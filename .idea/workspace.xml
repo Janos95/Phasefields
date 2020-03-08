@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
+    <generated>
+      <config projectName="phasefields" targetName="autodiff" />
+      <config projectName="phasefields" targetName="modica_mortola_gradient_test" />
+      <config projectName="phasefields" targetName="connectedness_constraint_test" />
+      <config projectName="phasefields" targetName="scoped_timer" />
+      <config projectName="phasefields" targetName="segmentation" />
+      <config projectName="phasefields" targetName="fw_test" />
+      <config projectName="phasefields" targetName="dijkstra_test" />
+      <config projectName="phasefields" targetName="io" />
+      <config projectName="phasefields" targetName="cost" />
+      <config projectName="phasefields" targetName="viewer" />
+    </generated>
+  </component>
+  <component name="CMakeSettings">
+    <configurations>
+      <configuration PROFILE_NAME="Debug-gcc-head" CONFIG_NAME="Debug" TOOLCHAIN_NAME="gcc-head" GENERATION_OPTIONS="-DIMGUI_DIR=~/libraries/imgui -DENOKI_AUTODIFF=ON" />
+    </configurations>
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="11b62d60-32b8-46a0-9c5e-70e1f1122bcc" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/cost/connectedness_constraint_autodiff.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cost/connectedness_constraint_autodiff.hpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cost/detach.hpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/cost/utility.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/connectedness_constraint_test.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/cost/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/connectedness_constraint.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/connectedness_constraint.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/connectedness_constraint.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/connectedness_constraint.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/connectedness_constraint_analytic.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/dijkstra.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/dijkstra.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/external/enoki/tests/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/cost/external/enoki/tests/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/external/enoki/tests/autodiff.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/external/enoki/tests/autodiff.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/utility.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/utility.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/io/write_mesh.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/io/write_mesh.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/main.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/tests/CMakeLists.txt" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug-gcc-head" />
+  <component name="FavoritesManager">
+    <favorites_list name="phasefields" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="CMakeLists.txt" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectId" id="1WoAgBiEHSg9JxqmE1NEirVYu68" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showExcludedFiles" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/CMakeLists.txt" />
+    <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
+    <property name="nodejs_npm_path_reset_for_default_project" value="true" />
+    <property name="settings.editor.selected.configurable" value="CMakeSettings" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/cost" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/cost" />
+    </key>
+  </component>
+  <component name="RunManager" selected="CMake Application.connectedness_constraint_test">
+    <configuration name="autodiff" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="autodiff" CONFIG_NAME="Debug-gcc-head">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="connectedness_constraint_test" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="connectedness_constraint_test" CONFIG_NAME="Debug-gcc-head" RUN_TARGET_PROJECT_NAME="phasefields" RUN_TARGET_NAME="connectedness_constraint_test">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="cost" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="cost" CONFIG_NAME="Debug-gcc-head">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="dijkstra_test" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="dijkstra_test" CONFIG_NAME="Debug-gcc-head" RUN_TARGET_PROJECT_NAME="phasefields" RUN_TARGET_NAME="dijkstra_test">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="fw_test" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="fw_test" CONFIG_NAME="Debug-gcc-head" RUN_TARGET_PROJECT_NAME="phasefields" RUN_TARGET_NAME="fw_test">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="io" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="io" CONFIG_NAME="Debug-gcc-head">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="modica_mortola_gradient_test" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="modica_mortola_gradient_test" CONFIG_NAME="Debug-gcc-head" RUN_TARGET_PROJECT_NAME="phasefields" RUN_TARGET_NAME="modica_mortola_gradient_test">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="scoped_timer" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="scoped_timer" CONFIG_NAME="Debug-gcc-head">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="segmentation" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="segmentation" CONFIG_NAME="Debug-gcc-head" RUN_TARGET_PROJECT_NAME="phasefields" RUN_TARGET_NAME="segmentation">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="viewer" type="CMakeRunConfiguration" factoryName="Application" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="viewer" CONFIG_NAME="Debug-gcc-head">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <list>
+      <item itemvalue="CMake Application.segmentation" />
+      <item itemvalue="CMake Application.cost" />
+      <item itemvalue="CMake Application.autodiff" />
+      <item itemvalue="CMake Application.io" />
+      <item itemvalue="CMake Application.scoped_timer" />
+      <item itemvalue="CMake Application.connectedness_constraint_test" />
+      <item itemvalue="CMake Application.dijkstra_test" />
+      <item itemvalue="CMake Application.fw_test" />
+      <item itemvalue="CMake Application.modica_mortola_gradient_test" />
+      <item itemvalue="CMake Application.viewer" />
+    </list>
+  </component>
+  <component name="ServiceViewManager">
+    <option name="viewStates">
+      <list>
+        <serviceView>
+          <treeState>
+            <expand />
+            <select />
+          </treeState>
+        </serviceView>
+      </list>
+    </option>
+  </component>
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="11b62d60-32b8-46a0-9c5e-70e1f1122bcc" name="Default Changelist" comment="" />
+      <created>1579805682175</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1579805682175</updated>
+      <workItem from="1579805683353" duration="655000" />
+      <workItem from="1579865509133" duration="1996000" />
+      <workItem from="1579964815790" duration="2942000" />
+      <workItem from="1581811063644" duration="5318000" />
+      <workItem from="1581849312806" duration="7870000" />
+      <workItem from="1582123460813" duration="6783000" />
+      <workItem from="1582198091664" duration="599000" />
+      <workItem from="1582310333843" duration="3098000" />
+      <workItem from="1582321181003" duration="1833000" />
+      <workItem from="1582411341925" duration="3295000" />
+      <workItem from="1582415654792" duration="4484000" />
+      <workItem from="1582475581517" duration="6475000" />
+      <workItem from="1582501139663" duration="1998000" />
+      <workItem from="1582537796834" duration="5606000" />
+      <workItem from="1582546854570" duration="2802000" />
+      <workItem from="1582660048314" duration="3301000" />
+      <workItem from="1582664001954" duration="239000" />
+      <workItem from="1582674392357" duration="48000" />
+      <workItem from="1582706687291" duration="3550000" />
+      <workItem from="1582726453614" duration="10265000" />
+      <workItem from="1582799659066" duration="28094000" />
+      <workItem from="1582884037076" duration="1600000" />
+      <workItem from="1582886057901" duration="17943000" />
+      <workItem from="1582972859381" duration="13830000" />
+      <workItem from="1582990500479" duration="178000" />
+      <workItem from="1582990693128" duration="4292000" />
+      <workItem from="1583019243679" duration="6687000" />
+      <workItem from="1583061739139" duration="2336000" />
+      <workItem from="1583072754744" duration="7727000" />
+      <workItem from="1583082126222" duration="2021000" />
+      <workItem from="1583149371579" duration="18246000" />
+      <workItem from="1583229920009" duration="1626000" />
+      <workItem from="1583232465660" duration="18213000" />
+      <workItem from="1583256398359" duration="9000" />
+      <workItem from="1583256410828" duration="20000" />
+      <workItem from="1583256448433" duration="45000" />
+      <workItem from="1583256498097" duration="7491000" />
+      <workItem from="1583265975663" duration="3092000" />
+      <workItem from="1583278003702" duration="599000" />
+      <workItem from="1583317201388" duration="4124000" />
+      <workItem from="1583321839230" duration="36961000" />
+      <workItem from="1583409043821" duration="6415000" />
+      <workItem from="1583499292340" duration="2159000" />
+      <workItem from="1583587932467" duration="11474000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="354" y="8" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1583607892408">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state x="354" y="8" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.2560.1080@0.0.2560.1080" timestamp="1583607892408" />
+    <state x="1603" y="262" width="624" height="525" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog" timestamp="1582990668384">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state x="1603" y="262" width="624" height="525" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog/0.0.2560.1080@0.0.2560.1080" timestamp="1582990668384" />
+    <state x="501" y="259" width="524" height="495" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog" timestamp="1583155985975">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state x="501" y="259" width="524" height="495" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.2560.1080@0.0.2560.1080" timestamp="1583155985975" />
+    <state x="785" y="276" width="212" height="496" key="#xdebugger.XInspectDialog" timestamp="1583339481022">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state x="785" y="276" width="212" height="496" key="#xdebugger.XInspectDialog/0.0.2560.1080@0.0.2560.1080" timestamp="1583339481022" />
+    <state x="398" y="118" key="#xdebugger.evaluate" timestamp="1583341113546">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state x="398" y="118" key="#xdebugger.evaluate/0.0.2560.1080@0.0.2560.1080" timestamp="1583341113546" />
+    <state x="1063" y="216" width="424" height="472" key="FileChooserDialogImpl" timestamp="1583256526518">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state x="1063" y="216" width="424" height="472" key="FileChooserDialogImpl/0.0.2560.1080@0.0.2560.1080" timestamp="1583256526518" />
+    <state width="2508" height="245" key="GridCell.Tab.0.bottom" timestamp="1583629380789">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state width="1558" height="167" key="GridCell.Tab.0.bottom/0.0.1600.900@0.0.1600.900" timestamp="1583084150064" />
+    <state width="2508" height="245" key="GridCell.Tab.0.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1583629380789" />
+    <state width="2508" height="245" key="GridCell.Tab.0.center" timestamp="1583629380788">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state width="1558" height="167" key="GridCell.Tab.0.center/0.0.1600.900@0.0.1600.900" timestamp="1583084150063" />
+    <state width="2508" height="245" key="GridCell.Tab.0.center/0.0.2560.1080@0.0.2560.1080" timestamp="1583629380788" />
+    <state width="2508" height="245" key="GridCell.Tab.0.left" timestamp="1583629380788">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state width="1558" height="167" key="GridCell.Tab.0.left/0.0.1600.900@0.0.1600.900" timestamp="1583084150063" />
+    <state width="2508" height="245" key="GridCell.Tab.0.left/0.0.2560.1080@0.0.2560.1080" timestamp="1583629380788" />
+    <state width="2508" height="245" key="GridCell.Tab.0.right" timestamp="1583629380789">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state width="1558" height="167" key="GridCell.Tab.0.right/0.0.1600.900@0.0.1600.900" timestamp="1583084150064" />
+    <state width="2508" height="245" key="GridCell.Tab.0.right/0.0.2560.1080@0.0.2560.1080" timestamp="1583629380789" />
+    <state width="2508" height="172" key="GridCell.Tab.1.bottom" timestamp="1583603784508">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state width="1558" height="167" key="GridCell.Tab.1.bottom/0.0.1600.900@0.0.1600.900" timestamp="1583084159011" />
+    <state width="2508" height="172" key="GridCell.Tab.1.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1583603784508" />
+    <state width="2508" height="172" key="GridCell.Tab.1.center" timestamp="1583603784508">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state width="1558" height="167" key="GridCell.Tab.1.center/0.0.1600.900@0.0.1600.900" timestamp="1583084159010" />
+    <state width="2508" height="172" key="GridCell.Tab.1.center/0.0.2560.1080@0.0.2560.1080" timestamp="1583603784508" />
+    <state width="2508" height="172" key="GridCell.Tab.1.left" timestamp="1583603784508">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state width="1558" height="167" key="GridCell.Tab.1.left/0.0.1600.900@0.0.1600.900" timestamp="1583084159010" />
+    <state width="2508" height="172" key="GridCell.Tab.1.left/0.0.2560.1080@0.0.2560.1080" timestamp="1583603784508" />
+    <state width="2508" height="172" key="GridCell.Tab.1.right" timestamp="1583603784508">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state width="1558" height="167" key="GridCell.Tab.1.right/0.0.1600.900@0.0.1600.900" timestamp="1583084159010" />
+    <state width="2508" height="172" key="GridCell.Tab.1.right/0.0.2560.1080@0.0.2560.1080" timestamp="1583603784508" />
+    <state width="2508" height="277" key="GridCell.Tab.2.bottom" timestamp="1582978449601">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state width="2508" height="277" key="GridCell.Tab.2.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1582978449601" />
+    <state width="2508" height="277" key="GridCell.Tab.2.center" timestamp="1582978449601">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state width="2508" height="277" key="GridCell.Tab.2.center/0.0.2560.1080@0.0.2560.1080" timestamp="1582978449601" />
+    <state width="2508" height="277" key="GridCell.Tab.2.left" timestamp="1582978449600">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state width="2508" height="277" key="GridCell.Tab.2.left/0.0.2560.1080@0.0.2560.1080" timestamp="1582978449600" />
+    <state width="2508" height="277" key="GridCell.Tab.2.right" timestamp="1582978449601">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state width="2508" height="277" key="GridCell.Tab.2.right/0.0.2560.1080@0.0.2560.1080" timestamp="1582978449601" />
+    <state x="693" y="-123" width="1422" height="789" key="SettingsEditor" timestamp="1583607874789">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state x="283" y="40" key="SettingsEditor/0.0.1600.900@0.0.1600.900" timestamp="1583072829889" />
+    <state x="693" y="-123" width="1422" height="789" key="SettingsEditor/0.0.2560.1080@0.0.2560.1080" timestamp="1583607874789" />
+    <state x="1066" y="-40" width="422" height="521" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1583263886899">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state x="656" y="87" width="422" height="521" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.1600.900@0.0.1600.900" timestamp="1582548138283" />
+    <state x="1066" y="-40" width="418" height="625" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.2560.1080@0.0.2560.1080" timestamp="1583263886899" />
+    <state x="575" y="361" width="439" height="150" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1582537820504">
+      <screen x="0" y="0" width="1600" height="900" />
+    </state>
+    <state x="575" y="361" width="439" height="150" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.0.1600.900@0.0.1600.900" timestamp="1582537820504" />
+    <state x="297" y="259" width="931" height="530" key="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory$2" timestamp="1583266121712">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state x="297" y="259" width="931" height="530" key="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory$2/0.0.2560.1080@0.0.2560.1080" timestamp="1583266121712" />
+    <state x="741" y="248" width="1076" height="814" key="search.everywhere.popup" timestamp="1583335693791">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state x="463" y="207" width="672" height="678" key="search.everywhere.popup/0.0.1600.900@0.0.1600.900" timestamp="1582484707865" />
+    <state x="741" y="248" width="1076" height="814" key="search.everywhere.popup/0.0.2560.1080@0.0.2560.1080" timestamp="1583335693791" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/viewer/default_callback.cpp</url>
+          <line>25</line>
+          <option name="timeStamp" value="30" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/viewer/scene.cpp</url>
+          <line>158</line>
+          <option name="timeStamp" value="31" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/../libraries/enoki/src/autodiff/autodiff.cpp</url>
+          <line>162</line>
+          <option name="timeStamp" value="36" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/cost/external/enoki/tests/autodiff.cpp</url>
+          <line>65</line>
+          <option name="timeStamp" value="73" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/tests/dijkstra_test.cpp</url>
+          <line>65</line>
+          <option name="timeStamp" value="88" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/cost/ceres_cost.hpp</url>
+          <line>51</line>
+          <option name="timeStamp" value="91" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/cost/connectedness_constraint.cpp</url>
+          <line>284</line>
+          <option name="timeStamp" value="93" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+</project>
