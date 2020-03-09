@@ -16,7 +16,7 @@ target_link_libraries(io
             phasefields::scoped_timer
             Corrade::Containers
             Corrade::PluginManager
-            Magnum::AnySceneImporter
+            MagnumPlugins::AssimpImporter
         )
 
 add_library(phasefields::io ALIAS io)

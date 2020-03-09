@@ -13,10 +13,11 @@
 
 #include <Magnum/Trade/MeshData.h>
 #include <Magnum/MeshTools/Interleave.h>
-#include <Corrade/Utility/Algorithms.h>
 #include <Magnum/EigenIntegration/Integration.h>
 #include <Magnum/Primitives/Cube.h>
 #include <Magnum/Primitives/Grid.h>
+
+#include <Corrade/Utility/Configuration.h>
 
 #include <ceres/problem.h>
 #include <ceres/solver.h>
@@ -37,8 +38,15 @@ using namespace std::chrono_literals;
 
 
 int main(int argc, char** argv) {
+    
+    std::cout << CONF_PATH << std::endl;
 
     ScopedTimer ti("total");
+    
+    Utility::Configuration conf(CONF_PATH, Utility::Configuration::Flag::ReadOnly);
+    auto eps = conf.value<double>("epsilon");
+    std::cout << eps << std::endl;
+    return 1;
 
     constexpr double epsilon = 1e-2;
 
@@ -48,7 +56,7 @@ int main(int argc, char** argv) {
     auto connectednessLoss1 = std::make_unique<ceres::TrivialLoss>();
     auto connectednessLoss2 = std::make_unique<ceres::TrivialLoss>();
 
-    auto meshdata = loadMeshData("/home/janos/phasefields/assets/in.ply");
+    auto meshdata = loadMeshData("/home/janos/data/centaur.ply");
     //auto meshdata = Primitives::grid3DSolid({20,20});
 
     auto varr = meshdata.positions3DAsArray();
@@ -88,8 +96,8 @@ int main(int argc, char** argv) {
     cost->push_back(std::make_unique<InterfaceEnergy>(V,F,epsilon), std::move(interfaceLoss));
     cost->push_back(std::make_unique<PotentialEnergy>(V,F,epsilon), std::move(potentialLoss));
     cost->push_back(std::make_unique<AreaRegularizer>(V,F), std::move(areaLoss));
-    cost->push_back(std::make_unique<ConnectednessConstraint>(V, F, epsilon, 0.85, 0.95), std::move(connectednessLoss1));
-    cost->push_back(std::make_unique<ConnectednessConstraint>(V, F, epsilon, -0.95, -0.85), std::move(connectednessLoss2));
+    //cost->push_back(std::make_unique<ConnectednessConstraint>(V, F, epsilon, 0.85, 0.95), std::move(connectednessLoss1));
+    //cost->push_back(std::make_unique<ConnectednessConstraint>(V, F, epsilon, -0.95, -0.85), std::move(connectednessLoss2));
 
     //Debug{} << varr;
     //Debug{} << farr;
@@ -145,7 +153,7 @@ int main(int argc, char** argv) {
     ceres::Solve(options, problem, U.data(), &summary);
     std::cout << summary.BriefReport() << std::endl;
 
-    writeMesh("/home/janos/phasefields/assets/out_connect.ply", varr, farr, U, true);
+    writeMesh("/home/janos/data/centaur_out1.ply", varr, farr, U, true);
     //std::thread t([&]{
     //    ceres::Solve(options, problem, U.data(), &summary);
     //    std::cout << summary.BriefReport() << '\n';

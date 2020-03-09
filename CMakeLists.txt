@@ -14,7 +14,8 @@ find_package(OpenMesh CONFIG REQUIRED)
 find_package(OpenMP CONFIG)
 find_package(libigl CONFIG REQUIRED)
 find_package(Corrade CONFIG REQUIRED PluginManager Containers TestSuite)
-find_package(Magnum CONFIG REQUIRED GL SceneGraph MeshTools Sdl2Application Shaders AnySceneImporter Primitives)
+find_package(Magnum CONFIG REQUIRED GL SceneGraph MeshTools Sdl2Application Shaders Primitives)
+find_package(MagnumPlugins CONFIG REQUIRED AssimpImporter)
 find_package(MagnumIntegration CONFIG REQUIRED ImGui Eigen)
 #find_package(Enoki CONFIG REQUIRED)
 
@@ -49,6 +50,7 @@ target_link_libraries(segmentation PRIVATE
         Magnum::Primitives
         OpenMeshCore
         ceres)
-
+        
+target_compile_definitions(segmentation PRIVATE CONF_PATH="${CMAKE_CURRENT_LIST_DIR}/phasfields.conf")
 
 add_subdirectory(tests)

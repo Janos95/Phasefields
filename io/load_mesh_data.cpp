@@ -7,7 +7,7 @@
 #include <Corrade/Containers/Pointer.h>
 #include <Corrade/Containers/Optional.h>
 
-#include <MagnumPlugins/AnySceneImporter/AnySceneImporter.h>
+#include <MagnumPlugins/AssimpImporter/AssimpImporter.h>
 
 using namespace Magnum;
 using namespace Corrade;
