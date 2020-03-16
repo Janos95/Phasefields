@@ -1,14 +1,17 @@
+[Buildset]
+BuildItems=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x01\x00\x00\x00\x0b\x00\x00\x00\x00\x01\x00\x00\x00\x16\x00p\x00h\x00a\x00s\x00e\x00f\x00i\x00e\x00l\x00d\x00s)
+
 [CMake]
 Build Directory Count=1
 Current Build Directory Index-Host System=0
 
 [CMake][CMake Build Directory 0]
 Build Directory Path=/home/janos/phasefields/build
-Build Type=Debug
+Build Type=Release
 CMake Binary=/usr/local/bin/cmake
 CMake Executable=/usr/local/bin/cmake
 Environment Profile=
-Extra Arguments=-DCMAKE_CXX_COMPILER=/usr/local/bin/g++head
+Extra Arguments=-DCMAKE_CXX_COMPILER=/usr/local/bin/g++-head
 Install Directory=/usr/local
 Runtime=Host System
 
@@ -24,13 +27,43 @@ parserArgumentsOpenCL=-ferror-limit=100 -fspell-checking -Wdocumentation -Wunuse
 Name=gcc-head
 
 [Launch]
-Launch Configurations=Launch Configuration 0
+Launch Configurations=Launch Configuration 0,Launch Configuration 1,Launch Configuration 2
 
 [Launch][Launch Configuration 0]
 Configured Launch Modes=execute
 Configured Launchers=nativeAppLauncher
 Name=New Compiled Binary Launcher
 Type=Native Application
+
+[Launch][Launch Configuration 1]
+Configured Launch Modes=execute
+Configured Launchers=nativeAppLauncher
+Name=segmentation
+Type=Native Application
+
+[Launch][Launch Configuration 1][Data]
+Configured from ProjectItem=phasefields,segmentation
+Project Target=phasefields,segmentation
+Working Directory=file:///home/janos/phasefields/build/
+isExecutable=false
+
+[Launch][Launch Configuration 2]
+Configured Launch Modes=execute
+Configured Launchers=nativeAppLauncher
+Name=seg
+Type=Native Application
+
+[Launch][Launch Configuration 2][Data]
+Arguments=
+Dependencies=@Variant(\x00\x00\x00\t\x00\x00\x00\x00\x00)
+Dependency Action=Nothing
+EnvironmentGroup=
+Executable=file:///home/janos/phasefields/build/segmentation
+External Terminal=konsole --noclose --workdir %workdir -e %exe
+Project Target=phasefields,segmentation
+Use External Terminal=false
+Working Directory=
+isExecutable=true
 
 [Project]
 VersionControlSupport=kdevgit

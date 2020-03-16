@@ -5,15 +5,14 @@
 #pragma once
 
 #include <Eigen/Core>
-
-#include <Corrade/Containers/ArrayView.h>
-#include <Magnum/Math/Vector3.h>
+#include <folly/Function.h>
+#include <Magnum/Math/Color.h>
 #include <Magnum/Magnum.h>
-
+#include <string>
 
 void writeMesh(
-        const std::string&,
-        Corrade::Containers::ArrayView<Magnum::Vector3> varr,
-        Corrade::Containers::ArrayView<Magnum::UnsignedInt> farr,
-        const Eigen::VectorXd&,
-        bool = false);
+        const std::string& path,
+        const Eigen::MatrixXd& V,
+        const Eigen::MatrixXi& F,
+        const Eigen::VectorXd& U,
+        folly::FunctionRef<Magnum::Color4(double)>);

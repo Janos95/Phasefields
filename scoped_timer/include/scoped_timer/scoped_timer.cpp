@@ -52,7 +52,7 @@ std::unordered_map<std::string, TimingInfo> log_;
 std::mutex mutex_;
 
 ScopedTimer::ScopedTimer(std::string name, bool verbose):
-    m_impl(std::make_unique<Impl>(std::move(name), my_clock::now(), verbose))
+    m_impl(std::make_unique<Impl>(Impl{std::move(name), my_clock::now(), verbose}))
 {
 }
 

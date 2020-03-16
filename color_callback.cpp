@@ -30,7 +30,7 @@ ColorCallback::ColorCallback(Eigen::VectorXd& U, Containers::Array<char>&& data)
 {
 }
 
-ceres::CallbackReturnType ColorCallback::operator()(const ceres::IterationSummary& summary)
+ceres::CallbackReturnType ColorCallback::operator()(const ceres::IterationSummary& )
 {
     std::lock_guard lock(m_mutex);
     if(!m_current){
@@ -40,7 +40,7 @@ ceres::CallbackReturnType ColorCallback::operator()(const ceres::IterationSummar
                 m_U->size() /*size */ ,
                 10 * sizeof(Float) /* stride */);
         auto view = arrayCast<Color4>(erasedView);
-        std::transform(m_U->begin(), m_U->end(), view.begin(), jet_colormap);
+        std::transform(m_U->begin(), m_U->end(), view.begin(), JetColorMap{});
         m_current = false;
     }
     return ceres::SOLVER_CONTINUE;

@@ -42,7 +42,6 @@ Viewer::Viewer(int argc, char** argv):
 
 void Viewer::viewportEvent(ViewportEvent& event) {
     GL::defaultFramebuffer.setViewport({{}, event.framebufferSize()});
-
     m_camera->reshape(event.windowSize(), event.framebufferSize());
     scene.setViewportSize(framebufferSize());
 }

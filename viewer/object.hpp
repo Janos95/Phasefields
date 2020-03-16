@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include "scene_graph_node.hpp"
-
 #include <Corrade/Containers/Optional.h>
 
 #include <Magnum/GL/Texture.h>
@@ -13,11 +11,13 @@
 #include <Magnum/Magnum.h>
 #include <Magnum/Math/Color.h>
 
+#include <memory>
+
 struct Object
 {
     Magnum::GL::Buffer vertices, indices;
     Magnum::GL::Mesh mesh;
-    Corrade::Containers::Optional<Magnum::GL::Texture2D> texture;
-    Magnum::Color4 color = Magnum::Color4{1};
-    SceneGraphNode* node;
+    std::unique_ptr<Magnum::GL::Texture2D> textureDiffuse = nullptr;
+    std::unique_ptr<Magnum::GL::Texture2D> textureSpecular = nullptr;
+    Magnum::Color4 color = Magnum::Color4::blue();
 };

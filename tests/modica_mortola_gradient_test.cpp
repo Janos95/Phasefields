@@ -2,14 +2,13 @@
 // Created by janos on 28.11.19.
 //
 
-#include "../phasefield_initialization.hpp"
-#include "ceres_cost.hpp"
+#include <phasefield_initialization.hpp>
+#include <ceres_cost.hpp>
 
 
 #include <ceres/gradient_checker.h>
 #include <ceres/dynamic_cost_function.h>
 
-#include <Eigen/Geometry>
 #include <Eigen/Core>
 
 #include <Magnum/Primitives/Grid.h>

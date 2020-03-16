@@ -2,7 +2,7 @@
 // Created by janos on 27.02.20.
 //
 
-#include "default_callback.hpp"
+#include "draw_callbacks.hpp"
 #include "object.hpp"
 
 #include <Magnum/Shaders/Flat.h>
@@ -10,19 +10,17 @@
 using namespace Magnum;
 using namespace Corrade;
 
-template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; }; //TODO replace flat by variant
-
-DefaultCallback::DefaultCallback(Object& object, Shaders::Flat3D& shader) :
+FlatCallback::FlatCallback(Object& object, Shaders::Flat3D& shader) :
         m_mesh(object.mesh),
         m_color(object.color),
         m_shader(shader)
 {
-    if(object.texture){
-        m_texture = std::addressof(*object.texture);
+    if(object.textureDiffuse){
+        m_texture = object.textureDiffuse.get();
     }
 }
 
-void DefaultCallback::operator()(const Matrix4& transformationMatrix, SceneGraph::Camera3D& camera){
+void FlatCallback::operator()(const Matrix4& transformationMatrix, SceneGraph::Camera3D& camera){
     m_shader.setTransformationProjectionMatrix(camera.projectionMatrix() * transformationMatrix);
 
     if (m_texture) {
@@ -32,5 +30,6 @@ void DefaultCallback::operator()(const Matrix4& transformationMatrix, SceneGraph
         m_shader.setColor(m_color);
     }
 
-    m_mesh.draw(m_shader);
+    m_shader.draw(m_mesh);
 }
+

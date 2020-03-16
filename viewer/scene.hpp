@@ -15,16 +15,15 @@
 using Object3D = Magnum::SceneGraph::Object<Magnum::SceneGraph::RigidMatrixTransformation3D>;
 using Scene3D = Magnum::SceneGraph::Scene<Magnum::SceneGraph::RigidMatrixTransformation3D>;
 
+class SceneGraphNode;
 
-enum class CompileFlag: Magnum::UnsignedByte {
-    GenerateFlatNormals = 1 << 0,
-    GenerateSmoothNormals = 1 << 1,
-    AddColorAttribute = 1 << 2,
+enum class ShaderType : Magnum::UnsignedShort {
+    Flat = 1,
+    FlatTextured = 2,
+    VertexColor = 3,
+    MeshVisualizer = 4,
+    Phong = 5,
 };
-
-using CompileFlags = Corrade::Containers::EnumSet<CompileFlag>;
-
-CORRADE_ENUMSET_OPERATORS(CompileFlags)
 
 class Scene {
 public:
@@ -32,13 +31,15 @@ public:
     Scene();
     ~Scene();
 
-    bool addObject(
-            std::string name,
-            const Magnum::Trade::MeshData& meshdata,
-            CompileFlags flags = {},
-            const Magnum::Image2D* image = nullptr);
+    Object* addObject(std::string name, Object object);
 
-    Object* getObject(const std::string_view& name);
+    Object* getObject(std::string_view name);
+
+    SceneGraphNode* addNode(std::string nodeName, std::string_view par, std::string_view obj, ShaderType shader);
+
+    SceneGraphNode* addNode(std::string nodeName, std::string_view obj, ShaderType shader);
+
+    void setDrawMode(std::string_view node, ShaderType shader);
 
     Scene3D& root();
 

@@ -20,6 +20,7 @@
 #include <igl/edges.h>
 
 #include <folly/small_vector.h>
+#include <fmt/core.h>
 
 #include <Corrade/Utility/Debug.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
@@ -43,7 +44,7 @@ namespace {
         int NumParameters();
 
         struct Neighbor {
-            Neighbor(int v, double w) : weight(w), vertex(v) {}
+            Neighbor(int v, double w) : vertex(v), weight(w) {}
 
             int vertex;
             Scalar weight;
@@ -78,8 +79,8 @@ namespace {
             const double epsilon,
             const double a,
             const double b):
-            m_F(F),
             m_V(V),
+            m_F(F),
             m_epsilon(epsilon), m_a(a), m_b(b) {
 
         CORRADE_INTERNAL_ASSERT(m_F.colwise().maxCoeff().maxCoeff() < m_V.size());
@@ -122,11 +123,14 @@ namespace {
 #pragma omp declare reduction (+: Eigen::VectorXd: omp_out=omp_out+omp_in)\
      initializer(omp_priv=Eigen::VectorXd::Zero(omp_orig.size()))
 
+#pragma omp declare reduction (+: enoki::DiffArray<double>: omp_out=omp_out+omp_in)\
+     initializer(omp_priv=enoki::DiffArray<double>(0))
+
     template<class Scalar>
     bool Impl<Scalar>::Evaluate(double const *params,
                                 double *cost,
                                 double *jacobian) const {
-        ScopedTimer t("Connectedness", false);
+        ScopedTimer t("Connectedness", true);
 
         F weight(m_a, m_b);
         FGrad weightGrad(m_a, m_b);
@@ -150,7 +154,7 @@ namespace {
         std::vector ws(numFaces, Scalar(-1.));
         std::vector uT(numFaces, Scalar(0.));
 
-        for (std::size_t i = 0; i < numFaces; i++) {
+        for (int i = 0; i < numFaces; i++) {
             auto f = m_F.row(i);
             uT[i] = 1. / 3. * (U[f[0]] + U[f[1]] + U[f[2]]);
             bool in = m_a <= detail::detach(uT[i]) && detail::detach(uT[i]) <= m_b;
@@ -186,14 +190,15 @@ namespace {
         auto numComponents = roots.size();
         if (numComponents <= 1){
             *cost = 0.;
-            std::fill_n(jacobian, numVertices, 0.);
+            if(jacobian)
+                std::fill_n(jacobian, numVertices, 0.);
             return true;
         }
-        printf("Found %d connencted components. Enforcing Connectedness!\n", (int) numComponents);
+        fmt::print("Found {} connencted components. Enforcing Connectedness!\n", numComponents);
 
         std::vector W(numComponents, Scalar(0.));
 
-        for (std::size_t i = 0; i < numFaces; ++i) {
+        for (int i = 0; i < numFaces; ++i) {
             auto &c = components[i];
             if (c != -1) {
                 auto it = std::lower_bound(roots.begin(), roots.end(), c);
@@ -222,9 +227,9 @@ namespace {
         Scalar d = 0;
         Eigen::VectorXd gradient = Eigen::VectorXd::Zero(numVertices);
 
-//#pragma omp parallel for schedule(dynamic) reduction(+:gradient, d)
-        for (int i = 0; i < numComponents; ++i) {
-            for (int j = i + 1; j < numComponents; ++j) {
+#pragma omp parallel for if(std::is_same_v<Scalar, double>) schedule(dynamic) reduction(+:gradient, d)
+        for (std::size_t i = 0; i < numComponents; ++i) {
+            for (std::size_t j = i + 1; j < numComponents; ++j) {
 
                 Scalar dij = 0;
                 auto Wij = W[i] * W[j];
@@ -252,9 +257,9 @@ namespace {
                 if (jacobian && !detail::IsDiffArray<Scalar>) {
                     for (int k = 0; k < numFaces; ++k) {
                         double weightedGrad = detail::detach(dij);
-                        if (components[k] == i)
+                        if (components[k] == static_cast<int>(i))
                             weightedGrad *= detail::detach(W[j]);
-                        else if (components[k] == j)
+                        else if (components[k] == static_cast<int>(j))
                             weightedGrad *= detail::detach(W[i]);
                         else
                             continue;
@@ -276,7 +281,6 @@ namespace {
         *cost = detail::detach(d);
 
         if (jacobian) {
-
             if constexpr(detail::IsDiffArray<Scalar>) {
                 Eigen::VectorXd autodiffgrad = Eigen::VectorXd::Zero(numVertices);
                 Scalar::simplify_graph_();
@@ -323,9 +327,9 @@ ConnectednessConstraint::ConnectednessConstraint(
         GradientFlags flags)
 {
     if(flags & GradientFlag::Automatic)
-        m_implAutodiff = std::make_unique<ImplAutodiff>(Impl<enoki::DiffArray<double>>(V, F, epsilon, a, b));
+        m_implAutodiff = std::make_unique<ImplAutodiff>(ImplAutodiff{Impl<enoki::DiffArray<double>>(V, F, epsilon, a, b)});
     if(flags & GradientFlag::Analytic)
-        m_implAnalytic = std::make_unique<ImplAnalytic>(Impl<double>(V, F, epsilon, a, b));
+        m_implAnalytic = std::make_unique<ImplAnalytic>(ImplAnalytic{Impl<double>(V, F, epsilon, a, b)});
 }
 
 ConnectednessConstraint::~ConnectednessConstraint() = default;

@@ -13,6 +13,7 @@ using Var = enoki::DiffArray<double>;
 namespace graph {
 
     struct Edge {
+        Edge(int a_, int b_): a(a_), b(b_){}
         int a, b;
         auto operator<=>(const Edge&) const = default;
     };

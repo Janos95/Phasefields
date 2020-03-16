@@ -6,16 +6,24 @@
 #include "connectedness_constraint.hpp"
 #include "load_mesh_data.hpp"
 #include "viewer.hpp"
+#include "upload.hpp"
 #include "write_mesh.hpp"
+#include "colormaps.hpp"
+#include "draw_callbacks.hpp"
 
 #include <scoped_timer/scoped_timer.hpp>
 
-
 #include <Magnum/Trade/MeshData.h>
-#include <Magnum/MeshTools/Interleave.h>
-#include <Magnum/EigenIntegration/Integration.h>
+#include <Magnum/Primitives/Plane.h>
 #include <Magnum/Primitives/Cube.h>
+#include <Magnum/Primitives/Capsule.h>
 #include <Magnum/Primitives/Grid.h>
+#include <Magnum/Image.h>
+#include <Magnum/PixelFormat.h>
+#include <Magnum/MeshTools/Interleave.h>
+#include <Magnum/MeshTools/Transform.h>
+#include <Magnum/GL/TextureFormat.h>
+#include <Magnum/ImageView.h>
 
 #include <Corrade/Utility/Configuration.h>
 
@@ -24,6 +32,8 @@
 #include <ceres/loss_function.h>
 #include <ceres/gradient_problem.h>
 #include <ceres/gradient_problem_solver.h>
+
+#include <fmt/core.h>
 
 #include <thread>
 #include <algorithm>
@@ -35,20 +45,23 @@ using namespace Corrade::Containers;
 
 using namespace std::chrono_literals;
 
-
-
 int main(int argc, char** argv) {
     
-    std::cout << CONF_PATH << std::endl;
-
     ScopedTimer ti("total");
-    
-    Utility::Configuration conf(CONF_PATH, Utility::Configuration::Flag::ReadOnly);
-    auto eps = conf.value<double>("epsilon");
-    std::cout << eps << std::endl;
-    return 1;
 
-    constexpr double epsilon = 1e-2;
+    Utility::Configuration conf(CONF_PATH, Utility::Configuration::Flag::ReadOnly);
+
+    auto epsilon = conf.value<double>("epsilon");
+    auto a = conf.value<double>("a");
+    auto b = conf.value<double>("b");
+    auto wMM = conf.value<double>("modica_mortola_weight");
+    auto wArea = conf.value<double>("area_weight");
+    auto wConnectedness = conf.value<double>("connectedness_weight");
+    auto enforceConnectedness = conf.value<bool>("enforce_connectedness");
+    auto postConnect = conf.value<bool>("post_connect");
+    auto inputPath = conf.value<std::string>("input_path");
+    auto outputPath1 = conf.value<std::string>("output_path1");
+    auto outputPath2 = conf.value<std::string>("output_path2");
 
     auto interfaceLoss = std::make_unique<ceres::TrivialLoss>();
     auto potentialLoss = std::make_unique<ceres::TrivialLoss>();
@@ -56,91 +69,49 @@ int main(int argc, char** argv) {
     auto connectednessLoss1 = std::make_unique<ceres::TrivialLoss>();
     auto connectednessLoss2 = std::make_unique<ceres::TrivialLoss>();
 
-    auto meshdata = loadMeshData("/home/janos/data/centaur.ply");
-    //auto meshdata = Primitives::grid3DSolid({20,20});
+    auto meshdata = loadMeshData(inputPath);
 
-    auto varr = meshdata.positions3DAsArray();
-    auto farr = meshdata.indicesAsArray();
 
-    printf("Solving Problem with %d vertices\n", varr.size());
-    //Debug{} << varr;
-    //Debug{} << farr;
-
-    //Debug{} << varr.size();
-    //Debug{} << farr.size();
-
-    using MatrixXU = Eigen::Matrix<UnsignedInt, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
-
-    CORRADE_INTERNAL_ASSERT(farr.size() % 3 == 0);
-    Eigen::MatrixXi F = Eigen::Map<const MatrixXU>(farr.data(), farr.size() / 3, 3).cast<int>();
-
-    Eigen::MatrixXd V(varr.size(), 3);
-    for (int i = 0; i < meshdata.vertexCount(); ++i) {
-       V.row(i) = EigenIntegration::cast<Eigen::Vector3f>(varr[i]).cast<double>();
+    Viewer viewer(argc, argv);
+    auto& scene = viewer.scene;
+    //viewer.scene.addObject("mesh", meshdata);
+    auto res = 4096;
+    Containers::Array<char> data(NoInit, res * res * 4);
+    Image2D tex(PixelFormat::RGBA8Unorm, {res,res}, std::move(data));
+    auto view = tex.pixels<Color4ub>();
+    for (int x = 0; x < res; ++x) {
+        for (int y = 0; y < res; ++y) {
+            auto a = x / 256;
+            auto b = y / 256;
+            if((a+b)%2)
+                view[y][x] = Color3ub(0,0,0);
+            else
+                view[y][x] = Color3ub(255, 255, 255);
+        }
     }
 
-    //normalize vertex length to be in [0,1] for better numerical stability
-    double maxVertexNorm = V.rowwise().norm().maxCoeff();
-    V *= 1. / maxVertexNorm;
+    auto cube = Primitives::cubeSolid();
+    auto* obj = scene.addObject("plane", upload(cube, tex));
+    auto* node = scene.addNode("plane_node", "plane", ShaderType::Flat);
+    viewer.exec();
 
-    //std::cout << V << std::endl;
-    //std::cout << F << std::endl;
+    return 1;
 
-    //std::cout << V.rows() << std::endl;
-    //std::cout << F.rows() << std::endl;
+    auto[V, F] = toEigen(meshdata);
+
+    fmt::print("Solving Problem with {} vertices\n", V.rows());
 
     Eigen::VectorXd U(V.rows());
     initRandomNormal(U);
 
     auto* cost = new SumProblem(U.size());
-    cost->push_back(std::make_unique<InterfaceEnergy>(V,F,epsilon), std::move(interfaceLoss));
-    cost->push_back(std::make_unique<PotentialEnergy>(V,F,epsilon), std::move(potentialLoss));
-    cost->push_back(std::make_unique<AreaRegularizer>(V,F), std::move(areaLoss));
-    //cost->push_back(std::make_unique<ConnectednessConstraint>(V, F, epsilon, 0.85, 0.95), std::move(connectednessLoss1));
-    //cost->push_back(std::make_unique<ConnectednessConstraint>(V, F, epsilon, -0.95, -0.85), std::move(connectednessLoss2));
-
-    //Debug{} << varr;
-    //Debug{} << farr;
-
-    //Viewer viewer(argc,argv);
-    //Debug{} << meshdata.vertexData().size();
-    //viewer.scene.addObject("mesh", meshdata, CompileFlag::AddColorAttribute|CompileFlag::GenerateFlatNormals);
-    //auto& vertices = viewer.scene.getObject("mesh")->vertices;
-    //Containers::Array<char> data(vertices.size());
-    //Utility::copy({vertices.mapRead(), vertices.size()}, data);
-    //ColorCallback colorCB(U, std::move(data));
-
-    //{
-    //    colorCB(viewer.scene);
-    //    data = Containers::Array<char>(vertices.size());
-    //    Containers::ArrayView raw(vertices.mapRead(), vertices.size());
-    //    CORRADE_INTERNAL_ASSERT(raw);
-    //    Containers::StridedArrayView1D<void> erasedViewC(
-    //            data,
-    //            data.begin() + 6 * sizeof(Float) /*start*/,
-    //            U.size() /*size */ ,
-    //            10 * sizeof(Float) /* stride */);
-    //    auto viewC = arrayCast<Color4>(erasedViewC);
-
-    //    Containers::StridedArrayView1D<void> erasedViewP(
-    //            data,
-    //            data.begin()  /*start*/,
-    //            U.size() /*size */ ,
-    //            10 * sizeof(Float) /* stride */);
-    //    auto viewP = arrayCast<Vector3>(erasedViewP);
-
-    //    Containers::StridedArrayView1D<void> erasedViewN(
-    //            data,
-    //            data.begin() + 3 * sizeof(Float) /*start*/,
-    //            U.size() /*size */ ,
-    //            10 * sizeof(Float) /* stride */);
-    //    auto viewN = arrayCast<Vector3>(erasedViewN);
-
-    //    Debug{} << viewP;
-    //    Debug{} << viewN;
-    //    Debug{} << viewC;
-    //    vertices.unmap();
-    //}
+    cost->push_back(std::make_unique<InterfaceEnergy>(V,F,epsilon), std::move(interfaceLoss), wMM);
+    cost->push_back(std::make_unique<PotentialEnergy>(V,F,epsilon), std::move(potentialLoss), wMM);
+    cost->push_back(std::make_unique<AreaRegularizer>(V,F), std::move(areaLoss), wArea);
+    if(enforceConnectedness){
+        cost->push_back(std::make_unique<ConnectednessConstraint>(V, F, epsilon, a, b), std::move(connectednessLoss1), wConnectedness);
+        cost->push_back(std::make_unique<ConnectednessConstraint>(V, F, epsilon, -b, -a), std::move(connectednessLoss2), wConnectedness);
+    }
 
     // Run the solver!
     ceres::GradientProblemSolver::Options options;
@@ -152,27 +123,24 @@ int main(int argc, char** argv) {
     ceres::GradientProblem problem(cost);
     ceres::Solve(options, problem, U.data(), &summary);
     std::cout << summary.BriefReport() << std::endl;
+    double max = U.maxCoeff();
+    double min = U.minCoeff();
+    fmt::print("(min,max): ({},{})\n", min, max);
+    SegmentationColorMap mapper{{{-1.05,-0.05, Color4::red()},{0.05, 1.05, Color4::blue()}}};
+    writeMesh(outputPath1, V, F, U, mapper);
 
-    writeMesh("/home/janos/data/centaur_out1.ply", varr, farr, U, true);
-    //std::thread t([&]{
-    //    ceres::Solve(options, problem, U.data(), &summary);
-    //    std::cout << summary.BriefReport() << '\n';
-    //});
+    if(!enforceConnectedness && postConnect){
+        cost->push_back(std::make_unique<ConnectednessConstraint>(V, F, epsilon, a, b), std::move(connectednessLoss1), wConnectedness);
+        cost->push_back(std::make_unique<ConnectednessConstraint>(V, F, epsilon, -b, -a), std::move(connectednessLoss2), wConnectedness);
+    }
 
-    //std::thread t([&]{
-    //    while(1){
-    //        initRandomNormal(U);
-    //        colorCB(ceres::IterationSummary{});
-    //        std::this_thread::sleep_for(1s/60);
-    //    }
-    //});
+    if(postConnect){
+        ceres::Solve(options, problem, U.data(), &summary);
+        std::cout << summary.BriefReport() << std::endl;
+    }
 
-    // Plot the mesh
-    //viewer.callbacks.emplace_back(colorCB);
-    //viewer.exec();
 
-    //t.join();
-
+    writeMesh(outputPath2, V, F, U, mapper);
 
     auto finalCosts = cost->computeSeperateCosts(U);
     for(auto cost: finalCosts)

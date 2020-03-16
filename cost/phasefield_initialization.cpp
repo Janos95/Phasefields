@@ -1,11 +1,10 @@
 //
-// Created by janos on 27.11.19.
+// Created by janos on 09.03.20.
 //
 
-#pragma once
+#include "phasefield_initialization.hpp"
 
 #include <igl/doublearea.h>
-
 #include <random>
 
 auto initAlongZAxis(const Eigen::MatrixXd& V, const Eigen::MatrixXi& F, Eigen::VectorXd& U)
@@ -48,9 +47,6 @@ auto initAlongZAxis(const Eigen::MatrixXd& V, const Eigen::MatrixXi& F, Eigen::V
     }
 
 }
-
-
-
 
 void initRandomNormal(Eigen::VectorXd& V)
 {

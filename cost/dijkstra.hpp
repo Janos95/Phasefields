@@ -71,6 +71,7 @@ private:
 
     struct HeapElement
     {
+        HeapElement(int n, double d): node(n), distance(d){}
         int node;
         double distance;
     };

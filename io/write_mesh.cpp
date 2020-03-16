@@ -2,6 +2,7 @@
 // Created by janos on 03.03.20.
 //
 
+#include "write_mesh.hpp"
 
 #include "../colormaps.hpp"
 #include "../mesh/mesh.hpp"
@@ -14,6 +15,8 @@
 #include <Magnum/Math/Color.h>
 #include <Magnum/Magnum.h>
 
+#include <fmt/core.h>
+
 #include <algorithm>
 
 using namespace Corrade;
@@ -21,22 +24,23 @@ using namespace Magnum;
 
 
 auto convertToOpenMesh(
-        Containers::ArrayView<Vector3> points,
-        Containers::ArrayView<Color4> colors,
-        Containers::ArrayView<UnsignedInt> faces)
+        Containers::ArrayView<const Vector3d> points,
+        Containers::ArrayView<const Color4> colors,
+        Containers::ArrayView<const Int> faces)
 {
     MagnumMesh mesh;
     mesh.request_vertex_colors();
 
     CORRADE_INTERNAL_ASSERT(points.size() == colors.size());
     std::vector<MagnumMesh::VertexHandle> vertexHandles;
-    for (int i = 0; i < points.size(); ++i) {
-        auto handle = mesh.add_vertex(points[i]);
+    for (std::size_t i = 0; i < points.size(); ++i) {
+        Vector3 p(points[i]);
+        auto handle = mesh.add_vertex(p);
         mesh.set_color(handle, colors[i]);
         vertexHandles.push_back(std::move(handle));
     }
 
-    for(auto&& f : Containers::arrayCast<Vector3ui>(faces)){
+    for(auto&& f : Containers::arrayCast<const Vector3i>(faces)){
         std::vector<MagnumMesh::VertexHandle> face;
         for (int i = 0; i < 3; ++i) {
             face.push_back(vertexHandles[f[i]]);
@@ -49,22 +53,20 @@ auto convertToOpenMesh(
 
 void writeMesh(
         const std::string& path,
-        Containers::ArrayView<Vector3> varr,
-        Containers::ArrayView<UnsignedInt> farr,
+        const Eigen::MatrixXd& V,
+        const Eigen::MatrixXi& F,
         const Eigen::VectorXd& U,
-        bool normalize){
+        folly::FunctionRef<Color4(double)> mapping)
+{
+    fmt::print("Writing mesh with to {}\n", path);
+    Eigen::MatrixXd VT = V.transpose();
+    Eigen::MatrixXi FT = F.transpose();
+    auto varr = Containers::arrayCast<const Vector3d>(Containers::ArrayView(VT.data(), V.size()));
+    Containers::ArrayView farr(FT.data(), F.size());
 
     Containers::Array<Color4> color(Containers::NoInit, U.size());
-    Eigen::VectorXd V = U;
-    if(normalize) {
-        double min = U.minCoeff();
-        double max = U.maxCoeff();
-        printf("(min,max): (%f, %f)\n", min, max);
-        V = (U.array() - min) * 1. / (max - min);
-    } else{
-        V = (V.array() + 1.) / 2.;
-    }
-    std::transform(V.begin(), V.end(), color.begin(), jet_colormap);
+
+    std::transform(U.begin(), U.end(), color.begin(), mapping);
     auto mesh = convertToOpenMesh(varr, color, farr);
 
     OpenMesh::IO::write_mesh(mesh, path, OpenMesh::IO::Options::VertexColor | OpenMesh::IO::Options::Binary);

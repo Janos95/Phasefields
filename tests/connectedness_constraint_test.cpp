@@ -2,9 +2,9 @@
 // Created by janos on 05.03.20.
 //
 
-#include <connectedness_constraint.hpp>
-#include "../phasefield_initialization.hpp"
 #include <load_mesh_data.hpp>
+#include <connectedness_constraint.hpp>
+#include <phasefield_initialization.hpp>
 
 #include <Magnum/Primitives/Capsule.h>
 #include <Magnum/Primitives/Grid.h>
@@ -15,7 +15,6 @@
 #include <Magnum/Magnum.h>
 
 #include <Corrade/TestSuite/Tester.h>
-#include <Corrade/TestSuite/Compare/Numeric.h>
 
 using namespace Corrade;
 using namespace Magnum;
@@ -31,24 +30,9 @@ namespace {
         ConnectednessConstraint m_auto,m_ana;
         double m_r;
         
-        auto reformat(Trade::MeshData const& mesh){
-            auto varr = mesh.positions3DAsArray();
-            auto farr = mesh.indicesAsArray();
-
-            using MatrixXU = Eigen::Matrix<UnsignedInt, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
-            Eigen::MatrixXi F = Eigen::Map<const MatrixXU>(farr.data(), farr.size() / 3, 3).cast<int>();
-            Eigen::MatrixXd V(varr.size(), 3);
-            for (std::size_t i = 0; i < mesh.vertexCount(); ++i) {
-                V.row(i) = EigenIntegration::cast<Eigen::Vector3f>(varr[i]).cast<double>();
-            }
-            V *= 1. / V.maxCoeff();
-            return std::make_tuple(std::move(V), std::move(F));
-        }
-        
-        
         ConnectednessConstraintTest()
         {
-            std::tie(m_V, m_F) = reformat(Primitives::capsule3DSolid(20, 20, 20, 1.));
+            std::tie(m_V, m_F) = toEigen(Primitives::capsule3DSolid(20, 20, 20, 1.));
             m_U.resize(m_V.rows());
             initRandomNormal(m_U);
             m_U *= 100;
@@ -60,7 +44,7 @@ namespace {
         }
 
         void testMesh(Trade::MeshData const& mesh){
-            auto [V, F] = reformat(mesh);
+            auto [V, F] = toEigen(mesh);
 
             Eigen::VectorXd U(V.rows());
             initRandomNormal(U);
