@@ -77,7 +77,10 @@ Object* Scene::Impl::getObject(std::string_view name){
 }
 
 SceneGraphNode* Scene::Impl::addNode(std::string nodeName, std::string_view objectName, ShaderType shader){
-    auto& object = m_objects.find(objectName)->second;
+    auto it = m_objects.find(objectName);
+    if(it == m_objects.end())
+        return nullptr;
+    auto& object = it->second;
     auto node = new SceneGraphNode(&m_scene, &m_drawableGroup); //ownership is taking by parent node
     m_nodes.emplace(std::move(nodeName), node);
     node->setDrawCallback(object, m_shaders[shader].get(), shader);

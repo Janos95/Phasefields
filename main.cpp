@@ -18,6 +18,7 @@
 #include <Magnum/Primitives/Cube.h>
 #include <Magnum/Primitives/Capsule.h>
 #include <Magnum/Primitives/Grid.h>
+#include <Magnum/Primitives/Icosphere.h>
 #include <Magnum/Image.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/MeshTools/Interleave.h>
@@ -45,34 +46,10 @@ using namespace Corrade::Containers;
 
 using namespace std::chrono_literals;
 
-int main(int argc, char** argv) {
-    
-    ScopedTimer ti("total");
-
-    Utility::Configuration conf(CONF_PATH, Utility::Configuration::Flag::ReadOnly);
-
-    auto epsilon = conf.value<double>("epsilon");
-    auto a = conf.value<double>("a");
-    auto b = conf.value<double>("b");
-    auto wMM = conf.value<double>("modica_mortola_weight");
-    auto wArea = conf.value<double>("area_weight");
-    auto wConnectedness = conf.value<double>("connectedness_weight");
-    auto enforceConnectedness = conf.value<bool>("enforce_connectedness");
-    auto postConnect = conf.value<bool>("post_connect");
-    auto inputPath = conf.value<std::string>("input_path");
-    auto outputPath1 = conf.value<std::string>("output_path1");
-    auto outputPath2 = conf.value<std::string>("output_path2");
-
-    auto interfaceLoss = std::make_unique<ceres::TrivialLoss>();
-    auto potentialLoss = std::make_unique<ceres::TrivialLoss>();
-    auto areaLoss = std::make_unique<ceres::TrivialLoss>();
-    auto connectednessLoss1 = std::make_unique<ceres::TrivialLoss>();
-    auto connectednessLoss2 = std::make_unique<ceres::TrivialLoss>();
-
-    auto meshdata = loadMeshData(inputPath);
-
-
-    Viewer viewer(argc, argv);
+auto viewerTest(Trade::MeshData& meshdata)
+{
+    int argc = 0;
+    Viewer viewer(argc, nullptr);
     auto& scene = viewer.scene;
     //viewer.scene.addObject("mesh", meshdata);
     auto res = 4096;
@@ -90,12 +67,46 @@ int main(int argc, char** argv) {
         }
     }
 
+    auto plane = Primitives::grid3DSolid({1,1}, Primitives::GridFlag::GenerateTextureCoords | Primitives::GridFlag::GenerateNormals);
     auto cube = Primitives::cubeSolid();
-    auto* obj = scene.addObject("plane", upload(cube, tex));
-    auto* node = scene.addNode("plane_node", "plane", ShaderType::Flat);
+    auto ico = Primitives::icosphereSolid(1);
+    //scene.addObject("plane", upload(plane, tex));
+    scene.addObject("mesh", upload(meshdata, tex));
+    //scene.addNode("plane_node", "plane", ShaderType::FlatTextured);
+    scene.addNode("mesh", "mesh", ShaderType::Phong);
     viewer.exec();
 
-    return 1;
+    return 0;
+
+}
+
+int main(int argc, char** argv) {
+    
+    ScopedTimer ti("total");
+
+    Utility::Configuration conf(CONF_PATH, Utility::Configuration::Flag::ReadOnly);
+
+    auto epsilon = conf.value<double>("epsilon");
+    auto a = conf.value<double>("a");
+    auto b = conf.value<double>("b");
+    auto wMM = conf.value<double>("modica_mortola_weight");
+    auto wArea = conf.value<double>("area_weight");
+    auto wConnectedness = conf.value<double>("connectedness_weight");
+    auto enforceConnectedness = conf.value<bool>("enforce_connectedness");
+    auto postConnect = conf.value<bool>("post_connect");
+    auto iterations = conf.value<int>("iterations");
+    auto postConnectIterations = conf.value<int>("post_connect_iterations");
+    auto inputPath = conf.value<std::string>("input_path");
+    auto outputPath1 = conf.value<std::string>("output_path1");
+    auto outputPath2 = conf.value<std::string>("output_path2");
+
+    auto interfaceLoss = std::make_unique<ceres::TrivialLoss>();
+    auto potentialLoss = std::make_unique<ceres::TrivialLoss>();
+    auto areaLoss = std::make_unique<ceres::TrivialLoss>();
+    auto connectednessLoss1 = std::make_unique<ceres::TrivialLoss>();
+    auto connectednessLoss2 = std::make_unique<ceres::TrivialLoss>();
+
+    auto meshdata = loadMeshData(inputPath);
 
     auto[V, F] = toEigen(meshdata);
 
@@ -116,7 +127,7 @@ int main(int argc, char** argv) {
     // Run the solver!
     ceres::GradientProblemSolver::Options options;
     options.minimizer_progress_to_stdout = true;
-    options.max_num_iterations = 10000;
+    options.max_num_iterations = iterations;
     options.update_state_every_iteration = true;
     ceres::GradientProblemSolver::Summary summary;
 
@@ -130,6 +141,7 @@ int main(int argc, char** argv) {
     writeMesh(outputPath1, V, F, U, mapper);
 
     if(!enforceConnectedness && postConnect){
+        options.max_num_iterations = postConnectIterations;
         cost->push_back(std::make_unique<ConnectednessConstraint>(V, F, epsilon, a, b), std::move(connectednessLoss1), wConnectedness);
         cost->push_back(std::make_unique<ConnectednessConstraint>(V, F, epsilon, -b, -a), std::move(connectednessLoss2), wConnectedness);
     }

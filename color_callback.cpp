@@ -13,11 +13,12 @@
 
 #include <Corrade/Containers/Reference.h>
 #include <Corrade/Containers/StridedArrayView.h>
-
 #include <Corrade/Utility/Algorithms.h>
+#include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/ArrayView.h>
+
 #include <Magnum/MeshTools/Interleave.h>
 
-#include <mutex>
 #include <algorithm>
 
 using namespace Magnum;
@@ -39,7 +40,7 @@ ceres::CallbackReturnType ColorCallback::operator()(const ceres::IterationSummar
                 m_vertexData.begin() + 6 * sizeof(Float) /*start*/,
                 m_U->size() /*size */ ,
                 10 * sizeof(Float) /* stride */);
-        auto view = arrayCast<Color4>(erasedView);
+        auto view = Containers::arrayCast<Color4>(erasedView);
         std::transform(m_U->begin(), m_U->end(), view.begin(), JetColorMap{});
         m_current = false;
     }

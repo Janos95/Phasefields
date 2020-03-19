@@ -53,7 +53,7 @@ public:
     }
 
     bool isConnected() const {
-        return std::all_of(m_visited.begin(),m_visited.end(), std::identity{});
+        return std::all_of(m_visited.begin(),m_visited.end(), [](const auto& x){ return x; });
     }
 
     graph::ReversedShortestPath<BreadthFirstSearch> getShortestPathReversed(const int start, const int target) const {

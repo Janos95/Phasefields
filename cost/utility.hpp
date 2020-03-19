@@ -144,7 +144,7 @@ public:
     }
 
     bool foundAll() const {
-        return std::all_of(m_found.begin()+1, m_found.end(), std::identity{});
+        return std::all_of(m_found.begin()+1, m_found.end(), [](const auto& x){ return x; });
     }
 
     int target(int i) const{

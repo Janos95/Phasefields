@@ -6,6 +6,8 @@
 #pragma once
 
 #include <enoki/autodiff.h>
+
+#ifdef __cpp_concepts
 #include <concepts>
 
 namespace detail {
@@ -30,4 +32,26 @@ template<IsDiffArray T>
         return x;
     }
 }
+#else
+namespace detail
+{
+    template< class >
+    struct is_diff_array : std::false_type { };
+
+    template< class T >
+    struct is_diff_array<enoki::DiffArray<T>> : std::true_type { };
+
+    template< class T >
+    constexpr bool IsDiffArray = is_diff_array<T>::value;
+
+    template<class T>
+    auto detach(T x){
+        if constexpr(IsDiffArray<T>)
+            return enoki::detach(x);
+        else
+            return x;
+    }
+}
+#endif
+
 

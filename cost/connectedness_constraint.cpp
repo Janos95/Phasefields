@@ -27,8 +27,6 @@
 
 #include <ratio>
 #include <numeric>
-#include <execution>
-
 
 using namespace Corrade;
 
@@ -54,7 +52,19 @@ namespace {
             Edge(const int v1_, const int v2_) : v1(std::min(v1_, v2_)), v2(std::max(v1_, v2_)) {}
 
             int v1, v2;
+
+#ifdef __cpp_impl_three_way_comparison
             auto operator<=>(const Edge&) const = default;
+#else
+
+            bool operator<(const Edge& other) const{
+                return std::tie(v1, v2) < std::tie(other.v1, other.v2);
+            }
+
+            bool operator==(const Edge& other) const{
+                return std::tie(v1, v2) == std::tie(other.v1, other.v2);
+            }
+#endif
         };
 
         const Eigen::MatrixXd &m_V;
@@ -184,8 +194,8 @@ namespace {
                 components[i] = -1;
         }
 
-        std::sort(std::execution::par, roots.begin(), roots.end());
-        roots.erase(std::unique(std::execution::par, roots.begin(), roots.end()), roots.end());
+        std::sort(roots.begin(), roots.end());
+        roots.erase(std::unique(roots.begin(), roots.end()), roots.end());
 
         auto numComponents = roots.size();
         if (numComponents <= 1){

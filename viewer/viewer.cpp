@@ -9,6 +9,7 @@
 #include <Magnum/Math/Matrix4.h>
 #include <Magnum/GL/PixelFormat.h>
 #include <Magnum/Math/FunctionsBatch.h>
+#include <Magnum/ImGuiIntegration/Context.h>
 
 using namespace Corrade;
 using namespace Magnum;
@@ -21,8 +22,16 @@ Viewer::Viewer(int argc, char** argv):
             .setTitle("Viewer")
             .setWindowFlags(Configuration::WindowFlag::Resizable)}
 {
+    m_imgui = ImGuiIntegration::Context(Vector2{windowSize()}/dpiScaling(),
+                                       windowSize(), framebufferSize());
+
+
     GL::Renderer::enable(GL::Renderer::Feature::DepthTest);
     GL::Renderer::enable(GL::Renderer::Feature::FaceCulling);
+    GL::Renderer::setBlendEquation(GL::Renderer::BlendEquation::Add,
+                                   GL::Renderer::BlendEquation::Add);
+    GL::Renderer::setBlendFunction(GL::Renderer::BlendFunction::SourceAlpha,
+                                   GL::Renderer::BlendFunction::OneMinusSourceAlpha);
 
     /* Set up the camera */
     {
@@ -111,6 +120,25 @@ void Viewer::mouseScrollEvent(MouseScrollEvent& event) {
 
 void Viewer::drawEvent() {
     GL::defaultFramebuffer.clear(GL::FramebufferClear::Color|GL::FramebufferClear::Depth);
+
+    m_imgui.newFrame();
+
+    /* Enable text input, if needed */
+    //if(ImGui::GetIO().WantTextInput && !isTextInputActive())
+    //    startTextInput();
+    //else if(!ImGui::GetIO().WantTextInput && isTextInputActive())
+    //    stopTextInput();
+
+    //Float value;
+    ///* 1. Show a simple window.
+    //   Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets appear in
+    //   a window called "Debug" automatically */
+    //{
+    //    ImGui::Text("Hello, world!");
+    //    ImGui::SliderFloat("Float", &value, 0.0f, 1.0f);
+    //    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+    //                1000.0/Double(ImGui::GetIO().Framerate), Double(ImGui::GetIO().Framerate));
+    //}
 
     /* Call arcball update in every frame. This will do nothing if the camera
        has not been changed. Otherwise, camera transformation will be

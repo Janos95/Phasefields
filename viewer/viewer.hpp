@@ -12,6 +12,7 @@
 #include <Corrade/Containers/Optional.h>
 
 #include <Magnum/Platform/Sdl2Application.h>
+#include <Magnum/ImGuiIntegration/Context.h>
 
 #include <folly/Function.h>
 
@@ -33,4 +34,5 @@ private:
     void mouseScrollEvent(MouseScrollEvent& event) override;
 
     Corrade::Containers::Optional<ArcBallCamera> m_camera;
+    ImGuiIntegration::Context m_imgui{NoCreate};
 };

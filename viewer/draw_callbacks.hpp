@@ -52,7 +52,13 @@ class PhongCallback
 {
 public:
 
-    explicit PhongCallback(Object& obj, Magnum::Shaders::Phong& shader): m_mesh(obj.mesh), m_shader(shader){}
+    explicit PhongCallback(Object& obj, Magnum::Shaders::Phong& shader):
+        m_mesh(obj.mesh),
+        m_shader(shader),
+        m_diffuseTexture(obj.textureDiffuse.get()),
+        m_specularTexture(obj.textureSpecular.get())
+        {
+        }
 
     void operator()(const Magnum::Matrix4& transformationMatrix, Magnum::SceneGraph::Camera3D& camera){
         m_shader.bindTextures(nullptr, m_diffuseTexture, m_specularTexture, nullptr)

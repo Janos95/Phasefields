@@ -2,61 +2,42 @@
 <project version="4">
   <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
     <generated>
-      <config projectName="phasefields" targetName="modica_mortola_gradient_test" />
-      <config projectName="phasefields" targetName="connectedness_constraint_test" />
-      <config projectName="phasefields" targetName="scoped_timer" />
-      <config projectName="phasefields" targetName="dijkstra_test" />
       <config projectName="phasefields" targetName="segmentation" />
-      <config projectName="phasefields" targetName="cost" />
+      <config projectName="phasefields" targetName="dijkstra_test" />
+      <config projectName="phasefields" targetName="connectedness_constraint_test" />
       <config projectName="phasefields" targetName="io" />
-      <config projectName="phasefields" targetName="fw_test" />
+      <config projectName="phasefields" targetName="scoped_timer" />
+      <config projectName="phasefields" targetName="modica_mortola_gradient_test" />
       <config projectName="phasefields" targetName="viewer" />
+      <config projectName="phasefields" targetName="cost" />
+      <config projectName="phasefields" targetName="fw_test" />
     </generated>
   </component>
   <component name="CMakeSettings">
     <configurations>
-      <configuration PROFILE_NAME="Debug-clang-head" CONFIG_NAME="Debug" TOOLCHAIN_NAME="clang-head" GENERATION_OPTIONS="-DIMGUI_DIR=~/libraries/imgui -DTBB_DIR=~/libraries/prefix/tbb/cmake" />
+      <configuration PROFILE_NAME="Release-system" CONFIG_NAME="Release" TOOLCHAIN_NAME="system" GENERATION_OPTIONS="-DIMGUI_DIR=~/libraries/imgui -DTBB_DIR=~/libraries/prefix/tbb/cmake" />
     </configurations>
   </component>
   <component name="ChangeListManager">
     <list default="true" id="11b62d60-32b8-46a0-9c5e-70e1f1122bcc" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/conanfile.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/cost/phasefield_initialization.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/viewer/draw_callbacks.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/viewer/upload.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/viewer/upload.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.kdev4/phasefields.kdev4" beforeDir="false" afterPath="$PROJECT_DIR$/.kdev4/phasefields.kdev4" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/color_callback.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/color_callback.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/colormaps.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/colormaps.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/colormaps.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/colormaps.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cost/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/cost/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/ceres_cost.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/ceres_cost.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/ceres_cost.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/ceres_cost.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/bfs.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/bfs.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cost/connectedness_constraint.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/connectedness_constraint.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/dijkstra.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/dijkstra.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/detach.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/detach.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cost/graph_common.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/graph_common.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/io/load_mesh_data.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/io/load_mesh_data.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/io/load_mesh_data.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/io/load_mesh_data.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/io/write_mesh.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/io/write_mesh.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/io/write_mesh.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/io/write_mesh.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/utility.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/utility.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/main.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/phasefield_initialization.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/phasefield_initialization.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/phasefields.conf" beforeDir="false" afterPath="$PROJECT_DIR$/phasefields.conf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scoped_timer/include/scoped_timer/scoped_timer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/scoped_timer/include/scoped_timer/scoped_timer.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/connectedness_constraint_test.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/connectedness_constraint_test.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/modica_mortola_gradient_test.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/modica_mortola_gradient_test.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/viewer/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/default_callback.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/draw_callbacks.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/default_callback.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/object.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/object.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/draw_callbacks.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/draw_callbacks.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/draw_callbacks.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/draw_callbacks.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/viewer/scene.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/scene.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/scene.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/scene.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/scene_graph_node.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/scene_graph_node.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/scene_graph_node.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/scene_graph_node.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/upload.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/upload.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/viewer/viewer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/viewer.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/viewer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/viewer.hpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -66,7 +47,7 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug-clang-head" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Release-system" />
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
@@ -76,9 +57,6 @@
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
-  </component>
-  <component name="OCResolveContextSettings">
-    <option name="configuration" value="0-Debug-viewer" />
   </component>
   <component name="ProjectId" id="1WoAgBiEHSg9JxqmE1NEirVYu68" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -90,7 +68,7 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="cf.first.check.clang-format" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/CMakeLists.txt" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../libraries/magnum-examples/CMakeLists.txt" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.detected.package.tslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
@@ -116,47 +94,47 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="connectedness_constraint_test" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="connectedness_constraint_test" CONFIG_NAME="Debug-clang-head" RUN_TARGET_PROJECT_NAME="phasefields" RUN_TARGET_NAME="connectedness_constraint_test">
+    <configuration name="connectedness_constraint_test" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="connectedness_constraint_test" CONFIG_NAME="Release-system" RUN_TARGET_PROJECT_NAME="phasefields" RUN_TARGET_NAME="connectedness_constraint_test">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="cost" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="cost" CONFIG_NAME="Debug-clang-head">
+    <configuration name="cost" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="cost" CONFIG_NAME="Release-system">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="dijkstra_test" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="dijkstra_test" CONFIG_NAME="Debug-clang-head" RUN_TARGET_PROJECT_NAME="phasefields" RUN_TARGET_NAME="dijkstra_test">
+    <configuration name="dijkstra_test" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="dijkstra_test" CONFIG_NAME="Release-system" RUN_TARGET_PROJECT_NAME="phasefields" RUN_TARGET_NAME="dijkstra_test">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="fw_test" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="fw_test" CONFIG_NAME="Debug-clang-head" RUN_TARGET_PROJECT_NAME="phasefields" RUN_TARGET_NAME="fw_test">
+    <configuration name="fw_test" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="fw_test" CONFIG_NAME="Release-system" RUN_TARGET_PROJECT_NAME="phasefields" RUN_TARGET_NAME="fw_test">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="io" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="io" CONFIG_NAME="Debug-clang-head">
+    <configuration name="io" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="io" CONFIG_NAME="Release-system">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="modica_mortola_gradient_test" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="modica_mortola_gradient_test" CONFIG_NAME="Debug-clang-head" RUN_TARGET_PROJECT_NAME="phasefields" RUN_TARGET_NAME="modica_mortola_gradient_test">
+    <configuration name="modica_mortola_gradient_test" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="modica_mortola_gradient_test" CONFIG_NAME="Release-system" RUN_TARGET_PROJECT_NAME="phasefields" RUN_TARGET_NAME="modica_mortola_gradient_test">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="scoped_timer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="scoped_timer" CONFIG_NAME="Debug-clang-head">
+    <configuration name="scoped_timer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="scoped_timer" CONFIG_NAME="Release-system">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="segmentation" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="segmentation" CONFIG_NAME="Debug-clang-head" RUN_TARGET_PROJECT_NAME="phasefields" RUN_TARGET_NAME="segmentation">
+    <configuration name="segmentation" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="segmentation" CONFIG_NAME="Release-system" RUN_TARGET_PROJECT_NAME="phasefields" RUN_TARGET_NAME="segmentation">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="viewer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="viewer" CONFIG_NAME="Debug-clang-head">
+    <configuration name="viewer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="viewer" CONFIG_NAME="Release-system">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -243,6 +221,10 @@
       <workItem from="1584311352258" duration="3428000" />
       <workItem from="1584318850723" duration="2424000" />
       <workItem from="1584361051089" duration="1657000" />
+      <workItem from="1584451559087" duration="6854000" />
+      <workItem from="1584543951772" duration="715000" />
+      <workItem from="1584627569849" duration="601000" />
+      <workItem from="1584631105650" duration="4856000" />
     </task>
     <servers />
   </component>
@@ -279,50 +261,50 @@
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="429" height="486" key="DebuggerActiveHint/0.0.2560.1080@0.0.2560.1080" timestamp="1583782207147" />
-    <state x="1063" y="216" width="424" height="472" key="FileChooserDialogImpl" timestamp="1583256526518">
+    <state x="1063" y="162" width="424" height="472" key="FileChooserDialogImpl" timestamp="1584459194901">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="1063" y="216" width="424" height="472" key="FileChooserDialogImpl/0.0.2560.1080@0.0.2560.1080" timestamp="1583256526518" />
-    <state width="1228" height="272" key="GridCell.Tab.0.bottom" timestamp="1584362700793">
+    <state x="1063" y="162" width="424" height="472" key="FileChooserDialogImpl/0.0.2560.1080@0.0.2560.1080" timestamp="1584459194901" />
+    <state width="1228" height="147" key="GridCell.Tab.0.bottom" timestamp="1584634817580">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.0.bottom/0.0.1600.900@0.0.1600.900" timestamp="1583084150064" />
-    <state width="1228" height="272" key="GridCell.Tab.0.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1584362700793" />
-    <state width="1228" height="272" key="GridCell.Tab.0.center" timestamp="1584362700793">
+    <state width="1228" height="147" key="GridCell.Tab.0.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1584634817580" />
+    <state width="1228" height="147" key="GridCell.Tab.0.center" timestamp="1584634817579">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.0.center/0.0.1600.900@0.0.1600.900" timestamp="1583084150063" />
-    <state width="1228" height="272" key="GridCell.Tab.0.center/0.0.2560.1080@0.0.2560.1080" timestamp="1584362700793" />
-    <state width="1228" height="272" key="GridCell.Tab.0.left" timestamp="1584362700793">
+    <state width="1228" height="147" key="GridCell.Tab.0.center/0.0.2560.1080@0.0.2560.1080" timestamp="1584634817579" />
+    <state width="1228" height="147" key="GridCell.Tab.0.left" timestamp="1584634817579">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.0.left/0.0.1600.900@0.0.1600.900" timestamp="1583084150063" />
-    <state width="1228" height="272" key="GridCell.Tab.0.left/0.0.2560.1080@0.0.2560.1080" timestamp="1584362700793" />
-    <state width="1228" height="272" key="GridCell.Tab.0.right" timestamp="1584362700793">
+    <state width="1228" height="147" key="GridCell.Tab.0.left/0.0.2560.1080@0.0.2560.1080" timestamp="1584634817579" />
+    <state width="1228" height="147" key="GridCell.Tab.0.right" timestamp="1584634817579">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.0.right/0.0.1600.900@0.0.1600.900" timestamp="1583084150064" />
-    <state width="1228" height="272" key="GridCell.Tab.0.right/0.0.2560.1080@0.0.2560.1080" timestamp="1584362700793" />
-    <state width="1228" height="272" key="GridCell.Tab.1.bottom" timestamp="1584362700794">
+    <state width="1228" height="147" key="GridCell.Tab.0.right/0.0.2560.1080@0.0.2560.1080" timestamp="1584634817579" />
+    <state width="2508" height="176" key="GridCell.Tab.1.bottom" timestamp="1584454797507">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.1.bottom/0.0.1600.900@0.0.1600.900" timestamp="1583084159011" />
-    <state width="1228" height="272" key="GridCell.Tab.1.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1584362700794" />
-    <state width="1228" height="272" key="GridCell.Tab.1.center" timestamp="1584362700794">
+    <state width="2508" height="176" key="GridCell.Tab.1.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1584454797507" />
+    <state width="2508" height="176" key="GridCell.Tab.1.center" timestamp="1584454797506">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.1.center/0.0.1600.900@0.0.1600.900" timestamp="1583084159010" />
-    <state width="1228" height="272" key="GridCell.Tab.1.center/0.0.2560.1080@0.0.2560.1080" timestamp="1584362700794" />
-    <state width="1228" height="272" key="GridCell.Tab.1.left" timestamp="1584362700793">
+    <state width="2508" height="176" key="GridCell.Tab.1.center/0.0.2560.1080@0.0.2560.1080" timestamp="1584454797506" />
+    <state width="2508" height="176" key="GridCell.Tab.1.left" timestamp="1584454797506">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.1.left/0.0.1600.900@0.0.1600.900" timestamp="1583084159010" />
-    <state width="1228" height="272" key="GridCell.Tab.1.left/0.0.2560.1080@0.0.2560.1080" timestamp="1584362700793" />
-    <state width="1228" height="272" key="GridCell.Tab.1.right" timestamp="1584362700794">
+    <state width="2508" height="176" key="GridCell.Tab.1.left/0.0.2560.1080@0.0.2560.1080" timestamp="1584454797506" />
+    <state width="2508" height="176" key="GridCell.Tab.1.right" timestamp="1584454797507">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.1.right/0.0.1600.900@0.0.1600.900" timestamp="1583084159010" />
-    <state width="1228" height="272" key="GridCell.Tab.1.right/0.0.2560.1080@0.0.2560.1080" timestamp="1584362700794" />
+    <state width="2508" height="176" key="GridCell.Tab.1.right/0.0.2560.1080@0.0.2560.1080" timestamp="1584454797507" />
     <state width="2508" height="277" key="GridCell.Tab.2.bottom" timestamp="1582978449601">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
@@ -343,16 +325,16 @@
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="863" y="240" width="824" height="497" key="IDE.errors.dialog/0.0.2560.1080@0.0.2560.1080" timestamp="1584140652836" />
-    <state x="340" y="25" width="1731" height="730" key="SettingsEditor" timestamp="1584318635992">
+    <state x="341" y="252" width="1731" height="730" key="SettingsEditor" timestamp="1584634429707">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="283" y="40" key="SettingsEditor/0.0.1600.900@0.0.1600.900" timestamp="1583072829889" />
-    <state x="340" y="25" width="1731" height="730" key="SettingsEditor/0.0.2560.1080@0.0.2560.1080" timestamp="1584318635992" />
-    <state x="1066" y="-130" width="422" height="521" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1584318120320">
+    <state x="341" y="252" width="1731" height="730" key="SettingsEditor/0.0.2560.1080@0.0.2560.1080" timestamp="1584634429707" />
+    <state x="1066" y="-256" width="422" height="521" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1584632790971">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="656" y="87" width="422" height="521" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.1600.900@0.0.1600.900" timestamp="1582548138283" />
-    <state x="1066" y="-130" width="418" height="625" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.2560.1080@0.0.2560.1080" timestamp="1584318120320" />
+    <state x="1066" y="-256" width="418" height="625" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.2560.1080@0.0.2560.1080" timestamp="1584632790971" />
     <state x="575" y="361" width="439" height="150" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1582537820504">
       <screen x="0" y="0" width="1600" height="900" />
     </state>
@@ -365,11 +347,11 @@
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="600" height="428" key="javadoc.popup/0.0.2560.1080@0.0.2560.1080" timestamp="1583955150393" />
-    <state x="741" y="248" width="1076" height="814" key="search.everywhere.popup" timestamp="1583335693791">
+    <state x="741" y="248" width="1076" height="814" key="search.everywhere.popup" timestamp="1584641716121">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="463" y="207" width="672" height="678" key="search.everywhere.popup/0.0.1600.900@0.0.1600.900" timestamp="1582484707865" />
-    <state x="741" y="248" width="1076" height="814" key="search.everywhere.popup/0.0.2560.1080@0.0.2560.1080" timestamp="1583335693791" />
+    <state x="741" y="248" width="1076" height="814" key="search.everywhere.popup/0.0.2560.1080@0.0.2560.1080" timestamp="1584641716121" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -393,16 +375,6 @@
           <url>file://$PROJECT_DIR$/cost/ceres_cost.cpp</url>
           <line>122</line>
           <option name="timeStamp" value="90" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/viewer/draw_callbacks.hpp</url>
-          <line>57</line>
-          <option name="timeStamp" value="91" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/viewer/scene.cpp</url>
-          <line>79</line>
-          <option name="timeStamp" value="92" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

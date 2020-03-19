@@ -15,7 +15,8 @@ FlatCallback::FlatCallback(Object& object, Shaders::Flat3D& shader) :
         m_color(object.color),
         m_shader(shader)
 {
-    if(object.textureDiffuse){
+    if(m_shader.flags() & Shaders::Flat3D::Flag::Textured){
+        CORRADE_INTERNAL_ASSERT(object.textureDiffuse);
         m_texture = object.textureDiffuse.get();
     }
 }
@@ -23,7 +24,7 @@ FlatCallback::FlatCallback(Object& object, Shaders::Flat3D& shader) :
 void FlatCallback::operator()(const Matrix4& transformationMatrix, SceneGraph::Camera3D& camera){
     m_shader.setTransformationProjectionMatrix(camera.projectionMatrix() * transformationMatrix);
 
-    if (m_texture) {
+    if (m_shader.flags() & Shaders::Flat3D::Flag::Textured) {
         m_shader.bindTexture(*m_texture);
     }
     else{

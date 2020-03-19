@@ -28,7 +28,7 @@ target_link_libraries(viewer
             Magnum::Application
             Magnum::Shaders
         PRIVATE
-            Boost::Boost
+            MagnumIntegration::ImGui
         )
 
 
