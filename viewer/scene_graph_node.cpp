@@ -25,7 +25,7 @@ void SceneGraphNode::setDrawCallback(::Object& obj, GL::AbstractShaderProgram* s
 {
     switch(type){
         case ShaderType::MeshVisualizer :
-            callback = MeshVisualizerCallback(obj, *dynamic_cast<Shaders::MeshVisualizer*>(shader));
+            callback = MeshVisualizerCallback(obj, *dynamic_cast<Shaders::MeshVisualizer3D*>(shader));
             break;
         case ShaderType::Flat :
         case ShaderType::FlatTextured :

@@ -114,15 +114,15 @@ SceneGraph::DrawableGroup3D& Scene::Impl::drawables(){
 }
 
 void Scene::Impl::setViewportSize(const Vector2i& size){
-    dynamic_cast<Shaders::MeshVisualizer*>(m_shaders[ShaderType::MeshVisualizer].get())->setViewportSize(Vector2(size));
+    dynamic_cast<Shaders::MeshVisualizer3D*>(m_shaders[ShaderType::MeshVisualizer].get())->setViewportSize(Vector2(size));
 }
 
 Scene::Impl::Impl() {
     m_shaders.try_emplace(ShaderType::Flat, new Shaders::Flat3D{});
     m_shaders.try_emplace(ShaderType::FlatTextured, new Shaders::Flat3D{Shaders::Flat3D::Flag::Textured});
     m_shaders.try_emplace(ShaderType::VertexColor, new Shaders::VertexColor3D{});
-    m_shaders.try_emplace(ShaderType::MeshVisualizer, new Shaders::MeshVisualizer{Shaders::MeshVisualizer::Flag::Wireframe});
-    m_shaders.try_emplace(ShaderType::Phong, new Shaders::Phong{Shaders::Phong::Flag::DiffuseTexture});
+    m_shaders.try_emplace(ShaderType::MeshVisualizer, new Shaders::MeshVisualizer3D{Shaders::MeshVisualizer3D::Flag::Wireframe | Shaders::MeshVisualizer3D::Flag::NormalDirection});
+    m_shaders.try_emplace(ShaderType::Phong, new Shaders::Phong{Shaders::Phong::Flag::VertexColor});
 }
 
 Scene::Scene(): m_impl(std::make_unique<Impl>())

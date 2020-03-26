@@ -17,4 +17,6 @@ enum class CompileFlag: Magnum::UnsignedShort {
 
 using CompileFlags = Corrade::Containers::EnumSet<CompileFlag>;
 
-Object upload(Magnum::Trade::MeshData& meshData, Magnum::ImageView2D image, CompileFlag flags = {});
+CORRADE_ENUMSET_OPERATORS(CompileFlags)
+
+Object upload(Magnum::Trade::MeshData&& meshData, CompileFlag flags = {});

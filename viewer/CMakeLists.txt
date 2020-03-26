@@ -1,6 +1,8 @@
 
 
-add_library(viewer
+corrade_add_resource(viewer_RESOURCES resources.conf)
+
+add_library(viewer SHARED
         viewer.cpp
         viewer.hpp
         scene_graph_node.cpp
@@ -15,7 +17,8 @@ add_library(viewer
         upload.cpp
         upload.hpp
         draw_callbacks.cpp
-        draw_callbacks.hpp)
+        draw_callbacks.hpp
+        ${viewer_RESOURCES})
 
 target_include_directories(viewer PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(viewer
@@ -27,9 +30,7 @@ target_link_libraries(viewer
             Magnum::SceneGraph
             Magnum::Application
             Magnum::Shaders
-        PRIVATE
             MagnumIntegration::ImGui
         )
-
 
 add_library(phasefields::viewer ALIAS viewer)

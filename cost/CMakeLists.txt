@@ -13,6 +13,7 @@ target_include_directories(cost PUBLIC
 target_link_libraries(cost PUBLIC ceres)
 target_link_libraries(cost PRIVATE igl::core Folly::folly autodiff phasefields::scoped_timer)
 if(OpenMP_CXX_FOUND)
+    message(WARNING "not using parallel connectedness constraint")
     target_link_libraries(cost PRIVATE OpenMP::OpenMP_CXX)
 endif()
 add_library(phasefields::cost ALIAS cost)

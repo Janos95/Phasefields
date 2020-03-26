@@ -22,6 +22,9 @@
 #include <folly/small_vector.h>
 #include <fmt/core.h>
 
+#include <tbb/combinable.h>
+#include <tbb/parallel_for.h>
+
 #include <Corrade/Utility/Debug.h>
 #include <Corrade/TestSuite/Compare/Numeric.h>
 
@@ -140,6 +143,9 @@ namespace {
     bool Impl<Scalar>::Evaluate(double const *params,
                                 double *cost,
                                 double *jacobian) const {
+        using VectorT = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
+        using MatrixT = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
+
         ScopedTimer t("Connectedness", true);
 
         F weight(m_a, m_b);
@@ -150,7 +156,7 @@ namespace {
         int numFaces = m_F.rows();
         int numVertices = m_V.rows();
 
-        Eigen::Matrix<Scalar, Eigen::Dynamic, 1> U(numVertices);
+        VectorT U(numVertices);
         std::copy_n(params, numVertices, U.begin());
 
         if constexpr(detail::IsDiffArray<Scalar>) {
@@ -224,7 +230,7 @@ namespace {
         std::vector dijkstras(numComponents - 1, Dijkstra(m_adjacencyList));
         std::vector stops(numComponents - 1, StoppingCriteria{});
         {
-            ScopedTimer t("dijkstra", false);
+            ScopedTimer t("dijkstra", true);
 //#pragma omp parallel for schedule(dynamic)
             for (std::size_t i = 0; i < numComponents - 1; ++i) {
                 StoppingCriteria stop(roots[i], numComponents, components);
@@ -235,51 +241,64 @@ namespace {
         }
 
         Scalar d = 0;
+        MatrixT D;
+        if constexpr(!detail::IsDiffArray<Scalar>)
+            D = MatrixT(numComponents, numComponents);
         Eigen::VectorXd gradient = Eigen::VectorXd::Zero(numVertices);
 
-#pragma omp parallel for if(std::is_same_v<Scalar, double>) schedule(dynamic) reduction(+:gradient, d)
-        for (std::size_t i = 0; i < numComponents; ++i) {
-            for (std::size_t j = i + 1; j < numComponents; ++j) {
+        {
+            ScopedTimer tDiff("connectedness diff", true);
 
-                Scalar dij = 0;
-                auto Wij = W[i] * W[j];
+#pragma omp parallel for if(!detail::IsDiffArray<Scalar>) schedule(dynamic) reduction(+:gradient, d)
+            for (std::size_t i = 0; i < numComponents; ++i) {
+                for (std::size_t j = i + 1; j < numComponents; ++j) {
 
-                for (auto&&[a, b]: dijkstras[i].getShortestPathReversed(roots[i], stops[i].target(j))) {
+                    Scalar dij = 0;
+                    auto Wij = W[i] * W[j];
 
-                    auto &av = m_adjacencyList[a];
-                    auto it = std::find_if(av.begin(), av.end(), [b = b](const auto &n) { return b == n.vertex; });
-                    dij += it->weight;
+                    for (auto&&[a, b]: dijkstras[i].getShortestPathReversed(roots[i], stops[i].target(j))) {
 
+                        auto &av = m_adjacencyList[a];
+                        auto it = std::find_if(av.begin(), av.end(), [b = b](const auto &n) { return b == n.vertex; });
+                        dij += it->weight;
+
+                        if (jacobian && !detail::IsDiffArray<Scalar>) {
+                            auto lineElement = .5 * (m_diams[a] + m_diams[b]);
+                            const double fgrada = weightGrad(detail::detach(uT[a]));
+                            const double fgradb = weightGrad(detail::detach(uT[b]));
+                            auto weightedFGrad = detail::detach(Wij) * lineElement * .5 * (1. / 3.);
+                            for (auto v : m_F.row(a))
+                                gradient[v] += weightedFGrad * fgrada;
+                            for (auto v : m_F.row(b))
+                                gradient[v] += weightedFGrad * fgradb;
+                        }
+                    }
+
+                    d += dij * Wij;
                     if (jacobian && !detail::IsDiffArray<Scalar>) {
-                        auto lineElement = .5 * (m_diams[a] + m_diams[b]);
-                        const double fgrada = weightGrad(detail::detach(uT[a]));
-                        const double fgradb = weightGrad(detail::detach(uT[b]));
-                        auto weightedFGrad = detail::detach(Wij) * lineElement * .5 * (1. / 3.);
-                        for (auto v : m_F.row(a))
-                            gradient[v] += weightedFGrad * fgrada;
-                        for (auto v : m_F.row(b))
-                            gradient[v] += weightedFGrad * fgradb;
+                        D(i, j) = dij;
+                        D(j, i) = dij;
                     }
                 }
+            }
 
-                d += dij * Wij;
-
-                if (jacobian && !detail::IsDiffArray<Scalar>) {
+            if constexpr (!detail::IsDiffArray<Scalar>) {
+                if (jacobian) {
                     for (int k = 0; k < numFaces; ++k) {
-                        double weightedGrad = detail::detach(dij);
-                        if (components[k] == static_cast<int>(i))
-                            weightedGrad *= detail::detach(W[j]);
-                        else if (components[k] == static_cast<int>(j))
-                            weightedGrad *= detail::detach(W[i]);
-                        else
+                        if (components[k] < 0) //not in interface
                             continue;
-                        auto wgrad = bumpGrad(detail::detach(uT[k]));
+                        auto wgrad = bumpGrad(uT[k]);
                         if (std::abs(wgrad) < std::numeric_limits<double>::epsilon())
                             continue;
-                        weightedGrad *= wgrad * m_areas[k] / 3.;
-                        //each incident vertex has the same influence
-                        for (auto v : m_F.row(k)) {
-                            gradient[v] += weightedGrad;
+                        std::size_t i = components[k];
+                        for (std::size_t j = 0; j < numComponents; ++j) {
+                            if (i == j)
+                                continue;
+                            double weightedGrad = D(i, j) * W[j] * wgrad * m_areas[k] / 3.;
+                            //each incident vertex has the same influence
+                            for (auto v : m_F.row(k)) {
+                                gradient[v] += weightedGrad;
+                            }
                         }
                     }
                 }

@@ -61,8 +61,7 @@ public:
         }
 
     void operator()(const Magnum::Matrix4& transformationMatrix, Magnum::SceneGraph::Camera3D& camera){
-        m_shader.bindTextures(nullptr, m_diffuseTexture, m_specularTexture, nullptr)
-                .setLightPosition({5.0f, 5.0f, 7.0f})
+        m_shader.setLightPosition({5.0f, 5.0f, 7.0f})
                 .setTransformationMatrix(transformationMatrix)
                 .setNormalMatrix(transformationMatrix.normalMatrix())
                 .setProjectionMatrix(camera.projectionMatrix())
@@ -71,21 +70,22 @@ public:
 
 private:
 
-    Magnum::GL::Texture2D *m_diffuseTexture, *m_specularTexture;
     Magnum::GL::Mesh& m_mesh;
     Magnum::Shaders::Phong& m_shader;
+    Magnum::GL::Texture2D *m_diffuseTexture, *m_specularTexture;
 };
 
 class MeshVisualizerCallback
 {
 public:
 
-    explicit MeshVisualizerCallback(Object& obj, Magnum::Shaders::MeshVisualizer& shader): m_mesh(obj.mesh), m_shader(shader){}
+    explicit MeshVisualizerCallback(Object& obj, Magnum::Shaders::MeshVisualizer3D& shader): m_mesh(obj.mesh), m_shader(shader){}
 
     void operator()(const Magnum::Matrix4& transformationMatrix, Magnum::SceneGraph::Camera3D& camera){
         m_shader.setColor(m_colorMesh)
                 .setWireframeColor(m_colorWireframe)
-                .setTransformationProjectionMatrix(camera.projectionMatrix()*transformationMatrix)
+                .setTransformationMatrix(transformationMatrix)
+                .setProjectionMatrix(camera.projectionMatrix())
                 .draw(m_mesh);
     }
 
@@ -94,5 +94,5 @@ private:
     Magnum::GL::Mesh& m_mesh;
     Magnum::Color4 m_colorMesh = Magnum::Color4::blue();
     Magnum::Color4 m_colorWireframe = Magnum::Color4::red();
-    Magnum::Shaders::MeshVisualizer& m_shader;
+    Magnum::Shaders::MeshVisualizer3D& m_shader;
 };

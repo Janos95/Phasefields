@@ -3,7 +3,6 @@ project(phasefields)
 
 set(CMAKE_CXX_STANDARD 17)
 
-
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/modules)
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/conan_modules)
 
@@ -22,9 +21,10 @@ find_package(Boost CONFIG REQUIRED)
 find_package(ParallelSTL CONFIG REQUIRED)
 #find_package(Enoki CONFIG REQUIRED)
 
-set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
+#set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 #list(APPEND CMAKE_CXX_FLAGS "-fsanitize=address -fsanitize=undefined")
+list(APPEND CMAKE_CXX_FLAGS "-ffast-math")
 
 add_subdirectory(scoped_timer)
 add_subdirectory(viewer)

@@ -18,7 +18,7 @@
 
 using namespace Corrade;
 using namespace Magnum;
-
+#include <iostream>
 namespace {
 
 

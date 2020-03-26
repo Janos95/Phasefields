@@ -23,10 +23,12 @@
 #include <Magnum/PixelFormat.h>
 #include <Magnum/MeshTools/Interleave.h>
 #include <Magnum/MeshTools/Transform.h>
+#include <Magnum/MeshTools/Duplicate.h>
 #include <Magnum/GL/TextureFormat.h>
 #include <Magnum/ImageView.h>
 
 #include <Corrade/Utility/Configuration.h>
+#include <Corrade/Utility/Algorithms.h>
 
 #include <ceres/problem.h>
 #include <ceres/solver.h>
@@ -36,6 +38,7 @@
 
 #include <fmt/core.h>
 
+#include <random>
 #include <thread>
 #include <algorithm>
 #include <iostream>
@@ -46,39 +49,40 @@ using namespace Corrade::Containers;
 
 using namespace std::chrono_literals;
 
-auto viewerTest(Trade::MeshData& meshdata)
+
+class PhasefieldHandle : public ceres::IterationCallback
 {
-    int argc = 0;
-    Viewer viewer(argc, nullptr);
-    auto& scene = viewer.scene;
-    //viewer.scene.addObject("mesh", meshdata);
-    auto res = 4096;
-    Containers::Array<char> data(NoInit, res * res * 4);
-    Image2D tex(PixelFormat::RGBA8Unorm, {res,res}, std::move(data));
-    auto view = tex.pixels<Color4ub>();
-    for (int x = 0; x < res; ++x) {
-        for (int y = 0; y < res; ++y) {
-            auto a = x / 256;
-            auto b = y / 256;
-            if((a+b)%2)
-                view[y][x] = Color3ub(0,0,0);
-            else
-                view[y][x] = Color3ub(255, 255, 255);
-        }
+public:
+    explicit PhasefieldHandle(const Eigen::VectorXd& U): m_U(U)
+    {
     }
 
-    auto plane = Primitives::grid3DSolid({1,1}, Primitives::GridFlag::GenerateTextureCoords | Primitives::GridFlag::GenerateNormals);
-    auto cube = Primitives::cubeSolid();
-    auto ico = Primitives::icosphereSolid(1);
-    //scene.addObject("plane", upload(plane, tex));
-    scene.addObject("mesh", upload(meshdata, tex));
-    //scene.addNode("plane_node", "plane", ShaderType::FlatTextured);
-    scene.addNode("mesh", "mesh", ShaderType::Phong);
-    viewer.exec();
+    ceres::CallbackReturnType operator()(const ceres::IterationSummary&) override
+    {
+        std::lock_guard l(m_mutex);
+        m_UCopy = m_U;
+        current = true;
+        return ceres::CallbackReturnType::SOLVER_CONTINUE;
+    }
 
-    return 0;
+    bool updateIfCurrent(Eigen::VectorXd& U) {
+        std::lock_guard l(m_mutex);
+        if(current){
+            U = m_UCopy;
+            current = false;
+            return true;
+        }
+        return false;
+    }
 
-}
+private:
+
+    bool current = false;
+    Corrade::Containers::Reference<const Eigen::VectorXd> m_U;
+    Eigen::VectorXd m_UCopy;
+
+    mutable std::mutex m_mutex;
+};
 
 int main(int argc, char** argv) {
     
@@ -108,7 +112,7 @@ int main(int argc, char** argv) {
 
     auto meshdata = loadMeshData(inputPath);
 
-    auto[V, F] = toEigen(meshdata);
+    auto [V, F] = toEigen(meshdata);
 
     fmt::print("Solving Problem with {} vertices\n", V.rows());
 
@@ -124,38 +128,78 @@ int main(int argc, char** argv) {
         cost->push_back(std::make_unique<ConnectednessConstraint>(V, F, epsilon, -b, -a), std::move(connectednessLoss2), wConnectedness);
     }
 
+    PhasefieldHandle phasefieldHandle(U);
+
     // Run the solver!
     ceres::GradientProblemSolver::Options options;
     options.minimizer_progress_to_stdout = true;
     options.max_num_iterations = iterations;
     options.update_state_every_iteration = true;
+    options.callbacks.push_back(&phasefieldHandle);
     ceres::GradientProblemSolver::Summary summary;
+    std::thread t([&] {
+                      ceres::GradientProblem problem(cost);
+                      ceres::Solve(options, problem, U.data(), &summary);
+                  });
 
-    ceres::GradientProblem problem(cost);
-    ceres::Solve(options, problem, U.data(), &summary);
-    std::cout << summary.BriefReport() << std::endl;
-    double max = U.maxCoeff();
-    double min = U.minCoeff();
-    fmt::print("(min,max): ({},{})\n", min, max);
-    SegmentationColorMap mapper{{{-1.05,-0.05, Color4::red()},{0.05, 1.05, Color4::blue()}}};
-    writeMesh(outputPath1, V, F, U, mapper);
+    Viewer viewer(argc, argv);
+    Scene scene;
+    viewer.setScene(scene);
 
-    if(!enforceConnectedness && postConnect){
-        options.max_num_iterations = postConnectIterations;
-        cost->push_back(std::make_unique<ConnectednessConstraint>(V, F, epsilon, a, b), std::move(connectednessLoss1), wConnectedness);
-        cost->push_back(std::make_unique<ConnectednessConstraint>(V, F, epsilon, -b, -a), std::move(connectednessLoss2), wConnectedness);
-    }
+    auto* object = scene.addObject("mesh", upload(std::move(meshdata), CompileFlag::GenerateSmoothNormals));
+    auto& generated = object->meshData;
 
-    if(postConnect){
-        ceres::Solve(options, problem, U.data(), &summary);
-        std::cout << summary.BriefReport() << std::endl;
-    }
+    scene.addNode("mesh", "mesh", ShaderType::Phong);
+    viewer.callbacks.emplace_back([&]
+        (auto& v) mutable
+        {
+            Eigen::VectorXd C;
+            if(phasefieldHandle.updateIfCurrent(C)){
+                auto* obj = scene.getObject("mesh");
+                CORRADE_INTERNAL_ASSERT(obj);
+                GL::Buffer& vertices = obj->vertices;
+                auto data = vertices.map(
+                        0,
+                        vertices.size(),
+                        GL::Buffer::MapFlag::Write);
+
+                CORRADE_CONSTEXPR_ASSERT(data, "could not map vertex data");
+                auto colorView = generated.mutableAttribute<Color4>(Trade::MeshAttribute::Color);
+                std::transform(C.begin(), C.end(), colorView.begin(), JetColorMap{});
+
+                Utility::copy(generated.vertexData(), data);
+                vertices.unmap();
+                v.redraw();
+            }
+        }
+    );
+
+    viewer.exec();
+
+    //ceres::Solve(options, problem, U.data(), &summary);
+    //std::cout << summary.BriefReport() << std::endl;
+    //double max = U.maxCoeff();
+    //double min = U.minCoeff();
+    //fmt::print("(min,max): ({},{})\n", min, max);
+    //SegmentationColorMap mapper{{{-1.05,-0.05, Color4::red()},{0.05, 1.05, Color4::blue()}}};
+    //writeMesh(outputPath1, V, F, U, mapper);
+
+    //if(!enforceConnectedness && postConnect){
+    //    options.max_num_iterations = postConnectIterations;
+    //    cost->push_back(std::make_unique<ConnectednessConstraint>(V, F, epsilon, a, b), std::move(connectednessLoss1), wConnectedness);
+    //    cost->push_back(std::make_unique<ConnectednessConstraint>(V, F, epsilon, -b, -a), std::move(connectednessLoss2), wConnectedness);
+    //}
+
+    //if(postConnect){
+    //    ceres::Solve(options, problem, U.data(), &summary);
+    //    std::cout << summary.BriefReport() << std::endl;
+    //}
 
 
-    writeMesh(outputPath2, V, F, U, mapper);
+    //writeMesh(outputPath2, V, F, U, mapper);
 
-    auto finalCosts = cost->computeSeperateCosts(U);
-    for(auto cost: finalCosts)
-        std::cout << cost << std::endl;
-    ScopedTimer::printStatistics();
+    //auto finalCosts = cost->computeSeperateCosts(U);
+    //for(auto cost: finalCosts)
+    //    std::cout << cost << std::endl;
+    //ScopedTimer::printStatistics();
 }
