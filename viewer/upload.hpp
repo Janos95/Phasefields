@@ -19,4 +19,6 @@ using CompileFlags = Corrade::Containers::EnumSet<CompileFlag>;
 
 CORRADE_ENUMSET_OPERATORS(CompileFlags)
 
-Object upload(Magnum::Trade::MeshData&& meshData, CompileFlag flags = {});
+Magnum::Trade::MeshData preprocess(Magnum::Trade::MeshData& meshData, CompileFlag flags = {});
+
+Object upload(Magnum::Trade::MeshData const& meshData);

@@ -22,12 +22,12 @@ class Viewer: public Magnum::Platform::Application{
 public:
     explicit Viewer(int argc, char** argv);
 
-    std::vector<folly::FunctionRef<void(Viewer&)>> callbacks;
+    std::vector<folly::FunctionRef<void(Scene*)>> tickCallbacks;
+    std::vector<folly::FunctionRef<void(ImGuiIntegration::Context&)>> menuCallbacks;
 
-    Viewer& setScene(Scene&);
+    Viewer& initCamera();
 
 private:
-    void showMenu();
 
     void drawEvent() override;
     void tickEvent() override;

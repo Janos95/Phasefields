@@ -70,9 +70,8 @@ Viewer::Viewer(int argc, char** argv):
     setMinimalLoopPeriod(16);
 }
 
-Viewer& Viewer::setScene(Scene& scene){
-    m_scene = std::addressof(scene);
-
+Viewer& Viewer::initCamera(){
+    CORRADE_INTERNAL_ASSERT(m_scene);
     /* Setup the arcball after the camera objects */
     const Vector3 eye = Vector3::zAxis(-10.0f);
     const Vector3 center{};
@@ -200,10 +199,14 @@ void Viewer::mouseScrollEvent(MouseScrollEvent& event) {
 
 void Viewer::tickEvent()
 {
-    for(auto& cb : callbacks)
-        cb(*this);
+    for(auto& cb : tickCallbacks)
+        cb(m_scene);
+    if(m_scene && !m_camera) initCamera();
+    if(m_scene && m_scene->isDirty()){
+        m_scene->setClean();
+        redraw();
+    }
 }
-
 
 void Viewer::drawEvent() {
     GL::defaultFramebuffer.clear(GL::FramebufferClear::Color|GL::FramebufferClear::Depth);
@@ -216,11 +219,13 @@ void Viewer::drawEvent() {
         stopTextInput();
 
     /* draw scene */
-    bool camChanged = m_camera->update();
-    m_camera->draw(m_scene->drawables());
+    if(m_scene){
+        bool camChanged = m_camera->update();
+        m_camera->draw(m_scene->drawables());
+    }
 
-    //showMenu();
-    ImGui::ShowDemoWindow();
+    for(auto& menuCB : menuCallbacks)
+        menuCB(m_imgui);
     m_imgui.updateApplicationCursor(*this);
 
     /* Render ImGui window */
@@ -240,68 +245,5 @@ void Viewer::drawEvent() {
 
     swapBuffers();
     redraw();
-}
-
-void Viewer::showMenu() {
-    ImGui::SetNextWindowPos({500.0f, 50.0f}, ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowBgAlpha(0.5f);
-    ImGui::Begin("Options", nullptr);
-    ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.6f);
-
-    /* General information */
-    ImGui::Text("Hide/show menu: H");
-    ImGui::Text("Rendering: %3.2f FPS (1 thread)", Double(ImGui::GetIO().Framerate));
-    ImGui::Spacing();
-
-    /* Rendering parameters */
-    if(ImGui::TreeNodeEx("Particle Rendering", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::PushID("Particle Rendering");
-        {
-            constexpr const char* items[] = {"Uniform", "Ramp by ID", "Random"};
-            static Int colorMode = 1;
-            if(ImGui::Combo("Color Mode", &colorMode, items, 3));
-
-            if(colorMode == 0) { /* Uniform color */
-                static Color3 color = Color3::blue();
-                if(ImGui::ColorEdit3("Diffuse Color", color.data()));
-            }
-        }
-        static Vector3 lightDir = Vector3::xAxis();
-        if(ImGui::InputFloat3("Light Direction", lightDir.data()));
-        ImGui::PopID();
-        ImGui::TreePop();
-    }
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
-
-    /* Simulation parameters */
-    if(ImGui::TreeNodeEx("Simulation", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::PushID("Simulation");
-        Float a,b,c;
-        bool d;
-        ImGui::InputFloat("Stiffness", &a);
-        ImGui::SliderFloat("Viscosity", &b, 0.0f, 1.0f);
-        ImGui::SliderFloat("Restitution", &c, 0.0f, 1.0f);
-        ImGui::Checkbox("Dynamic Boundary", &d);
-        ImGui::PopID();
-        ImGui::TreePop();
-    }
-    ImGui::Spacing();
-    ImGui::Separator();
-
-    /* Reset */
-    ImGui::Spacing();
-    bool p = false;
-    if(ImGui::Button(p ? "Play Sim" : "Pause Sim"))
-        p ^= true;
-    ImGui::SameLine();
-    if(ImGui::Button("Reset Sim")) {
-        p = false;
-    }
-    ImGui::SameLine();
-    if(ImGui::Button("Reset Camera"));
-    ImGui::PopItemWidth();
-    ImGui::End();
 }
 

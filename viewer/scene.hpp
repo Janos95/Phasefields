@@ -41,6 +41,12 @@ public:
 
     void setDrawMode(std::string_view node, ShaderType shader);
 
+    void reset();
+
+    [[nodiscard]] bool isDirty() const { return m_dirty; }
+    bool setClean() { m_dirty = false; }
+    void setDirty() { m_dirty = true; }
+
     Scene3D& root();
 
     Magnum::SceneGraph::DrawableGroup3D& drawables();
@@ -48,6 +54,7 @@ public:
     void setViewportSize(const Magnum::Vector2i& size);
 
 private:
+    bool m_dirty;
     struct Impl;
     std::unique_ptr<Impl> m_impl;
 };

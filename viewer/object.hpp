@@ -16,13 +16,9 @@
 
 struct Object
 {
-    Magnum::Trade::MeshData meshData = Magnum::Trade::MeshData{Magnum::MeshPrimitive::Points, 0};
-
     Magnum::GL::Buffer vertices, indices;
     Magnum::GL::Mesh mesh;
     std::unique_ptr<Magnum::GL::Texture2D> textureDiffuse = nullptr;
     std::unique_ptr<Magnum::GL::Texture2D> textureSpecular = nullptr;
     Magnum::Color4 color = Magnum::Color4::blue();
-
-    int vertexCount, indexCount;
 };

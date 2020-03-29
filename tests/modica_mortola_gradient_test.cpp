@@ -3,7 +3,7 @@
 //
 
 #include <phasefield_initialization.hpp>
-#include <ceres_cost.hpp>
+#include <modica_mortola.hpp>
 
 
 #include <ceres/gradient_checker.h>

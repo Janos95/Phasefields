@@ -42,6 +42,8 @@ add_executable(segmentation
         color_callback.hpp
         my_configurator.hpp
         color_callback.cpp
+        optimization_context.cpp
+        optimization_context.hpp
         colormaps.hpp
         colormaps.cpp)
 
@@ -54,7 +56,6 @@ target_link_libraries(segmentation PRIVATE
         MagnumIntegration::Eigen
         Magnum::Primitives
         fmt::fmt
-        OpenMeshCore
         ceres
         )
 

@@ -1,82 +1,14 @@
 //
 // Created by janos on 2/23/20.
 //
-#include "ceres_cost.hpp"
+#include "modica_mortola.hpp"
+#include "quadrature_ref_triangle.hpp"
+#include "interpolation.hpp"
 
-SumProblem::SumProblem(int problemSize)
-{
-    mutable_parameter_block_sizes()->push_back(problemSize);
-    set_num_residuals(1);
-}
+#include <Corrade/Utility/Assert.h>
 
-
-void SumProblem::push_back(
-        std::unique_ptr<ceres::FirstOrderFunction> func,
-        std::unique_ptr<ceres::LossFunction> loss,
-        double weight){
-    m_problems.push_back(std::move(func));
-    if(!loss || std::abs(weight - 1) < 1e-6)
-        m_losses.push_back(std::move(loss));
-    else{
-        m_losses.push_back(std::make_unique<ceres::ScaledLoss>(loss.get(), weight, ceres::Ownership::DO_NOT_TAKE_OWNERSHIP));
-        m_owner.push_back(std::move(loss));
-    }
-}
-
-std::vector<double> SumProblem::computeSeperateCosts(const Eigen::VectorXd& U){
-    std::vector<double> costs;
-    for(const auto& pb: m_problems){
-        double cost = 0;
-        pb->Evaluate(U.data(), &cost, nullptr);
-        costs.push_back(cost);
-    }
-    return costs;
-}
-
-bool SumProblem::Evaluate(const double* parameters,
-              double* cost,
-              double* jacobians) const {
-    auto n = NumParameters();
-    *cost = 0.;
-    if(jacobians)
-        std::fill_n(jacobians, n, 0.);
-
-    auto singleJac = jacobians ? new double[n] : nullptr;
-
-    for(std::size_t i = 0; i < m_problems.size(); ++i){
-        double residual = 0;
-        m_problems[i]->Evaluate(parameters, &residual, singleJac);
-        double out[3] = {residual, 1.};
-        if(m_losses[i])
-            m_losses[i]->Evaluate(residual, out);
-        if(jacobians){
-            MappedVectorType mappedJac(jacobians, n), mappedSingleJac(singleJac, n);
-            mappedJac.noalias() += out[1] * mappedSingleJac;
-        }
-        *cost += out[0];
-    }
-
-    delete[] singleJac;
-
-    return true;
-}
-
-
-bool SumProblem::Evaluate(double const* const* parameters,
-              double* residuals,
-              double** jacobians) const
-{
-    auto jacs = jacobians && *jacobians ? *jacobians : nullptr;
-    return Evaluate(*parameters, residuals, jacs);
-}
-
-
-int SumProblem::NumParameters() const {
-    auto numParams = m_problems.front()->NumParameters();
-    for(const auto& prob: m_problems)
-        assert(prob->NumParameters() == numParams);
-    return numParams;
-}
+#include <igl/doublearea.h>
+#include <igl/grad.h>
 
 InterfaceEnergy::InterfaceEnergy(const Eigen::MatrixXd& V, const Eigen::MatrixXi& F, const double epsilon):
         m_epsilon(epsilon),

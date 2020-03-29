@@ -44,6 +44,8 @@ struct Scene::Impl{
 
     void setDrawMode(std::string_view node, ShaderType shader);
 
+    void reset() { m_scene.children().clear(); m_nodes.clear(); m_objects.clear(); }
+
     Scene3D& root();
 
     SceneGraph::DrawableGroup3D& drawables();
@@ -168,3 +170,5 @@ void Scene::setDrawMode(std::string_view node, ShaderType shader)
 {
    m_impl->setDrawMode(node, shader);
 }
+
+void Scene::reset() { m_impl->reset(); }
