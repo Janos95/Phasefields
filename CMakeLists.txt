@@ -18,7 +18,7 @@ find_package(Magnum CONFIG REQUIRED GL SceneGraph MeshTools Sdl2Application Shad
 find_package(MagnumPlugins CONFIG REQUIRED AssimpImporter)
 find_package(MagnumIntegration CONFIG REQUIRED ImGui Eigen)
 find_package(Boost CONFIG REQUIRED)
-find_package(ParallelSTL CONFIG REQUIRED)
+#find_package(ParallelSTL CONFIG REQUIRED)
 #find_package(Enoki CONFIG REQUIRED)
 
 #set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
@@ -28,7 +28,6 @@ list(APPEND CMAKE_CXX_FLAGS "-ffast-math")
 
 add_subdirectory(scoped_timer)
 add_subdirectory(viewer)
-add_subdirectory(io)
 add_subdirectory(cost)
 
 find_package(PkgConfig REQUIRED)
@@ -52,11 +51,11 @@ target_link_libraries(segmentation PRIVATE
         phasefields::viewer
         phasefields::scoped_timer
         phasefields::cost
-        phasefields::io
         MagnumIntegration::Eigen
         Magnum::Primitives
         fmt::fmt
         ceres
+        MagnumPlugins::AssimpImporter
         )
 
         

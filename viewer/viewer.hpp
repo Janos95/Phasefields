@@ -22,10 +22,10 @@ class Viewer: public Magnum::Platform::Application{
 public:
     explicit Viewer(int argc, char** argv);
 
-    std::vector<folly::FunctionRef<void(Scene*)>> tickCallbacks;
-    std::vector<folly::FunctionRef<void(ImGuiIntegration::Context&)>> menuCallbacks;
+    std::vector<folly::Function<void(Scene*&)>> tickCallbacks;
+    std::vector<folly::Function<void(ImGuiIntegration::Context&)>> menuCallbacks;
 
-    Viewer& initCamera();
+    Viewer& init();
 
 private:
 
@@ -41,7 +41,7 @@ private:
     void textInputEvent(TextInputEvent& event) override;
 
     Corrade::Containers::Optional<ArcBallCamera> m_camera;
-    Scene* m_scene;
+    Scene* m_scene = nullptr;
     ImGuiIntegration::Context m_imgui{NoCreate};
     bool m_trackingMouse = false;
 

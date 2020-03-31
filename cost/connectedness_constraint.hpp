@@ -43,6 +43,8 @@ public:
             const double b,
             GradientFlags = GradientFlag::Analytic);
 
+    void setPreimageInterval(double a, double b);
+
     ~ConnectednessConstraint() override;
 
     bool Evaluate(double const* parameters, double* cost, double* jacobian) const override ;

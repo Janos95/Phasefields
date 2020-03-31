@@ -44,6 +44,8 @@ namespace {
 
         int NumParameters();
 
+        void setPreimageInterval(double a, double b){ m_a = a; m_b = b; }
+
         struct Neighbor {
             Neighbor(int v, double w) : vertex(v), weight(w) {}
 
@@ -147,6 +149,8 @@ namespace {
         using MatrixT = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
 
         ScopedTimer t("Connectedness", true);
+
+        fmt::print("Interval ({}, {})\n", m_a, m_b);
 
         F weight(m_a, m_b);
         FGrad weightGrad(m_a, m_b);
@@ -377,4 +381,9 @@ int ConnectednessConstraint::NumParameters() const {
         return m_implAutodiff->impl.NumParameters();
 }
 
-
+void ConnectednessConstraint::setPreimageInterval(double a, double b) {
+    if(m_implAnalytic)
+        return m_implAnalytic->impl.setPreimageInterval(a,b);
+    else
+        return m_implAutodiff->impl.setPreimageInterval(a,b);
+}

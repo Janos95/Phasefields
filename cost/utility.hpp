@@ -164,3 +164,8 @@ private:
     std::vector<int> m_targetVertices;
 };
 
+
+double triangleDiameter(
+        const Eigen::Vector3d& a,
+        const Eigen::Vector3d& b,
+        const Eigen::Vector3d& c);

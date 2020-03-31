@@ -15,10 +15,12 @@
 
 #include <Eigen/Core>
 
-#include <thread>
+#include <folly/futures/Future.h>
+#include <folly/executors/ThreadedExecutor.h>
+
 #include <mutex>
-#include <condition_variable>
-#include <atomic>
+#include <thread>
+
 
 class OptimizationContext {
 public:
@@ -26,45 +28,52 @@ public:
     ~OptimizationContext();
 
     void showMenu(Magnum::ImGuiIntegration::Context&);
-    void updateScene(Scene* scene);
+    void updateScene(Scene*& scene);
 
-    bool loadMesh(std::string& path);
-    bool saveMesh(std::string& path);
+    bool loadMesh(std::string const& path);
+    bool saveMesh(std::string const& path);
+
+    void startOptimization();
+    void stopOptimization();
+
+    enum class InitializationFlag: Magnum::UnsignedByte {
+        RandomNormal = 1
+    };
+
+    void initializePhasefield(InitializationFlag flag);
 
 private:
 
-    void work();
     ceres::CallbackReturnType optimizationCallback(ceres::IterationSummary const&);
 
     IterationCallbackWrapper m_optimizationCallback;
 
-    Corrade::Containers::Array<double> m_U;
+    Eigen::VectorXd m_U;
 
-    std::mutex m_meshDataMutex;
+    folly::Future<folly::Unit> m_optimizationFuture;
+    folly::ThreadedExecutor m_executor;
+
+    std::mutex m_mutex;
     Corrade::Containers::Optional<Trade::MeshData> m_meshData;
-    bool m_reupload = false;
-    bool m_newMeshData = false;
+    std::atomic_bool m_reupload = false;
+    std::atomic_bool m_newMeshData = false;
+    std::atomic_bool m_exit = false;
 
     Eigen::MatrixXi m_F;
     Eigen::MatrixXd m_V;
 
     double m_epsilon = 1e-2;
-    double m_a = .85, m_b = .95;
-    double m_weightMM = 1., m_weightConnectedness = 1., m_weightArea = 1.;
+    float m_posA = .85f, m_posB = .95f;
+    float m_negA = -.95f, m_negB = -.85f;
 
-    std::string m_outputPath;
-    std::string m_inputPath;
+    std::vector<char> m_outputPath;
+    std::vector<char> m_inputPath;
 
     SumProblem* m_cost = nullptr;
-    ceres::GradientProblem m_problem;
+    Corrade::Containers::Optional<ceres::GradientProblem> m_problem;
     ceres::GradientProblemSolver::Options m_options;
-    bool m_run = false;
 
-    std::thread m_optThread;
-    std::mutex m_mutex;
-    std::condition_variable m_cv;
-
-    std::atomic_bool m_exit = false;
+    std::vector<std::pair<std::string, double>> m_checkBoxes = {{"Modica Mortola", 1.},{"Area Regularization", 1.},{"Connectedness Constraint Positive", 1.},{"Connectedness Constraint Negative", 1.}};
 };
 
 

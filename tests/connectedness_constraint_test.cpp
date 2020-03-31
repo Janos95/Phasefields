@@ -2,7 +2,6 @@
 // Created by janos on 05.03.20.
 //
 
-#include <load_mesh_data.hpp>
 #include <connectedness_constraint.hpp>
 #include <phasefield_initialization.hpp>
 

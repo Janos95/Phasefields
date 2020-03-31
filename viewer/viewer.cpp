@@ -70,8 +70,9 @@ Viewer::Viewer(int argc, char** argv):
     setMinimalLoopPeriod(16);
 }
 
-Viewer& Viewer::initCamera(){
+Viewer& Viewer::init(){
     CORRADE_INTERNAL_ASSERT(m_scene);
+    m_scene->setViewportSize(framebufferSize());
     /* Setup the arcball after the camera objects */
     const Vector3 eye = Vector3::zAxis(-10.0f);
     const Vector3 center{};
@@ -84,14 +85,23 @@ Viewer& Viewer::initCamera(){
 
 void Viewer::viewportEvent(ViewportEvent& event) {
     GL::defaultFramebuffer.setViewport({{}, event.framebufferSize()});
-    m_camera->reshape(event.windowSize(), event.framebufferSize());
-    m_scene->setViewportSize(framebufferSize());
+    if(m_scene){
+        m_camera->reshape(event.windowSize(), event.framebufferSize());
+        m_scene->setViewportSize(event.framebufferSize());
+    }
     m_imgui.relayout(Vector2{event.windowSize()}/event.dpiScaling(),
                     event.windowSize(), event.framebufferSize());
 }
 
 
 void Viewer::keyPressEvent(KeyEvent& event) {
+    if(m_imgui.handleKeyPressEvent(event)) {
+        event.setAccepted();
+        return;
+    }
+
+    if(!m_camera) return;
+
     switch(event.key()) {
         case KeyEvent::Key::L:
             if(m_camera->lagging() > 0.0f) {
@@ -136,6 +146,8 @@ void Viewer::mousePressEvent(MouseEvent& event) {
         return;
     }
 
+    if(!m_camera) return;
+
     m_trackingMouse = true;
     ///* Enable mouse capture so the mouse can drag outside of the window */
     ///** @todo replace once https://github.com/mosra/magnum/pull/419 is in */
@@ -153,16 +165,14 @@ void Viewer::mouseReleaseEvent(MouseEvent& event) {
         return;
     }
 
+    if(!m_camera) return;
     /* Disable mouse capture again */
     /** @todo replace once https://github.com/mosra/magnum/pull/419 is in */
     if(m_trackingMouse){
-        fmt::print("stopping mouse tracking\n");
         SDL_CaptureMouse(SDL_FALSE);
         m_trackingMouse = false;
         event.setAccepted();
     }
-
-
 }
 
 void Viewer::mouseMoveEvent(MouseMoveEvent& event) {
@@ -171,7 +181,7 @@ void Viewer::mouseMoveEvent(MouseMoveEvent& event) {
         return;
     }
 
-    if(!event.buttons()) return;
+    if(!m_camera || !event.buttons()) return;
 
     if(event.modifiers() & MouseMoveEvent::Modifier::Shift)
         m_camera->translate(event.position());
@@ -188,6 +198,8 @@ void Viewer::mouseScrollEvent(MouseScrollEvent& event) {
         return;
     }
 
+    if(!m_camera) return;
+
     const Float delta = event.offset().y();
     if(Math::abs(delta) < 1.0e-2f) return;
 
@@ -201,7 +213,7 @@ void Viewer::tickEvent()
 {
     for(auto& cb : tickCallbacks)
         cb(m_scene);
-    if(m_scene && !m_camera) initCamera();
+    if(m_scene && !m_camera) init();
     if(m_scene && m_scene->isDirty()){
         m_scene->setClean();
         redraw();

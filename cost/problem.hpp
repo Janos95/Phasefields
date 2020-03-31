@@ -21,7 +21,7 @@ struct IterationCallbackWrapper : public ceres::IterationCallback{
     ceres::CallbackReturnType operator()(ceres::IterationSummary const& summary) override {
          return callback(summary);
      }
-     folly::FunctionRef<ceres::CallbackReturnType(ceres::IterationSummary const&)> callback;
+     folly::Function<ceres::CallbackReturnType(ceres::IterationSummary const&)> callback;
 };
 
 class SumProblem : public ceres::FirstOrderFunction{
@@ -36,6 +36,19 @@ public:
         }
         m_problems.emplace_back(Functional{std::move(name), weight, std::move(up), std::move(ul)});
     }
+
+    void setWeight(std::string_view name, double weight);
+
+    template<class F>
+    void visit(std::string_view name, F f){
+        for(auto& [nameOther, _1, p, _2] : m_problems){
+            if(nameOther == name){
+                f(p);
+            }
+        }
+    }
+
+    void clear() { m_problems.clear(); }
 
     struct IndividualCost
     {

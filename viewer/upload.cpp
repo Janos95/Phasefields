@@ -117,9 +117,7 @@ Trade::MeshData preprocess(Trade::MeshData& meshData, CompileFlag flags) {
         extra = {&normalAttribute, 1};
         /* If we reuse a normal location, expect correct type */
     } else
-        CORRADE_ASSERT(meshData.attributeFormat(Trade::MeshAttribute::Normal) == VertexFormat::Vector3,
-                       "MeshTools::compile(): can't generate normals into"
-                               << meshData.attributeFormat(Trade::MeshAttribute::Normal), Object());
+        CORRADE_INTERNAL_ASSERT(meshData.attributeFormat(Trade::MeshAttribute::Normal) == VertexFormat::Vector3);
 
     /* If we want flat normals, we need to first duplicate everything using
        the index buffer. Otherwise just interleave the potential extra

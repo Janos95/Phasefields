@@ -2,6 +2,8 @@
 // Created by janos on 05.03.20.
 //
 
+#include "utility"
+
 #include <Eigen/Core>
 
 double triangleDiameter(

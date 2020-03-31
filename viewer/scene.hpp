@@ -44,7 +44,7 @@ public:
     void reset();
 
     [[nodiscard]] bool isDirty() const { return m_dirty; }
-    bool setClean() { m_dirty = false; }
+    void setClean() { m_dirty = false; }
     void setDirty() { m_dirty = true; }
 
     Scene3D& root();
