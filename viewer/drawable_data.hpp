@@ -14,11 +14,25 @@
 
 #include <memory>
 
-struct Object
+struct DrawableData
 {
     Magnum::GL::Buffer vertices, indices;
     Magnum::GL::Mesh mesh;
-    std::unique_ptr<Magnum::GL::Texture2D> textureDiffuse = nullptr;
-    std::unique_ptr<Magnum::GL::Texture2D> textureSpecular = nullptr;
-    Magnum::Color4 color = Magnum::Color4::blue();
+    Magnum::Trade::MeshData meshData{Magnum::MeshPrimitive::Points, 0};
 };
+
+struct UniformColorDrawableData : virtual DrawableData
+{
+    Magnum::Color4 color;
+};
+
+struct TexturedDrawableData : virtual DrawableData
+{
+    Magnum::GL::Texture2D texture;
+};
+
+
+
+
+
+

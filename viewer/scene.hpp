@@ -4,10 +4,11 @@
 
 #pragma once
 
-#include "object.hpp"
+#include "drawable_data.hpp"
 
 #include <Magnum/SceneGraph/RigidMatrixTransformation3D.h>
 #include <Magnum/SceneGraph/Object.h>
+#include <Magnum/SceneGraph/Scene.h>
 #include <Magnum/Trade/MeshData.h>
 
 #include <memory>
@@ -31,13 +32,13 @@ public:
     Scene();
     ~Scene();
 
-    Object* addObject(std::string name, Object object);
+    DrawableData* addObject(std::string name, std::unique_ptr<DrawableData> object);
 
-    Object* getObject(std::string_view name);
+    DrawableData* getObject(std::string_view name);
 
-    SceneGraphNode* addNode(std::string nodeName, std::string_view par, std::string_view obj, ShaderType shader);
+    SceneGraphNode* addNode(std::string nodeName, SceneGraphNode*, DrawableData&, ShaderType shader);
 
-    SceneGraphNode* addNode(std::string nodeName, std::string_view obj, ShaderType shader);
+    SceneGraphNode* getNode(std::string_view name);
 
     void setDrawMode(std::string_view node, ShaderType shader);
 
@@ -55,6 +56,8 @@ public:
 
 private:
     bool m_dirty;
+
+    //pimpl away map
     struct Impl;
     std::unique_ptr<Impl> m_impl;
 };

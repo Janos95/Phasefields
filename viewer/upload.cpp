@@ -18,16 +18,16 @@ using namespace Corrade;
 
 
 
-Object upload(Trade::MeshData const& meshData) {
-    GL::Buffer vertices, indices;
+void upload(DrawableData& drawableData) {
+    auto& [vertices, indices, mesh, meshData] = drawableData;
+
     vertices.setData(meshData.vertexData());
     indices.setData(meshData.indexData());
 
     CORRADE_ASSERT((!meshData.isIndexed() || indices.id()) && vertices.id(),
-                   "upload: invalid external buffer(s)",Object());
+                   "upload: invalid external buffer(s)",);
 
     /* Basics */
-    GL::Mesh mesh;
     mesh.setPrimitive(meshData.primitive());
 
     /* Vertex data */
@@ -95,7 +95,6 @@ Object upload(Trade::MeshData const& meshData) {
                 .setCount(meshData.indexCount());
     } else mesh.setCount(meshData.vertexCount());
 
-    return Object{std::move(vertices), std::move(indices), std::move(mesh), nullptr, nullptr};
 }
 
 

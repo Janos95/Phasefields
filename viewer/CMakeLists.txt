@@ -12,7 +12,7 @@ add_library(viewer SHARED
         arc_ball_camera.hpp
         scene.hpp
         scene.cpp
-        object.hpp
+        drawable_data.hpp
         camera.hpp
         upload.cpp
         upload.hpp

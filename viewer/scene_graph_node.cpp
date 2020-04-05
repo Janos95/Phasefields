@@ -1,6 +1,6 @@
 
 #include "scene_graph_node.hpp"
-#include "object.hpp"
+#include "drawable_data.hpp"
 
 #include <Magnum/Shaders/VertexColor.h>
 #include <Magnum/Shaders/Phong.h>
@@ -21,7 +21,7 @@ void SceneGraphNode::draw(const Matrix4& tf, SceneGraph::Camera3D& camera){
     callback(tf, camera);
 }
 
-void SceneGraphNode::setDrawCallback(::Object& obj, GL::AbstractShaderProgram* shader, ShaderType type)
+void SceneGraphNode::setDrawCallback(DrawableData& obj, GL::AbstractShaderProgram* shader, ShaderType type)
 {
     switch(type){
         case ShaderType::MeshVisualizer :

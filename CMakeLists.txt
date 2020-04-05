@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 project(phasefields)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/modules)
 list(APPEND CMAKE_PREFIX_PATH ${CMAKE_CURRENT_LIST_DIR}/conan_modules)
@@ -44,7 +44,18 @@ add_executable(segmentation
         optimization_context.cpp
         optimization_context.hpp
         colormaps.hpp
-        colormaps.cpp)
+        colormaps.cpp
+        brush.cpp
+        brush.hpp
+        update_scene.hpp
+        update_scene.cpp
+        subdivision.cpp
+        subdivision.hpp
+        mesh_io.cpp
+        mesh_io.hpp
+        primitives.cpp
+        primitives.hpp
+        phasefield_data.hpp)
 
 target_link_libraries(segmentation PRIVATE
         PkgConfig::Ipopt

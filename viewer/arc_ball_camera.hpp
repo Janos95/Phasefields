@@ -60,6 +60,14 @@ public:
         _camera->draw(drawables);
     }
 
+    Vector2i viewport(){
+        return _camera->viewport();
+    }
+
+    auto projectionMatrix(){
+        return _camera->projectionMatrix();
+    }
+
 private:
     SceneGraph::AbstractTranslationRotation3D* _cameraObject{};
     SceneGraph::Camera3D* _camera{};

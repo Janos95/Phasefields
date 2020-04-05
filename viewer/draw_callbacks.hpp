@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "object.hpp"
+#include "drawable_data.hpp"
 
 #include <Magnum/Math/Matrix4.h>
 #include <Magnum/SceneGraph/Camera.h>
@@ -15,20 +15,18 @@
 #include <Magnum/Shaders/Phong.h>
 #include <Magnum/Shaders/MeshVisualizer.h>
 
-
 class FlatCallback
 {
 public:
 
-    explicit FlatCallback(Object&, Magnum::Shaders::Flat3D&);
+    explicit FlatCallback(TexturedDrawableData&, Magnum::Shaders::Flat3D&);
 
     void operator()(const Magnum::Matrix4& transformationMatrix, Magnum::SceneGraph::Camera3D& camera);
 
 private:
 
     Magnum::GL::Mesh& m_mesh;
-    Magnum::GL::Texture2D* m_texture = nullptr;
-    Magnum::Color4 m_color;
+    Magnum::GL::Texture2D& m_texture;
     Magnum::Shaders::Flat3D& m_shader;
 };
 
@@ -36,7 +34,7 @@ class VertexColorCallback
 {
 public:
 
-    explicit VertexColorCallback(Object& obj, Magnum::Shaders::VertexColor3D& shader): m_mesh(obj.mesh), m_shader(shader){}
+    explicit VertexColorCallback(DrawableData& obj, Magnum::Shaders::VertexColor3D& shader): m_mesh(obj.mesh), m_shader(shader){}
 
     void operator()(const Magnum::Matrix4& transformationMatrix, Magnum::SceneGraph::Camera3D& camera){
         m_shader.setTransformationProjectionMatrix(camera.projectionMatrix() * transformationMatrix)
@@ -52,16 +50,16 @@ class PhongCallback
 {
 public:
 
-    explicit PhongCallback(Object& obj, Magnum::Shaders::Phong& shader):
+    explicit PhongCallback(TexturedDrawableData& obj, Magnum::Shaders::Phong& shader):
         m_mesh(obj.mesh),
         m_shader(shader),
-        m_diffuseTexture(obj.textureDiffuse.get()),
-        m_specularTexture(obj.textureSpecular.get())
+        m_texture(obj.texture)
         {
         }
 
     void operator()(const Magnum::Matrix4& transformationMatrix, Magnum::SceneGraph::Camera3D& camera){
-        m_shader.setLightPosition({5.0f, 5.0f, 7.0f})
+        m_shader.bindDiffuseTexture(m_texture)
+                .setLightPosition({5.0f, 5.0f, 7.0f})
                 .setTransformationMatrix(transformationMatrix)
                 .setNormalMatrix(transformationMatrix.normalMatrix())
                 .setProjectionMatrix(camera.projectionMatrix())
@@ -72,14 +70,14 @@ private:
 
     Magnum::GL::Mesh& m_mesh;
     Magnum::Shaders::Phong& m_shader;
-    Magnum::GL::Texture2D *m_diffuseTexture, *m_specularTexture;
+    Magnum::GL::Texture2D& m_texture;
 };
 
 class MeshVisualizerCallback
 {
 public:
 
-    explicit MeshVisualizerCallback(Object& obj, Magnum::Shaders::MeshVisualizer3D& shader): m_mesh(obj.mesh), m_shader(shader){}
+    explicit MeshVisualizerCallback(DrawableData& obj, Magnum::Shaders::MeshVisualizer3D& shader): m_mesh(obj.mesh), m_shader(shader){}
 
     void operator()(const Magnum::Matrix4& transformationMatrix, Magnum::SceneGraph::Camera3D& camera){
         m_shader.setColor(m_colorMesh)

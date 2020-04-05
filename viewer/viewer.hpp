@@ -22,10 +22,29 @@ class Viewer: public Magnum::Platform::Application{
 public:
     explicit Viewer(int argc, char** argv);
 
-    std::vector<folly::Function<void(Scene*&)>> tickCallbacks;
-    std::vector<folly::Function<void(ImGuiIntegration::Context&)>> menuCallbacks;
+    struct AbstractEventHandler{
+        virtual void tickEvent(Scene& scene){ }
+        virtual void drawImGui(){ }
+        virtual void viewportEvent(ViewportEvent& event, Viewer&){ }
+        virtual bool keyPressEvent(KeyEvent& event, Viewer&){ return false; }
+        virtual bool mousePressEvent(MouseEvent& event, Viewer&){ return false; }
+        virtual bool mouseReleaseEvent(MouseEvent& event, Viewer&){ return false; }
+        virtual bool mouseMoveEvent(MouseMoveEvent& event, Viewer&){ return false; }
+        virtual bool mouseScrollEvent(MouseScrollEvent& event, Viewer&){ return false; }
+        virtual bool keyReleaseEvent(KeyEvent& event, Viewer&){ return false; }
+        virtual bool textInputEvent(TextInputEvent& event, Viewer&){ return false; }
+
+        static typename Derived::Status status;
+    };
+
+    template<class... H>
+    auto insertEventCallbacks(H&&... handlers) {
+        (m_eventCallbacks.emplace_back(new(new char[sizeof(H)]) H(std::move(handlers))), ...);
+    }
 
     Viewer& init();
+    ArcBallCamera& camera() { return *m_camera; }
+    void setScene(Scene& scene) { m_scene = std::addressof(scene); }
 
 private:
 
@@ -39,6 +58,8 @@ private:
     void mouseScrollEvent(MouseScrollEvent& event) override;
     void keyReleaseEvent(KeyEvent& event) override;
     void textInputEvent(TextInputEvent& event) override;
+
+    std::vector<std::unique_ptr<AbstractEventHandler>> m_eventCallbacks;
 
     Corrade::Containers::Optional<ArcBallCamera> m_camera;
     Scene* m_scene = nullptr;

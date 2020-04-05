@@ -5,7 +5,7 @@
 #include <Magnum/Trade/MeshData.h>
 #include <Magnum/ImageView.h>
 
-#include "object.hpp"
+#include "drawable_data.hpp"
 
 enum class CompileFlag: Magnum::UnsignedShort {
     GenerateFlatNormals = 1,
@@ -21,4 +21,4 @@ CORRADE_ENUMSET_OPERATORS(CompileFlags)
 
 Magnum::Trade::MeshData preprocess(Magnum::Trade::MeshData& meshData, CompileFlag flags = {});
 
-Object upload(Magnum::Trade::MeshData const& meshData);
+void upload(DrawableData& drawableData);

@@ -23,9 +23,9 @@ public:
 
     explicit SceneGraphNode(Object3D* parent, Magnum::SceneGraph::DrawableGroup3D* group);
 
-    void setDrawCallback(::Object& obj, Magnum::GL::AbstractShaderProgram* shader, ShaderType type);
+    void setDrawCallback(DrawableData& obj, Magnum::GL::AbstractShaderProgram* shader, ShaderType type);
 
-    ::Object* object;
+    DrawableData* object;
     callback_type callback;
 
 protected:

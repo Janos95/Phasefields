@@ -11,8 +11,6 @@
 #include <Magnum/Math/FunctionsBatch.h>
 #include <Magnum/ImGuiIntegration/Context.hpp>
 
-#include <fmt/core.h>
-
 
 using namespace Corrade;
 using namespace Magnum;
@@ -52,7 +50,7 @@ Viewer::Viewer(int argc, char** argv):
                 16.0f*framebufferSize().x()/size.x(), &fontConfig);
 
         m_imgui = ImGuiIntegration::Context{*ImGui::GetCurrentContext(),
-                                                  Vector2{windowSize()}/dpiScaling(), windowSize(), framebufferSize()};
+                                            Vector2{windowSize()}/dpiScaling(), windowSize(), framebufferSize()};
 
         /* Setup proper blending to be used by ImGui */
         GL::Renderer::setBlendEquation(GL::Renderer::BlendEquation::Add,
@@ -89,8 +87,12 @@ void Viewer::viewportEvent(ViewportEvent& event) {
         m_camera->reshape(event.windowSize(), event.framebufferSize());
         m_scene->setViewportSize(event.framebufferSize());
     }
+
+    for (auto const& eventCB : m_eventCallbacks)
+        eventCB->viewportEvent(event, *this);
+
     m_imgui.relayout(Vector2{event.windowSize()}/event.dpiScaling(),
-                    event.windowSize(), event.framebufferSize());
+                     event.windowSize(), event.framebufferSize());
 }
 
 
@@ -98,6 +100,12 @@ void Viewer::keyPressEvent(KeyEvent& event) {
     if(m_imgui.handleKeyPressEvent(event)) {
         event.setAccepted();
         return;
+    }
+
+    for (auto const& eventCB : m_eventCallbacks) {
+        eventCB->keyPressEvent(event, *this);
+        if(event.isAccepted())
+            return;
     }
 
     if(!m_camera) return;
@@ -117,8 +125,6 @@ void Viewer::keyPressEvent(KeyEvent& event) {
             break;
 
         default:
-            if(!m_imgui.handleKeyPressEvent(event))
-                return;
             break;
     }
 
@@ -131,6 +137,12 @@ void Viewer::keyReleaseEvent(KeyEvent& event) {
         event.setAccepted();
         return;
     }
+
+    for (auto const& eventCB : m_eventCallbacks) {
+        eventCB->keyReleaseEvent(event, *this);
+        if(event.isAccepted())
+            return;
+    }
 }
 
 void Viewer::textInputEvent(TextInputEvent& event) {
@@ -138,12 +150,24 @@ void Viewer::textInputEvent(TextInputEvent& event) {
         event.setAccepted();
         return;
     }
+
+    for (auto const& eventCB : m_eventCallbacks) {
+        eventCB->textInputEvent(event, *this);
+        if(event.isAccepted())
+            return;
+    }
 }
 
 void Viewer::mousePressEvent(MouseEvent& event) {
     if(m_imgui.handleMousePressEvent(event)){
         event.setAccepted();
         return;
+    }
+
+    for (auto const& eventCB : m_eventCallbacks) {
+        eventCB->mousePressEvent(event, *this);
+        if(event.isAccepted())
+            return;
     }
 
     if(!m_camera) return;
@@ -165,6 +189,12 @@ void Viewer::mouseReleaseEvent(MouseEvent& event) {
         return;
     }
 
+    for (auto const& eventCB : m_eventCallbacks) {
+        eventCB->mouseReleaseEvent(event, *this);
+        if(event.isAccepted())
+            return;
+    }
+
     if(!m_camera) return;
     /* Disable mouse capture again */
     /** @todo replace once https://github.com/mosra/magnum/pull/419 is in */
@@ -179,6 +209,13 @@ void Viewer::mouseMoveEvent(MouseMoveEvent& event) {
     if(m_imgui.handleMouseMoveEvent(event)){
         event.setAccepted();
         return;
+    }
+
+
+    for (auto const& eventCB : m_eventCallbacks) {
+        eventCB->mouseMoveEvent(event, *this);
+        if(event.isAccepted())
+            return;
     }
 
     if(!m_camera || !event.buttons()) return;
@@ -198,6 +235,12 @@ void Viewer::mouseScrollEvent(MouseScrollEvent& event) {
         return;
     }
 
+    for (auto const& eventCB : m_eventCallbacks) {
+        eventCB->mouseScrollEvent(event, *this);
+        if(event.isAccepted())
+            return;
+    }
+
     if(!m_camera) return;
 
     const Float delta = event.offset().y();
@@ -211,8 +254,8 @@ void Viewer::mouseScrollEvent(MouseScrollEvent& event) {
 
 void Viewer::tickEvent()
 {
-    for(auto& cb : tickCallbacks)
-        cb(m_scene);
+    for(auto& eventCB : m_eventCallbacks)
+        eventCB->tickEvent(m_scene);
     if(m_scene && !m_camera) init();
     if(m_scene && m_scene->isDirty()){
         m_scene->setClean();
@@ -236,8 +279,8 @@ void Viewer::drawEvent() {
         m_camera->draw(m_scene->drawables());
     }
 
-    for(auto& menuCB : menuCallbacks)
-        menuCB(m_imgui);
+    for (auto const& eventCB : m_eventCallbacks)
+        eventCB->drawImGui();
     m_imgui.updateApplicationCursor(*this);
 
     /* Render ImGui window */

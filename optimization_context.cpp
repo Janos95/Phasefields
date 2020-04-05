@@ -14,13 +14,11 @@
 #include <Corrade/Utility/Algorithms.h>
 
 #include <Magnum/Math/Vector3.h>
-#include <MagnumPlugins/AssimpImporter/AssimpImporter.h>
 #include <Magnum/EigenIntegration/Integration.h>
 #include <Magnum/ImGuiIntegration/Context.hpp>
 
-#include <assimp/Exporter.hpp>
-#include <assimp/scene.h>
-
+#include <folly/futures/Future.h>
+#include <folly/executors/ThreadedExecutor.h>
 #include <fmt/core.h>
 
 #include <random>
@@ -41,7 +39,6 @@ std::tuple<Eigen::MatrixXd, Eigen::MatrixXi> toEigen(Trade::MeshData const& mesh
     }
     return std::make_tuple(std::move(V), std::move(F));
 }
-
 
 
 OptimizationContext::OptimizationContext():
@@ -75,38 +72,6 @@ ceres::CallbackReturnType OptimizationContext::optimizationCallback(ceres::Itera
     return ceres::SOLVER_CONTINUE;
 }
 
-void OptimizationContext::updateScene(Scene*& scene){
-    bool newMeshData = true;
-    if(m_newMeshData.compare_exchange_strong(newMeshData, false)) {
-        Debug{} << "Uploading new mesh";
-        if(scene) scene->reset();
-        else scene = new Scene(); //@todo scene leaks, but I am not sure who should own it...
-        {
-            std::lock_guard l(m_mutex);
-            scene->addObject("mesh", upload(*m_meshData));
-        }
-        scene->addNode("mesh", "mesh", ShaderType::Phong);
-        scene->setDirty();
-    }
-    bool reupload = true;
-    if(m_reupload.compare_exchange_strong(reupload, false)){
-        auto* obj = scene->getObject("mesh");
-        CORRADE_INTERNAL_ASSERT(obj);
-        GL::Buffer& vertices = obj->vertices;
-        auto data = vertices.map(0,
-                                 vertices.size(),
-                                 GL::Buffer::MapFlag::Write);
-
-        CORRADE_CONSTEXPR_ASSERT(data, "could not map vertex data");
-        {
-            std::lock_guard l(m_mutex);
-            Utility::copy(m_meshData->vertexData(), data);
-        }
-        vertices.unmap();
-        scene->setDirty();
-    }
-}
-
 void OptimizationContext::initializePhasefield(InitializationFlag flag)
 {
     std::default_random_engine engine(0);
@@ -123,53 +88,11 @@ void OptimizationContext::initializePhasefield(InitializationFlag flag)
     m_reupload = true;
 }
 
-bool OptimizationContext::loadMesh(std::string const& path){
-    PluginManager::Manager<Trade::AbstractImporter> manager;
-    auto importer = manager.loadAndInstantiate("AssimpImporter");
-    auto name = importer->metadata()->name();
-    fmt::print("Trying to load mesh using {}\n", name);
-    if(!importer) std::exit(1);
-
-    Debug{} << "Opening file" << path.c_str();
-
-    if(!importer->openFile(path)){
-        puts("could not open file");
-        std::exit(4);
-    }
-
-    Debug{} << "Imported " << importer->meshCount() << " meshes";
-
-    if(importer->meshCount()){
-
-        if(m_optimizationFuture.valid() && !m_optimizationFuture.isReady()){
-            m_exit = true;
-            m_optimizationFuture.wait();
-        }
-
-        m_meshData = importer->mesh(0);
-        if(!m_meshData) return false;
-        *m_meshData = preprocess(*m_meshData, CompileFlag::GenerateSmoothNormals);
-        std::tie(m_V,m_F) = toEigen(*m_meshData);
-        m_U = Eigen::VectorXd::Zero(m_V.rows());
-        m_cost->clear();
-        m_cost->emplace_back<InterfaceEnergy>("Modica Mortola", 1., m_V, m_F, m_epsilon);
-        m_cost->emplace_back<PotentialEnergy>("Modica Mortola", 1., m_V, m_F, m_epsilon);
-        m_cost->emplace_back<AreaRegularizer>("Area Regularization", 1., m_V, m_F);
-        m_cost->emplace_back<ConnectednessConstraint>("Connectedness Constraint Positive", 1., m_V, m_F, m_epsilon, m_posA, m_posB);
-        m_cost->emplace_back<ConnectednessConstraint>("Connectedness Constraint Negative", 1., m_V, m_F, m_epsilon, -m_negA, -m_negB);
-        m_problem.emplace(m_cost);
-        Debug{} << "Succeded importing mesh";
-        m_newMeshData = true;
-        return true;
-    }
-    else{
-        Debug{} << "Could not load mesh";
-        return false;
-    }
-}
-
-
 void OptimizationContext::startOptimization() {
+
+    folly::Future<folly::Unit> m_optimizationFuture;
+    folly::ThreadedExecutor m_executor;
+
     stopOptimization();
 
     if(!m_problem)
@@ -207,77 +130,14 @@ void OptimizationContext::stopOptimization() {
     }
 }
 
-template <class To, class From>
-To bit_cast(const From &src) noexcept
-{
-    To dst;
-    std::memcpy(&dst, &src, sizeof(To));
-    return dst;
-}
-
-bool OptimizationContext::saveMesh(std::string const& path) {
-    //@todo generate path if not existent
-    //@todo synchronization
-
-
-    auto* mesh = new aiMesh;
-    if(m_meshData->isIndexed()){
-        CORRADE_INTERNAL_ASSERT(m_meshData->primitive() == MeshPrimitive::Triangles);
-        auto numTriangles = m_meshData->indexCount() / 3;
-        mesh->mNumFaces = numTriangles;
-        auto faces = new aiFace[numTriangles];
-        for (std::size_t i = 0; i < numTriangles; ++i) {
-            auto indices = new unsigned int[3];
-            for (int j = 0; j < 3; ++j) {
-                indices[j] = m_F(i,j);
-            }
-            faces[i].mIndices = indices;
-            faces[i].mNumIndices = 3;
-        }
-        mesh->mFaces = faces;
-    }
-
-    auto numVertices = m_V.rows();
-    mesh->mNumVertices = numVertices;
-
-    auto vertexView = m_meshData->attribute<Vector3>(Trade::MeshAttribute::Position);
-    auto normalView = m_meshData->attribute<Vector3>(Trade::MeshAttribute::Position);
-    auto colorView = m_meshData->attribute<Color4>(Trade::MeshAttribute::Position);
-    auto vertices = new aiVector3D[m_V.rows()];
-    auto normals = new aiVector3D[m_V.rows()];
-    auto colors = new aiColor4D[m_V.rows()];
-
-    std::transform(vertexView.begin(), vertexView.end(), vertices, &bit_cast<aiVector3D, Vector3>);
-    std::transform(normalView.begin(), normalView.end(), normals, &bit_cast<aiVector3D, Vector3>);
-    std::transform(colorView.begin(), colorView.end(), colors, &bit_cast<aiColor4D, Color4>);
-
-    mesh->mColors[0] = colors;
-    mesh->mVertices = vertices;
-    mesh->mNormals = normals;
-
-    aiScene scene;
-    auto meshes = new aiMesh*;
-    meshes[0] = mesh;
-    scene.mMeshes = meshes;
-
-    Assimp::Exporter exporter;
-    auto desc = exporter.GetExportFormatDescription(0);
-    switch (exporter.Export(&scene, desc->id, path.c_str(), 0)) {
-        case aiReturn_SUCCESS : return true;
-        case aiReturn_OUTOFMEMORY : std::exit(137);
-        default : return false;
-    }
-}
 
 /**
  *
  * @todo
  *  - add color edit for phasefield vis
- *  - add save option
- *  - add options to change parameters
- *  - add options to enable/disable functionals
+ *  - add options to change epsilon
  */
-void OptimizationContext::showMenu(ImGuiIntegration::Context& context){
+void OptimizationContext::drawEvent(){
     ImGui::SetNextWindowPos({500.0f, 50.0f}, ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowBgAlpha(0.5f);
     ImGui::Begin("Options", nullptr);
@@ -318,6 +178,9 @@ void OptimizationContext::showMenu(ImGuiIntegration::Context& context){
         ImGui::DragFloatRange2("Negative Interval", &m_negA, &m_negB, .01f, -1.f, .0f, "Min: %.2f", "Max: %.2f");
         ImGui::TreePop();
     }
+
+
+    ImGui::Checkbox("Enable Brush", &m_brushEnabled);
 
     ImGui::PopItemWidth();
     ImGui::End();

@@ -14,45 +14,52 @@
 
 #include <folly/Function.h>
 
-#include <queue>
+#include <deque>
 #include <numeric>
 #include <limits>
-
-
 
 template<class R>
 class BreadthFirstSearch
 {
 public:
 
-    explicit BreadthFirstSearch(const R& adjacencyList):
+    explicit BreadthFirstSearch(const R& adjacencyList, int source):
             m_adjacencyList(adjacencyList),
             m_prev(adjacencyList.size(), -1),
             m_visited(adjacencyList.size(), false)
     {
+        m_q.push_back(source);
     }
 
-    auto run(int source)
+    bool step()
     {
-        std::queue<int> q;
-        q.push(source);
+        if(m_q.empty())
+            return false;
 
-        while(!q.empty())
-        {
-            auto v = q.front();
-            q.pop();
+        auto v = m_q.front();
+        m_q.pop_front();
 
-            for(const auto& [w, _]: m_adjacencyList[v]){
-                if(!m_visited[w]){
-                    m_prev[w] = v;
-                    m_visited[w] = true;
-                    q.push(w);
-                }
+        for(const auto& [w, _]: m_adjacencyList[v]){
+            if(!m_visited[w]){
+                m_prev[w] = v;
+                m_visited[w] = true;
+                m_q.push_back(w);
             }
         }
+        return true;
     }
 
-    bool isConnected() const {
+    auto& enqueuedVertices(){
+        return m_q;
+    }
+
+    auto run()
+    {
+        while(step())
+            ;
+    }
+
+    [[nodiscard]] bool isConnected() const {
         return std::all_of(m_visited.begin(),m_visited.end(), [](const auto& x){ return x; });
     }
 
@@ -69,5 +76,6 @@ private:
     const R& m_adjacencyList;
     std::vector<int> m_prev;
     std::vector<bool> m_visited;
+    std::deque<int> m_q;
 };
 

@@ -9,9 +9,10 @@
 #include <ceres/loss_function.h>
 #include <ceres/iteration_callback.h>
 
+#include <folly/Function.h>
 #include <memory>
 #include <vector>
-#include <folly/Function.h>
+#include <thread>
 
 struct IterationCallbackWrapper : public ceres::IterationCallback{
 

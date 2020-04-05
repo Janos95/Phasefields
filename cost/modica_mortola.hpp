@@ -30,7 +30,7 @@ private:
     const Eigen::MatrixXd& m_V;
     const Eigen::MatrixXi& m_F;
 
-    Eigen::SparseMatrix<double, Eigen::ColMajor, int> m_GSQ;
+    Eigen::SparseMatrix<double> m_GSQ;
     Eigen::VectorXd m_dblA;
 
 };

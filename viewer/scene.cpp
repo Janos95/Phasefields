@@ -3,24 +3,16 @@
 //
 
 #include "scene.hpp"
-#include "draw_callbacks.hpp"
 #include "scene_graph_node.hpp"
 
 #include <Magnum/SceneGraph/Drawable.h>
-#include <Magnum/SceneGraph/Scene.h>
-#include <Magnum/Shaders/VertexColor.h>
 #include <Magnum/Shaders/Phong.h>
 #include <Magnum/Shaders/MeshVisualizer.h>
 #include <Magnum/Shaders/Flat.h>
-#include <Magnum/Image.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/Primitives/Capsule.h>
 
-
 #include <Corrade/Utility/Algorithms.h>
-
-#include <fmt/core.h>
-#include <fmt/color.h>
 
 #include <any>
 #include <map>
@@ -34,13 +26,13 @@ struct Scene::Impl{
 
     Impl();
 
-    Object* addObject(std::string name, Object object);
+    DrawableData* addObject(std::string name, std::unique_ptr<DrawableData> object);
 
-    Object* getObject(std::string_view name);
+    DrawableData* getObject(std::string_view name);
 
-    SceneGraphNode* addNode(std::string nodeName, std::string_view objectName, ShaderType shader);
+    SceneGraphNode* addNode(std::string nodeName, SceneGraphNode*, DrawableData&, ShaderType shader);
 
-    SceneGraphNode* addNode(std::string, std::string_view, std::string_view, ShaderType);
+    SceneGraphNode* getNode(std::string_view name);
 
     void setDrawMode(std::string_view node, ShaderType shader);
 
@@ -56,50 +48,42 @@ struct Scene::Impl{
 
     SceneGraph::DrawableGroup3D m_drawableGroup;
 
-    std::map<std::string, Object, std::less<>> m_objects;
+    std::map<std::string, std::unique_ptr<DrawableData>, std::less<>> m_objects;
     std::map<std::string, SceneGraphNode*, std::less<>> m_nodes;
 
     std::map<ShaderType, std::unique_ptr<GL::AbstractShaderProgram>> m_shaders;
 };
 
-Object* Scene::Impl::addObject(
+DrawableData* Scene::Impl::addObject(
         std::string name,
-        Object object)
+        std::unique_ptr<DrawableData> object)
 {
     auto [it, inserted] = m_objects.emplace(std::move(name), std::move(object));
-    return inserted ? std::addressof(it->second) : nullptr;
+    return inserted ? it->second.get() : nullptr;
 }
 
-Object* Scene::Impl::getObject(std::string_view name){
+DrawableData* Scene::Impl::getObject(std::string_view name){
     auto it = m_objects.find(name);
     if(it == m_objects.end())
         return nullptr;
     else
-        return std::addressof(it->second);
+        return it->second.get();
 }
 
-SceneGraphNode* Scene::Impl::addNode(std::string nodeName, std::string_view objectName, ShaderType shader){
-    auto it = m_objects.find(objectName);
-    if(it == m_objects.end())
+SceneGraphNode* Scene::Impl::addNode(std::string nodeName, SceneGraphNode* parent, DrawableData& object, ShaderType shader){
+    Object3D* parentNode = parent ? static_cast<Object3D*>(parent) : &m_scene;
+    auto node = new SceneGraphNode(parentNode, &m_drawableGroup); //ownership is taking by parent node
+    m_nodes.emplace(std::move(nodeName), node);
+    node->setDrawCallback(object, m_shaders[shader].get(), shader);
+    return node;
+}
+
+SceneGraphNode* Scene::Impl::getNode(std::string_view name){
+    auto it = m_nodes.find(name);
+    if(it == m_nodes.end())
         return nullptr;
-    auto& object = it->second;
-    auto node = new SceneGraphNode(&m_scene, &m_drawableGroup); //ownership is taking by parent node
-    m_nodes.emplace(std::move(nodeName), node);
-    node->setDrawCallback(object, m_shaders[shader].get(), shader);
-    return node;
-}
-
-SceneGraphNode* Scene::Impl::addNode(
-        std::string nodeName,
-        std::string_view parentName,
-        std::string_view objectName,
-        ShaderType shader){
-    auto* parent = m_nodes.find(parentName)->second;
-    auto& object = m_objects.find(objectName)->second;
-    auto node = new SceneGraphNode(parent, &m_drawableGroup); //ownership is taking by parent node
-    m_nodes.emplace(std::move(nodeName), node);
-    node->setDrawCallback(object, m_shaders[shader].get(), shader);
-    return node;
+    else
+        return it->second;
 }
 
 void Scene::Impl::setDrawMode(std::string_view nodeName, ShaderType shader){
@@ -145,29 +129,23 @@ void Scene::setViewportSize(const Vector2i& size){
     m_impl->setViewportSize(size);
 }
 
-Object* Scene::addObject(std::string name, Object object)
-{
+DrawableData* Scene::addObject(std::string name, std::unique_ptr<DrawableData> object){
     return m_impl->addObject(std::move(name), std::move(object));
 }
 
-
-Object* Scene::getObject(std::string_view name)
-{
+DrawableData* Scene::getObject(std::string_view name){
     return m_impl->getObject(name);
 }
 
-SceneGraphNode* Scene::addNode(std::string node, std::string_view obj, ShaderType shader)
-{
-    return m_impl->addNode(std::move(node), obj, shader);
+SceneGraphNode* Scene::addNode(std::string node, SceneGraphNode* parent, DrawableData& obj, ShaderType shader){
+    return m_impl->addNode(std::move(node), parent, obj, shader);
 }
 
-SceneGraphNode* Scene::addNode(std::string node, std::string_view par, std::string_view obj, ShaderType shader)
-{
-    return m_impl->addNode(std::move(node), par, obj, shader);
+SceneGraphNode* Scene::getNode(std::string_view name){
+    return m_impl->getNode(name);
 }
 
-void Scene::setDrawMode(std::string_view node, ShaderType shader)
-{
+void Scene::setDrawMode(std::string_view node, ShaderType shader){
    m_impl->setDrawMode(node, shader);
 }
 

@@ -150,8 +150,6 @@ namespace {
 
         ScopedTimer t("Connectedness", true);
 
-        fmt::print("Interval ({}, {})\n", m_a, m_b);
-
         F weight(m_a, m_b);
         FGrad weightGrad(m_a, m_b);
         W bump(m_a, m_b);

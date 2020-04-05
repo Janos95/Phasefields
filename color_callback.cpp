@@ -4,7 +4,7 @@
 #include "color_callback.hpp"
 #include "colormaps.hpp"
 
-#include "object.hpp"
+#include "drawable_data.hpp"
 #include "scene.hpp"
 
 #include <Eigen/Core>
