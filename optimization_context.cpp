@@ -48,86 +48,86 @@ OptimizationContext::OptimizationContext():
         .minimizer_progress_to_stdout = true,
         .update_state_every_iteration = true,
         .callbacks = {&m_optimizationCallback}},
-    m_cost(new SumProblem()),
-    m_inputPath(100),
-    m_outputPath(100)
+    m_cost(new SumProblem())
+    //m_inputPath(100),
+    //m_outputPath(100)
 {
-    std::string defaultPath = "/home/janos/data/spot.ply";
-    std::copy(defaultPath.begin(), defaultPath.end(), m_inputPath.begin());
+    //std::string defaultPath = "/home/janos/data/spot.ply";
+    //std::copy(defaultPath.begin(), defaultPath.end(), m_inputPath.begin());
 }
 
 ceres::CallbackReturnType OptimizationContext::optimizationCallback(ceres::IterationSummary const&){
-    bool exit = true;
-    if(m_exit.compare_exchange_strong(exit, false)){
-        return ceres::SOLVER_TERMINATE_SUCCESSFULLY;
-    }
+    //bool exit = true;
+    //if(m_exit.compare_exchange_strong(exit, false)){
+    //    return ceres::SOLVER_TERMINATE_SUCCESSFULLY;
+    //}
 
-    {
-        std::lock_guard l(m_mutex);
-        auto colorView = m_meshData->mutableAttribute<Color4>(Trade::MeshAttribute::Color);
-        std::transform(m_U.begin(), m_U.end(), colorView.begin(), JetColorMap{});
-    }
+    //{
+    //    std::lock_guard l(m_mutex);
+    //    auto colorView = m_meshData->mutableAttribute<Color4>(Trade::MeshAttribute::Color);
+    //    std::transform(m_U.begin(), m_U.end(), colorView.begin(), JetColorMap{});
+    //}
 
-    m_reupload = true;
-    return ceres::SOLVER_CONTINUE;
+    //m_reupload = true;
+    //return ceres::SOLVER_CONTINUE;
 }
 
 void OptimizationContext::initializePhasefield(InitializationFlag flag)
 {
-    std::default_random_engine engine(0);
-    std::normal_distribution distr(.0, .1);
+    //std::default_random_engine engine(0);
+    //std::normal_distribution distr(.0, .1);
 
-    if(m_optimizationFuture.valid() && !m_optimizationFuture.isReady()){
-        m_exit = true;
-        m_optimizationFuture.wait();
-    }
+    //if(m_optimizationFuture.valid() && !m_optimizationFuture.isReady()){
+    //    m_exit = true;
+    //    m_optimizationFuture.wait();
+    //}
 
-    for(auto& u: m_U) u = distr(engine);
-    auto colorView = m_meshData->mutableAttribute<Color4>(Trade::MeshAttribute::Color);
-    std::transform(m_U.begin(), m_U.end(), colorView.begin(), JetColorMap{});
-    m_reupload = true;
+    //for(auto& u: m_U) u = distr(engine);
+    //auto colorView = m_meshData->mutableAttribute<Color4>(Trade::MeshAttribute::Color);
+    //std::transform(m_U.begin(), m_U.end(), colorView.begin(), JetColorMap{});
+    //m_reupload = true;
 }
 
 void OptimizationContext::startOptimization() {
 
-    folly::Future<folly::Unit> m_optimizationFuture;
-    folly::ThreadedExecutor m_executor;
+    //folly::Future<folly::Unit> m_optimizationFuture;
+    //folly::ThreadedExecutor m_executor;
 
-    stopOptimization();
+    //stopOptimization();
 
-    if(!m_problem)
-        return;
+    //if(!m_problem)
+    //    return;
 
-    fmt::print("Optimizing the following functionals for "
-               "a maximum of {} iterations: \n", m_options.max_num_iterations);
-    for(auto const& [name, w] : m_checkBoxes){
-        m_cost->setWeight(name, w);
-        if(w){
-            fmt::print("{}\n",name);
-        }
-    }
+    //fmt::print("Optimizing the following functionals for "
+    //           "a maximum of {} iterations: \n", m_options.max_num_iterations);
+    //for(auto const& [name, w] : m_checkBoxes){
+    //    m_cost->setWeight(name, w);
+    //    if(w){
+    //        fmt::print("{}\n",name);
+    //    }
+    //}
 
-    m_cost->visit("Connectedness Constraint Positive",[=](auto& p ){ auto ptr = p.get(); dynamic_cast<ConnectednessConstraint*>(ptr)->setPreimageInterval(m_posA, m_posB); });
-    m_cost->visit("Connectedness Constraint Negative",[=](auto& p ){ auto ptr = p.get(); dynamic_cast<ConnectednessConstraint*>(ptr)->setPreimageInterval(m_negA, m_negB); });
+    //m_cost->visit("Connectedness Constraint Positive",[=](auto& p ){ auto ptr = p.get(); dynamic_cast<ConnectednessConstraint*>(ptr)->setPreimageInterval(m_posA, m_posB); });
+    //m_cost->visit("Connectedness Constraint Negative",[=](auto& p ){ auto ptr = p.get(); dynamic_cast<ConnectednessConstraint*>(ptr)->setPreimageInterval(m_negA, m_negB); });
 
-    m_optimizationFuture = folly::makeSemiFuture().via(&m_executor).thenValue(
-            [this](auto&&){
-                ceres::GradientProblemSolver::Options options;
-                {
-                    std::lock_guard l(m_mutex);
-                    options = m_options;
-                }
+    //m_optimizationFuture = folly::makeSemiFuture().via(&m_executor).thenValue(
+    //        [this](auto&&){
+    //            ceres::GradientProblemSolver::Options options;
+    //            {
+    //                std::lock_guard l(m_mutex);
+    //                options = m_options;
+    //            }
 
-                ceres::GradientProblemSolver::Summary summary;
-                ceres::Solve(options, *m_problem, m_U.data(), &summary);
-            });
+    //            ceres::GradientProblemSolver::Summary summary;
+    //            ceres::Solve(options, *m_problem, m_U.data(), &summary);
+    //        });
 }
 
 void OptimizationContext::stopOptimization() {
-    if(m_optimizationFuture.valid() && !m_optimizationFuture.isReady()){
-        m_exit = true;
-        m_optimizationFuture.wait();
-    }
+    //if(m_optimizationFuture.valid() && !m_optimizationFuture.isReady()){
+    //    m_exit = true;
+    //    m_optimizationFuture.wait();
+    //}
 }
 
 
@@ -137,58 +137,55 @@ void OptimizationContext::stopOptimization() {
  *  - add color edit for phasefield vis
  *  - add options to change epsilon
  */
-void OptimizationContext::drawEvent(){
-    ImGui::SetNextWindowPos({500.0f, 50.0f}, ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowBgAlpha(0.5f);
-    ImGui::Begin("Options", nullptr);
-    ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.6f);
+void OptimizationContext::drawImGui(){
+    //ImGui::SetNextWindowPos({500.0f, 50.0f}, ImGuiCond_FirstUseEver);
+    //ImGui::SetNextWindowBgAlpha(0.5f);
+    //ImGui::Begin("Options", nullptr);
+    //ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.6f);
 
 
-    ImGui::InputText("mesh path", m_inputPath.data(), m_inputPath.size());
-    if(ImGui::Button("load mesh")){
-        loadMesh(std::string{m_inputPath.begin(),std::find(m_inputPath.begin(), m_inputPath.end(), '\0')});
-    }
+    //ImGui::InputText("mesh path", m_inputPath.data(), m_inputPath.size());
+    //if(ImGui::Button("load mesh")){
+    //    loadMesh(std::string{m_inputPath.begin(),std::find(m_inputPath.begin(), m_inputPath.end(), '\0')});
+    //}
 
 
-    if(ImGui::Button("reset phasefield")){
-        initializePhasefield(InitializationFlag::RandomNormal);
-    }
+    //if(ImGui::Button("reset phasefield")){
+    //    initializePhasefield(InitializationFlag::RandomNormal);
+    //}
 
-    if (ImGui::Button("optimize")){
-        startOptimization();
-    }
+    //if (ImGui::Button("optimize")){
+    //    startOptimization();
+    //}
 
-    static std::uint32_t iterations = 100;
-    constexpr static std::uint32_t step = 1;
-    std::uint32_t old = iterations;
-    ImGui::InputScalar("iterations", ImGuiDataType_U32, &iterations, &step, nullptr, "%u");
-    if(old != iterations){
-        std::lock_guard l(m_mutex);
-        m_options.max_num_iterations = static_cast<int>(iterations);
-    }
+    //static std::uint32_t iterations = 100;
+    //constexpr static std::uint32_t step = 1;
+    //std::uint32_t old = iterations;
+    //ImGui::InputScalar("iterations", ImGuiDataType_U32, &iterations, &step, nullptr, "%u");
+    //if(old != iterations){
+    //    std::lock_guard l(m_mutex);
+    //    m_options.max_num_iterations = static_cast<int>(iterations);
+    //}
 
-    for(auto& [name, w] : m_checkBoxes){
-        constexpr static double lower = 0., upper = 1.;
-        ImGui::SliderScalar(name.c_str(), ImGuiDataType_Double, &w, &lower, &upper, "%.5f", 1.0f);
-    }
+    //for(auto& [name, w] : m_checkBoxes){
+    //    constexpr static double lower = 0., upper = 1.;
+    //    ImGui::SliderScalar(name.c_str(), ImGuiDataType_Double, &w, &lower, &upper, "%.5f", 1.0f);
+    //}
 
-    if (ImGui::TreeNode("Preimage Intervals"))
-    {
-        ImGui::DragFloatRange2("Positive Interval", &m_posA, &m_posB, .01f, .0f, 1.f, "Min: %.2f", "Max: %.2f");
-        ImGui::DragFloatRange2("Negative Interval", &m_negA, &m_negB, .01f, -1.f, .0f, "Min: %.2f", "Max: %.2f");
-        ImGui::TreePop();
-    }
+    //if (ImGui::TreeNode("Preimage Intervals"))
+    //{
+    //    ImGui::DragFloatRange2("Positive Interval", &m_posA, &m_posB, .01f, .0f, 1.f, "Min: %.2f", "Max: %.2f");
+    //    ImGui::DragFloatRange2("Negative Interval", &m_negA, &m_negB, .01f, -1.f, .0f, "Min: %.2f", "Max: %.2f");
+    //    ImGui::TreePop();
+    //}
 
-
-    ImGui::Checkbox("Enable Brush", &m_brushEnabled);
-
-    ImGui::PopItemWidth();
-    ImGui::End();
+    //ImGui::PopItemWidth();
+    //ImGui::End();
 }
 
 OptimizationContext::~OptimizationContext(){
-    if(m_optimizationFuture.valid() && !m_optimizationFuture.isReady()){
-        m_exit = true;
-        m_optimizationFuture.wait();
-    }
+    //if(m_optimizationFuture.valid() && !m_optimizationFuture.isReady()){
+    //    m_exit = true;
+    //    m_optimizationFuture.wait();
+    //}
 }

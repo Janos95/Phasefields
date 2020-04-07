@@ -6,7 +6,6 @@
 
 #include "viewer.hpp"
 #include "problem.hpp"
-#include "ray_mesh_intersection.hpp"
 
 #include <Magnum/ImGuiIntegration/Context.h>
 
@@ -24,7 +23,7 @@ public:
     OptimizationContext();
     ~OptimizationContext();
 
-    void drawEvent() override;
+    void drawImGui() override;
 
     void startOptimization();
     void stopOptimization();

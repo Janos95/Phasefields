@@ -14,7 +14,7 @@ find_package(OpenMesh CONFIG REQUIRED)
 find_package(OpenMP CONFIG)
 find_package(libigl CONFIG REQUIRED)
 find_package(Corrade CONFIG REQUIRED PluginManager Containers TestSuite)
-find_package(Magnum CONFIG REQUIRED GL SceneGraph MeshTools Sdl2Application Shaders Primitives)
+find_package(Magnum CONFIG REQUIRED GL SceneGraph MeshTools Sdl2Application Shaders Primitives DebugTools)
 find_package(MagnumPlugins CONFIG REQUIRED AssimpImporter)
 find_package(MagnumIntegration CONFIG REQUIRED ImGui Eigen)
 find_package(Boost CONFIG REQUIRED)
@@ -38,9 +38,6 @@ pkg_check_modules(Ipopt REQUIRED IMPORTED_TARGET ipopt)
 
 add_executable(segmentation
         main.cpp
-        color_callback.hpp
-        my_configurator.hpp
-        color_callback.cpp
         optimization_context.cpp
         optimization_context.hpp
         colormaps.hpp
@@ -55,6 +52,8 @@ add_executable(segmentation
         mesh_io.hpp
         primitives.cpp
         primitives.hpp
+        shader_options.hpp
+        shader_options.cpp
         phasefield_data.hpp)
 
 target_link_libraries(segmentation PRIVATE

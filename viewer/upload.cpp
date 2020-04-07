@@ -4,6 +4,8 @@
 
 #include "upload.hpp"
 
+#include <Corrade/Containers/GrowableArray.h>
+
 #include <Magnum/GL/TextureFormat.h>
 #include <Magnum/GL/Sampler.h>
 #include <Magnum/MeshTools/Compile.h>
@@ -19,7 +21,10 @@ using namespace Corrade;
 
 
 void upload(DrawableData& drawableData) {
-    auto& [vertices, indices, mesh, meshData] = drawableData;
+    auto& vertices = drawableData.vertices;
+    auto& indices = drawableData.indices;
+    auto& mesh = drawableData.mesh;
+    auto& meshData = drawableData.meshData;
 
     vertices.setData(meshData.vertexData());
     indices.setData(meshData.indexData());
@@ -98,42 +103,45 @@ void upload(DrawableData& drawableData) {
 }
 
 
-Trade::MeshData preprocess(Trade::MeshData& meshData, CompileFlag flags) {
+Trade::MeshData preprocess(Trade::MeshData const& meshData, CompileFlags flags) {
 
     CORRADE_INTERNAL_ASSERT(meshData.primitive() == MeshPrimitive::Triangles);
     CORRADE_INTERNAL_ASSERT(meshData.attributeCount(Trade::MeshAttribute::Position));
     /* This could fire if we have 2D positions or for packed formats */
     CORRADE_INTERNAL_ASSERT(meshData.attributeFormat(Trade::MeshAttribute::Position) == VertexFormat::Vector3);
 
-    /* If the data already have a normal array, reuse its location,
+    /* If the data already has the necessary attribute array, reuse its location,
        otherwise mix in an extra one */
-    Trade::MeshAttributeData normalAttribute;
-    Containers::ArrayView<const Trade::MeshAttributeData> extra;
-    if (!meshData.hasAttribute(Trade::MeshAttribute::Normal)) {
-        normalAttribute = Trade::MeshAttributeData{
-                Trade::MeshAttribute::Normal, VertexFormat::Vector3,
-                nullptr};
-        extra = {&normalAttribute, 1};
-        /* If we reuse a normal location, expect correct type */
-    } else
-        CORRADE_INTERNAL_ASSERT(meshData.attributeFormat(Trade::MeshAttribute::Normal) == VertexFormat::Vector3);
+    Containers::Array<Trade::MeshAttributeData> extra;
+
+    using L = std::initializer_list<std::tuple<CompileFlags, VertexFormat, Trade::MeshAttribute>>;
+    for(auto&& [flag, format, attribute] : L{
+        {CompileFlag::AddNormalAttribute|CompileFlag::GenerateFlatNormals|CompileFlag::GenerateSmoothNormals, VertexFormat::Vector3, Trade::MeshAttribute::Normal},
+        {CompileFlag::AddColorAttribute, VertexFormat::Vector4, Trade::MeshAttribute::Color},
+        {CompileFlag::AddTextureCoordinates, VertexFormat::Vector2, Trade::MeshAttribute::TextureCoordinates}})
+    {
+        if (flags & flag && !meshData.hasAttribute(attribute)) {
+            Containers::arrayAppend(extra, Trade::MeshAttributeData{attribute, format, nullptr});
+            /* If we reuse the attribute location, expect correct type */
+        } else if(flags & flag)
+            CORRADE_INTERNAL_ASSERT(meshData.attributeFormat(attribute) == format);
+    }
 
     /* If we want flat normals, we need to first duplicate everything using
        the index buffer. Otherwise just interleave the potential extra
-       normal attribute in. */
+       attributes in. */
     Trade::MeshData generated{MeshPrimitive::Points, 0};
     if (flags & CompileFlag::GenerateFlatNormals && meshData.isIndexed())
         generated = MeshTools::duplicate(meshData, extra);
     else
         generated = MeshTools::interleave(meshData, extra);
 
-    /* Generate the normals. If we don't have the index buffer, we can only
-       generate flat ones. */
-    if (flags & CompileFlag::GenerateFlatNormals || !meshData.isIndexed())
+    /* Generate the normals. @todo what if mesh is not indexed?*/
+    if (flags & CompileFlag::GenerateFlatNormals)
         MeshTools::generateFlatNormalsInto(
                 generated.attribute<Vector3>(Trade::MeshAttribute::Position),
                 generated.mutableAttribute<Vector3>(Trade::MeshAttribute::Normal));
-    else
+    else if(flags & CompileFlag::GenerateSmoothNormals)
         MeshTools::generateSmoothNormalsInto(generated.indices(),
                                              generated.attribute<Vector3>(Trade::MeshAttribute::Position),
                                              generated.mutableAttribute<Vector3>(Trade::MeshAttribute::Normal));

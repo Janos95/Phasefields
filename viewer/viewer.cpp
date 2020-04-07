@@ -67,7 +67,7 @@ Viewer::Viewer(int argc, char** argv):
     setSwapInterval(1);
     setMinimalLoopPeriod(16);
 }
-
+#include <iostream>
 Viewer& Viewer::init(){
     CORRADE_INTERNAL_ASSERT(m_scene);
     m_scene->setViewportSize(framebufferSize());
@@ -75,6 +75,7 @@ Viewer& Viewer::init(){
     const Vector3 eye = Vector3::zAxis(-10.0f);
     const Vector3 center{};
     const Vector3 up = Vector3::yAxis();
+    std::cout << "root of camera " << &(m_scene->root()) << std::endl;
     m_camera.emplace(m_scene->root(), eye, center, up, 45.0_degf,
                      windowSize(), framebufferSize());
     return *this;
@@ -84,9 +85,11 @@ Viewer& Viewer::init(){
 void Viewer::viewportEvent(ViewportEvent& event) {
     GL::defaultFramebuffer.setViewport({{}, event.framebufferSize()});
     if(m_scene){
-        m_camera->reshape(event.windowSize(), event.framebufferSize());
+        if(m_camera)
+            m_camera->reshape(event.windowSize(), event.framebufferSize());
         m_scene->setViewportSize(event.framebufferSize());
     }
+
 
     for (auto const& eventCB : m_eventCallbacks)
         eventCB->viewportEvent(event, *this);
@@ -211,7 +214,6 @@ void Viewer::mouseMoveEvent(MouseMoveEvent& event) {
         return;
     }
 
-
     for (auto const& eventCB : m_eventCallbacks) {
         eventCB->mouseMoveEvent(event, *this);
         if(event.isAccepted())
@@ -254,12 +256,15 @@ void Viewer::mouseScrollEvent(MouseScrollEvent& event) {
 
 void Viewer::tickEvent()
 {
-    for(auto& eventCB : m_eventCallbacks)
-        eventCB->tickEvent(m_scene);
-    if(m_scene && !m_camera) init();
-    if(m_scene && m_scene->isDirty()){
-        m_scene->setClean();
-        redraw();
+    if(m_scene){
+        for(auto& eventCB : m_eventCallbacks)
+            eventCB->tickEvent(*m_scene);
+        if(m_scene->isDirty()){
+            if(!m_camera)
+                init();
+            m_scene->setClean();
+            redraw();
+        }
     }
 }
 
@@ -274,7 +279,7 @@ void Viewer::drawEvent() {
         stopTextInput();
 
     /* draw scene */
-    if(m_scene){
+    if(m_camera){
         bool camChanged = m_camera->update();
         m_camera->draw(m_scene->drawables());
     }

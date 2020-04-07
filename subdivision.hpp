@@ -8,14 +8,22 @@
 #include "viewer.hpp"
 
 class Subdivision : public Viewer::AbstractEventHandler {
-
-    PhasefieldData* m_phasefieldData;
-    int m_numFaces;
-    int m_numVertices;
+    PhasefieldData& m_phasefieldData;
+    int m_numFaces = 0;
+    int m_numVertices = 0;
 
 public:
 
-    void drawEvent() override;
+    explicit Subdivision(PhasefieldData& data): m_phasefieldData(data) {}
+    void drawImGui() override;
+    void tickEvent(Scene&){
+        switch(m_phasefieldData.status){
+            case PhasefieldData::Status::NewMesh:
+                m_numVertices = m_phasefieldData.original.vertexCount();
+                m_numFaces = m_phasefieldData.original.indexCount();
+                return;
+        }
+    }
     void subdivide(int);
 };
 

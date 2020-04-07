@@ -5,6 +5,7 @@
 #pragma once
 
 #include "drawable_data.hpp"
+#include "drawables.hpp"
 
 #include <Magnum/SceneGraph/RigidMatrixTransformation3D.h>
 #include <Magnum/SceneGraph/Object.h>
@@ -12,37 +13,21 @@
 #include <Magnum/Trade/MeshData.h>
 
 #include <memory>
+#include <map>
 
 using Object3D = Magnum::SceneGraph::Object<Magnum::SceneGraph::RigidMatrixTransformation3D>;
 using Scene3D = Magnum::SceneGraph::Scene<Magnum::SceneGraph::RigidMatrixTransformation3D>;
-
-class SceneGraphNode;
-
-enum class ShaderType : Magnum::UnsignedShort {
-    Flat = 1,
-    FlatTextured = 2,
-    VertexColor = 3,
-    MeshVisualizer = 4,
-    Phong = 5,
-};
 
 class Scene {
 public:
 
     Scene();
-    ~Scene();
 
-    DrawableData* addObject(std::string name, std::unique_ptr<DrawableData> object);
+    Drawable* addNode(std::string nodeName, Object&, DrawableType shader);
 
-    DrawableData* getObject(std::string_view name);
+    Drawable* setDrawableType(std::string_view nodeName, DrawableType type);
 
-    SceneGraphNode* addNode(std::string nodeName, SceneGraphNode*, DrawableData&, ShaderType shader);
-
-    SceneGraphNode* getNode(std::string_view name);
-
-    void setDrawMode(std::string_view node, ShaderType shader);
-
-    void reset();
+    Object* getNode(std::string_view name);
 
     [[nodiscard]] bool isDirty() const { return m_dirty; }
     void setClean() { m_dirty = false; }
@@ -55,9 +40,13 @@ public:
     void setViewportSize(const Magnum::Vector2i& size);
 
 private:
-    bool m_dirty;
+    bool m_dirty = false;
 
-    //pimpl away map
-    struct Impl;
-    std::unique_ptr<Impl> m_impl;
+    Scene3D m_scene;
+
+    Magnum::SceneGraph::DrawableGroup3D m_drawableGroup;
+
+    std::map<std::string, Object*, std::less<>> m_nodes;
+
+    std::vector<std::unique_ptr<Magnum::GL::AbstractShaderProgram>> m_shaders;
 };

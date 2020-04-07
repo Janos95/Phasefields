@@ -15,22 +15,25 @@ void Subdivision::subdivide(int numSubdivisions) {
     Containers::Array<UnsignedInt> faces;
     Containers::Array<Vector3> vertices;
     {
-        std::lock_guard l(m_phasefieldData->mutex);
-        faces = m_phasefieldData->original.indicesAsArray();
-        vertices = m_phasefieldData->original.positions3DAsArray();
+        std::lock_guard l(m_phasefieldData.mutex);
+        faces = m_phasefieldData.original.indicesAsArray();
+        vertices = m_phasefieldData.original.positions3DAsArray();
     }
 
     while(numSubdivisions--)
         MeshTools::subdivide(faces,vertices,[](auto const& v1, auto const& v2){ return .5 * (v1 + v2); });
 
+    m_numFaces = faces.size() / 3;
+    m_numVertices = vertices.size();
+
     {
-        std::lock_guard l(m_phasefieldData->mutex);
-        m_phasefieldData->vertices = std::move(vertices);
-        m_phasefieldData->faces = std::move(faces);
+        std::lock_guard l(m_phasefieldData.mutex);
+        m_phasefieldData.V = std::move(vertices);
+        m_phasefieldData.F = std::move(faces);
     }
 }
 
-void Subdivision::drawEvent() {
+void Subdivision::drawImGui(){
     if (ImGui::TreeNode("Subdivisions"))
     {
         ImGui::Text("Currently we have %d vertices and %d faces", m_numVertices, m_numFaces);

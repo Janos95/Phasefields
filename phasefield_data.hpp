@@ -5,6 +5,7 @@
 #pragma once
 
 #include "drawable_data.hpp"
+#include "drawables.hpp"
 
 #include <Corrade/Containers/Array.h>
 
@@ -13,18 +14,21 @@
 
 #include <mutex>
 
-struct PhasefieldData : DrawableData {
+struct PhasefieldData : ColorMapDrawableData {
 
     enum class Status: Magnum::UnsignedShort {
+        NothingChanged,
         NewMesh,
         Subdivided,
         PhasefieldUpdated
     };
 
-    Corrade::Containers::Array<Magnum::Vector3d> vertices;
-    Corrade::Containers::Array<Int> faces;
+    Corrade::Containers::Array<Magnum::Vector3> V;
+    Corrade::Containers::Array<Magnum::UnsignedInt> F;
     Corrade::Containers::Array<double> phasefield;
-    Magnum::Trade::MeshData original;
-    Status status;
+    Magnum::Trade::MeshData original{Magnum::MeshPrimitive::Points, 0};
+    Status status = Status::NothingChanged;
+    Drawable* drawable = nullptr;
+    DrawableType type;
     std::mutex mutex;
 };

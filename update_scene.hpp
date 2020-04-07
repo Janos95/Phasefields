@@ -10,16 +10,19 @@
 
 struct UpdateScene : public Viewer::AbstractEventHandler {
 
+    explicit UpdateScene(PhasefieldData& data): phasefieldData(data) {}
+
     PhasefieldData& phasefieldData;
 
-    void tickEvent(Scene& scene) override;
+    void tickEvent(Scene&scene) override;
 
     void makeScene(Scene& scene);
 
-    void reuploadVertices(Scene& scene);
+    void reuploadVertices();
 
-    void uploadIndices(Scene& scene);
+    void reuploadIndices();
 
+    void reupload();
 };
 
 

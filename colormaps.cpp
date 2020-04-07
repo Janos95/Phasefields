@@ -6,42 +6,60 @@
 
 #include <Magnum/Math/Color.h>
 #include <Magnum/Magnum.h>
+#include <Magnum/DebugTools/ColorMap.h>
+#include <Magnum/GL/TextureFormat.h>
+#include <Magnum/PixelFormat.h>
+#include <Magnum/ImageView.h>
 
-#include <algorithm> //thats ridiculous
+
+#include <imgui.h>
 
 using namespace Magnum;
 
-namespace {
 
-    float jet_colormap_red(float x) {
-        if (x < 0.7f) {
-            return 4.0f * x - 1.5f;
-        } else {
-            return -4.0f * x + 4.5f;
-        }
+ColorMap::ColorMap(PhasefieldData &data):
+    phasefieldData(data),
+    map{
+            {"Turbo", ColorMapType::Turbo},
+            {"Magma", ColorMapType::Magma},
+            {"Plasma", ColorMapType::Plasma},
+            {"Inferno", ColorMapType::Inferno},
+            {"Viridis", ColorMapType::Viridis}
     }
+{
+    current = map.begin();
+}
 
-    float jet_colormap_green(float x) {
-        if (x < 0.5f) {
-            return 4.0f * x - 0.5f;
-        } else {
-            return -4.0f * x + 3.5f;
-        }
-    }
+void ColorMap::drawImGui(){
+    if (ImGui::TreeNode("Color Maps"))
+    {
+        if (ImGui::BeginCombo("##combo", current->name.data())) {
+            for (auto it = map.begin(); it < map.end(); ++it){
+                bool isSelected = (current == it); // You can store your selection however you want, outside or inside your objects
+                if (ImGui::Selectable(it->name.c_str(), isSelected)){
+                    auto drawable = phasefieldData.drawable;
+                    auto type = phasefieldData.type;
+                    if(drawable && it != current && type == DrawableType::ColorMapPhong){
+                        current = it;
+                        switch(phasefieldData.type){
+                            case DrawableType::ColorMapPhong :
+                                dynamic_cast<ColorMapPhongDrawable*>(drawable)->setColorMapping(current->type);
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
 
-    float jet_colormap_blue(float x) {
-        if (x < 0.3f) {
-            return 4.0f * x + 0.5f;
-        } else {
-            return -4.0f * x + 2.5f;
+                if (isSelected)
+                    ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+            }
+            //@todo imgui display image of colormap
+            ImGui::EndCombo();
         }
+
+        ImGui::TreePop();
     }
 }
 
-Color4 JetColorMap::operator()(double x) {
-    float r = std::clamp(jet_colormap_red(x), 0.0f, 1.0f);
-    float g = std::clamp(jet_colormap_green(x), 0.0f, 1.0f);
-    float b = std::clamp(jet_colormap_blue(x), 0.0f, 1.0f);
-    return Color4(r, g, b, 1.0f);
-}
 

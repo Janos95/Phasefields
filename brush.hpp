@@ -9,15 +9,17 @@
 
 #include <Eigen/SparseCore>
 
+
 struct TriangleMeshAdjacencyList
 {
     using graph_type = Eigen::SparseMatrix<int>;
     using sparse_iterator_type = typename graph_type::InnerIterator;
     graph_type graph;
-
-    TriangleMeshAdjacencyList(Containers::ArrayView<Vector3d> vertices, Containers::ArrayView<Vector3i> faces):
+    TriangleMeshAdjacencyList() = default;
+    TriangleMeshAdjacencyList(Containers::ArrayView<Vector3> vertices, Containers::ArrayView<UnsignedInt> indices):
             graph(vertices.size(), vertices.size())
     {
+        auto faces = Containers::arrayCast<Vector3ui>(indices);
         std::vector<Eigen::Triplet<int>> triplets;
         for(auto const& face : faces){
             for (int j = 0; j < 3; ++j) {
@@ -30,52 +32,66 @@ struct TriangleMeshAdjacencyList
         graph.makeCompressed();
     }
 
-    auto operator[](int vertexId){
-        return VertexRange{Iterator{graph, vertexId}, Iterator{graph, vertexId /*@todo */}};
+    auto operator[](int vertexId) const{
+        return VertexRange{
+                    Iterator{graph.valuePtr(), graph.innerIndexPtr(), graph.outerIndexPtr()[vertexId]},
+                    Iterator{graph.valuePtr(), graph.innerIndexPtr(), graph.outerIndexPtr()[vertexId + 1]}
+                };
     }
 
-    struct Iterator : public sparse_iterator_type {
-        bool operator !=(Iterator const& other){
-            //@todo
+    [[nodiscard]] auto size() const { return graph.rows();}
+
+    struct Iterator {
+        Iterator& operator++() {
+            ++idx;
+            return *this;
         }
 
-        auto operator*(){
-            return std::pair(this->row(), this->value());
+        bool operator !=(Iterator const& other) const {
+            return idx != other.idx;
         }
+
+        auto operator*() const {
+            return std::pair(rows[idx], values[idx]);
+        }
+
+        int const* values;
+        int const* rows;
+        int idx;
     };
 
     struct VertexRange{
         Iterator m_begin, m_end;
-        auto begin() { return m_begin; }
-        auto end() { return m_end; }
+        [[nodiscard]] auto begin() const { return m_begin; }
+        [[nodiscard]] auto end() const { return m_end; }
     };
 };
 
 class Brush : public Viewer::AbstractEventHandler {
-
+public:
     using duration_type = std::chrono::duration<double>;
 
     void paint(Magnum::UnsignedInt vertexIndex, duration_type dur);
 
-    Brush(PhasefieldData* data):
-        m_phasefieldData(data),
-        m_adjacencyList(data->vertices, data->faces)
-    {
-    }
+    explicit Brush(PhasefieldData& data);
 
-    bool mousePressEvent(Viewer::MouseEvent& event, Viewer&) override;
-    bool mouseMoveEvent(Viewer::MouseMoveEvent& event, Viewer&) override;
-    bool mouseReleaseEvent(Viewer::MouseEvent& event, Viewer&) override;
+    void mousePressEvent(Viewer::MouseEvent& event, Viewer&) override;
+    void mouseMoveEvent(Viewer::MouseMoveEvent& event, Viewer&) override;
+    void mouseReleaseEvent(Viewer::MouseEvent& event, Viewer&) override;
     void drawImGui() override;
+    void tickEvent(Scene&) override;
 
-    PhasefieldData* m_phasefieldData;
+
+private:
+    PhasefieldData& m_phasefieldData;
 
     TriangleMeshAdjacencyList m_adjacencyList;
-    Magnum::UnsignedInt m_speed;
+    Magnum::UnsignedInt m_speed = 1;
     float m_phase = 0;
-    Vector2i m_position;
-    std::atomic_bool m_tracking = false;
-    std::mutex m_mutex;
+    int m_brushing = 0;
+    Vector2i m_position{};
+    bool m_tracking = false;
+    //std::mutex m_mutex;
 };
 
 

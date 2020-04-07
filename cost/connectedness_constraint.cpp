@@ -129,8 +129,8 @@ namespace {
         m_areas *= 0.5;
 
 #ifndef NODEBUG
-        BreadthFirstSearch bfs(m_adjacencyList);
-        bfs.run(0);
+        BreadthFirstSearch bfs(m_adjacencyList, 0);
+        bfs.run();
         CORRADE_INTERNAL_ASSERT(bfs.isConnected());
 #endif
     }

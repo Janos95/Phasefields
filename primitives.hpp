@@ -15,10 +15,11 @@ enum class PrimitiveType: Magnum::UnsignedShort {
 
 Magnum::Trade::MeshData uShapedSquare();
 
-class LoadPrimitives : Viewer::AbstractEventHandler {
-    PhasefieldData* m_phasefieldData = nullptr;
+struct LoadPrimitives : Viewer::AbstractEventHandler {
+    PhasefieldData& phasefieldData;
+    bool track = false;
 
-public:
+    explicit LoadPrimitives(PhasefieldData& data): phasefieldData(data) {}
 
     struct AbstractPrimitiveOptions { virtual ~AbstractPrimitiveOptions() = default; };
 
@@ -29,10 +30,11 @@ public:
     };
 
     struct CapsuleOptions : AbstractPrimitiveOptions {
-        int hemisphereRings = 1; //	Number of (face) rings for each hemisphere. Must be larger or equal to 1.
-        int cylinderRings = 1; // 	Number of (face) rings for cylinder. Must be larger or equal to 1.
-        int segments = 3; //	Number of (face) segments. Must be larger or equal to 3.
-        float halfLength = 1.; //	Half the length of cylinder part
+        std::uint32_t hemisphereRings = 30; //	Number of (face) rings for each hemisphere. Must be larger or equal to 1.
+        std::uint32_t cylinderRings = 30; // 	Number of (face) rings for cylinder. Must be larger or equal to 1.
+        std::uint32_t segments = 30; //	Number of (face) segments. Must be larger or equal to 3.
+        float radius = 1.f;
+        float length = 2.f;
     };
 
     struct UOptions : AbstractPrimitiveOptions {

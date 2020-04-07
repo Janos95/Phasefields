@@ -100,9 +100,9 @@ namespace {
 
         void compareToBfs(){
             Dijkstra dijk(g3);
-            BreadthFirstSearch bfs(g3);
+            BreadthFirstSearch bfs(g3, 0);
             dijk.run(0, {});
-            bfs.run(0);
+            bfs.run();
             for (int i = 1; i < 7; ++i) {
                 auto r1 = dijk.getShortestPathReversed(0, i);
                 auto r2 = bfs.getShortestPathReversed(0, i);

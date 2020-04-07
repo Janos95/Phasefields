@@ -5,8 +5,6 @@ corrade_add_resource(viewer_RESOURCES resources.conf)
 add_library(viewer SHARED
         viewer.cpp
         viewer.hpp
-        scene_graph_node.cpp
-        scene_graph_node.hpp
         arc_ball.cpp
         arc_ball.hpp
         arc_ball_camera.hpp
@@ -16,8 +14,8 @@ add_library(viewer SHARED
         camera.hpp
         upload.cpp
         upload.hpp
-        draw_callbacks.cpp
-        draw_callbacks.hpp
+        drawables.cpp
+        drawables.hpp
         ${viewer_RESOURCES})
 
 target_include_directories(viewer PUBLIC ${CMAKE_CURRENT_LIST_DIR})
@@ -30,6 +28,7 @@ target_link_libraries(viewer
             Magnum::SceneGraph
             Magnum::Application
             Magnum::Shaders
+            Magnum::DebugTools
             MagnumIntegration::ImGui
         )
 

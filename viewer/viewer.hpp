@@ -26,15 +26,13 @@ public:
         virtual void tickEvent(Scene& scene){ }
         virtual void drawImGui(){ }
         virtual void viewportEvent(ViewportEvent& event, Viewer&){ }
-        virtual bool keyPressEvent(KeyEvent& event, Viewer&){ return false; }
-        virtual bool mousePressEvent(MouseEvent& event, Viewer&){ return false; }
-        virtual bool mouseReleaseEvent(MouseEvent& event, Viewer&){ return false; }
-        virtual bool mouseMoveEvent(MouseMoveEvent& event, Viewer&){ return false; }
-        virtual bool mouseScrollEvent(MouseScrollEvent& event, Viewer&){ return false; }
-        virtual bool keyReleaseEvent(KeyEvent& event, Viewer&){ return false; }
-        virtual bool textInputEvent(TextInputEvent& event, Viewer&){ return false; }
-
-        static typename Derived::Status status;
+        virtual void keyPressEvent(KeyEvent& event, Viewer&){ }
+        virtual void mousePressEvent(MouseEvent& event, Viewer&){ }
+        virtual void mouseReleaseEvent(MouseEvent& event, Viewer&){ }
+        virtual void mouseMoveEvent(MouseMoveEvent& event, Viewer&){}
+        virtual void mouseScrollEvent(MouseScrollEvent& event, Viewer&){ }
+        virtual void keyReleaseEvent(KeyEvent& event, Viewer&){ }
+        virtual void textInputEvent(TextInputEvent& event, Viewer&){ }
     };
 
     template<class... H>

@@ -3,17 +3,38 @@
 //
 #pragma once
 
+#include "phasefield_data.hpp"
+#include "viewer.hpp"
+
+#include <Corrade/Containers/EnumSet.h>
+
 #include <Magnum/Math/Color.h>
 #include <Magnum/Magnum.h>
-#include <Corrade/Containers/EnumSet.h>
+#include <Magnum/DebugTools/ColorMap.h>
 
 #include <vector>
 #include <algorithm>
 
 
-class JetColorMap{
-public:
-     Magnum::Color4 operator()(double x);
+
+
+struct ColorMap : Viewer::AbstractEventHandler {
+
+    struct ComboElement{
+        ComboElement(std::string n, ColorMapType t) : name(std::move(n)), type(t) {}
+        std::string name;
+        ColorMapType type;
+    };
+
+    explicit ColorMap(PhasefieldData& data);
+
+    PhasefieldData& phasefieldData;
+
+    std::vector<ComboElement> map;
+    std::vector<ComboElement>::iterator current;
+    bool updated = true;
+
+    void drawImGui() override;
 };
 
 class SegmentationColorMap{

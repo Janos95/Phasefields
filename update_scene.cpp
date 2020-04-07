@@ -3,80 +3,63 @@
 //
 
 #include "update_scene.hpp"
+#include "upload.hpp"
+
+#include <Corrade/Utility/Algorithms.h>
 
 void UpdateScene::tickEvent(Scene& scene)  {
-
-    if(!phasefieldData) return;
-
-    switch (phasefieldData->status) {
-        case PhasefieldData::Status::PhasefieldUpdated: reuploadVertices(*scene); break;
-        case PhasefieldData::Status::NewMesh: uploadMesh(*scene); break;
-        case PhasefieldData::Status::Subdivided: break;
+    switch (phasefieldData.status) {
+        case PhasefieldData::Status::NothingChanged : return;
+        case PhasefieldData::Status::PhasefieldUpdated: reuploadVertices(); break;
+        case PhasefieldData::Status::NewMesh: makeScene(scene); break;
+        case PhasefieldData::Status::Subdivided: reupload(); break;
     }
-
-    scene->setDirty();
-
-    bool newMeshData = true;
-    if(m_newMeshData.compare_exchange_strong(newMeshData, false)) {
-        Debug{} << "Uploading new mesh";
-        if(scene) scene->reset();
-        else scene = new Scene(); //@todo scene leaks, but I am not sure who should own it...
-        {
-            std::lock_guard l(m_mutex);
-            scene->addObject("mesh", upload(*m_meshData));
-        }
-        scene->addNode("mesh", "mesh", ShaderType::Phong);
-        scene->setDirty();
-    }
-    bool reupload = true;
-    if(m_reupload.compare_exchange_strong(reupload, false)){
-        auto* obj = scene->getObject("mesh");
-        CORRADE_INTERNAL_ASSERT(obj);
-        GL::Buffer& vertices = obj->vertices;
-        auto data = vertices.map(0,
-                                 vertices.size(),
-                                 GL::Buffer::MapFlag::Write);
-
-        CORRADE_CONSTEXPR_ASSERT(data, "could not map vertex data");
-        {
-            std::lock_guard l(m_mutex);
-            Utility::copy(m_meshData->vertexData(), data);
-        }
-        vertices.unmap();
-        scene->setDirty();
-    }
-}
-
-void UpdateScene::makeScene(Scene& scene){
-    scene.reset();
-    scene.addObject("mesh", upload())
-    scene.addNode("mesh", "mesh", ShaderType::Phong);
+    phasefieldData.status = PhasefieldData::Status::NothingChanged;
     scene.setDirty();
 }
 
-void UpdateScene::reuploadVertices(Scene& scene)
+void UpdateScene::makeScene(Scene& scene){
+    //scene.reset(); //@todo note sure if the reset function correctly cleans up the drawable group
+
+    auto& md = phasefieldData.meshData;
+    //for(auto& v : md.mutableAttribute<Vector2>(md.attributeId(Trade::MeshAttribute::TextureCoordinates)))
+    //        v = Vector2{1.f};
+    //for(auto v : phasefieldData.meshData.textureCoordinates2DAsArray())
+    //    Debug{} << v;
+
+    //Debug{} << "is indexed " << phasefieldData.meshData.isIndexed();
+
+    upload(phasefieldData);
+    phasefieldData.drawable = scene.addNode("mesh", phasefieldData, DrawableType::ColorMapPhong);
+    phasefieldData.type = DrawableType::ColorMapPhong;
+}
+
+void UpdateScene::reuploadVertices()
 {
-    auto* obj = scene.getObject("mesh");
-    CORRADE_INTERNAL_ASSERT(obj);
-    GL::Buffer& vertices = obj->vertices;
+    GL::Buffer& vertices = phasefieldData.vertices;
     auto data = vertices.map(0,
                              vertices.size(),
                              GL::Buffer::MapFlag::Write);
 
     CORRADE_CONSTEXPR_ASSERT(data, "could not map vertex data");
-    Utility::copy(m_meshData->vertexData(), data);
+    Utility::copy(phasefieldData.meshData.vertexData(), data);
     vertices.unmap();
-    scene.setDirty();
 }
 
-void UpdateScene::uploadIndices(Scene& scene)
+void UpdateScene::reuploadIndices()
 {
-    Debug{} << "Uploading new mesh";
-    if(scene) scene->reset();
-    else scene = new Scene(); //@todo scene leaks, but I am not sure who should own it...
-    {
-        std::lock_guard l(m_mutex);
-        scene->addObject("mesh", upload(*m_meshData));
-    }
-    scene->addNode("mesh", "mesh", ShaderType::Phong);
+    Debug{} << "Reuploading Indices";
+    GL::Buffer& indices = phasefieldData.indices;
+    auto data = indices.map(0,
+                            indices.size(),
+                            GL::Buffer::MapFlag::Write);
+
+    CORRADE_CONSTEXPR_ASSERT(data, "could not map vertex data");
+    Utility::copy(phasefieldData.meshData.indexData(), data);
+    indices.unmap();
+}
+
+void UpdateScene::reupload(){
+    reuploadVertices();
+    reuploadIndices();
 }
