@@ -8,6 +8,7 @@
 #include <Corrade/Utility/Algorithms.h>
 
 void UpdateScene::tickEvent(Scene& scene)  {
+    std::lock_guard l(phasefieldData.mutex);
     switch (phasefieldData.status) {
         case PhasefieldData::Status::NothingChanged : return;
         case PhasefieldData::Status::PhasefieldUpdated: reuploadVertices(); break;

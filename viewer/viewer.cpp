@@ -175,6 +175,7 @@ void Viewer::mousePressEvent(MouseEvent& event) {
 
     if(!m_camera) return;
 
+    Debug{} << "starting mouse tracking for arc camera";
     m_trackingMouse = true;
     ///* Enable mouse capture so the mouse can drag outside of the window */
     ///** @todo replace once https://github.com/mosra/magnum/pull/419 is in */
@@ -199,6 +200,7 @@ void Viewer::mouseReleaseEvent(MouseEvent& event) {
     }
 
     if(!m_camera) return;
+    Debug{} << "stopping mouse tracking for arc camera";
     /* Disable mouse capture again */
     /** @todo replace once https://github.com/mosra/magnum/pull/419 is in */
     if(m_trackingMouse){

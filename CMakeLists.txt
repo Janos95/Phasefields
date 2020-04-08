@@ -54,6 +54,8 @@ add_executable(segmentation
         primitives.hpp
         shader_options.hpp
         shader_options.cpp
+        toggle_button.cpp
+        toggle_button.hpp
         phasefield_data.hpp)
 
 target_link_libraries(segmentation PRIVATE

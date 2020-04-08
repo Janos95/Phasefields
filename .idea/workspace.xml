@@ -3,12 +3,12 @@
   <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
     <generated>
       <config projectName="phasefields" targetName="dijkstra_test" />
-      <config projectName="phasefields" targetName="scoped_timer" />
       <config projectName="phasefields" targetName="segmentation" />
-      <config projectName="phasefields" targetName="fw_test" />
       <config projectName="phasefields" targetName="viewer_RESOURCES-dependencies" />
+      <config projectName="phasefields" targetName="scoped_timer" />
       <config projectName="phasefields" targetName="viewer" />
       <config projectName="phasefields" targetName="cost" />
+      <config projectName="phasefields" targetName="fw_test" />
     </generated>
   </component>
   <component name="CMakeSettings">
@@ -18,41 +18,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="11b62d60-32b8-46a0-9c5e-70e1f1122bcc" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/shader_options.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/shader_options.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/viewer/drawables.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/toggle_button.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/toggle_button.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/brush.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/brush.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/brush.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/brush.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/color_callback.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/color_callback.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/colormaps.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/colormaps.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/colormaps.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/colormaps.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/connectedness_constraint.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/connectedness_constraint.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/main.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesh_io.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/mesh_io.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/mesh_io.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/mesh_io.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/optimization_context.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization_context.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/optimization_context.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization_context.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/phasefield_data.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/phasefield_data.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/primitives.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/primitives.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/primitives.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/primitives.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/subdivision.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/subdivision.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/subdivision.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/subdivision.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/dijkstra_test.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/dijkstra_test.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/update_scene.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/update_scene.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/update_scene.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/update_scene.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/draw_callbacks.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/draw_callbacks.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/drawables.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/drawable_data.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/drawable_data.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/scene.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/scene.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/scene.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/scene.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/scene_graph_node.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/scene_graph_node.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/upload.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/upload.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/upload.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/upload.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/arc_ball_camera.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/arc_ball_camera.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/viewer/viewer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/viewer.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/viewer/viewer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/viewer.hpp" afterDir="false" />
     </list>
@@ -257,6 +234,8 @@
       <workItem from="1586154221429" duration="13708000" />
       <workItem from="1586242368658" duration="37872000" />
       <workItem from="1586287307605" duration="2225000" />
+      <workItem from="1586329807434" duration="896000" />
+      <workItem from="1586330722158" duration="21696000" />
     </task>
     <servers />
   </component>
@@ -289,10 +268,10 @@
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="785" y="276" width="212" height="496" key="#xdebugger.XInspectDialog/0.0.2560.1080@0.0.2560.1080" timestamp="1583339481022" />
-    <state x="1555" y="217" width="693" height="574" key="#xdebugger.evaluate" timestamp="1586269468145">
+    <state x="1555" y="199" width="693" height="574" key="#xdebugger.evaluate" timestamp="1586375221086">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="1555" y="217" width="693" height="574" key="#xdebugger.evaluate/0.0.2560.1080@0.0.2560.1080" timestamp="1586269468145" />
+    <state x="1555" y="199" width="693" height="574" key="#xdebugger.evaluate/0.0.2560.1080@0.0.2560.1080" timestamp="1586375221086" />
     <state width="429" height="486" key="DebuggerActiveHint" timestamp="1583782207147">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
@@ -301,46 +280,46 @@
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="1063" y="108" width="424" height="472" key="FileChooserDialogImpl/0.0.2560.1080@0.0.2560.1080" timestamp="1585987070907" />
-    <state width="2508" height="181" key="GridCell.Tab.0.bottom" timestamp="1586289232498">
+    <state width="1228" height="192" key="GridCell.Tab.0.bottom" timestamp="1586376168587">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.0.bottom/0.0.1600.900@0.0.1600.900" timestamp="1583084150064" />
-    <state width="2508" height="181" key="GridCell.Tab.0.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1586289232498" />
-    <state width="2508" height="181" key="GridCell.Tab.0.center" timestamp="1586289232498">
+    <state width="1228" height="192" key="GridCell.Tab.0.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1586376168587" />
+    <state width="1228" height="192" key="GridCell.Tab.0.center" timestamp="1586376168586">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.0.center/0.0.1600.900@0.0.1600.900" timestamp="1583084150063" />
-    <state width="2508" height="181" key="GridCell.Tab.0.center/0.0.2560.1080@0.0.2560.1080" timestamp="1586289232498" />
-    <state width="2508" height="181" key="GridCell.Tab.0.left" timestamp="1586289232498">
+    <state width="1228" height="192" key="GridCell.Tab.0.center/0.0.2560.1080@0.0.2560.1080" timestamp="1586376168586" />
+    <state width="1228" height="192" key="GridCell.Tab.0.left" timestamp="1586376168586">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.0.left/0.0.1600.900@0.0.1600.900" timestamp="1583084150063" />
-    <state width="2508" height="181" key="GridCell.Tab.0.left/0.0.2560.1080@0.0.2560.1080" timestamp="1586289232498" />
-    <state width="2508" height="181" key="GridCell.Tab.0.right" timestamp="1586289232498">
+    <state width="1228" height="192" key="GridCell.Tab.0.left/0.0.2560.1080@0.0.2560.1080" timestamp="1586376168586" />
+    <state width="1228" height="192" key="GridCell.Tab.0.right" timestamp="1586376168587">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.0.right/0.0.1600.900@0.0.1600.900" timestamp="1583084150064" />
-    <state width="2508" height="181" key="GridCell.Tab.0.right/0.0.2560.1080@0.0.2560.1080" timestamp="1586289232498" />
-    <state width="2508" height="276" key="GridCell.Tab.1.bottom" timestamp="1586287280388">
+    <state width="1228" height="192" key="GridCell.Tab.0.right/0.0.2560.1080@0.0.2560.1080" timestamp="1586376168587" />
+    <state width="2508" height="254" key="GridCell.Tab.1.bottom" timestamp="1586375296239">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.1.bottom/0.0.1600.900@0.0.1600.900" timestamp="1583084159011" />
-    <state width="2508" height="276" key="GridCell.Tab.1.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1586287280388" />
-    <state width="2508" height="276" key="GridCell.Tab.1.center" timestamp="1586287280387">
+    <state width="2508" height="254" key="GridCell.Tab.1.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1586375296239" />
+    <state width="2508" height="254" key="GridCell.Tab.1.center" timestamp="1586375296239">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.1.center/0.0.1600.900@0.0.1600.900" timestamp="1583084159010" />
-    <state width="2508" height="276" key="GridCell.Tab.1.center/0.0.2560.1080@0.0.2560.1080" timestamp="1586287280387" />
-    <state width="2508" height="276" key="GridCell.Tab.1.left" timestamp="1586287280387">
+    <state width="2508" height="254" key="GridCell.Tab.1.center/0.0.2560.1080@0.0.2560.1080" timestamp="1586375296239" />
+    <state width="2508" height="254" key="GridCell.Tab.1.left" timestamp="1586375296238">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.1.left/0.0.1600.900@0.0.1600.900" timestamp="1583084159010" />
-    <state width="2508" height="276" key="GridCell.Tab.1.left/0.0.2560.1080@0.0.2560.1080" timestamp="1586287280387" />
-    <state width="2508" height="276" key="GridCell.Tab.1.right" timestamp="1586287280388">
+    <state width="2508" height="254" key="GridCell.Tab.1.left/0.0.2560.1080@0.0.2560.1080" timestamp="1586375296238" />
+    <state width="2508" height="254" key="GridCell.Tab.1.right" timestamp="1586375296239">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.1.right/0.0.1600.900@0.0.1600.900" timestamp="1583084159010" />
-    <state width="2508" height="276" key="GridCell.Tab.1.right/0.0.2560.1080@0.0.2560.1080" timestamp="1586287280388" />
+    <state width="2508" height="254" key="GridCell.Tab.1.right/0.0.2560.1080@0.0.2560.1080" timestamp="1586375296239" />
     <state width="2508" height="277" key="GridCell.Tab.2.bottom" timestamp="1582978449601">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
@@ -366,11 +345,11 @@
     </state>
     <state x="283" y="40" key="SettingsEditor/0.0.1600.900@0.0.1600.900" timestamp="1583072829889" />
     <state x="394" y="162" width="1731" height="730" key="SettingsEditor/0.0.2560.1080@0.0.2560.1080" timestamp="1586259332499" />
-    <state x="887" y="-342" width="776" height="761" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1586287599615">
+    <state x="887" y="-396" width="776" height="761" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1586354056522">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="656" y="87" width="422" height="521" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.1600.900@0.0.1600.900" timestamp="1582548138283" />
-    <state x="887" y="-342" width="776" height="761" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.2560.1080@0.0.2560.1080" timestamp="1586287599615" />
+    <state x="887" y="-396" width="776" height="761" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.2560.1080@0.0.2560.1080" timestamp="1586354056522" />
     <state x="575" y="361" width="439" height="150" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1582537820504">
       <screen x="0" y="0" width="1600" height="900" />
     </state>
@@ -414,6 +393,11 @@
           <url>file://$PROJECT_DIR$/tests/dijkstra_test.cpp</url>
           <line>65</line>
           <option name="timeStamp" value="88" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/subdivision.cpp</url>
+          <line>27</line>
+          <option name="timeStamp" value="90" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

@@ -35,9 +35,9 @@ public:
         virtual void textInputEvent(TextInputEvent& event, Viewer&){ }
     };
 
-    template<class... H>
-    auto insertEventCallbacks(H&&... handlers) {
-        (m_eventCallbacks.emplace_back(new(new char[sizeof(H)]) H(std::move(handlers))), ...);
+    auto insertEventCallbacks(std::initializer_list<AbstractEventHandler*> handlers) {
+        for(auto handler : handlers)
+        m_eventCallbacks.emplace_back(handler);
     }
 
     Viewer& init();

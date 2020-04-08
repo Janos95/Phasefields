@@ -4,6 +4,7 @@
 
 #include "primitives.hpp"
 #include "upload.hpp"
+#include "toggle_button.hpp"
 
 #include <Corrade/Utility/Algorithms.h>
 
@@ -12,10 +13,7 @@
 #include <Magnum/MeshTools/Transform.h>
 #include <Magnum/Math/Matrix4.h>
 
-#include <folly/sorted_vector_types.h>
-
 #include <imgui.h>
-#include <imgui_internal.h>
 
 using ComboElement = LoadPrimitives::ComboElement;
 
@@ -34,38 +32,6 @@ namespace {
         return map;
     }
 
-    void ToggleButton(const char* str_id, bool* v)
-    {
-        ImVec2 p = ImGui::GetCursorScreenPos();
-        ImDrawList* draw_list = ImGui::GetWindowDrawList();
-
-        float height = ImGui::GetFrameHeight();
-        float width = height * 1.55f;
-        float radius = height * 0.50f;
-
-        ImGui::InvisibleButton(str_id, ImVec2(width, height));
-        if (ImGui::IsItemClicked())
-            *v = !*v;
-
-        float t = *v ? 1.0f : 0.0f;
-
-        ImGuiContext& g = *GImGui;
-        float ANIM_SPEED = 0.08f;
-        if (g.LastActiveId == g.CurrentWindow->GetID(str_id))// && g.LastActiveIdTimer < ANIM_SPEED)
-        {
-            float t_anim = ImSaturate(g.LastActiveIdTimer / ANIM_SPEED);
-            t = *v ? (t_anim) : (1.0f - t_anim);
-        }
-
-        ImU32 col_bg;
-        if (ImGui::IsItemHovered())
-            col_bg = ImGui::GetColorU32(ImLerp(ImVec4(0.78f, 0.78f, 0.78f, 1.0f), ImVec4(0.64f, 0.83f, 0.34f, 1.0f), t));
-        else
-            col_bg = ImGui::GetColorU32(ImLerp(ImVec4(0.85f, 0.85f, 0.85f, 1.0f), ImVec4(0.56f, 0.83f, 0.26f, 1.0f), t));
-
-        draw_list->AddRectFilled(p, ImVec2(p.x + width, p.y + height), col_bg, height * 0.5f);
-        draw_list->AddCircleFilled(ImVec2(p.x + radius + t * (width - radius * 2.0f), p.y + radius), radius - 1.5f, IM_COL32(255, 255, 255, 255));
-    }
 }
 
 bool displayCapsuleOptions(LoadPrimitives::CapsuleOptions& options){
@@ -86,7 +52,18 @@ bool displayCapsuleOptions(LoadPrimitives::CapsuleOptions& options){
 }
 
 bool displayUOptions(LoadPrimitives::UOptions& options){
+    constexpr static std::uint32_t step = 1;
+    constexpr static float floatMax = 10.f;
+    constexpr static float floatMin = .1f;
 
+    constexpr static std::uint32_t ringsMin = 1u;
+    constexpr static std::uint32_t segmentsMin = 3u;
+    constexpr static std::uint32_t uintMax = 100u;
+    bool hasChanged = false;
+
+    hasChanged |= ImGui::DragFloatRange2("Widths", &options.innerWidth, &options.width, .01f, .01f, 10.f, "Min: %.2f", "Max: %.2f");
+    hasChanged |= ImGui::DragFloatRange2("Heights", &options.innerHeight, &options.height, .01f, .01f, 10.0f, "Min: %.2f", "Max: %.2f");
+    return hasChanged;
 }
 
 void LoadPrimitives::drawImGui(){
@@ -120,7 +97,7 @@ void LoadPrimitives::drawImGui(){
                     break;
             }
 
-            ToggleButton("Track Options,", &track);
+            toggleButton("Track Options,", &track);
         }
 
         if(((hasChanged && track) || ImGui::Button("Load")) && current != map.end()){
@@ -207,5 +184,6 @@ void LoadPrimitives::load(ComboElement& element){
     phasefieldData.meshData = preprocess(phasefieldData.original, CompileFlag::GenerateSmoothNormals|CompileFlag::AddTextureCoordinates);
     phasefieldData.V = phasefieldData.meshData.positions3DAsArray();
     phasefieldData.F = phasefieldData.meshData.indicesAsArray();
+    Containers::arrayResize(phasefieldData.phasefield, phasefieldData.V.size());
     phasefieldData.status = PhasefieldData::Status::NewMesh;
 }

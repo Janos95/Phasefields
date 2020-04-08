@@ -18,15 +18,17 @@ int main(int argc, char** argv) {
     auto data = new PhasefieldData;
     scene.addNode("mesh", *data, DrawableType::ColorMapPhong);
     viewer.setScene(scene);
-    viewer.insertEventCallbacks(
+    //ownership taken by viewer
+    viewer.insertEventCallbacks({
             //MeshIO{scene},
-            LoadPrimitives{*data},
-            Brush{*data},
-            Subdivision{*data},
+            new LoadPrimitives{*data},
+            new Brush{*data},
+            new Subdivision{*data},
             //OptimizationContext{scene}
-            ColorMap{*data},
-            ShaderOptions{*data},
-            UpdateScene{*data}//this needs to be at the end, otherwise the phasefield status is not visible to other callbacks
-    );
+            new ColorMap{*data},
+            new ShaderOptions{*data},
+            new UpdateScene{
+                    *data}//this needs to be at the end, otherwise the phasefield status is not visible to other callbacks
+    });
     viewer.exec();
 }

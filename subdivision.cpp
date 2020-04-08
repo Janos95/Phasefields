@@ -3,8 +3,11 @@
 //
 
 #include "subdivision.hpp"
+#include "upload.hpp"
 
 #include <Magnum/MeshTools/Subdivide.h>
+#include <Magnum/MeshTools/Interleave.h>
+
 #include <imgui.h>
 
 using namespace Magnum;
@@ -23,13 +26,20 @@ void Subdivision::subdivide(int numSubdivisions) {
     while(numSubdivisions--)
         MeshTools::subdivide(faces,vertices,[](auto const& v1, auto const& v2){ return .5 * (v1 + v2); });
 
-    m_numFaces = faces.size() / 3;
-    m_numVertices = vertices.size();
+    Trade::MeshAttributeData vertexData{Trade::MeshAttribute::Position, VertexFormat::Vector3, vertices};
+
+    Trade::MeshData meshData{MeshPrimitive::Triangles,
+                         Trade::DataFlag::Mutable, faces, Trade::MeshIndexData{faces},
+                         Trade::DataFlag::Mutable, vertices, {vertexData}};
 
     {
         std::lock_guard l(m_phasefieldData.mutex);
-        m_phasefieldData.V = std::move(vertices);
-        m_phasefieldData.F = std::move(faces);
+        auto& pd = m_phasefieldData;
+        pd.meshData = preprocess(meshData, CompileFlag::GenerateSmoothNormals|CompileFlag::AddTextureCoordinates);
+        pd.status = PhasefieldData::Status::NewMesh;
+
+        pd.V = std::move(vertices);
+        pd.F = std::move(faces);
     }
 }
 

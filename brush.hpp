@@ -9,6 +9,7 @@
 
 #include <Eigen/SparseCore>
 
+#include <thread>
 
 struct TriangleMeshAdjacencyList
 {
@@ -71,7 +72,8 @@ class Brush : public Viewer::AbstractEventHandler {
 public:
     using duration_type = std::chrono::duration<double>;
 
-    void paint(Magnum::UnsignedInt vertexIndex, duration_type dur);
+    void startPainting();
+    void stopPainting();
 
     explicit Brush(PhasefieldData& data);
 
@@ -85,13 +87,16 @@ public:
 private:
     PhasefieldData& m_phasefieldData;
 
-    TriangleMeshAdjacencyList m_adjacencyList;
     Magnum::UnsignedInt m_speed = 1;
     float m_phase = 0;
-    int m_brushing = 0;
-    Vector2i m_position{};
-    bool m_tracking = false;
-    //std::mutex m_mutex;
+    bool m_brushing = false;
+
+
+    std::thread m_thread;
+    std::atomic_bool m_stop = true;
+    std::unique_ptr<std::mutex> m_mutex = std::make_unique<std::mutex>();
+    std::atomic_bool m_loadPoint = false;
+    Vector3 m_point;
 };
 
 

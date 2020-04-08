@@ -19,8 +19,8 @@ public:
     void tickEvent(Scene&){
         switch(m_phasefieldData.status){
             case PhasefieldData::Status::NewMesh:
-                m_numVertices = m_phasefieldData.original.vertexCount();
-                m_numFaces = m_phasefieldData.original.indexCount();
+                m_numVertices = m_phasefieldData.meshData.vertexCount();
+                m_numFaces = m_phasefieldData.meshData.indexCount() / 3;
                 return;
         }
     }

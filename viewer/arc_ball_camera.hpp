@@ -60,11 +60,11 @@ public:
         _camera->draw(drawables);
     }
 
-    Vector2i viewport(){
+    Vector2i viewport() const {
         return _camera->viewport();
     }
 
-    auto projectionMatrix(){
+    auto projectionMatrix() const {
         return _camera->projectionMatrix();
     }
 
