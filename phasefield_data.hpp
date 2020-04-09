@@ -26,9 +26,12 @@ struct PhasefieldData : ColorMapDrawableData {
     Corrade::Containers::Array<Magnum::Vector3> V;
     Corrade::Containers::Array<Magnum::UnsignedInt> F;
     Corrade::Containers::Array<double> phasefield;
-    Magnum::Trade::MeshData original{Magnum::MeshPrimitive::Points, 0};
-    Status status = Status::NothingChanged;
+
     Drawable* drawable = nullptr;
     DrawableType type;
-    std::mutex mutex;
+
+    std::mutex mutex; //synchronizes async updates to original, meshData and status
+    Magnum::Trade::MeshData original{Magnum::MeshPrimitive::Points, 0};
+    Magnum::Trade::MeshData meshData{Magnum::MeshPrimitive::Points, 0};
+    Status status = Status::NothingChanged;
 };

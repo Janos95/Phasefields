@@ -3,7 +3,7 @@
 //
 
 #include "brush.hpp"
-#include "bfs.hpp"
+#include "dijkstra.hpp"
 #include "toggle_button.hpp"
 #include <scoped_timer/scoped_timer.hpp>
 
@@ -26,39 +26,64 @@ using namespace std::chrono_literals;
 
 Brush::Brush(PhasefieldData &data): m_phasefieldData(data) {}
 
+//not beautiful but its doing the job :)
 void Brush::startPainting() {
+    using my_dur_t = std::chrono::duration<float, std::ratio<1>>;
 
     m_thread = std::thread([&]{
         auto& pd = m_phasefieldData;
         auto& vertices = pd.V;
+        auto& phasefield = pd.phasefield;
+        auto recFilter = m_recursiveFilterFactor;
+        my_dur_t dur(m_timeTilNextWavefront);
+        auto begin = std::chrono::steady_clock::now();
+        float h = .1f; //@todo non fake grid scale
         auto adjacencyList = TriangleMeshAdjacencyList(pd.V, pd.F);
-        int step = 1;
-        bool reload = false;
+        int wavefrontSize = 1;
+        std::vector<int> history;
+        bool done = false;
         Vector3* it{};
         Vector3 p;
-        while(!m_stop){
+        Dijkstra dijkstra(adjacencyList);
+        while(true){
             if(m_loadPoint) {
                 {
                     m_loadPoint = false;
-                    std::lock_guard l(*m_mutex);
+                    std::lock_guard l(m_mutex);
                     p = m_point;
                 }
                 it = std::min_element(vertices.begin(), vertices.end(),
                                            [&](auto const &v1, auto const &v2) {
                                                return (v1 - p).dot() < (v2 - p).dot();
                                            });//@todo kdtree here would speed things up considerably
+                auto source = std::distance(vertices.begin(), it);
+                //if new source is not in history, we reset the search
+                if(std::find(history.begin(), history.end(), source) == history.end()){
+                    dijkstra.reset(); //@todo this does not need to be done in first iteration...
+                    history.clear();
+                    wavefrontSize = 1;
+                    dijkstra.setSource(source);
+                }
             }
-            BreadthFirstSearch bfs(adjacencyList, std::distance(vertices.begin(), it));
+            for (auto node : history)
+                phasefield[node] = (1.f - recFilter) * phasefield[node] + recFilter * m_phase;
 
-            {
-                std::lock_guard l(pd.mutex);
-                for (int j = 0; (j < step) && bfs.step(); ++j) {
-                    for(int a : bfs.enqueuedVertices()){
-                        auto& phasefield = pd.phasefield;
-                        phasefield[a] = .99 * phasefield[a] + .01f * m_phase;
+            int node;
+            double d;
+            if(!done) {
+                for (int j = 0; !done && j < wavefrontSize ; ++j) {
+                    done = !dijkstra.step(node, d);
+                    if(!done){
+                        phasefield[node] = (1.f - recFilter) * phasefield[node] + recFilter * m_phase;
+                        history.push_back(node);
+                    }
+                    else{
+                        fmt::print("Dijkstra is done\n");
                     }
                 }
-
+            }
+            {
+                std::lock_guard l(pd.mutex);
                 auto textureCoords = pd.meshData.mutableAttribute<Vector2>(Trade::MeshAttribute::TextureCoordinates);
 
                 for (int m = 0; m < textureCoords.size(); ++m) {
@@ -67,9 +92,17 @@ void Brush::startPainting() {
                 pd.status = PhasefieldData::Status::PhasefieldUpdated;
             }
 
-            fmt::print("Sleeping for {} seconds\n", (0.01s).count());
-            std::this_thread::sleep_for(.01s);
-            ++step;
+            //@todo subtract computation time and use a condition variable instead of sleeping
+            {
+                std::unique_lock ul(m_mutex);
+                if(m_stop) return;
+                m_cv.wait_for(ul, dur, [this]{ return m_stop; });
+                if(m_stop) return;
+            }
+            if(!done){
+                fmt::print("{}\n", d);
+                wavefrontSize = static_cast<int>(1.f/h * d) + 1;
+            }
         }
     });
 }
@@ -117,16 +150,22 @@ void Brush::mouseMoveEvent(Viewer::MouseMoveEvent& event, Viewer& viewer) {
 
     if(m_stop) return;
     auto position = event.position();
+    auto p = unproject(position, viewer);
+    std::lock_guard l(m_mutex);
+    m_point = p;
     m_loadPoint = true;
-    std::lock_guard l(*m_mutex);
-    m_point = unproject(position, viewer);
     event.setAccepted();
 }
 
 void Brush::mouseReleaseEvent(Viewer::MouseEvent &event, Viewer& viewer) {
     if(!m_brushing) return;
 
-    m_stop = true;
+    {
+        std::lock_guard l(m_mutex);
+        m_stop = true;
+        m_cv.notify_one();
+    }
+
     m_thread.join();
     event.setAccepted();
 }
@@ -135,8 +174,9 @@ void Brush::drawImGui() {
     if (ImGui::TreeNode("Brush"))
     {
         constexpr int step = 1;
-        ImGui::InputScalar("Speed (vertices per second)", ImGuiDataType_U32, &m_speed, &step, nullptr, "%d");
-
+        constexpr float min = 0.f, max = 1.f;
+        ImGui::SliderScalar("Time til next wavefront (in s)", ImGuiDataType_Float, &m_timeTilNextWavefront, &min, &max, "%.3f", 1.0f);
+        ImGui::SliderScalar("Recursive Phase Filter Factor", ImGuiDataType_Float, &m_recursiveFilterFactor, &min, &max, "%.3f", 1.0f);
         constexpr float lower = -1.f, upper = 1.f;
         ImGui::SliderScalar("Phase", ImGuiDataType_Float, &m_phase, &lower, &upper, "%.3f", 1.0f);
         if(toggleButton("Enable Brushing", &m_brushing)){

@@ -5,26 +5,31 @@
 #include "subdivision.hpp"
 #include "upload.hpp"
 
+#include <Corrade/Utility/Algorithms.h>
 #include <Magnum/MeshTools/Subdivide.h>
-#include <Magnum/MeshTools/Interleave.h>
+#include <Magnum/MeshTools/RemoveDuplicates.h>
 
 #include <imgui.h>
+#include <fmt/core.h>
 
 using namespace Magnum;
 using namespace Corrade;
 
 void Subdivision::subdivide(int numSubdivisions) {
+    auto faces = m_phasefieldData.original.indicesAsArray();
+    auto vertices = m_phasefieldData.original.positions3DAsArray();
 
-    Containers::Array<UnsignedInt> faces;
-    Containers::Array<Vector3> vertices;
-    {
-        std::lock_guard l(m_phasefieldData.mutex);
-        faces = m_phasefieldData.original.indicesAsArray();
-        vertices = m_phasefieldData.original.positions3DAsArray();
+    /**
+     * @todo this can be done with only one (re-)allocation, by resizing upfront.
+     */
+    while(numSubdivisions--){
+        auto linearInterpolation = [](auto const& v1, auto const& v2){ return .5 * (v1 + v2); };
+        MeshTools::subdivide(faces,vertices,linearInterpolation);
     }
 
-    while(numSubdivisions--)
-        MeshTools::subdivide(faces,vertices,[](auto const& v1, auto const& v2){ return .5 * (v1 + v2); });
+    auto oldSize = vertices.size();
+    auto newSize = MeshTools::removeDuplicatesIndexedInPlace<UnsignedInt, Vector3>(faces, vertices);
+    fmt::print("Old size was {}, new size after removing is {}\n", oldSize, newSize);
 
     Trade::MeshAttributeData vertexData{Trade::MeshAttribute::Position, VertexFormat::Vector3, vertices};
 
@@ -32,15 +37,18 @@ void Subdivision::subdivide(int numSubdivisions) {
                          Trade::DataFlag::Mutable, faces, Trade::MeshIndexData{faces},
                          Trade::DataFlag::Mutable, vertices, {vertexData}};
 
-    {
-        std::lock_guard l(m_phasefieldData.mutex);
-        auto& pd = m_phasefieldData;
-        pd.meshData = preprocess(meshData, CompileFlag::GenerateSmoothNormals|CompileFlag::AddTextureCoordinates);
-        pd.status = PhasefieldData::Status::NewMesh;
+    auto& pd = m_phasefieldData;
+    pd.meshData = preprocess(meshData, CompileFlag::GenerateSmoothNormals|CompileFlag::AddTextureCoordinates);
+    pd.status = PhasefieldData::Status::NewMesh;
 
-        pd.V = std::move(vertices);
-        pd.F = std::move(faces);
-    }
+    pd.V = std::move(vertices);
+    pd.F = std::move(faces);
+    /**
+     * @todo interpolate the phasefield instead of setting it to zero.
+     * But this should handle the case when the number of subdivision is less
+     * than what was used before
+     */
+    Containers::arrayResize(pd.phasefield, pd.V.size());
 }
 
 void Subdivision::drawImGui(){

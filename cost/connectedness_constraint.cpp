@@ -236,7 +236,8 @@ namespace {
 //#pragma omp parallel for schedule(dynamic)
             for (std::size_t i = 0; i < numComponents - 1; ++i) {
                 StoppingCriteria stop(roots[i], numComponents, components);
-                dijkstras[i].run(roots[i], {stop});
+                dijkstras[i].setSource(roots[i]);
+                dijkstras[i].run({stop});
                 CORRADE_INTERNAL_ASSERT(stop.foundAll());
                 stops[i] = std::move(stop);
             }

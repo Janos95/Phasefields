@@ -22,7 +22,6 @@ void UpdateScene::tickEvent(Scene& scene)  {
 void UpdateScene::makeScene(Scene& scene){
     //scene.reset(); //@todo note sure if the reset function correctly cleans up the drawable group
 
-    auto& md = phasefieldData.meshData;
     //for(auto& v : md.mutableAttribute<Vector2>(md.attributeId(Trade::MeshAttribute::TextureCoordinates)))
     //        v = Vector2{1.f};
     //for(auto v : phasefieldData.meshData.textureCoordinates2DAsArray())
@@ -30,7 +29,7 @@ void UpdateScene::makeScene(Scene& scene){
 
     //Debug{} << "is indexed " << phasefieldData.meshData.isIndexed();
 
-    upload(phasefieldData);
+    upload(phasefieldData, phasefieldData.meshData);
     phasefieldData.drawable = scene.addNode("mesh", phasefieldData, DrawableType::ColorMapPhong);
     phasefieldData.type = DrawableType::ColorMapPhong;
 }

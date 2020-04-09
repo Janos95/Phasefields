@@ -10,10 +10,11 @@
 #include <Eigen/SparseCore>
 
 #include <thread>
+#include <condition_variable>
 
 struct TriangleMeshAdjacencyList
 {
-    using graph_type = Eigen::SparseMatrix<int>;
+    using graph_type = Eigen::SparseMatrix<float>;
     using sparse_iterator_type = typename graph_type::InnerIterator;
     graph_type graph;
     TriangleMeshAdjacencyList() = default;
@@ -21,12 +22,13 @@ struct TriangleMeshAdjacencyList
             graph(vertices.size(), vertices.size())
     {
         auto faces = Containers::arrayCast<Vector3ui>(indices);
-        std::vector<Eigen::Triplet<int>> triplets;
+        std::vector<Eigen::Triplet<float>> triplets;
         for(auto const& face : faces){
             for (int j = 0; j < 3; ++j) {
                 int a = face[j], b = face[(j+1)%3];
-                triplets.emplace_back(a,b,1);
-                triplets.emplace_back(b,a,1);
+                auto w = (vertices[a] - vertices[b]).length();
+                triplets.emplace_back(a,b,w);
+                triplets.emplace_back(b,a,w);
             }
         }
         graph.setFromTriplets(triplets.begin(), triplets.end(), [](auto const& a, auto const& b){ return b; });
@@ -56,7 +58,7 @@ struct TriangleMeshAdjacencyList
             return std::pair(rows[idx], values[idx]);
         }
 
-        int const* values;
+        float const* values;
         int const* rows;
         int idx;
     };
@@ -89,13 +91,17 @@ private:
 
     Magnum::UnsignedInt m_speed = 1;
     float m_phase = 0;
+    float m_recursiveFilterFactor = 0.1;
+    float m_timeTilNextWavefront = .01;
     bool m_brushing = false;
 
 
     std::thread m_thread;
-    std::atomic_bool m_stop = true;
-    std::unique_ptr<std::mutex> m_mutex = std::make_unique<std::mutex>();
-    std::atomic_bool m_loadPoint = false;
+    std::condition_variable m_cv;
+    bool m_stop = true;
+
+    std::mutex m_mutex;
+    bool m_loadPoint = false;
     Vector3 m_point;
 };
 

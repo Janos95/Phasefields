@@ -11,6 +11,7 @@
 #include <Magnum/Primitives/Capsule.h>
 #include <Magnum/MeshTools/Interleave.h>
 #include <Magnum/MeshTools/Transform.h>
+#include <Magnum/MeshTools/RemoveDuplicates.h>
 #include <Magnum/Math/Matrix4.h>
 
 #include <imgui.h>

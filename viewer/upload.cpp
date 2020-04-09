@@ -20,11 +20,10 @@ using namespace Corrade;
 
 
 
-void upload(DrawableData& drawableData) {
+void upload(DrawableData& drawableData, Trade::MeshData& meshData) {
     auto& vertices = drawableData.vertices;
     auto& indices = drawableData.indices;
     auto& mesh = drawableData.mesh;
-    auto& meshData = drawableData.meshData;
 
     vertices.setData(meshData.vertexData());
     indices.setData(meshData.indexData());

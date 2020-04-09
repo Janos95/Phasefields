@@ -27,7 +27,6 @@ struct DrawableData : Object
 {
     Magnum::GL::Buffer vertices, indices;
     Magnum::GL::Mesh mesh;
-    Magnum::Trade::MeshData meshData{Magnum::MeshPrimitive::Points, 0};
 
     virtual ~DrawableData() = default;
 };

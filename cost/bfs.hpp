@@ -31,12 +31,12 @@ public:
         m_q.push_back(source);
     }
 
-    bool step()
+    bool step(int& v)
     {
         if(m_q.empty())
             return false;
 
-        auto v = m_q.front();
+        v = m_q.front();
         m_q.pop_front();
 
         for(const auto& [w, _]: m_adjacencyList[v]){
@@ -49,13 +49,10 @@ public:
         return true;
     }
 
-    auto& enqueuedVertices(){
-        return m_q;
-    }
-
     auto run()
     {
-        while(step())
+        int node;
+        while(step(node))
             ;
     }
 

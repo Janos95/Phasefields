@@ -73,4 +73,4 @@ target_link_libraries(segmentation PRIVATE
         
 target_compile_definitions(segmentation PRIVATE CONF_PATH="${CMAKE_CURRENT_LIST_DIR}/phasefields.conf")
 
-add_subdirectory(tests)
+#add_subdirectory(tests)
