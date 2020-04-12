@@ -8,6 +8,7 @@
 #include <Corrade/Utility/Algorithms.h>
 #include <Magnum/MeshTools/Subdivide.h>
 #include <Magnum/MeshTools/RemoveDuplicates.h>
+#include <Magnum/MeshTools/Interleave.h>
 
 #include <imgui.h>
 #include <fmt/core.h>
@@ -16,39 +17,65 @@ using namespace Magnum;
 using namespace Corrade;
 
 void Subdivision::subdivide(int numSubdivisions) {
-    auto faces = m_phasefieldData.original.indicesAsArray();
-    auto vertices = m_phasefieldData.original.positions3DAsArray();
+    auto& pd = m_phasefieldData;
 
-    /**
-     * @todo this can be done with only one (re-)allocation, by resizing upfront.
-     */
-    while(numSubdivisions--){
-        auto linearInterpolation = [](auto const& v1, auto const& v2){ return .5 * (v1 + v2); };
-        MeshTools::subdivide(faces,vertices,linearInterpolation);
+    Trade::MeshData* data;
+    Containers::ArrayView<Float> phasefield;
+    if(numSubdivisions >= m_lastNumSubdivision){
+        numSubdivisions -= m_lastNumSubdivision;
+        data = &pd.meshData;
+        phasefield = pd.phasefield;
+    } else {
+        data = &pd.original;
+        phasefield = Containers::ArrayView<Float>{pd.phasefield, data->vertexCount()};
     }
 
-    auto oldSize = vertices.size();
-    auto newSize = MeshTools::removeDuplicatesIndexedInPlace<UnsignedInt, Vector3>(faces, vertices);
-    fmt::print("Old size was {}, new size after removing is {}\n", oldSize, newSize);
 
-    Trade::MeshAttributeData vertexData{Trade::MeshAttribute::Position, VertexFormat::Vector3, vertices};
+    auto positions = data->attribute<Vector3>(Trade::MeshAttribute::Position);
+    auto indices = data->indicesAsArray();
+    auto vertexData = MeshTools::interleave(positions, phasefield);
 
+    auto indicesSizeCurrent = indices.size();
+    auto verticesSizeCurrent = positions.size();
+    auto indicesSize = indicesSizeCurrent * std::pow(4, numSubdivisions);
+    auto verticesSize = verticesSizeCurrent + (indicesSize - indicesSizeCurrent)/3;
+
+    Containers::arrayResize(indices,indicesSize);
+    Containers::arrayResize(vertexData,verticesSize*sizeof(Vector4));
+
+    auto vertices = Containers::arrayCast<Vector4>(vertexData);
+
+    while(numSubdivisions--){
+        Containers::ArrayView<UnsignedInt> indicesView{indices.data(), indicesSizeCurrent * 4};
+        Containers::StridedArrayView1D<Vector4> verticesView{vertices, verticesSizeCurrent + indicesSizeCurrent};
+
+        MeshTools::subdivideInPlace(indicesView, verticesView, [](auto& v1, auto& v2){return .5f * (v1 + v2); });
+
+        verticesSizeCurrent += indicesSizeCurrent;
+        indicesSizeCurrent *= 4;
+    }
+
+    auto sizeAfterRemoving = MeshTools::removeDuplicatesIndexedInPlace<UnsignedInt, Vector4>(indices, vertices);
+    fmt::print("Old size was {}, new size after removing is {}\n", verticesSize, sizeAfterRemoving);
+
+    Trade::MeshAttributeData positionData{Trade::MeshAttribute::Position, VertexFormat::Vector3, {vertexData, &vertices[0].xyz(), sizeAfterRemoving, sizeof(Vector4)}};
     Trade::MeshData meshData{MeshPrimitive::Triangles,
-                         Trade::DataFlag::Mutable, faces, Trade::MeshIndexData{faces},
-                         Trade::DataFlag::Mutable, vertices, {vertexData}};
+                         Trade::DataFlag{}, indices, Trade::MeshIndexData{indices},
+                         Trade::DataFlag{}, vertices, {positionData}};
 
-    auto& pd = m_phasefieldData;
     pd.meshData = preprocess(meshData, CompileFlag::GenerateSmoothNormals|CompileFlag::AddTextureCoordinates);
-    pd.status = PhasefieldData::Status::NewMesh;
+    pd.V = pd.meshData.positions3DAsArray();
+    pd.F = pd.meshData.indicesAsArray();
 
-    pd.V = std::move(vertices);
-    pd.F = std::move(faces);
-    /**
-     * @todo interpolate the phasefield instead of setting it to zero.
-     * But this should handle the case when the number of subdivision is less
-     * than what was used before
-     */
-    Containers::arrayResize(pd.phasefield, pd.V.size());
+    Containers::arrayResize(pd.phasefield, sizeAfterRemoving);
+    auto textureView = pd.meshData.mutableAttribute<Vector2>(Trade::MeshAttribute::TextureCoordinates);
+    for (int j = 0; j < sizeAfterRemoving; ++j) {
+        auto u = vertices[j].w();
+        pd.phasefield[j] = u;
+        textureView[j].x() = .5f * (u + 1.f);
+    }
+
+    pd.status = PhasefieldData::Status::Subdivided;
 }
 
 void Subdivision::drawImGui(){
@@ -60,6 +87,7 @@ void Subdivision::drawImGui(){
         ImGui::InputScalar("Number of Sibdivision (wrt. orignal mesh)", ImGuiDataType_U32, &numSubdivisions, &step, nullptr, "%d");
         if(ImGui::Button("do subdivision")){
             subdivide(numSubdivisions);
+            m_lastNumSubdivision= numSubdivisions;
         }
         ImGui::TreePop();
     }

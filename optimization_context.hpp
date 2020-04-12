@@ -6,6 +6,7 @@
 
 #include "viewer.hpp"
 #include "problem.hpp"
+#include "phasefield_data.hpp"
 
 #include <Magnum/ImGuiIntegration/Context.h>
 
@@ -20,7 +21,7 @@
 
 class OptimizationContext : public Viewer::AbstractEventHandler {
 public:
-    OptimizationContext();
+    OptimizationContext(PhasefieldData&);
     ~OptimizationContext();
 
     void drawImGui() override;
@@ -32,7 +33,6 @@ public:
         RandomNormal = 1
     };
 
-    void initializePhasefield(InitializationFlag flag);
 
 private:
 
@@ -42,6 +42,7 @@ private:
 
     Eigen::MatrixXi m_F;
     Eigen::MatrixXd m_V;
+    Eigen::VectorXd m_U;
 
     double m_epsilon = .05;
     float m_posA = .85f, m_posB = .95f;
@@ -50,6 +51,11 @@ private:
     SumProblem* m_cost = nullptr;
     Corrade::Containers::Optional<ceres::GradientProblem> m_problem;
     ceres::GradientProblemSolver::Options m_options;
+
+    std::thread m_thread;
+    std::atomic_bool m_continue = true;
+
+    PhasefieldData& m_pd;
 
     std::vector<std::pair<std::string, double>> m_weights =
             {

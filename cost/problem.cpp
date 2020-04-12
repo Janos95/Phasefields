@@ -6,12 +6,12 @@
 
 #include <Eigen/Core>
 
-#include <fmt/core.h>
-#include <Corrade/Utility/Assert.h>
-#include <mutex>
+#include <tbb/task_group.h>
 
-#include <folly/futures/Future.h>
-#include <folly/executors/CPUThreadPoolExecutor.h>
+#include <Corrade/Utility/Assert.h>
+#include <fmt/core.h>
+
+#include <mutex>
 
 std::vector<SumProblem::IndividualCost> SumProblem::computeIndividualCosts(double const* parameters) const {
     std::vector<SumProblem::IndividualCost> costs;
@@ -54,36 +54,31 @@ bool SumProblem::Evaluate(double const* parameters,
         std::fill_n(jacobians, n, 0.);
 
     std::mutex mutex;
-    static folly::CPUThreadPoolExecutor threadPool(std::min((int)std::thread::hardware_concurrency(), (int)m_problems.size()));
-    std::vector<folly::Future<folly::Unit>> futures;
+
+    tbb::task_group g;
     for(auto const& problem: m_problems){
         if(!problem.loss)
             continue;
-        fmt::print("Evaluation {}\n",problem.name);
-        futures.push_back(folly::makeSemiFuture().via(&threadPool)
-                .then(
-                [&](auto&&){
-                auto singleJac = jacobians ? new double[n] : nullptr;
-                double residual = 0;
-                problem.problem->Evaluate(parameters, &residual, singleJac);
-                double out[3];
-                problem.loss->Evaluate(residual, out);
-                if(jacobians){
-                    Eigen::Map<Eigen::VectorXd> mappedJac(jacobians, n), mappedSingleJac(singleJac, n);
-                    std::lock_guard l(mutex);
-                    mappedJac.noalias() += out[1] * mappedSingleJac;
-                }
-                {
-                    std::lock_guard l(mutex);
-                    *cost += out[0];
-                }
-                delete[] singleJac;
-                return folly::Unit{};
-                }));
+        g.run([&] {
+            fmt::print("Evaluation {}\n", problem.name);
+            auto singleJac = jacobians ? new double[n] : nullptr;
+            double residual = 0;
+            problem.problem->Evaluate(parameters, &residual, singleJac);
+            double out[3];
+            problem.loss->Evaluate(residual, out);
+            if (jacobians) {
+                Eigen::Map<Eigen::VectorXd> mappedJac(jacobians, n), mappedSingleJac(singleJac, n);
+                std::lock_guard l(mutex);
+                mappedJac.noalias() += out[1] * mappedSingleJac;
+            }
+            {
+                std::lock_guard l(mutex);
+                *cost += out[0];
+            }
+            delete[] singleJac;
+        });
     }
-
-    auto all = folly::collectAll(futures.begin(), futures.end());
-    all.wait();
+    g.wait();
     return true;
 }
 

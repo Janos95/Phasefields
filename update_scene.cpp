@@ -12,8 +12,8 @@ void UpdateScene::tickEvent(Scene& scene)  {
     switch (phasefieldData.status) {
         case PhasefieldData::Status::NothingChanged : return;
         case PhasefieldData::Status::PhasefieldUpdated: reuploadVertices(); break;
+        case PhasefieldData::Status::Subdivided:
         case PhasefieldData::Status::NewMesh: makeScene(scene); break;
-        case PhasefieldData::Status::Subdivided: reupload(); break;
     }
     phasefieldData.status = PhasefieldData::Status::NothingChanged;
     scene.setDirty();

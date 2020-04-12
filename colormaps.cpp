@@ -39,9 +39,12 @@ void ColorMap::drawImGui(){
                 if (ImGui::Selectable(it->name.c_str(), isSelected)){
                     auto drawable = phasefieldData.drawable;
                     auto type = phasefieldData.type;
-                    if(drawable && it != current && type == DrawableType::ColorMapPhong){
+                    if(drawable && it != current){
                         current = it;
                         switch(phasefieldData.type){
+                            case DrawableType::ColorMapFlat :
+                                dynamic_cast<ColorMapFlatDrawable*>(drawable)->setColorMapping(current->type);
+                                break;
                             case DrawableType::ColorMapPhong :
                                 dynamic_cast<ColorMapPhongDrawable*>(drawable)->setColorMapping(current->type);
                                 break;

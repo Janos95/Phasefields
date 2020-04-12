@@ -93,6 +93,7 @@ private:
     float m_phase = 0;
     float m_recursiveFilterFactor = 0.1;
     float m_timeTilNextWavefront = .01;
+    float m_distStep = 0.01;
     bool m_brushing = false;
 
 
@@ -101,7 +102,7 @@ private:
     bool m_stop = true;
 
     std::mutex m_mutex;
-    bool m_loadPoint = false;
+    std::atomic_bool m_loadPoint = false;
     Vector3 m_point;
 };
 

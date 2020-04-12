@@ -10,12 +10,14 @@
 #include "colormaps.hpp"
 #include "shader_options.hpp"
 
-
+/*
+ * @todo in release: load u, change shader -> sigsev
+ */
 int main(int argc, char** argv) {
 
     Viewer viewer(argc, argv);
     Scene scene;
-    auto data = new PhasefieldData;
+    auto data = new PhasefieldData; //@todo leaks
     scene.addNode("mesh", *data, DrawableType::ColorMapPhong);
     viewer.setScene(scene);
     //ownership taken by viewer
@@ -24,11 +26,10 @@ int main(int argc, char** argv) {
             new LoadPrimitives{*data},
             new Brush{*data},
             new Subdivision{*data},
-            //OptimizationContext{scene}
+            new OptimizationContext{*data},
             new ColorMap{*data},
             new ShaderOptions{*data},
-            new UpdateScene{
-                    *data}//this needs to be at the end, otherwise the phasefield status is not visible to other callbacks
+            new UpdateScene{*data}//this needs to be at the end, bc it resets the phasefield status
     });
     viewer.exec();
 }

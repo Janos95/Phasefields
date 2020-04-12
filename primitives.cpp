@@ -97,11 +97,11 @@ void LoadPrimitives::drawImGui(){
                 default:
                     break;
             }
-
             toggleButton("Track Options,", &track);
         }
 
-        if(((hasChanged && track) || ImGui::Button("Load")) && current != map.end()){
+        auto doLoad = ImGui::Button("Load");
+        if(((hasChanged && track) || doLoad) && current != map.end()){
             load(*current);
         }
 
@@ -182,9 +182,16 @@ void LoadPrimitives::load(ComboElement& element){
             break;
         }
     }
-    phasefieldData.meshData = preprocess(phasefieldData.original, CompileFlag::GenerateSmoothNormals|CompileFlag::AddTextureCoordinates);
-    phasefieldData.V = phasefieldData.meshData.positions3DAsArray();
-    phasefieldData.F = phasefieldData.meshData.indicesAsArray();
-    Containers::arrayResize(phasefieldData.phasefield, phasefieldData.V.size());
-    phasefieldData.status = PhasefieldData::Status::NewMesh;
+
+    auto& pd = phasefieldData;
+    pd.meshData = preprocess(pd.original, CompileFlag::GenerateSmoothNormals|CompileFlag::AddTextureCoordinates);
+    pd.V = pd.meshData.positions3DAsArray();
+    pd.F = pd.meshData.indicesAsArray();
+    auto size = pd.V.size();
+    Containers::arrayResize(pd.phasefield, size);
+    auto textureView = pd.meshData.mutableAttribute<Vector2>(Trade::MeshAttribute::TextureCoordinates);
+    for (int i = 0; i < size; ++i) {
+        textureView[i].x() = pd.phasefield[i];
+    }
+    pd.status = PhasefieldData::Status::NewMesh;
 }

@@ -10,182 +10,131 @@
 
 #include <Corrade/Containers/Pointer.h>
 #include <Corrade/Containers/Optional.h>
-#include <Corrade/PluginManager/PluginMetadata.h>
-#include <Corrade/Utility/Algorithms.h>
 
-#include <Magnum/Math/Vector3.h>
 #include <Magnum/EigenIntegration/Integration.h>
 #include <Magnum/ImGuiIntegration/Context.hpp>
 
-#include <folly/futures/Future.h>
-#include <folly/executors/ThreadedExecutor.h>
-#include <fmt/core.h>
-
-#include <random>
 
 using namespace Magnum;
 using namespace Corrade;
 
 
-std::tuple<Eigen::MatrixXd, Eigen::MatrixXi> toEigen(Trade::MeshData const& mesh){
-    auto varr = mesh.positions3DAsArray();
-    auto farr = mesh.indicesAsArray();
+void toEigen(PhasefieldData& pd, Eigen::MatrixXi& F, Eigen::MatrixXd& V, Eigen::VectorXd& U){
+    auto& vertices = pd.V;
+    auto& indices = pd.F;
+    auto& phasefield = pd.phasefield;
 
     using MatrixXU = Eigen::Matrix<UnsignedInt, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
-    Eigen::MatrixXi F = Eigen::Map<const MatrixXU>(farr.data(), farr.size() / 3, 3).cast<int>();
-    Eigen::MatrixXd V(varr.size(), 3);
-    for (std::size_t i = 0; i < mesh.vertexCount(); ++i) {
-        V.row(i) = EigenIntegration::cast<Eigen::Vector3f>(varr[i]).cast<double>();
-    }
-    return std::make_tuple(std::move(V), std::move(F));
+    F = Eigen::Map<const MatrixXU>(indices.data(), indices.size() / 3, 3).cast<int>();
+    V = Eigen::MatrixXd(vertices.size(), 3);
+    for (std::size_t i = 0; i < pd.V.size(); ++i)
+        V.row(i) = EigenIntegration::cast<Eigen::Vector3f>(vertices[i]).cast<double>();
+
+    U = Eigen::Map<Eigen::VectorXf>(phasefield.data(), phasefield.size()).cast<double>();
 }
 
 
-OptimizationContext::OptimizationContext():
+OptimizationContext::OptimizationContext(PhasefieldData& data):
+    m_pd(data),
     m_optimizationCallback([this](auto const& summary){ return optimizationCallback(summary); }),
     m_options{
         .max_num_iterations = 100,
         .minimizer_progress_to_stdout = true,
         .update_state_every_iteration = true,
-        .callbacks = {&m_optimizationCallback}},
+        .callbacks = {&m_optimizationCallback}
+             },
     m_cost(new SumProblem())
-    //m_inputPath(100),
-    //m_outputPath(100)
 {
-    //std::string defaultPath = "/home/janos/data/spot.ply";
-    //std::copy(defaultPath.begin(), defaultPath.end(), m_inputPath.begin());
 }
 
 ceres::CallbackReturnType OptimizationContext::optimizationCallback(ceres::IterationSummary const&){
-    //bool exit = true;
-    //if(m_exit.compare_exchange_strong(exit, false)){
-    //    return ceres::SOLVER_TERMINATE_SUCCESSFULLY;
-    //}
+    if(!m_continue)
+        return ceres::SOLVER_TERMINATE_SUCCESSFULLY;
 
-    //{
-    //    std::lock_guard l(m_mutex);
-    //    auto colorView = m_meshData->mutableAttribute<Color4>(Trade::MeshAttribute::Color);
-    //    std::transform(m_U.begin(), m_U.end(), colorView.begin(), JetColorMap{});
-    //}
+    {
+        std::lock_guard l(m_pd.mutex);
+        auto textureCoordsView = m_pd.meshData.mutableAttribute<Vector2>(Trade::MeshAttribute::TextureCoordinates);
+        CORRADE_INTERNAL_ASSERT(textureCoordsView.size() == m_U.size());
+        for (int i = 0; i < textureCoordsView.size(); ++i)
+            textureCoordsView[i].x() = static_cast<float>(.5 * (m_U[i] + 1.));
+        m_pd.status = PhasefieldData::Status::PhasefieldUpdated;
+    }
 
-    //m_reupload = true;
-    //return ceres::SOLVER_CONTINUE;
+    return ceres::SOLVER_CONTINUE;
 }
 
-void OptimizationContext::initializePhasefield(InitializationFlag flag)
-{
-    //std::default_random_engine engine(0);
-    //std::normal_distribution distr(.0, .1);
+#define EMPLACE_COST(cost, func, eps, ...) if(eps > std::numeric_limits<double>::epsilon()) cost->emplace_back<func>(__VA_ARGS__);
 
-    //if(m_optimizationFuture.valid() && !m_optimizationFuture.isReady()){
-    //    m_exit = true;
-    //    m_optimizationFuture.wait();
-    //}
-
-    //for(auto& u: m_U) u = distr(engine);
-    //auto colorView = m_meshData->mutableAttribute<Color4>(Trade::MeshAttribute::Color);
-    //std::transform(m_U.begin(), m_U.end(), colorView.begin(), JetColorMap{});
-    //m_reupload = true;
-}
-
+/*
+ * @todo only need to construct the cost functional when we get a new mesh/subdivision event.
+ * But then we would need to handle the resetting of parameters which at the moment is a bit combersome...
+ */
 void OptimizationContext::startOptimization() {
 
-    //folly::Future<folly::Unit> m_optimizationFuture;
-    //folly::ThreadedExecutor m_executor;
+    stopOptimization();
 
-    //stopOptimization();
+    toEigen(m_pd, m_F, m_V, m_U);
+    m_cost->clear();
 
-    //if(!m_problem)
-    //    return;
+    if(m_weights[0].second > std::numeric_limits<double>::epsilon())
+        m_cost->emplace_back<InterfaceEnergy>("Modica Mortola", 1., m_V, m_F, m_epsilon);
+    if(m_weights[0].second > std::numeric_limits<double>::epsilon())
+        m_cost->emplace_back<PotentialEnergy>("Modica Mortola", 1., m_V, m_F, m_epsilon);
+    if(m_weights[1].second > std::numeric_limits<double>::epsilon())
+        m_cost->emplace_back<AreaRegularizer>("Area Regularization", 1., m_V, m_F);
+    if(m_weights[2].second > std::numeric_limits<double>::epsilon())
+        m_cost->emplace_back<ConnectednessConstraint<double>>("Connectedness Constraint Positive", 1., m_V, m_F, m_epsilon, m_posA, m_posB);
+    if(m_weights[3].second > std::numeric_limits<double>::epsilon())
+        m_cost->emplace_back<ConnectednessConstraint<double>>("Connectedness Constraint Negative", 1., m_V, m_F, m_epsilon, -m_negA, -m_negB);
 
-    //fmt::print("Optimizing the following functionals for "
-    //           "a maximum of {} iterations: \n", m_options.max_num_iterations);
-    //for(auto const& [name, w] : m_checkBoxes){
-    //    m_cost->setWeight(name, w);
-    //    if(w){
-    //        fmt::print("{}\n",name);
-    //    }
-    //}
+    if(!m_problem)
+        m_problem.emplace(m_cost);
 
-    //m_cost->visit("Connectedness Constraint Positive",[=](auto& p ){ auto ptr = p.get(); dynamic_cast<ConnectednessConstraint*>(ptr)->setPreimageInterval(m_posA, m_posB); });
-    //m_cost->visit("Connectedness Constraint Negative",[=](auto& p ){ auto ptr = p.get(); dynamic_cast<ConnectednessConstraint*>(ptr)->setPreimageInterval(m_negA, m_negB); });
-
-    //m_optimizationFuture = folly::makeSemiFuture().via(&m_executor).thenValue(
-    //        [this](auto&&){
-    //            ceres::GradientProblemSolver::Options options;
-    //            {
-    //                std::lock_guard l(m_mutex);
-    //                options = m_options;
-    //            }
-
-    //            ceres::GradientProblemSolver::Summary summary;
-    //            ceres::Solve(options, *m_problem, m_U.data(), &summary);
-    //        });
+    m_continue = true;
+    m_thread = std::thread([&, options = m_options]{
+        ceres::GradientProblemSolver::Summary summary;
+        ceres::Solve(options, *m_problem, m_U.data(), &summary);
+        std::copy(m_U.begin(), m_U.end(), m_pd.phasefield.begin());
+            });
 }
 
 void OptimizationContext::stopOptimization() {
-    //if(m_optimizationFuture.valid() && !m_optimizationFuture.isReady()){
-    //    m_exit = true;
-    //    m_optimizationFuture.wait();
-    //}
+    m_continue = false;
+    if(m_thread.joinable())
+        m_thread.join();
 }
 
 
-/**
- *
- * @todo
- *  - add color edit for phasefield vis
- *  - add options to change epsilon
- */
 void OptimizationContext::drawImGui(){
-    //ImGui::SetNextWindowPos({500.0f, 50.0f}, ImGuiCond_FirstUseEver);
-    //ImGui::SetNextWindowBgAlpha(0.5f);
-    //ImGui::Begin("Options", nullptr);
-    //ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.6f);
+    if (ImGui::TreeNode("Optimization Options"))
+    {
+        static std::uint32_t iterations = 100;
+        constexpr static std::uint32_t step = 1;
+        ImGui::InputScalar("iterations", ImGuiDataType_S32, &m_options.max_num_iterations, &step, nullptr, "%u");
 
+        constexpr float minEps = 0.f, maxEps = 1.;
+        ImGui::DragScalar("epsilon", ImGuiDataType_Double, &m_epsilon, .01f, &minEps, &maxEps, "%f", 2);
 
-    //ImGui::InputText("mesh path", m_inputPath.data(), m_inputPath.size());
-    //if(ImGui::Button("load mesh")){
-    //    loadMesh(std::string{m_inputPath.begin(),std::find(m_inputPath.begin(), m_inputPath.end(), '\0')});
-    //}
+        ImGui::Text("Preimage Intervals");
+        ImGui::DragFloatRange2("Positive Interval", &m_posA, &m_posB, .01f, .0f, 1.f, "Min: %.2f", "Max: %.2f");
+        ImGui::DragFloatRange2("Negative Interval", &m_negA, &m_negB, .01f, -1.f, .0f, "Min: %.2f", "Max: %.2f");
 
+        ImGui::Text("Functional Weights");
+        for(auto& [name, w] : m_weights){
+            constexpr static double lower = 0., upper = 1.;
+            ImGui::SliderScalar(name.c_str(), ImGuiDataType_Double, &w, &lower, &upper, "%.5f", 1.0f);
+        }
 
-    //if(ImGui::Button("reset phasefield")){
-    //    initializePhasefield(InitializationFlag::RandomNormal);
-    //}
+        if (ImGui::Button("Optimize"))
+            startOptimization();
 
-    //if (ImGui::Button("optimize")){
-    //    startOptimization();
-    //}
+        if (auto stop = ImGui::Button("Stop"))
+            stopOptimization();
 
-    //static std::uint32_t iterations = 100;
-    //constexpr static std::uint32_t step = 1;
-    //std::uint32_t old = iterations;
-    //ImGui::InputScalar("iterations", ImGuiDataType_U32, &iterations, &step, nullptr, "%u");
-    //if(old != iterations){
-    //    std::lock_guard l(m_mutex);
-    //    m_options.max_num_iterations = static_cast<int>(iterations);
-    //}
-
-    //for(auto& [name, w] : m_checkBoxes){
-    //    constexpr static double lower = 0., upper = 1.;
-    //    ImGui::SliderScalar(name.c_str(), ImGuiDataType_Double, &w, &lower, &upper, "%.5f", 1.0f);
-    //}
-
-    //if (ImGui::TreeNode("Preimage Intervals"))
-    //{
-    //    ImGui::DragFloatRange2("Positive Interval", &m_posA, &m_posB, .01f, .0f, 1.f, "Min: %.2f", "Max: %.2f");
-    //    ImGui::DragFloatRange2("Negative Interval", &m_negA, &m_negB, .01f, -1.f, .0f, "Min: %.2f", "Max: %.2f");
-    //    ImGui::TreePop();
-    //}
-
-    //ImGui::PopItemWidth();
-    //ImGui::End();
+        ImGui::TreePop();
+    }
 }
 
 OptimizationContext::~OptimizationContext(){
-    //if(m_optimizationFuture.valid() && !m_optimizationFuture.isReady()){
-    //    m_exit = true;
-    //    m_optimizationFuture.wait();
-    //}
+    stopOptimization();
 }

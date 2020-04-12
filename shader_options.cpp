@@ -26,6 +26,7 @@ void ShaderOptions::drawImGui() {
     {
         const char* listbox_items[] = {
                 "Phong Color Mapped",
+                "Flat Color Mapped",
                 "Mesh Visualization",
                 };
 
@@ -36,6 +37,9 @@ void ShaderOptions::drawImGui() {
                     m_type = DrawableType::ColorMapPhong;
                     break;
                 case 1 :
+                    m_type = DrawableType::ColorMapFlat;
+                    break;
+                case 2 :
                     m_type = DrawableType::MeshVisualizer;
                     break;
                 default:

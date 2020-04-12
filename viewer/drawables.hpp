@@ -26,16 +26,35 @@ using Object = Magnum::SceneGraph::Object<Magnum::SceneGraph::RigidMatrixTransfo
 enum class DrawableType : Magnum::UnsignedShort {
     MeshVisualizer = 0,
     ColorMapPhong = 1,
+    ColorMapFlat = 2
 };
 
-class ColorMapFlatDrawable
+class ColorMapFlatDrawable : public Drawable
 {
 public:
 
+    explicit ColorMapFlatDrawable(Object& object, Magnum::GL::AbstractShaderProgram& shader, DrawableGroup* group):
+            Drawable(object, group),
+            m_mesh(dynamic_cast<ColorMapDrawableData&>(object).mesh),
+            m_shader(dynamic_cast<Magnum::Shaders::Flat3D&>(shader)),
+            m_textures(dynamic_cast<ColorMapDrawableData&>(object).textures)
+    {
+    }
+
+    void draw(const Magnum::Matrix4& transformationMatrix, Magnum::SceneGraph::Camera3D& camera) override {
+        m_shader.bindTexture(m_textures[int(m_type)])
+                .setTransformationProjectionMatrix(camera.projectionMatrix() * transformationMatrix)
+                .draw(m_mesh);
+    }
+
+    void setColorMapping(ColorMapType type) { m_type = type; }
 
 private:
 
-
+    Magnum::GL::Mesh& m_mesh;
+    Magnum::Shaders::Flat3D& m_shader;
+    Corrade::Containers::ArrayView<Magnum::GL::Texture2D> m_textures;
+    ColorMapType m_type = ColorMapType::Turbo;
 };
 
 class VertexColorDrawable : public Drawable
@@ -73,7 +92,7 @@ public:
 
     void draw(const Magnum::Matrix4& transformationMatrix, Magnum::SceneGraph::Camera3D& camera) override {
         m_shader.bindDiffuseTexture(m_textures[int(m_type)])
-                .setLightPosition({5.0f, 5.0f, 7.0f})
+                .setLightPositions({{10.0f, 10.0f, 10.0f}, {-10.0f, -10.0f, -10.0f}})
                 .setTransformationMatrix(transformationMatrix)
                 .setNormalMatrix(transformationMatrix.normalMatrix())
                 .setProjectionMatrix(camera.projectionMatrix())

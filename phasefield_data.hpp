@@ -25,7 +25,7 @@ struct PhasefieldData : ColorMapDrawableData {
 
     Corrade::Containers::Array<Magnum::Vector3> V;
     Corrade::Containers::Array<Magnum::UnsignedInt> F;
-    Corrade::Containers::Array<double> phasefield;
+    Corrade::Containers::Array<Magnum::Float> phasefield;
 
     Drawable* drawable = nullptr;
     DrawableType type;
@@ -34,4 +34,14 @@ struct PhasefieldData : ColorMapDrawableData {
     Magnum::Trade::MeshData original{Magnum::MeshPrimitive::Points, 0};
     Magnum::Trade::MeshData meshData{Magnum::MeshPrimitive::Points, 0};
     Status status = Status::NothingChanged;
+
+    std::vector<char> serialize(std::string const& path){
+
+    }
+
+    void deserialize(std::string const& path){
+
+
+        status = Status::NewMesh;
+    }
 };

@@ -47,6 +47,7 @@ Object* Scene::getNode(std::string_view name){
 
 Drawable* Scene::setDrawableType(std::string_view name, DrawableType type){
     auto it = m_nodes.find(name);
+    Drawable *drawable;
     if(it == m_nodes.end())
         return nullptr;
     else{
@@ -54,13 +55,17 @@ Drawable* Scene::setDrawableType(std::string_view name, DrawableType type){
         object->features().clear();
         switch (type) {
             case DrawableType::ColorMapPhong :
-                new ColorMapPhongDrawable(*object, *m_shaders[4], &m_drawableGroup);
+                drawable = new ColorMapPhongDrawable(*object, *m_shaders[4], &m_drawableGroup);
+                break;
+            case DrawableType::ColorMapFlat :
+                drawable = new ColorMapFlatDrawable(*object, *m_shaders[1], &m_drawableGroup);
                 break;
             case DrawableType::MeshVisualizer :
-                new MeshVisualizerDrawable(*object, *m_shaders[3], &m_drawableGroup);
+                drawable = new MeshVisualizerDrawable(*object, *m_shaders[3], &m_drawableGroup);
                 break;
         }
     }
+    return drawable;
 }
 
 Scene3D& Scene::root(){
@@ -80,6 +85,6 @@ Scene::Scene() {
     m_shaders.emplace_back(new Shaders::Flat3D{Shaders::Flat3D::Flag::Textured});
     m_shaders.emplace_back(new Shaders::VertexColor3D{});
     m_shaders.emplace_back(new Shaders::MeshVisualizer3D{Shaders::MeshVisualizer3D::Flag::Wireframe | Shaders::MeshVisualizer3D::Flag::NormalDirection});
-    m_shaders.emplace_back(new Shaders::Phong{Shaders::Phong::Flag::DiffuseTexture});
+    m_shaders.emplace_back(new Shaders::Phong{Shaders::Phong::Flag::DiffuseTexture, 2});
 }
 

@@ -5,7 +5,20 @@
 
 #pragma once
 
-#include <enoki/autodiff.h>
+namespace enoki {
+
+    template<typename T>
+    ENOKI_INLINE void set_requires_gradient(T &a, bool value);
+
+    template<typename T>
+    void backward(const T &a, bool free_graph);
+
+    template<typename T>
+    decltype(auto) gradient(T &&value);
+
+    template<class T>
+    class DiffArray;
+}
 
 #ifdef __cpp_concepts
 #include <concepts>

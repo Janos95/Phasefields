@@ -1,5 +1,6 @@
 cmake-*/
 build/
 assets/
+shaders/
 cost/external/
 conan_modules/*

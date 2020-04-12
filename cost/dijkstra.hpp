@@ -7,8 +7,6 @@
 #include "graph_common.hpp"
 #include "detach.hpp"
 
-#include <enoki/autodiff.h>
-
 #include <Corrade/Containers/Reference.h>
 #include <Corrade/Utility/Assert.h>
 
@@ -18,14 +16,6 @@
 #include <numeric>
 #include <limits>
 
-namespace {
-    struct InverseDistanceCompare{
-        template<class T>
-        bool operator()(T const& el1, T const& el2){
-            return el1.distance > el2.distance;
-        }
-    };
-}
 
 template<class R>
 class Dijkstra
@@ -92,6 +82,13 @@ private:
         HeapElement(int n, double d): node(n), distance(d){}
         int node;
         double distance;
+    };
+
+    struct InverseDistanceCompare{
+        template<class T>
+        bool operator()(T const& el1, T const& el2){
+            return el1.distance > el2.distance;
+        }
     };
 
     std::priority_queue<HeapElement,  std::vector<HeapElement>, InverseDistanceCompare> m_heap;

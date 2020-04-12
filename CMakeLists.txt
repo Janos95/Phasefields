@@ -10,14 +10,12 @@ find_package(Eigen3 CONFIG REQUIRED)
 find_package(Ceres CONFIG REQUIRED)
 find_package(Folly CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
-find_package(OpenMesh CONFIG REQUIRED)
-find_package(OpenMP CONFIG)
 find_package(libigl CONFIG REQUIRED)
 find_package(Corrade CONFIG REQUIRED PluginManager Containers TestSuite)
 find_package(Magnum CONFIG REQUIRED GL SceneGraph MeshTools Sdl2Application Shaders Primitives DebugTools)
 find_package(MagnumPlugins CONFIG REQUIRED AssimpImporter)
 find_package(MagnumIntegration CONFIG REQUIRED ImGui Eigen)
-find_package(Boost CONFIG REQUIRED)
+find_package(TBB CONFIG REQUIRED)
 #find_package(ParallelSTL CONFIG REQUIRED)
 #find_package(Enoki CONFIG REQUIRED)
 
@@ -29,6 +27,7 @@ list(APPEND CMAKE_CXX_FLAGS "-ffast-math")
 add_subdirectory(scoped_timer)
 add_subdirectory(viewer)
 add_subdirectory(cost)
+add_subdirectory(exact_geodesics)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(Ipopt REQUIRED IMPORTED_TARGET ipopt)
@@ -63,6 +62,7 @@ target_link_libraries(segmentation PRIVATE
         phasefields::viewer
         phasefields::scoped_timer
         phasefields::cost
+        phasefields::exact_geodesic
         MagnumIntegration::Eigen
         Magnum::Primitives
         fmt::fmt
