@@ -22,7 +22,7 @@ public:
         {
         }
 
-    void drawImGui() override;
+    void drawImGui(Viewer&) override;
     bool loadMesh(std::string const& path);
     bool loadBlob(std::string const& path);
     bool saveMesh(std::string const& path);

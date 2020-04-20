@@ -4,14 +4,11 @@
 
 #pragma once
 
-#include <Eigen/Core>
 
 #include <Corrade/Utility/Assert.h>
+#include <Corrade/Utility/StlMath.h>
 
-#include <vector>
-#include <cmath>
-
-
+#include <algorithm>
 
 class F
 {
@@ -59,7 +56,6 @@ private:
 };
 
 
-
 class FGrad
 {
 public:
@@ -102,10 +98,16 @@ private:
     const double m_a,m_b,m_c3;
 };
 
-double triangleDiameter(
-        const Eigen::Vector3d& a,
-        const Eigen::Vector3d& b,
-        const Eigen::Vector3d& c);
+
+auto computeAreas(const Containers::ArrayView<const Vector3ui>& indices, const Containers::StridedArrayView1D<const Vector3>& data){
+    Containers::Array<Float> areas(Containers::NoInit, indices.size());
+    for (int j = 0; j < indices.size(); ++j) {
+        auto& triangle = indices[j];
+        auto a = data[triangle[0]] - data[triangle[1]];
+        auto b = data[triangle[0]] - data[triangle[2]];
+        areas[j] = Math::cross(a, b).length() * .5f;
+    }
+}
 
 template<class R, class T>
 void updateWeight(const int target, const T& w, R& neighbors){
@@ -120,12 +122,12 @@ public:
 
     StoppingCriteria() = default;
 
-    StoppingCriteria(const int source, const int numComponents, const std::vector<int>& components):
+    StoppingCriteria(const int source, const int numComponents, const Containers::Array<int>& components):
         m_startComponent(components[source]),
         m_numComponentsToFind(numComponents - m_startComponent - 1),
         m_components(&components),
-        m_found(m_numComponentsToFind + 1, 0),
-        m_targetVertices(m_numComponentsToFind + 1, -1)
+        m_found(Containers::DirectInit, m_numComponentsToFind + 1, false),
+        m_targetVertices(Containers::DirectInit, m_numComponentsToFind + 1, -1)
     {
     }
 
@@ -157,15 +159,12 @@ public:
 private:
     int m_startComponent;
     int m_numComponentsToFind;
-    const std::vector<int>* m_components;
+    const Containers::Array<int>* m_components;
 
     int m_numComponentsFound = 0;
-    std::vector<bool> m_found;
-    std::vector<int> m_targetVertices;
+    Corrade::Containers::Array<bool> m_found;
+    Corrade::Containers::Array<int> m_targetVertices;
 };
 
 
-double triangleDiameter(
-        const Eigen::Vector3d& a,
-        const Eigen::Vector3d& b,
-        const Eigen::Vector3d& c);
+

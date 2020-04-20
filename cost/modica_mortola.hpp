@@ -4,19 +4,25 @@
 
 #pragma once
 
+#include "functional.hpp"
 
-#include <ceres/first_order_function.h>
+#include <Corrade/Containers/ArrayView.h>
 
-#include <Eigen/Core>
-#include <Eigen/SparseCore>
+namespace Eigen {
+    template<typename _Scalar, int _Options, typename _StorageIndex>
+    class SparseMatrix;
+}
 
-#include <memory>
+namespace Cr = Corrade;
+namespace Mg = Magnum;
 
-class InterfaceEnergy : public ceres::FirstOrderFunction
+struct DirichletEnergy :  Functional
 {
-public:
 
-    InterfaceEnergy(const Eigen::MatrixXd& V, const Eigen::MatrixXi& F, const double epsilon);
+    DirichletEnergy(
+            Cr::Containers::ArrayView<const Vector3> const& vertices,
+            Cr::Containers::ArrayView<const Vector3ui> const& faces,
+            Float epsilon);
 
     int NumParameters() const override;
 
@@ -24,23 +30,23 @@ public:
                   double* residual,
                   double* jacobians) const override;
 
-private:
-
     double m_epsilon;
-    const Eigen::MatrixXd& m_V;
-    const Eigen::MatrixXi& m_F;
 
-    Eigen::SparseMatrix<double> m_GSQ;
-    Eigen::VectorXd m_dblA;
+    Cr::Containers::ArrayView<const Vector3ui> m_triangles;
+    Cr::Containers::ArrayView<const Vector3> m_vertices;
+    Cr::Containers::Array<Mg::Float> areas;
 
+    Cr::Containers::Pointer<Eigen::SparseMatrix<Mg::Float, 0 /* ColMajor */, int>> m_GSQ;
 };
 
 
-class PotentialEnergy : public ceres::FirstOrderFunction
+struct DoubleWellPotential :  ceres::FirstOrderFunction
 {
-public:
 
-    PotentialEnergy(const Eigen::MatrixXd& V, const Eigen::MatrixXi& F, const double epsilon);
+    DoubleWellPotential(
+        Cr::Containers::ArrayView<const Vector3> const& vertices,
+        Cr::Containers::ArrayView<const Vector3ui> const& faces,
+        Mg::Float epsilon);
 
     int NumParameters() const override;
 
@@ -48,23 +54,21 @@ public:
                   double* cost,
                   double* jacobians) const override;
 
-private:
+    Cr::Containers::ArrayView<const Vector3ui> m_triangles;
+    Cr::Containers::ArrayView<const Vector3> m_vertices;
+    Cr::Containers::Array<Mg::Float> areas;
 
-    double m_epsilon;
-    const Eigen::MatrixXd& m_V;
-    const Eigen::MatrixXi& m_F;
-
-    Eigen::VectorXd m_dblA;
-
+    Mg::Float m_epsilon;
 };
 
 
-class AreaRegularizer : public ceres::FirstOrderFunction
+struct AreaRegularizer : public ceres::FirstOrderFunction
 {
 
-public:
-
-    AreaRegularizer(const Eigen::MatrixXd& V, const Eigen::MatrixXi& F);
+    AreaRegularizer(
+        Cr::Containers::ArrayView<const Vector3> const& vertices,
+        Cr::Containers::ArrayView<const Vector3ui> const& faces,
+        Mg::Float areaRatio = .5f);
 
     int NumParameters() const override;
 
@@ -72,12 +76,13 @@ public:
                   double* cost,
                   double* jacobians) const override;
 
-private:
 
-    const Eigen::MatrixXd& m_V;
-    const Eigen::MatrixXi& m_F;
+    Cr::Containers::ArrayView<const Vector3ui> triangles;
+    Cr::Containers::ArrayView<const Vector3> vertices;
+    Cr::Containers::Array<Mg::Float> areas;
 
-    Eigen::VectorXd m_dblA;
-    double m_area;
+    Mg::Float area;
+    Mg::Float areaRatio;
+    Mg::Float currentArea;
 };
 

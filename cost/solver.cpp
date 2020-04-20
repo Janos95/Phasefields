@@ -1,96 +1,81 @@
 //
-// Created by janos on 16.12.19.
+// Created by janos on 20.04.20.
 //
 
-#pragma once
+#include "solver.hpp"
+
+#include <ceres/iteration_callback.h>
+#include <ceres/gradient_problem_solver.h>
+#include <ceres/gradient_problem.h>
+#include <ceres/first_order_function.h>
 
 #include "IpTNLP.hpp"
 
-#include <Eigen/Core>
+using namespace Corrade;
 
+struct IpoptWrapper;
 
-
-
-template<class F, class... Derived>
-void evaluateFunctional(const F& f, Ipopt::Number* x, const Ipopt::Index n, Eigen::PlainObjectBase<Derived>&... out)
-{
-    using VectorType = Eigen::Matrix<Ipopt::Number, Eigen::Dynamic, 1>;
-    Eigen::Map<VectorType> mapped(x, n);
-    f.evaluate(mapped, out...);
-}
-
-template<typename T, typename Enable = void>
-class HessianBase
-{
-};
-
-
-template<class F>
-struct HessianBase<F, std::enable_if_t<provides_hessian_v<F>>>
-{
-    using HessianType = typename F::HessianType;
-    HessianType h;
-};
-
-
-
-struct Solver
-{
-    struct Options{
-        std::vector<std::function<void()>> callbacks;
-    };
-
-    struct Summary{
-
-    };
-
-    template<class P>
-    Solver(const Options& options, P&& problem, Summary& summary);
-};
-
-
-
-template<class F, class G>
-class IpoptProblem: public Ipopt::TNLP
-{
-    F& m_f;
-    G& m_g;
-
-    using DomainType = typename F::DomainType;
-    using ResultType = typename F::ResultType;
-    using GradientType = typename F::GradientType;
-
-    ResultType m_fResult;
-    GradientType m_fGradient;
-
-    ResultType m_gResult;
-    GradientType m_gGradient;
-
-    HessianBase<F> m_fHessian;
-    HessianBase<G> m_gHessian;
-
-    DomainType m_x;
-
-public:
-
-    struct Options : Solver::Options{
-        bool check_gradient = false;
-    };
-
-    IpoptProblem(F&& f, G&& g):
-        m_f(std::forward<F>(f)),
-        m_g(std::forward<G>(g))
-    {
+struct FirstOrderWrapper : ceres::FirstOrderFunction {
+    explicit FirstOrderWrapper(solver::Problem const& pb) : problem(pb) {
+        CORRADE_ASSERT(pb.constraints.empty(), "Solver : ceres does not support constraints",);
     }
 
+    solver::Problem const& problem;
 
-private:
+    bool Evaluate(double const* parameters, double* cost, double* jacobian) const override {
+        return problem.evaluate(parameters, cost, jacobian);
+    }
 
+    [[nodiscard]] int NumParameters() const override { return problem.numParameters(); }
+};
+
+struct CeresCallbackWrapper : ceres::IterationCallback {
+    using callback_type = unique_function<solver::Status(solver::IterationSummary const&)>;
+
+    CeresCallbackWrapper(callback_type& cb) : callback(cb) {}
+
+    callback_type& callback;
+    ceres::CallbackReturnType operator()(const ceres::IterationSummary& summary) override {
+        solver::IterationSummary solverSummary;
+        switch (callback(solverSummary)) {
+            case solver::Status::ABORT : return ceres::CallbackReturnType::SOLVER_ABORT;
+            case solver::Status::CONTINUE : return ceres::CallbackReturnType::SOLVER_CONTINUE;
+            case solver::Status::FINISHED : return ceres::CallbackReturnType::SOLVER_TERMINATE_SUCCESSFULLY;
+        }
+    }
+};
+
+void solve(solver::Options& options, solver::Problem& problem, double* params, solver::Summary* summary){
+    if(options.solver == solver::Solver::CERES){
+        ceres::GradientProblemSolver::Summary ceresSummary;
+        ceres::GradientProblem ceresProblem(new FirstOrderWrapper(problem));
+        ceres::GradientProblemSolver::Options ceresOptions{
+            .max_num_iterations = options.max_num_iterations,
+            .minimizer_progress_to_stdout = options.minimizer_progress_to_stdout
+        };
+        Containers::Array<Containers::Pointer<CeresCallbackWrapper>> cbs(options.callbacks.size());
+        for (int i = 0; i < cbs.size(); ++i)
+            cbs[i].reset(new CeresCallbackWrapper(options.callbacks[i]));
+        for(auto& cb : cbs) ceresOptions.callbacks.push_back(cb.get());
+        ceres::Solve(ceresOptions, ceresProblem, params, &ceresSummary);
+    } else if(options.solver == solver::Solver::IPOPT){
+        IpoptWrapper i
+    } else CORRADE_ASSERT(false, "Unkown solver type", );
+}
+
+
+
+struct IpoptWrapper : Ipopt::TNLP
+{
+
+    explicit IpoptWrapper(solver::Problem const& pb) : problem(pb) {}
+
+    solver::Problem const& problem;
 
     /**@name Overloaded from TNLP */
     //@{
     /** Method to return some info about the NLP */
-     bool get_nlp_info(
+    bool get_nlp_info(
             Ipopt::Index&          n,
             Ipopt::Index&          m,
             Ipopt::Index&          nnz_jac_g,
@@ -98,18 +83,14 @@ private:
             IndexStyleEnum& index_style
     ) override
     {
-        n = m_f.getDomainDimension();
-        m = m_g.getCoDomainDimension();
 
-        nnz_jac_g = m_g.getJacNNZ();
-        nnz_jac_f = m_f.getJacNNZ();
 
 
         index_style = TNLP::C_STYLE;
     }
 
     /** Method to return the bounds for my problem */
-     bool get_bounds_info(
+    bool get_bounds_info(
             Ipopt::Index   n,
             Ipopt::Number* x_l,
             Ipopt::Number* x_u,
@@ -122,7 +103,7 @@ private:
     }
 
     /** Method to return the starting point for the algorithm */
-     bool get_starting_point(
+    bool get_starting_point(
             Ipopt::Index   n,
             bool    init_x,
             Ipopt::Number* x,
@@ -132,53 +113,37 @@ private:
             Ipopt::Index   m,
             bool    init_lambda,
             Ipopt::Number* lambda
-    ) override;
+    ) override {
+
+    }
 
     /** Method to return the objective value */
-     bool eval_f(
+    bool eval_f(
             Ipopt::Index         n,
             const Ipopt::Number* x,
             bool          new_x,
             Ipopt::Number&       obj_value
     ) override
     {
-         if(new_x){
-             Eigen::Map<DomainType> mapped(x);
-             if constexpr(provides_hessian_v<F>)
-                 m_f.evaluate(mapped, m_fResult, m_fGradient, m_fHessian.h);
-             else
-                 m_f.evaluate(mapped, m_fResult, m_fGradient);
-         }
 
-         obj_value = m_fResult;
-         return true;
     }
 
     /** Method to return the gradient of the objective */
-     bool eval_grad_f(
+    bool eval_grad_f(
             Ipopt::Index         n,
             const Ipopt::Number* x,
             bool          new_x,
             Ipopt::Number*       grad_f
     ) override
     {
-        if(new_x){
-            Eigen::Map<DomainType> mapped(x);
-            if constexpr(provides_hessian_v<F>)
-                m_f.evaluate(mapped, m_fResult, m_fGradient, m_fHessian.h);
-            else
-                m_f.evaluate(mapped, m_fResult, m_fGradient);
-        }
 
-        std::copy_n(m_fGradient.begin(), n, grad_f);
-        return true;
     }
 
 
     /**
      * @brief no constraints for now so just return 1.
      */
-     bool eval_g(
+    bool eval_g(
             Ipopt::Index         n,
             const Ipopt::Number* x,
             bool          new_x,
@@ -186,7 +151,7 @@ private:
             Ipopt::Number*       g
     ) override
     {
-         return true;
+        return true;
     }
 
     /**
@@ -203,14 +168,14 @@ private:
             Ipopt::Number*       values
     ) override
     {
-         return true;
+        return true;
     }
 
     /** Method to return:
      *   1) The structure of the hessian of the lagrangian (if "values" is NULL)
      *   2) The values of the hessian of the lagrangian (if "values" is not NULL)
      */
-     bool eval_h(
+    bool eval_h(
             Ipopt::Index         n,
             const Ipopt::Number* x,
             bool          new_x,
@@ -224,10 +189,10 @@ private:
             Ipopt::Number*       values
     ) override
     {
-         return false;
+        return false;
     }
 
-     void finalize_solution(
+    void finalize_solution(
             Ipopt::SolverReturn               status,
             Ipopt::Index                      n,
             const Ipopt::Number*              x,
@@ -240,13 +205,7 @@ private:
             const Ipopt::IpoptData*           ip_data,
             Ipopt::IpoptCalculatedQuantities* ip_cq
     ) override
-     {
+    {
 
-     }
-
-
-
-
-
+    }
 };
-

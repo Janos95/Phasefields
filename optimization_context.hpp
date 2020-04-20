@@ -7,63 +7,36 @@
 #include "viewer.hpp"
 #include "problem.hpp"
 #include "phasefield_data.hpp"
+#include "solver.hpp"
 
-#include <Magnum/ImGuiIntegration/Context.h>
+#include <Corrade/Containers/Array.h>
 
-#include <ceres/gradient_problem.h>
-#include <ceres/gradient_problem_solver.h>
-#include <ceres/iteration_callback.h>
+#include <tbb/task_group.h>
 
-#include <Eigen/Core>
+#include <atomic>
 
-#include <mutex>
-#include <thread>
+namespace Mg = Magnum;
+namespace Cr = Corrade;
 
-class OptimizationContext : public Viewer::AbstractEventHandler {
-public:
-    OptimizationContext(PhasefieldData&);
-    ~OptimizationContext();
+struct OptimizationContext final : Viewer::AbstractEventHandler {
+    explicit OptimizationContext(PhasefieldData&);
 
-    void drawImGui() override;
+    void drawImGui(Viewer&) override;
+    void tickEvent(Viewer&) override;
 
     void startOptimization();
     void stopOptimization();
 
-    enum class InitializationFlag: Magnum::UnsignedByte {
-        RandomNormal = 1
-    };
+    Problem problem;
+    solver::Options options;
+    Corrade::Containers::Array<Mg::Double> phasefield;
+    tbb::task_group taskGroup;
 
+    std::atomic_bool optimize = false;
 
-private:
+    PhasefieldData& pd;
 
-    ceres::CallbackReturnType optimizationCallback(ceres::IterationSummary const&);
-
-    IterationCallbackWrapper m_optimizationCallback;
-
-    Eigen::MatrixXi m_F;
-    Eigen::MatrixXd m_V;
-    Eigen::VectorXd m_U;
-
-    double m_epsilon = .05;
-    float m_posA = .85f, m_posB = .95f;
-    float m_negA = -.95f, m_negB = -.85f;
-
-    SumProblem* m_cost = nullptr;
-    Corrade::Containers::Optional<ceres::GradientProblem> m_problem;
-    ceres::GradientProblemSolver::Options m_options;
-
-    std::thread m_thread;
-    std::atomic_bool m_continue = true;
-
-    PhasefieldData& m_pd;
-
-    std::vector<std::pair<std::string, double>> m_weights =
-            {
-                {"Modica Mortola", 1.},
-                {"Area Regularization", 1.},
-                {"Connectedness Constraint Positive", 1.},
-                {"Connectedness Constraint Negative", 1.}
-            };
+    bool showShortestPaths = false;
 };
 
 

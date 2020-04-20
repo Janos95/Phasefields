@@ -8,7 +8,7 @@
 namespace enoki {
 
     template<typename T>
-    ENOKI_INLINE void set_requires_gradient(T &a, bool value);
+    inline void set_requires_gradient(T &a, bool value);
 
     template<typename T>
     void backward(const T &a, bool free_graph);

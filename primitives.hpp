@@ -26,15 +26,15 @@ struct LoadPrimitives : Viewer::AbstractEventHandler {
     struct ComboElement {
         std::string name;
         PrimitiveType type;
-        std::unique_ptr<AbstractPrimitiveOptions> options;
+        Corrade::Containers::Pointer<AbstractPrimitiveOptions> options;
     };
 
     struct CapsuleOptions : AbstractPrimitiveOptions {
-        std::uint32_t hemisphereRings = 30; //	Number of (face) rings for each hemisphere. Must be larger or equal to 1.
+        std::uint32_t hemisphereRings = 10; //	Number of (face) rings for each hemisphere. Must be larger or equal to 1.
         std::uint32_t cylinderRings = 30; // 	Number of (face) rings for cylinder. Must be larger or equal to 1.
         std::uint32_t segments = 30; //	Number of (face) segments. Must be larger or equal to 3.
         float radius = 1.f;
-        float length = 2.f;
+        float length = 5.f;
     };
 
     struct UOptions : AbstractPrimitiveOptions {
@@ -44,7 +44,7 @@ struct LoadPrimitives : Viewer::AbstractEventHandler {
         float innerHeight = .5f;
     };
 
-    void drawImGui() override;
+    void drawImGui(Viewer&) override;
     void load(ComboElement&);
 };
 

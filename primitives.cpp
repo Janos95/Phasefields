@@ -67,7 +67,7 @@ bool displayUOptions(LoadPrimitives::UOptions& options){
     return hasChanged;
 }
 
-void LoadPrimitives::drawImGui(){
+void LoadPrimitives::drawImGui(Viewer&){
     if (ImGui::TreeNode("Primitives"))
     {
         static auto map = makeComboMap();

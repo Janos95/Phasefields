@@ -7,12 +7,8 @@
 
 #include "graph_common.hpp"
 
-#include <enoki/autodiff.h>
-
 #include <Corrade/Containers/Reference.h>
 #include <Corrade/Utility/Assert.h>
-
-#include <folly/Function.h>
 
 #include <deque>
 #include <numeric>
@@ -25,8 +21,8 @@ public:
 
     explicit BreadthFirstSearch(const R& adjacencyList, int source):
             m_adjacencyList(adjacencyList),
-            m_prev(adjacencyList.size(), -1),
-            m_visited(adjacencyList.size(), false)
+            m_prev(Containers::DirectInit, adjacencyList.size(), -1),
+            m_visited(Containers::DirectInit, adjacencyList.size(), false)
     {
         m_q.push_back(source);
     }
@@ -71,8 +67,8 @@ private:
     friend graph::ReversedPathIterator<BreadthFirstSearch>;
 
     const R& m_adjacencyList;
-    std::vector<int> m_prev;
-    std::vector<bool> m_visited;
+    Containers::Array<int> m_prev;
+    Containers::Array<bool> m_visited;
     std::deque<int> m_q;
 };
 

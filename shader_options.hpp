@@ -10,20 +10,21 @@
 
 class ShaderOptions : public Viewer::AbstractEventHandler {
     PhasefieldData& m_phasefieldData;
-    bool m_updateNode = false;
-    DrawableType m_type;
 
-    Float m_lineWidth = 1.f;
-    Float m_wireframeWidth = 1.f;
+
+    Object3D* m_node;
+
+
+
 public:
 
-    explicit ShaderOptions(PhasefieldData& data): m_phasefieldData(data) {}
+    explicit ShaderOptions(PhasefieldData& data);
 
-    void drawImGui() override;
-    void tickEvent(Scene &scene) override;
-    void handlePhong();
-    void handleFlat();
-    void handleMeshVis();
+    void drawImGui(Viewer&) override;
+    void tickEvent(Viewer&) override;
+    bool displayPhongOptions();
+    bool displayFlatOptions();
+    bool displayMeshVisualizerOptions();
 
 };
 

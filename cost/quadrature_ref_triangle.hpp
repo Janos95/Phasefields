@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include <Eigen/Core>
+#include <Corrade/Containers/StaticArray.h>
+#include <Magnum/Math/RectangularMatrix.h>
 
 //0.816847572980459  0.091576213509771
 //0.091576213509771  0.816847572980459
@@ -25,41 +26,43 @@
 //1.0  0.0
 //0.0  1.0
 
+namespace Cr = Corrade;
+namespace Mg = Magnum;
 
 template<class T>
 class QuadratureRefTriangle
 {
 private:
-    using Vector6R = Eigen::Matrix<T, 6, 1>;
 
-    const Eigen::Matrix<T, 6, 2> interpolationPoints = (Eigen::Matrix<T, 6, 2>{}
-         << T(0.816847572980459),  T(0.091576213509771),
-            T(0.091576213509771),  T(0.816847572980459),
-            T(0.091576213509771),  T(0.091576213509771),
-            T(0.108103018168070),  T(0.445948490915965),
-            T(0.445948490915965),  T(0.108103018168070),
-            T(0.445948490915965),  T(0.445948490915965)).finished();
+    const Mg::Math::RectangularMatrix<2, 6, T> interpolationPoints{
+            Mg::Math::Vector<6, T>{T(0.816847572980459), T(0.091576213509771), T(0.091576213509771), T(0.108103018168070), T(0.445948490915965), T(0.445948490915965)},
+            Mg::Math::Vector<6, T>{T(0.091576213509771), T(0.816847572980459), T(0.091576213509771), T(0.445948490915965), T(0.108103018168070), T(0.445948490915965)}};
 
-    const Vector6R weights = (Vector6R{}
-         << T(0.109951743655322),
-            T(0.109951743655322),
-            T(0.109951743655322),
-            T(0.223381589678011),
-            T(0.223381589678011),
-            T(0.223381589678011)).finished();
+           // {{T(0.816847572980459),  T(0.091576213509771)},
+           //  {T(0.091576213509771),  T(0.816847572980459)},
+           //  {T(0.091576213509771),  T(0.091576213509771)},
+           //  {T(0.108103018168070),  T(0.445948490915965)},
+           //  {T(0.445948490915965),  T(0.108103018168070)},
+           //  {T(0.445948490915965),  T(0.445948490915965)}};
+
+    const Cr::Containers::StaticArray<6, T> weights =
+            {T(0.109951743655322),
+             T(0.109951743655322),
+             T(0.109951743655322),
+             T(0.223381589678011),
+             T(0.223381589678011),
+             T(0.223381589678011)};
 
 public:
 
     template<class F>
     T integrate(const F& f) const
     {
-        Vector6R values = Vector6R::Zero();
-
+        T s{0};
         for (int i = 0; i < 6; ++i) {
-            auto row = interpolationPoints.row(i);
-            values[i] = f(row[0], row[1]);
+            auto const& p = interpolationPoints[i];
+            s += f(p[0], p[1]) * weights[i];
         }
-
-        return T(0.5) * values.dot(weights);
+        return T(0.5) * s;
     }
 };

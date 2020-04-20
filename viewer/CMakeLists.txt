@@ -8,8 +8,6 @@ add_library(viewer SHARED
         arc_ball.cpp
         arc_ball.hpp
         arc_ball_camera.hpp
-        scene.hpp
-        scene.cpp
         drawable_data.hpp
         camera.hpp
         upload.cpp
@@ -21,6 +19,7 @@ add_library(viewer SHARED
 target_include_directories(viewer PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(viewer
         PUBLIC
+            phasefields::utilities
             Magnum::GL
             Magnum::SceneGraph
             Magnum::Magnum

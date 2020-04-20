@@ -60,6 +60,15 @@ Viewer::Viewer(int argc, char** argv):
 
     }
 
+    /* Setup the arcball after the camera objects */
+    {
+        const Vector3 eye = Vector3::zAxis(-10.0f);
+        const Vector3 center{};
+        const Vector3 up = Vector3::yAxis();
+        camera.emplace(scene, eye, center, up, 45.0_degf,
+                       windowSize(), framebufferSize());
+    }
+
     GL::Renderer::enable(GL::Renderer::Feature::DepthTest);
     GL::Renderer::enable(GL::Renderer::Feature::FaceCulling);
 
@@ -67,31 +76,16 @@ Viewer::Viewer(int argc, char** argv):
     setSwapInterval(1);
     setMinimalLoopPeriod(16);
 }
-#include <iostream>
-Viewer& Viewer::init(){
-    CORRADE_INTERNAL_ASSERT(m_scene);
-    m_scene->setViewportSize(framebufferSize());
-    /* Setup the arcball after the camera objects */
-    const Vector3 eye = Vector3::zAxis(-10.0f);
-    const Vector3 center{};
-    const Vector3 up = Vector3::yAxis();
-    std::cout << "root of camera " << &(m_scene->root()) << std::endl;
-    m_camera.emplace(m_scene->root(), eye, center, up, 45.0_degf,
-                     windowSize(), framebufferSize());
-    return *this;
-}
+
+
 
 
 void Viewer::viewportEvent(ViewportEvent& event) {
     GL::defaultFramebuffer.setViewport({{}, event.framebufferSize()});
-    if(m_scene){
-        if(m_camera)
-            m_camera->reshape(event.windowSize(), event.framebufferSize());
-        m_scene->setViewportSize(event.framebufferSize());
-    }
+    if(camera)
+        camera->reshape(event.windowSize(), event.framebufferSize());
 
-
-    for (auto const& eventCB : m_eventCallbacks)
+    for (auto& eventCB : m_eventCallbacks)
         eventCB->viewportEvent(event, *this);
 
     m_imgui.relayout(Vector2{event.windowSize()}/event.dpiScaling(),
@@ -105,26 +99,26 @@ void Viewer::keyPressEvent(KeyEvent& event) {
         return;
     }
 
-    for (auto const& eventCB : m_eventCallbacks) {
+    for (auto& eventCB : m_eventCallbacks) {
         eventCB->keyPressEvent(event, *this);
         if(event.isAccepted())
             return;
     }
 
-    if(!m_camera) return;
+    if(!camera) return;
 
     switch(event.key()) {
         case KeyEvent::Key::L:
-            if(m_camera->lagging() > 0.0f) {
+            if(camera->lagging() > 0.0f) {
                 Debug{} << "Lagging disabled";
-                m_camera->setLagging(0.0f);
+                camera->setLagging(0.0f);
             } else {
                 Debug{} << "Lagging enabled";
-                m_camera->setLagging(0.85f);
+                camera->setLagging(0.85f);
             }
             break;
         case KeyEvent::Key::R:
-            m_camera->reset();
+            camera->reset();
             break;
 
         default:
@@ -141,7 +135,7 @@ void Viewer::keyReleaseEvent(KeyEvent& event) {
         return;
     }
 
-    for (auto const& eventCB : m_eventCallbacks) {
+    for (auto& eventCB : m_eventCallbacks) {
         eventCB->keyReleaseEvent(event, *this);
         if(event.isAccepted())
             return;
@@ -154,7 +148,7 @@ void Viewer::textInputEvent(TextInputEvent& event) {
         return;
     }
 
-    for (auto const& eventCB : m_eventCallbacks) {
+    for (auto& eventCB : m_eventCallbacks) {
         eventCB->textInputEvent(event, *this);
         if(event.isAccepted())
             return;
@@ -167,21 +161,20 @@ void Viewer::mousePressEvent(MouseEvent& event) {
         return;
     }
 
-    for (auto const& eventCB : m_eventCallbacks) {
+    for (auto& eventCB : m_eventCallbacks) {
         eventCB->mousePressEvent(event, *this);
         if(event.isAccepted())
             return;
     }
 
-    if(!m_camera) return;
+    if(!camera) return;
 
-    Debug{} << "starting mouse tracking for arc camera";
     m_trackingMouse = true;
     ///* Enable mouse capture so the mouse can drag outside of the window */
     ///** @todo replace once https://github.com/mosra/magnum/pull/419 is in */
     SDL_CaptureMouse(SDL_TRUE);
 
-    m_camera->initTransformation(event.position());
+    camera->initTransformation(event.position());
 
     event.setAccepted();
     redraw(); /* camera has changed, redraw! */
@@ -193,14 +186,13 @@ void Viewer::mouseReleaseEvent(MouseEvent& event) {
         return;
     }
 
-    for (auto const& eventCB : m_eventCallbacks) {
+    for (auto& eventCB : m_eventCallbacks) {
         eventCB->mouseReleaseEvent(event, *this);
         if(event.isAccepted())
             return;
     }
 
-    if(!m_camera) return;
-    Debug{} << "stopping mouse tracking for arc camera";
+    if(!camera) return;
     /* Disable mouse capture again */
     /** @todo replace once https://github.com/mosra/magnum/pull/419 is in */
     if(m_trackingMouse){
@@ -216,17 +208,17 @@ void Viewer::mouseMoveEvent(MouseMoveEvent& event) {
         return;
     }
 
-    for (auto const& eventCB : m_eventCallbacks) {
+    for (auto& eventCB : m_eventCallbacks) {
         eventCB->mouseMoveEvent(event, *this);
         if(event.isAccepted())
             return;
     }
 
-    if(!m_camera || !event.buttons()) return;
+    if(!camera || !event.buttons()) return;
 
     if(event.modifiers() & MouseMoveEvent::Modifier::Shift)
-        m_camera->translate(event.position());
-    else m_camera->rotate(event.position());
+        camera->translate(event.position());
+    else camera->rotate(event.position());
 
     event.setAccepted();
     redraw(); /* camera has changed, redraw! */
@@ -239,18 +231,18 @@ void Viewer::mouseScrollEvent(MouseScrollEvent& event) {
         return;
     }
 
-    for (auto const& eventCB : m_eventCallbacks) {
+    for (auto& eventCB : m_eventCallbacks) {
         eventCB->mouseScrollEvent(event, *this);
         if(event.isAccepted())
             return;
     }
 
-    if(!m_camera) return;
+    if(!camera) return;
 
     const Float delta = event.offset().y();
     if(Math::abs(delta) < 1.0e-2f) return;
 
-    m_camera->zoom(delta);
+    camera->zoom(delta);
 
     event.setAccepted();
     redraw(); /* camera has changed, redraw! */
@@ -258,15 +250,11 @@ void Viewer::mouseScrollEvent(MouseScrollEvent& event) {
 
 void Viewer::tickEvent()
 {
-    if(m_scene){
-        for(auto& eventCB : m_eventCallbacks)
-            eventCB->tickEvent(*m_scene);
-        if(m_scene->isDirty()){
-            if(!m_camera)
-                init();
-            m_scene->setClean();
-            redraw();
-        }
+    for(auto& eventCB : m_eventCallbacks)
+        eventCB->tickEvent(*this);
+    if(scene.isDirty()){
+        scene.setClean();
+        redraw();
     }
 }
 
@@ -281,13 +269,13 @@ void Viewer::drawEvent() {
         stopTextInput();
 
     /* draw scene */
-    if(m_camera){
-        bool camChanged = m_camera->update();
-        m_camera->draw(m_scene->drawables());
+    if(camera){
+        bool camChanged = camera->update();
+        camera->draw(drawableGroup);
     }
 
-    for (auto const& eventCB : m_eventCallbacks)
-        eventCB->drawImGui();
+    for (auto& eventCB : m_eventCallbacks)
+        eventCB->drawImGui(*this);
     m_imgui.updateApplicationCursor(*this);
 
     /* Render ImGui window */

@@ -4,45 +4,52 @@
 
 #pragma once
 
-
-#include "scene.hpp"
 #include "arc_ball_camera.hpp"
 
 #include <Corrade/Containers/Reference.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/Pointer.h>
+
+#include <Corrade/Containers/GrowableArray.h>
 
 #include <Magnum/Platform/Sdl2Application.h>
 #include <Magnum/ImGuiIntegration/Context.h>
+#include <Magnum/SceneGraph/RigidMatrixTransformation3D.h>
+#include <Magnum/SceneGraph/Object.h>
+#include <Magnum/SceneGraph/Scene.h>
+#include <Magnum/SceneGraph/Drawable.h>
 
-#include <folly/Function.h>
 
 using namespace Math::Literals;
+
+using Object3D = Magnum::SceneGraph::Object<Magnum::SceneGraph::RigidMatrixTransformation3D>;
+using Scene3D = Magnum::SceneGraph::Scene<Magnum::SceneGraph::RigidMatrixTransformation3D>;
 
 class Viewer: public Magnum::Platform::Application{
 public:
     explicit Viewer(int argc, char** argv);
 
     struct AbstractEventHandler{
-        virtual void tickEvent(Scene& scene){ }
-        virtual void drawImGui(){ }
-        virtual void viewportEvent(ViewportEvent& event, Viewer&){ }
-        virtual void keyPressEvent(KeyEvent& event, Viewer&){ }
-        virtual void mousePressEvent(MouseEvent& event, Viewer&){ }
-        virtual void mouseReleaseEvent(MouseEvent& event, Viewer&){ }
-        virtual void mouseMoveEvent(MouseMoveEvent& event, Viewer&){}
-        virtual void mouseScrollEvent(MouseScrollEvent& event, Viewer&){ }
-        virtual void keyReleaseEvent(KeyEvent& event, Viewer&){ }
-        virtual void textInputEvent(TextInputEvent& event, Viewer&){ }
+        virtual void tickEvent(Viewer&){ }
+        virtual void drawImGui(Viewer&){ }
+        virtual void viewportEvent(ViewportEvent&, Viewer&){ }
+        virtual void keyPressEvent(KeyEvent&, Viewer&){ }
+        virtual void mousePressEvent(MouseEvent&, Viewer&){ }
+        virtual void mouseReleaseEvent(MouseEvent&, Viewer&){ }
+        virtual void mouseMoveEvent(MouseMoveEvent&, Viewer&){}
+        virtual void mouseScrollEvent(MouseScrollEvent&, Viewer&){ }
+        virtual void keyReleaseEvent(KeyEvent&, Viewer&){ }
+        virtual void textInputEvent(TextInputEvent&, Viewer&){ }
     };
 
     auto insertEventCallbacks(std::initializer_list<AbstractEventHandler*> handlers) {
         for(auto handler : handlers)
-        m_eventCallbacks.emplace_back(handler);
+            Corrade::Containers::arrayAppend(m_eventCallbacks, Containers::InPlaceInit, handler);
     }
 
-    Viewer& init();
-    ArcBallCamera& camera() { return *m_camera; }
-    void setScene(Scene& scene) { m_scene = std::addressof(scene); }
+    Magnum::SceneGraph::DrawableGroup3D drawableGroup;
+    Scene3D scene;
+    Corrade::Containers::Optional<ArcBallCamera> camera;
 
 private:
 
@@ -57,10 +64,8 @@ private:
     void keyReleaseEvent(KeyEvent& event) override;
     void textInputEvent(TextInputEvent& event) override;
 
-    std::vector<std::unique_ptr<AbstractEventHandler>> m_eventCallbacks;
+    Corrade::Containers::Array<Corrade::Containers::Pointer<AbstractEventHandler>> m_eventCallbacks;
 
-    Corrade::Containers::Optional<ArcBallCamera> m_camera;
-    Scene* m_scene = nullptr;
     ImGuiIntegration::Context m_imgui{NoCreate};
     bool m_trackingMouse = false;
 

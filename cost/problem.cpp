@@ -15,7 +15,7 @@
 
 std::vector<SumProblem::IndividualCost> SumProblem::computeIndividualCosts(double const* parameters) const {
     std::vector<SumProblem::IndividualCost> costs;
-    for(auto const& [name, w, pb, l]: m_problems){
+    for(auto const& [name, w, pb]: functionals){
         if(!l)
             continue;
         double cost = 0;
@@ -60,7 +60,6 @@ bool SumProblem::Evaluate(double const* parameters,
         if(!problem.loss)
             continue;
         g.run([&] {
-            fmt::print("Evaluation {}\n", problem.name);
             auto singleJac = jacobians ? new double[n] : nullptr;
             double residual = 0;
             problem.problem->Evaluate(parameters, &residual, singleJac);

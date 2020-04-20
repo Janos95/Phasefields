@@ -30,7 +30,6 @@ void Subdivision::subdivide(int numSubdivisions) {
         phasefield = Containers::ArrayView<Float>{pd.phasefield, data->vertexCount()};
     }
 
-
     auto positions = data->attribute<Vector3>(Trade::MeshAttribute::Position);
     auto indices = data->indicesAsArray();
     auto vertexData = MeshTools::interleave(positions, phasefield);
@@ -88,6 +87,8 @@ void Subdivision::drawImGui(){
         if(ImGui::Button("do subdivision")){
             subdivide(numSubdivisions);
             m_lastNumSubdivision= numSubdivisions;
+            m_numVertices = m_phasefieldData.meshData.vertexCount();
+            m_numFaces = m_phasefieldData.meshData.indexCount() / 3;
         }
         ImGui::TreePop();
     }

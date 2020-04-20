@@ -12,58 +12,39 @@
 #include "bfs.hpp"
 #include "detach.hpp"
 #include "small_array.hpp"
-
+#include "robin_map.h"
 #include <scoped_timer/scoped_timer.hpp>
 
 #include <Magnum/Magnum.h>
-#include <Corrade/Containers/EnumSet.h>
 
 #include <ceres/first_order_function.h>
 
-#include <Eigen/Core>
-#include <igl/doublearea.h>
-#include <igl/edges.h>
-
-#include <ratio>
 #include <numeric>
 
+namespace Mn = Magnum;
+namespace Cr = Corrade;
 
 enum class GradientFlag : Magnum::UnsignedByte {
-    Analytic = 1 << 0,
-    Automatic = 1 << 1,
+    Analytic = 0,
+    Automatic = 1
 };
 
 
-template<class Scalar>
-class ConnectednessConstraint : public ceres::FirstOrderFunction
-{
-public:
-    ConnectednessConstraint() noexcept;
-    
-    ConnectednessConstraint(ConnectednessConstraint&&) noexcept;
-    
-    ConnectednessConstraint& operator=(ConnectednessConstraint&&);
-    
-    //deleted copy constructor
-    ConnectednessConstraint(ConnectednessConstraint&) = delete;
-    
-    //deleted copy assigment
-    ConnectednessConstraint& operator=(ConnectednessConstraint&) = delete;
-    
-    ConnectednessConstraint(
-            const Eigen::MatrixXd& V,
-            const Eigen::MatrixXi& F,
-            const double epsilon,
-            const double a,
-            const double b);
 
-    void setPreimageInterval(double a, double b);
+template<class Scalar>
+struct ConnectednessConstraint : public ceres::FirstOrderFunction
+{
+
+    ConnectednessConstraint(
+            Containers::ArrayView<const Vector3> const& vertices,
+            Containers::ArrayView<const Vector3ui> const& faces,
+            Float epsilon,
+            Float a,
+            Float b);
 
     bool Evaluate(double const* parameters, double* cost, double* jacobian) const override ;
 
     int NumParameters() const override;
-
-private:
 
     struct Neighbor {
         Neighbor(int v, double w) : vertex(v), weight(w) {}
@@ -91,87 +72,97 @@ private:
 #endif
     };
 
-    const Eigen::MatrixXd &m_V;
-    const Eigen::MatrixXi& m_F;
+    Containers::ArrayView<const Vector3ui> triangles;
+    Containers::ArrayView<const Vector3> vertices;
 
-    std::vector<Edge> m_dualEdges;
-    mutable std::vector<SmallArray<3, Neighbor>> m_adjacencyList;
+    Containers::Array<Edge> dualEdges;
+    Containers::Array<SmallArray<3, Neighbor>> adjacencyList;
 
-    std::vector<double> m_lineElements;
-    Eigen::VectorXd m_areas;
-    std::vector<double> m_diams;
+    Containers::Array<Float> lineElements;
+    Containers::Array<Float> areas;
+    Containers::Array<Float> diams;
 
-    double m_epsilon;
-    double m_a, m_b;
+    Float epsilon;
+    Float a, b;
+
+    using graph_type = Dijkstra<Containers::Array<SmallArray<3, Neighbor>>>;
+
+    struct ShortestPathTree{
+        Dijkstra<graph_type> dijkstra;
+        StoppingCriteria stop;
+    };
+
+    Containers::Array<ShortestPathTree> shortestPaths;
 };
 
 template<class Scalar>
 ConnectednessConstraint<Scalar>::ConnectednessConstraint(
-        const Eigen::MatrixXd &V,
-        const Eigen::MatrixXi &F,
-        const double epsilon,
-        const double a,
-        const double b):
-        m_V(V),
-        m_F(F),
-        m_epsilon(epsilon), m_a(a), m_b(b) {
+        Containers::ArrayView<const Vector3> const& vertices_,
+        Containers::ArrayView<const Vector3ui> const& triangles_,
+        Float epsilon_,
+        Float a_,
+        Float b_):
+    vertices(vertices_),
+    triangles(triangles_),
+    epsilon(epsilon_), a(a_), b(b_) {
 
-    CORRADE_INTERNAL_ASSERT(m_F.colwise().maxCoeff().maxCoeff() < m_V.size());
     //compute edges in dual graph
-    std::map<Edge, int> edgeMap;
-    m_dualEdges.reserve(3 * F.rows());
-    for (int i = 0; i < F.rows(); ++i) {
+    tsl::robin_map<Edge, int> edges;
+    edges.reserve(3 * triangles.size());
+    Containers::arrayReserve(dualEdges, 3 * triangles.size());
+    for (int i = 0; i < triangles.size(); ++i) {
         for (int j = 0; j < 3; ++j) {
-            auto[it, inserted] = edgeMap.try_emplace(Edge{m_F(i, j), m_F(i, (j + 1) % 3)}, i);
+            auto[it, inserted] = edges.try_emplace(Edge{triangles[i][j], triangles[i][(j + 1) % 3]}, i);
             if (!inserted) {
                 //both faces share edge F(i,j) - F(i,j+1mod3)
-                m_dualEdges.emplace_back(it->second, i);
+                Containers::arrayAppend(dualEdges, Containers::InPlaceInit, it->second, i);
             }
         }
     }
 
-    m_lineElements.resize(m_dualEdges.size(), 0);
-    m_adjacencyList.resize(m_F.rows(), SmallArray<3, Neighbor>{Containers::NoInit});
-    for (auto[v1, v2] : m_dualEdges) {
-        m_adjacencyList[v1].emplace_back(v2, .0);
-        m_adjacencyList[v2].emplace_back(v1, .0);
+    Containers::arrayResize(lineElements, Containers::ValueInit, dualEdges.size());
+    adjacencyList.resize(triangles.size(), SmallArray<3, Neighbor>{Containers::NoInit});
+    for (auto[v1, v2] : dualEdges) {
+        adjacencyList[v1].emplace_back(v2, .0);
+        adjacencyList[v2].emplace_back(v1, .0);
     }
 
-    m_diams.resize(m_F.rows());
-    for (int i = 0; i < m_F.rows(); ++i) {
-        auto f = m_F.row(i);
-        m_diams[i] = triangleDiameter(m_V.row(f[0]), m_V.row(f[2]), m_V.row(f[2]));
-    }
+    Containers::arrayResize(diams, triangles.size());
+    for (int i = 0; i < triangles.size(); ++i) {
+        auto t = triangles[i];
 
-    igl::doublearea(m_V, m_F, m_areas);
-    m_areas *= 0.5;
+        auto x = vertices[t[0]] - vertices[t[1]];
+        auto y = vertices[t[0]] - vertices[t[2]];
+        auto z = vertices[t[1]] - vertices[t[2]];
+
+        diams[i] = std::sqrt(std::max({(x-y).dot(), (y-z).dot(), (x-z).dot()}));
+        areas[i] = Math::cross(x, y).length() * .5f;
+    }
 
 #ifndef NODEBUG
-    BreadthFirstSearch bfs(m_adjacencyList, 0);
+    BreadthFirstSearch bfs(adjacencyList, 0);
     bfs.run();
     CORRADE_INTERNAL_ASSERT(bfs.isConnected());
 #endif
 }
 
 template<class Scalar>
-bool ConnectednessConstraint<Scalar>::Evaluate(double const *params,
+bool ConnectednessConstraint<Scalar>::Evaluate(double const *phasefield,
                             double *cost,
                             double *jacobian) const {
-    using VectorT = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
-    using MatrixT = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>;
 
-    ScopedTimer t("Connectedness", true);
+    ScopedTimer timer("Connectedness");
 
-    F weight(m_a, m_b);
-    FGrad weightGrad(m_a, m_b);
-    W bump(m_a, m_b);
-    WGrad bumpGrad(m_a, m_b);
+    F weight(a, b);
+    FGrad weightGrad(a, b);
+    W bump(a, b);
+    WGrad bumpGrad(a, b);
 
-    int numFaces = m_F.rows();
-    int numVertices = m_V.rows();
+    int numFaces = triangles.size();
+    int numVertices = vertices.size();
 
-    VectorT U(numVertices);
-    std::copy_n(params, numVertices, U.begin());
+    Containers::Array<Scalar> U(Containers::ValueInit, numVertices);
+    std::copy_n(phasefield, numVertices, U.begin());
 
     if constexpr(detail::IsDiffArray<Scalar>) {
         if (jacobian)
@@ -180,44 +171,45 @@ bool ConnectednessConstraint<Scalar>::Evaluate(double const *params,
     }
 
     UnionFind set(numFaces);
-    std::vector inInterface(numFaces, false);
-    std::vector ws(numFaces, Scalar(-1.));
-    std::vector uT(numFaces, Scalar(0.));
+    Containers::Array<bool> inInterface(Containers::DirectInit, numFaces, false);
+    Containers::Array<Scalar> ws(Containers::DirectInit, numFaces, -1.);
+    Containers::Array<Scalar> uT(Containers::DirectInit, numFaces, Scalar(0.));
 
     for (int i = 0; i < numFaces; i++) {
-        auto f = m_F.row(i);
-        uT[i] = 1. / 3. * (U[f[0]] + U[f[1]] + U[f[2]]);
-        bool in = m_a <= detail::detach(uT[i]) && detail::detach(uT[i]) <= m_b;
+        auto t = triangles[i];
+        uT[i] = 1. / 3. * (U[t[0]] + U[t[1]] + U[t[2]]);
+        bool in = a <= detail::detach(uT[i]) && detail::detach(uT[i]) <= b;
         if (in) {
             ws[i] = bump(uT[i]);
             inInterface[i] = true;
         }
     }
 
-    for (auto[dualV1, dualV2] : m_dualEdges) {
+    for (auto [dualV1, dualV2] : dualEdges) {
         auto fuT1 = weight(uT[dualV1]);
         auto fuT2 = weight(uT[dualV2]);
-        auto w = .5 * (m_diams[dualV1] + m_diams[dualV2]) * .5 * (fuT1 + fuT2);
-        updateWeight(dualV1, w, m_adjacencyList[dualV2]);
-        updateWeight(dualV2, w, m_adjacencyList[dualV1]);
+        auto w = .5 * (diams[dualV1] + diams[dualV2]) * .5 * (fuT1 + fuT2);
+        updateWeight(dualV1, w, adjacencyList[dualV2]);
+        updateWeight(dualV2, w, adjacencyList[dualV1]);
         if (std::abs(detail::detach(w)) < std::numeric_limits<double>::epsilon())
             set.unite(dualV1, dualV2);
     }
 
-    std::vector<int> components(set.size());
-    std::vector<int> roots;
+    Containers::Array<int> components(Containers::NoInit, set.size());
+    Containers::Array<int> roots;
     for (std::size_t i = 0; i < components.size(); ++i) {
         if (inInterface[i]) {
             components[i] = set.find(i);
-            roots.push_back(components[i]);
+            Containers::arrayAppend(roots, components[i]);
         } else
             components[i] = -1;
     }
 
     std::sort(roots.begin(), roots.end());
-    roots.erase(std::unique(roots.begin(), roots.end()), roots.end());
+    Containers::arrayResize(roots, std::unique(roots.begin(), roots.end()) - roots.begin());
 
     auto numComponents = roots.size();
+    Debug{} << "Phase [" << a << ',' << b << "] has " << numComponents << "connected components";
     if (numComponents <= 1){
         *cost = 0.;
         if(jacobian)
@@ -225,9 +217,7 @@ bool ConnectednessConstraint<Scalar>::Evaluate(double const *params,
         return true;
     }
 
-    Debug{} << "Found" << numComponents <<  "connencted components. Enforcing Connectedness!\n";
-
-    std::vector W(numComponents, Scalar(0.));
+    Containers::Array<Scalar> W(Containers::DirectInit, numComponents, 0.);
 
     for (int i = 0; i < numFaces; ++i) {
         auto &c = components[i];
@@ -236,33 +226,36 @@ bool ConnectednessConstraint<Scalar>::Evaluate(double const *params,
             CORRADE_INTERNAL_ASSERT(it != roots.end() && *it == c);
             auto k = std::distance(roots.begin(), it);
             CORRADE_INTERNAL_ASSERT(std::abs(-1 - detail::detach(ws[i])) > 1e-6);
-            W[k] += ws[i] * m_areas[i];
+            W[k] += ws[i] * areas[i];
             c = k;
         }
     }
 
     //run dijkstra from each connected component except last one
-    std::vector dijkstras(numComponents - 1, Dijkstra(m_adjacencyList));
-    std::vector stops(numComponents - 1, StoppingCriteria{});
+    Containers::arrayResize(shortestPaths, numComponents - 1);
     {
-        ScopedTimer t("dijkstra", true);
+        ScopedTimer t("dijkstra");
         for (std::size_t i = 0; i < numComponents - 1; ++i) {
             StoppingCriteria stop(roots[i], numComponents, components);
-            dijkstras[i].setSource(roots[i]);
-            dijkstras[i].run({stop});
+            Dijkstra dijk(adjacencyList);
+            dijk.setSource(roots[i]);
+            dijk.run({stop});
             CORRADE_INTERNAL_ASSERT(stop.foundAll());
-            stops[i] = std::move(stop);
+            shortestPaths[i].dijkstra = std::move(dijk);
+            shortestPaths[i].stop = std::move(stop);
         }
     }
 
     Scalar d = 0;
-    MatrixT D;
-    if constexpr(!detail::IsDiffArray<Scalar>)
-        D = MatrixT(numComponents, numComponents);
-    Eigen::VectorXd gradient = Eigen::VectorXd::Zero(numVertices);
+    Containers::Array<Scalar> distancesData(Containers::ValueInit, numComponents * numComponents);
+    Containers::StridedArrayView2D<Scalar> distances(distancesData, {numComponents, numComponents});
+
+    if(jacobian && !detail::IsDiffArray<Scalar>)
+        std::fill_n(jacobian, numVertices, Scalar{0});
 
     {
-        ScopedTimer tDiff("connectedness diff", true);
+        ScopedTimer tDiff("connectedness diff");
+        auto& [dijkstras, stops] = shortestPaths;
 
         for (std::size_t i = 0; i < numComponents; ++i) {
             for (std::size_t j = i + 1; j < numComponents; ++j) {
@@ -270,28 +263,29 @@ bool ConnectednessConstraint<Scalar>::Evaluate(double const *params,
                 Scalar dij = 0;
                 auto Wij = W[i] * W[j];
 
-                for (auto&&[a, b]: dijkstras[i].getShortestPathReversed(roots[i], stops[i].target(j))) {
+                for (auto&& [a, b]: dijkstras[i].getShortestPathReversed(roots[i], stops[i].target(j))) {
 
-                    auto &av = m_adjacencyList[a];
+                    auto &av = adjacencyList[a];
                     auto it = std::find_if(av.begin(), av.end(), [b = b](const auto &n) { return b == n.vertex; });
+                    CORRADE_INTERNAL_ASSERT(it != av.end());
                     dij += it->weight;
 
                     if (jacobian && !detail::IsDiffArray<Scalar>) {
-                        auto lineElement = .5 * (m_diams[a] + m_diams[b]);
+                        auto lineElement = .5 * (diams[a] + diams[b]);
                         const double fgrada = weightGrad(detail::detach(uT[a]));
                         const double fgradb = weightGrad(detail::detach(uT[b]));
                         auto weightedFGrad = detail::detach(Wij) * lineElement * .5 * (1. / 3.);
-                        for (auto v : m_F.row(a))
-                            gradient[v] += weightedFGrad * fgrada;
-                        for (auto v : m_F.row(b))
-                            gradient[v] += weightedFGrad * fgradb;
+                        for (auto v : triangles[a])
+                            jacobian[v] += weightedFGrad * fgrada;
+                        for (auto v : triangles[b])
+                            jacobian[v] += weightedFGrad * fgradb;
                     }
                 }
 
                 d += dij * Wij;
                 if (jacobian && !detail::IsDiffArray<Scalar>) {
-                    D(i, j) = dij;
-                    D(j, i) = dij;
+                    distances[i][j] = dij;
+                    distances[j][i] = dij;
                 }
             }
         }
@@ -308,32 +302,30 @@ bool ConnectednessConstraint<Scalar>::Evaluate(double const *params,
                     for (std::size_t j = 0; j < numComponents; ++j) {
                         if (i == j)
                             continue;
-                        double weightedGrad = D(i, j) * W[j] * wgrad * m_areas[k] / 3.;
+                        double weightedGrad = distances(i, j) * W[j] * wgrad * areas[k] / 3.;
                         //each incident vertex has the same influence
-                        for (auto v : m_F.row(k)) {
-                            gradient[v] += weightedGrad;
-                        }
+                        for (int l = 0; l < 3; ++l)
+                            jacobian[triangles[k][l]] += weightedGrad;
                     }
                 }
             }
         }
     }
 
-    auto scaleFactor = (1. / std::pow(m_epsilon, 2)) * 2.; // 1/(eps * eps)
+    auto scaleFactor = (1. / std::pow(epsilon, 2)) * 2.; // 1/(eps * eps)
     d *= scaleFactor;
     *cost = detail::detach(d);
 
     if (jacobian) {
         if constexpr(detail::IsDiffArray<Scalar>) {
-            Eigen::VectorXd autodiffgrad = Eigen::VectorXd::Zero(numVertices);
             Scalar::simplify_graph_();
             enoki::backward(d);
             for (int i = 0; i < numVertices; ++i) {
                 jacobian[i] = enoki::gradient(U[i]);
             }
         } else {
-            Eigen::Map<Eigen::VectorXd> map(jacobian, numVertices);
-            map = scaleFactor * gradient;
+            for (int i = 0; i < numVertices; ++i)
+                jacobian[i] *= scaleFactor;
         }
     }
     return true;
@@ -341,6 +333,6 @@ bool ConnectednessConstraint<Scalar>::Evaluate(double const *params,
 
 template<class Scalar>
 int ConnectednessConstraint<Scalar>::NumParameters() const {
-    return m_V.rows();
+    return vertices.size();
 }
 

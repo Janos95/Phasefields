@@ -4,19 +4,20 @@
 
 #include "scoped_timer.hpp"
 
-#include <fmt/format.h>
-
 #include <mutex>
 #include <unordered_map>
 #include <chrono>
 #include <cmath>
+#include <cstdio>
+
+using namespace Corrade;
 
 using my_clock = std::chrono::steady_clock;
 using my_duration = std::chrono::duration<long double, std::nano>;
 using time_point_t = std::chrono::time_point<my_clock>;
 
 template<class Ratio>
-std::string toSI()
+char const* toSI()
 {
     if constexpr(std::is_same_v<std::nano, Ratio>)
         return "nano seconds";
@@ -52,7 +53,7 @@ std::unordered_map<std::string, TimingInfo> log_;
 std::mutex mutex_;
 
 ScopedTimer::ScopedTimer(std::string name, bool verbose):
-    m_impl(std::make_unique<Impl>(Impl{std::move(name), my_clock::now(), verbose}))
+    m_impl(Containers::pointer<Impl>(std::move(name), my_clock::now(), verbose))
 {
 }
 
@@ -61,7 +62,7 @@ ScopedTimer::~ScopedTimer()
     const auto end = my_clock::now();
     my_duration time = end - m_impl->start_;
     if(m_impl->verbose_)
-        fmt::print("{} took {} {}\n", m_impl->name_, user_dur{time}.count(), toSI<Ratio>());
+        printf("%s took %f %s\n", m_impl->name_.c_str(), user_dur{time}.count(), toSI<Ratio>());
 
     std::lock_guard l(mutex_);
 
@@ -75,7 +76,6 @@ ScopedTimer::~ScopedTimer()
 
 void ScopedTimer::printStatistics()
 {
-
     std::lock_guard l(mutex_);
     for(const auto& [name, timingInfo]: log_)
     {
@@ -83,6 +83,6 @@ void ScopedTimer::printStatistics()
         user_dur standardDeviation = my_duration{std::sqrt(M2/(count - 1))};
         user_dur meanUser = mean;
         auto unit = toSI<Ratio>();
-        fmt::print("{3}: Mean {0} {2}, Standard Deviation {1} {2}\n", meanUser.count(), standardDeviation.count(), unit, name);
+        printf("%s: Mean %f %s, Standard Deviation %f %s\n", name.c_str(), meanUser.count(), unit, standardDeviation.count(), unit);
     }
 }

@@ -17,15 +17,12 @@ class Subdivision : public Viewer::AbstractEventHandler {
 public:
 
     explicit Subdivision(PhasefieldData& data): m_phasefieldData(data) {}
-    void drawImGui() override;
-    void tickEvent(Scene&){
-        switch(m_phasefieldData.status){
-            case PhasefieldData::Status::Subdivided:
-            case PhasefieldData::Status::NewMesh:
+    void drawImGui(Viewer&) override;
+    void tickEvent(Viewer&) override {
+        if(m_phasefieldData.status == PhasefieldData::Status::NewMesh){
+                m_lastNumSubdivision = 0;
                 m_numVertices = m_phasefieldData.meshData.vertexCount();
                 m_numFaces = m_phasefieldData.meshData.indexCount() / 3;
-                m_lastNumSubdivision = 0;
-                return;
         }
     }
     void subdivide(int);

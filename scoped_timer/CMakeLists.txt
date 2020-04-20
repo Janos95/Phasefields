@@ -5,6 +5,5 @@ add_library(scoped_timer STATIC ${scoped_timer_sources} ${scoped_timer_headers})
 target_include_directories(scoped_timer PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
-target_link_libraries(scoped_timer PUBLIC fmt::fmt)
-
+target_link_libraries(scoped_timer PUBLIC Corrade::Containers)
 add_library(phasefields::scoped_timer ALIAS scoped_timer)

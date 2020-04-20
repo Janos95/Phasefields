@@ -1,0 +1,22 @@
+
+high priority
+    * debug connectedness_constraint
+    * add genus g surface as primitive
+    * debug subdivision
+    * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!MATHEMATIK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+medium prioritiy
+    * add ipopt
+    * add path visualization
+    * get rid of igl
+    * use eigen only in implementation files (if possible)
+    * use imgui docking branch
+
+
+low priority
+    * add pbr shader
+    * describe two phases as two different materials?
+    * add background/tabletop
+    * debug kd tree
+    * figure out a way to have incremental geodesics
+

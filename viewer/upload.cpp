@@ -5,6 +5,7 @@
 #include "upload.hpp"
 
 #include <Corrade/Containers/GrowableArray.h>
+#include <Corrade/Utility/Algorithms.h>
 
 #include <Magnum/GL/TextureFormat.h>
 #include <Magnum/GL/Sampler.h>
@@ -17,7 +18,6 @@
 
 using namespace Magnum;
 using namespace Corrade;
-
 
 
 void upload(DrawableData& drawableData, Trade::MeshData& meshData) {
@@ -147,3 +147,35 @@ Trade::MeshData preprocess(Trade::MeshData const& meshData, CompileFlags flags) 
 
     return generated;
 }
+
+//void makeScene(Viewer& scene){
+//    upload(phasefieldData, phasefieldData.meshData);
+//    phasefieldData.drawable = new ColorMapPhongDrawable(viewer.scene, pd.shaders[DrawableType::ColorMapPhong], viewer.drawableGroup)
+//    phasefieldData.type = DrawableType::ColorMapPhong;
+//}
+
+void reuploadVertices(DrawableData& drawableData, Trade::MeshData const& meshData)
+{
+    GL::Buffer& vertices = drawableData.vertices;
+    auto data = vertices.map(0,
+                             vertices.size(),
+                             GL::Buffer::MapFlag::Write);
+
+    CORRADE_CONSTEXPR_ASSERT(data, "could not map vertex data");
+    Utility::copy(meshData.vertexData(), data);
+    vertices.unmap();
+}
+
+void reuploadIndices(DrawableData& drawableData, Trade::MeshData const& meshData)
+{
+    Debug{} << "Reuploading Indices";
+    GL::Buffer& indices = drawableData.indices;
+    auto data = indices.map(0,
+                            indices.size(),
+                            GL::Buffer::MapFlag::Write);
+
+    CORRADE_CONSTEXPR_ASSERT(data, "could not map vertex data");
+    Utility::copy(meshData.indexData(), data);
+    indices.unmap();
+}
+

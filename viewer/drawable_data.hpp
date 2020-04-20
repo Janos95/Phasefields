@@ -6,6 +6,7 @@
 
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Containers/Pointer.h>
 
 #include <Magnum/GL/Texture.h>
 #include <Magnum/GL/Mesh.h>
@@ -19,7 +20,6 @@
 #include <Magnum/SceneGraph/Object.h>
 #include <Magnum/SceneGraph/RigidMatrixTransformation3D.h>
 
-#include <memory>
 
 using Object = Magnum::SceneGraph::Object<Magnum::SceneGraph::RigidMatrixTransformation3D>;
 

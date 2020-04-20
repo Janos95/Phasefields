@@ -7,61 +7,58 @@
 #include <imgui.h>
 
 
-void ShaderOptions::handleFlat() {
+bool ShaderOptions::displayPhongOptions() {
 
 }
 
 
-void ShaderOptions::handlePhong() {
+bool ShaderOptions::displayFlatOptions() {
 
 }
 
 
-void ShaderOptions::handleMeshVis() {
+bool ShaderOptions::displayMeshVisualizerOptions() {
 
 }
 
-void ShaderOptions::drawImGui() {
+ShaderOptions::ShaderOptions(PhasefieldData &data):
+    m_phasefieldData(data)
+{
+    m_shaders.emplace_back(new Shaders::Flat3D{});
+    m_shaders.emplace_back(new Shaders::Flat3D{Shaders::Flat3D::Flag::Textured});
+    m_shaders.emplace_back(new Shaders::VertexColor3D{});
+    m_shaders.emplace_back(new Shaders::MeshVisualizer3D{Shaders::MeshVisualizer3D::Flag::Wireframe});
+    m_shaders.emplace_back(new Shaders::Phong{Shaders::Phong::Flag::DiffuseTexture, 2});
+}
+
+void ShaderOptions::drawImGui(Viewer& viewer) {
     if (ImGui::TreeNode("Shader Options"))
     {
         const char* listbox_items[] = {
-                "Phong Color Mapped",
-                "Flat Color Mapped",
                 "Mesh Visualization",
+                "Phong Color Mapped",
+                "Flat Color Mapped"
                 };
 
-        static int listbox_item_current = 0;
-        if(ImGui::ListBox("Shader Type\n", &listbox_item_current, listbox_items, IM_ARRAYSIZE(listbox_items), 4)){
-            switch (listbox_item_current) {
-                case 0 :
-                    m_type = DrawableType::ColorMapPhong;
-                    break;
-                case 1 :
-                    m_type = DrawableType::ColorMapFlat;
-                    break;
-                case 2 :
-                    m_type = DrawableType::MeshVisualizer;
-                    break;
-                default:
-                    break;
-            }
-            m_updateNode = true;
-        }
+        static DrawableType type = DrawableType::ColorMapPhong;
+        bool newShader = ImGui::ListBox("Shader Type\n", (int*)&type, listbox_items, IM_ARRAYSIZE(listbox_items), 4);
+        if(newShader)
+            m_node->features().clear();
 
-        switch (listbox_item_current) {
-            case 0 : handlePhong(); break;
-            case 1 : handleFlat(); break;
-            case 2 : handleMeshVis(); break;
+        switch (type) {
+            case DrawableType::MeshVisualizer :
+                if(displayPhongOptions() || newShader)
+                    new MeshVisualizerDrawable(*m_node, *m_shaders[4], &viewer.drawableGroup);
+            case DrawableType::ColorMapPhong :
+                if(displayFlatOptions() || newShader)
+                    new ColorMapPhongDrawable(*m_node, *m_shaders[4], &viewer.drawableGroup);
+            case DrawableType::ColorMapFlat :
+                if(displayMeshVisualizerOptions() || newShader)
+                    new ColorMapFlatDrawable(*m_node, *m_shaders[4], &viewer.drawableGroup);
             default : break;
         }
+
         ImGui::TreePop();
     }
 }
 
-void ShaderOptions::tickEvent(Scene &scene) {
-    if(m_updateNode){
-        m_phasefieldData.drawable = scene.setDrawableType("mesh", m_type);
-        m_phasefieldData.type = m_type;
-        m_updateNode = false;
-    }
-}

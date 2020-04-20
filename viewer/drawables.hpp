@@ -23,7 +23,7 @@ using Drawable = Magnum::SceneGraph::Drawable3D;
 using DrawableGroup = Magnum::SceneGraph::DrawableGroup3D;
 using Object = Magnum::SceneGraph::Object<Magnum::SceneGraph::RigidMatrixTransformation3D>;
 
-enum class DrawableType : Magnum::UnsignedShort {
+enum class DrawableType : Magnum::Int {
     MeshVisualizer = 0,
     ColorMapPhong = 1,
     ColorMapFlat = 2
@@ -123,9 +123,10 @@ public:
     void draw(const Magnum::Matrix4& transformationMatrix, Magnum::SceneGraph::Camera3D& camera) override {
         m_shader.setColor(m_colorMesh)
                 .setWireframeColor(m_colorWireframe)
+                .setWireframeWidth(.2)
                 .setTransformationMatrix(transformationMatrix)
                 .setProjectionMatrix(camera.projectionMatrix())
-                .setNormalMatrix(transformationMatrix.normalMatrix())
+                //.setNormalMatrix(transformationMatrix.normalMatrix())
                 .draw(m_mesh);
     }
 

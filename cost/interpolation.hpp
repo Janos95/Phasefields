@@ -21,13 +21,15 @@ auto interpolateBasisFunction(const T w1, const T w2, const int basis)
             break;
         default:
             assert(false);
+#ifdef NDEBUG
             __builtin_unreachable();
+#endif
     }
     return interp;
 }
 
 template<typename T>
-struct DoubleWellPotential
+struct DoubleWell
 {
     T v1, v2, v3;
 
@@ -39,7 +41,7 @@ struct DoubleWellPotential
 };
 
 template<typename T>
-struct DoubleWellPotentialGrad
+struct DoubleWellGrad
 {
     T v1, v2, v3;
     int i;

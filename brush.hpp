@@ -9,8 +9,8 @@
 
 #include <Eigen/SparseCore>
 
-#include <thread>
-#include <condition_variable>
+#include <atomic>
+#include <tbb/task_group.h>
 
 struct TriangleMeshAdjacencyList
 {
@@ -70,7 +70,7 @@ struct TriangleMeshAdjacencyList
     };
 };
 
-class Brush : public Viewer::AbstractEventHandler {
+struct Brush : Viewer::AbstractEventHandler {
 public:
     using duration_type = std::chrono::duration<double>;
 
@@ -82,8 +82,10 @@ public:
     void mousePressEvent(Viewer::MouseEvent& event, Viewer&) override;
     void mouseMoveEvent(Viewer::MouseMoveEvent& event, Viewer&) override;
     void mouseReleaseEvent(Viewer::MouseEvent& event, Viewer&) override;
-    void drawImGui() override;
-    void tickEvent(Scene&) override;
+    void keyPressEvent(Viewer::KeyEvent&, Viewer&) override;
+    void keyReleaseEvent(Viewer::KeyEvent&, Viewer&) override;
+    void drawImGui(Viewer&) override;
+    void tickEvent(Viewer&) override;
 
 
 private:
@@ -96,9 +98,6 @@ private:
     float m_distStep = 0.01;
     bool m_brushing = false;
 
-
-    std::thread m_thread;
-    std::condition_variable m_cv;
     bool m_stop = true;
 
     std::mutex m_mutex;

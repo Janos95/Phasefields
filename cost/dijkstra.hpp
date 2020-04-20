@@ -6,11 +6,10 @@
 
 #include "graph_common.hpp"
 #include "detach.hpp"
+#include "unique_function.h"
 
 #include <Corrade/Containers/Reference.h>
 #include <Corrade/Utility/Assert.h>
-
-#include <folly/Function.h>
 
 #include <queue>
 #include <numeric>
@@ -59,12 +58,14 @@ public:
         return true;
     }
 
-    auto run(std::initializer_list<folly::FunctionRef<bool(int)>> cbs)
+    auto run(std::initializer_list<unique_function<bool(int)>> cbs)
     {
         int u;
         double d;
-        while( step(u, d) && std::any_of(cbs.begin(), cbs.end(),[u](auto& cb){ return cb(u); }))
-            ;
+        while(step(u, d)){
+            if(std::any_of(cbs.begin(), cbs.end(),[u](auto& cb){ return cb(u); }))
+                break;
+        }
     }
 
     graph::ReversedShortestPath<Dijkstra> getShortestPathReversed(const int start, const int target) const {

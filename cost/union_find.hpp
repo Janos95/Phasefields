@@ -6,8 +6,6 @@
 
 #include <Corrade/Containers/Array.h>
 
-#include <vector>
-
 struct Node{
     int rank;
     int parent;

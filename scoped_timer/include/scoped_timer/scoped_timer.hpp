@@ -5,7 +5,7 @@
 #pragma once
 
 #include <string>
-#include <memory>
+#include <Corrade/Containers/Pointer.h>
 
 class ScopedTimer
 {
@@ -20,5 +20,5 @@ public:
 private:
 
     struct Impl;
-    std::unique_ptr<Impl> m_impl;
+    Corrade::Containers::Pointer<Impl> m_impl;
 };

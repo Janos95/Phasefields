@@ -4,13 +4,18 @@
 #include "modica_mortola.hpp"
 #include "quadrature_ref_triangle.hpp"
 #include "interpolation.hpp"
+#include "utility"
 
 #include <Corrade/Utility/Assert.h>
+#include <Magnum/Magnum.h>
+#include <Magnum/Math/Vector3.h>
 
-#include <igl/doublearea.h>
 #include <igl/grad.h>
 
-InterfaceEnergy::InterfaceEnergy(const Eigen::MatrixXd& V, const Eigen::MatrixXi& F, const double epsilon):
+using namespace Magnum;
+using namespace Corrade;
+
+DirichletEnergy::DirichletEnergy(const Eigen::MatrixXd& V, const Eigen::MatrixXi& F, const double epsilon):
         m_epsilon(epsilon),
         m_V(V),
         m_F(F),
@@ -34,16 +39,16 @@ InterfaceEnergy::InterfaceEnergy(const Eigen::MatrixXd& V, const Eigen::MatrixXi
 }
 
 
-int InterfaceEnergy::NumParameters() const {
+int DirichletEnergy::NumParameters() const {
     return m_V.rows();
 }
 
 
-bool InterfaceEnergy::Evaluate(double const* parameters,
+bool DirichletEnergy::Evaluate(double const* parameters,
               double* residual,
               double* jacobians) const
 {
-    Eigen::Map<const Eigen::VectorXd> U(parameters, m_V.rows()); //TODO: dont const cast
+    Eigen::Map<const Eigen::VectorXd> U(parameters, m_V.rows());
 
     Eigen::VectorXd intermResult = m_GSQ * U;
     residual[0] = .5 * m_epsilon * U.transpose() * intermResult;
@@ -58,7 +63,7 @@ bool InterfaceEnergy::Evaluate(double const* parameters,
     return true;
 }
 
-PotentialEnergy::PotentialEnergy(const Eigen::MatrixXd& V, const Eigen::MatrixXi& F, const double epsilon):
+DoubleWellPotential::DoubleWellPotential(const Eigen::MatrixXd& V, const Eigen::MatrixXi& F, const double epsilon):
         m_epsilon(epsilon),
         m_V(V),
         m_F(F),
@@ -111,17 +116,26 @@ bool PotentialEnergy::Evaluate(double const* parameters,
 
 
 
+AreaRegularizer::AreaRegularizer(
+        Containers::ArrayView<const Vector3> const& vertices,
+        Containers::ArrayView<const Vector3ui> const& triangles,
+        Float areaRatio) :
+        m_vertices(vertices),
+        m_triangles(triangles),
+        areaRatio{
+
+}
 AreaRegularizer::AreaRegularizer(const Eigen::MatrixXd& V, const Eigen::MatrixXi& F):
         m_V(V),
         m_F(F),
         m_dblA(F.rows())
 {
     igl::doublearea(m_V, m_F, m_dblA);
-    m_area = m_dblA.sum() / 2.;
+    area = ;
 }
 
 int AreaRegularizer::NumParameters() const {
-    return m_V.rows();
+    return vertices.size();
 }
 
 
@@ -129,31 +143,33 @@ bool AreaRegularizer::Evaluate(double const* parameters,
               double* cost,
               double* jacobians) const
 {
-    Eigen::Map<const Eigen::VectorXd> U(parameters, m_V.rows()); //TODO: dont const cast
+    Eigen::Map<const Eigen::VectorXd> U(parameters, vertices.size());
 
     if(jacobians)
-        std::fill(jacobians, jacobians + U.rows(), 0);
+        std::fill_n(jacobians, vertices.size(), 0.f);
 
-    QuadratureRefTriangle<double> quad;
-    double residual = 0;
+    QuadratureRefTriangle<Float> quad;
+    currentArea = 0.
 
-    for (int i = 0; i < m_F.rows(); ++i) {
-        auto f = m_F.row(i);
-        IndicatorFunction<double> ind{U[f[0]],U[f[1]],U[f[2]]};
-        residual += m_dblA[i] * quad.integrate(ind);
+            f;
+
+    for (int i = 0; i < triangles.size(); ++i) {
+        auto t = triangles[i];
+        IndicatorFunction<Float> ind{U[t[0]],U[t[1]],U[t[2]]};
+        currentArea += 2.f * areas[i] * quad.integrate(ind);
 
         if(jacobians)
         {
-            IndicatorFunctionGrad<double> interp{U[f[0]],U[f[1]],U[f[2]]};
+            IndicatorFunctionGrad<Float> interp{U[t[0]],U[t[1]],U[t[2]]};
             for (int j = 0; j < 3; ++j) {
                 interp.i = j;
-                jacobians[f[j]] += m_dblA[i] * quad.integrate(interp);
+                jacobians[t[j]] += 2.f * areas[i] * quad.integrate(interp);
             }
         }
     }
 
-    //printf("AreaRegularizer: phasefield area, half total area=(%f,%f)\n", residual, m_area/2);
-    cost[0] = std::pow(residual - m_area / 2., 2) / 2.;
+    //printf("AreaRegularizer: phasefield area, half total area=(%f,%f)\n", currentArea, area * areaRatio);
+    *cost = currentArea - area * areaRatio;
 
     if(jacobians)
         Eigen::Map<Eigen::VectorXd>(jacobians, m_V.rows()) *= residual - m_area / 2.;

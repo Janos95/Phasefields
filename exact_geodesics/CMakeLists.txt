@@ -1,9 +1,8 @@
 
 
-add_library(exact_geodesic INTERFACE
-       )
+add_library(exact_geodesics INTERFACE)
 
-target_sources(exact_geodesic INTERFACE
+target_sources(exact_geodesics INTERFACE
         geodesic_algorithm_graph_base.h
         geodesic_algorithm_subdivision.h
         geodesic_constants_and_simple_functions.h
@@ -16,6 +15,7 @@ target_sources(exact_geodesic INTERFACE
         geodesic_algorithm_exact_elements.h
         geodesic_mesh_elements.h
         )
-target_include_directories(exact_geodesic INTERFACE ${CMAKE_CURRENT_LIST_DIR})
 
-add_library(phasefields::exact_geodesic ALIAS exact_geodesic)
+target_include_directories(exact_geodesics INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+
+add_library(phasefields::exact_geodesics ALIAS exact_geodesics)

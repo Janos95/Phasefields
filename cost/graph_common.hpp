@@ -4,11 +4,9 @@
 
 #pragma once
 
-#include <enoki/autodiff.h>
 #include <Corrade/Utility/Assert.h>
-#include <iterator> //this hits compiles pretty hard :(
 
-using Var = enoki::DiffArray<double>;
+#include <iterator> //this hits compiles pretty hard :(
 
 namespace graph {
 

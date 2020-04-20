@@ -1,3 +1,8 @@
+find_package(Ceres CONFIG REQUIRED)
+find_package(TBB CONFIG REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(Ipopt REQUIRED IMPORTED_TARGET ipopt)
+
 file(GLOB cost_headers ${CMAKE_CURRENT_SOURCE_DIR} *.hpp)
 file(GLOB cost_sources ${CMAKE_CURRENT_SOURCE_DIR} *.cpp)
 
@@ -7,11 +12,19 @@ add_library(cost STATIC ${cost_sources} ${cost_headers})
 target_include_directories(cost PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
-target_link_libraries(cost PUBLIC ceres)
-target_link_libraries(cost PRIVATE igl::core Folly::folly autodiff phasefields::scoped_timer TBB::tbb)
-if(OpenMP_CXX_FOUND)
-    message(WARNING "not using threaded connectedness constraint")
-    target_link_libraries(cost PRIVATE OpenMP::OpenMP_CXX)
-endif()
+
+target_link_libraries(cost PRIVATE
+        ceres
+        Eigen3::Eigen
+        autodiff
+        TBB::tbb
+        phasefields::scoped_timer
+        )
+
+target_link_libraries(cost PUBLIC
+        PkgConfig::Ipopt
+        phasefields::utilities
+        )
+
 add_library(phasefields::cost ALIAS cost)
 

@@ -34,7 +34,7 @@ struct ColorMap : Viewer::AbstractEventHandler {
     std::vector<ComboElement>::iterator current;
     bool updated = true;
 
-    void drawImGui() override;
+    void drawImGui(Viewer&) override;
 };
 
 class SegmentationColorMap{

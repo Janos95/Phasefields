@@ -5,7 +5,6 @@
 #include "subdivision.hpp"
 #include "brush.hpp"
 #include "mesh_io.hpp"
-#include "update_scene.hpp"
 #include "primitives.hpp"
 #include "colormaps.hpp"
 #include "shader_options.hpp"
@@ -16,10 +15,7 @@
 int main(int argc, char** argv) {
 
     Viewer viewer(argc, argv);
-    Scene scene;
     auto data = new PhasefieldData; //@todo leaks
-    scene.addNode("mesh", *data, DrawableType::ColorMapPhong);
-    viewer.setScene(scene);
     //ownership taken by viewer
     viewer.insertEventCallbacks({
             //MeshIO{scene},
@@ -28,8 +24,7 @@ int main(int argc, char** argv) {
             new Subdivision{*data},
             new OptimizationContext{*data},
             new ColorMap{*data},
-            new ShaderOptions{*data},
-            new UpdateScene{*data}//this needs to be at the end, bc it resets the phasefield status
+            new ShaderOptions{*data}
     });
     viewer.exec();
 }

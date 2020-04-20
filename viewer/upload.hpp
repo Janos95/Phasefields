@@ -22,3 +22,7 @@ CORRADE_ENUMSET_OPERATORS(CompileFlags)
 Magnum::Trade::MeshData preprocess(Magnum::Trade::MeshData const& meshData, CompileFlags flags = {});
 
 void upload(DrawableData& drawableData, Magnum::Trade::MeshData& meshData);
+
+void reuploadVertices(DrawableData& drawableData, Trade::MeshData const& meshData);
+
+void reuploadIndices(DrawableData& drawableData, Trade::MeshData const& meshData);
