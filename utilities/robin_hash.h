@@ -25,17 +25,12 @@
 #define TSL_ROBIN_HASH_H 
 
 
-#include <algorithm>
 #include <cassert>
-#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
-#include <memory>
-#include <stdexcept>
 #include <type_traits>
 #include <utility>
-#include <vector>
 
 #include "robin_growth_policy.h"
 
@@ -64,25 +59,21 @@ template<std::size_t GrowthFactor>
 struct is_power_of_two_policy<tsl::rh::power_of_two_growth_policy<GrowthFactor>>: std::true_type {
 };
 
-// Only available in C++17, we need to be compatible with C++11
 template<class T>
 const T& clamp( const T& v, const T& lo, const T& hi) {
-    return std::min(hi, std::max(lo, v));
+    return v <= lo ? lo : v >= hi ? hi : v;
 }
 
 template<typename T, typename U>
 static T numeric_cast(U value, const char* error_message = "numeric_cast() failed.") {
     T ret = static_cast<T>(value);
-    if(static_cast<U>(ret) != value) {
-        TSL_RH_THROW_OR_TERMINATE(std::runtime_error, error_message);
-    }
-    
+
+    CORRADE_ASSERT(static_cast<U>(ret) == value, error_message, {});
+
     const bool is_same_signedness = (std::is_unsigned<T>::value && std::is_unsigned<U>::value) ||
                                     (std::is_signed<T>::value && std::is_signed<U>::value);
-    if(!is_same_signedness && (ret < T{}) != (value < U{})) {
-        TSL_RH_THROW_OR_TERMINATE(std::runtime_error, error_message);
-    }
-    
+    CORRADE_ASSERT(is_same_signedness || (ret < T{}) == (value < U{}), error_message, {});
+
     return ret;
 }
 
@@ -329,7 +320,6 @@ template<class ValueType,
          class ValueSelect,
          class Hash,
          class KeyEqual,
-         class Allocator,
          bool StoreHash,
          class GrowthPolicy>
 class robin_hash: private Hash, private KeyEqual, private GrowthPolicy {
@@ -350,7 +340,6 @@ public:
     using difference_type = std::ptrdiff_t;
     using hasher = Hash;
     using key_equal = KeyEqual;
-    using allocator_type = Allocator;
     using reference = value_type&;
     using const_reference = const value_type&;
     using pointer = value_type*;
@@ -373,8 +362,7 @@ private:
                                           is_power_of_two_policy<GrowthPolicy>::value)
                                          &&
                                           // Don't store the hash for primitive types with default hash.
-                                          (!std::is_arithmetic<key_type>::value ||
-                                           !std::is_same<Hash, std::hash<key_type>>::value)
+                                          !std::is_arithmetic<key_type>::value
                                        );
                                         
     /**
@@ -406,10 +394,8 @@ private:
     using bucket_entry = tsl::detail_robin_hash::bucket_entry<value_type, STORE_HASH>;
     using distance_type = typename bucket_entry::distance_type;
     
-    using buckets_allocator = typename std::allocator_traits<allocator_type>::template rebind_alloc<bucket_entry>;
-    using buckets_container_type = std::vector<bucket_entry, buckets_allocator>;
-    
-    
+    using buckets_container_type = bucket_entry*;
+
 public: 
     /**
      * The 'operator*()' and 'operator->()' methods return a const reference and const pointer respectively to the 
@@ -435,7 +421,6 @@ public:
         }
         
     public:
-        using iterator_category = std::forward_iterator_tag;
         using value_type = const typename robin_hash::value_type;
         using difference_type = std::ptrdiff_t;
         using reference = value_type&;
@@ -512,26 +497,15 @@ public:
 
     
 public:
-#if defined(__cplusplus) && __cplusplus >= 201402L
-    robin_hash(size_type bucket_count, 
+    robin_hash(size_type bucket_count,
                const Hash& hash,
                const KeyEqual& equal,
-               const Allocator& alloc,
                float min_load_factor = DEFAULT_MIN_LOAD_FACTOR,
                float max_load_factor = DEFAULT_MAX_LOAD_FACTOR): 
                                        Hash(hash), 
                                        KeyEqual(equal),
                                        GrowthPolicy(bucket_count),
-                                       m_buckets_data(
-                                           [&]() {
-                                               if(bucket_count > max_bucket_count()) {
-                                                   TSL_RH_THROW_OR_TERMINATE(std::length_error, 
-                                                                             "The map exceeds its maximum bucket count.");
-                                               }
-                                               
-                                               return bucket_count;
-                                           }(), alloc
-                                       ),
+                                       m_buckets_data(bucket_count),
                                        m_buckets(m_buckets_data.empty()?static_empty_bucket_ptr():m_buckets_data.data()),
                                        m_bucket_count(bucket_count),
                                        m_nb_elements(0), 
@@ -546,47 +520,7 @@ public:
         this->min_load_factor(min_load_factor);
         this->max_load_factor(max_load_factor);
     }
-#else
-    /**
-     * C++11 doesn't support the creation of a std::vector with a custom allocator and 'count' default-inserted elements. 
-     * The needed contructor `explicit vector(size_type count, const Allocator& alloc = Allocator());` is only
-     * available in C++14 and later. We thus must resize after using the `vector(const Allocator& alloc)` constructor.
-     * 
-     * We can't use `vector(size_type count, const T& value, const Allocator& alloc)` as it requires the
-     * value T to be copyable.
-     */
-    robin_hash(size_type bucket_count, 
-               const Hash& hash,
-               const KeyEqual& equal,
-               const Allocator& alloc,
-               float min_load_factor = DEFAULT_MIN_LOAD_FACTOR,
-               float max_load_factor = DEFAULT_MAX_LOAD_FACTOR): 
-                                       Hash(hash), 
-                                       KeyEqual(equal),
-                                       GrowthPolicy(bucket_count),
-                                       m_buckets_data(alloc), 
-                                       m_buckets(static_empty_bucket_ptr()), 
-                                       m_bucket_count(bucket_count),
-                                       m_nb_elements(0), 
-                                       m_grow_on_next_insert(false),
-                                       m_try_skrink_on_next_insert(false)
-    {
-        if(bucket_count > max_bucket_count()) {
-            TSL_RH_THROW_OR_TERMINATE(std::length_error, "The map exceeds its maxmimum bucket count.");
-        }
-        
-        if(m_bucket_count > 0) {
-            m_buckets_data.resize(m_bucket_count);
-            m_buckets = m_buckets_data.data();
-            
-            tsl_rh_assert(!m_buckets_data.empty());
-            m_buckets_data.back().set_as_last_bucket();
-        }
-        
-        this->min_load_factor(min_load_factor);
-        this->max_load_factor(max_load_factor);
-    }
-#endif
+
     
     robin_hash(const robin_hash& other): Hash(other),
                                          KeyEqual(other),
@@ -652,11 +586,6 @@ public:
         
         return *this;
     }
-    
-    allocator_type get_allocator() const {
-        return m_buckets_data.get_allocator();
-    }
-    
     
     /*
      * Iterators
@@ -960,12 +889,8 @@ public:
     template<class K, class U = ValueSelect, typename std::enable_if<has_mapped_type<U>::value>::type* = nullptr>
     const typename U::value_type& at(const K& key, std::size_t hash) const {
         auto it = find(key, hash);
-        if(it != cend()) {
-            return it.value();
-        }
-        else {
-            TSL_RH_THROW_OR_TERMINATE(std::out_of_range, "Couldn't find key.");
-        }
+        CORRADE_ASSERT(it != cend(), "Couldn't find key",{});
+        return it.value();
     }
     
     template<class K, class U = ValueSelect, typename std::enable_if<has_mapped_type<U>::value>::type* = nullptr>
@@ -1051,10 +976,6 @@ public:
      */
     size_type bucket_count() const {
         return m_bucket_count; 
-    }
-    
-    size_type max_bucket_count() const {
-        return std::min(GrowthPolicy::max_bucket_count(), m_buckets_data.max_size());
     }
     
     /*
@@ -1298,8 +1219,7 @@ private:
     
     
     void rehash_impl(size_type count) {
-        robin_hash new_table(count, static_cast<Hash&>(*this), static_cast<KeyEqual&>(*this), 
-                             get_allocator(), m_min_load_factor, m_max_load_factor);
+        robin_hash new_table(count, static_cast<Hash&>(*this), static_cast<KeyEqual&>(*this), m_min_load_factor, m_max_load_factor);
         
         const bool use_stored_hash = USE_STORED_HASH_ON_REHASH(new_table.bucket_count());
         for(auto& bucket: m_buckets_data) {
@@ -1406,8 +1326,7 @@ private:
     }
     
 private:
-    buckets_container_type m_buckets_data;
-    
+
     /**
      * Points to m_buckets_data.data() if !m_buckets_data.empty() otherwise points to static_empty_bucket_ptr.
      * This variable is useful to avoid the cost of checking if m_buckets_data is empty when trying 

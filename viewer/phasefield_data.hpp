@@ -7,6 +7,7 @@
 #include "drawable_data.hpp"
 #include "drawables.hpp"
 #include "functional.hpp"
+#include "problem.hpp"
 
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Pointer.h>
@@ -14,51 +15,48 @@
 #include <Magnum/Magnum.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/MeshTools/Duplicate.h>
+#include <Magnum/Trade/MeshData.h>
 
 namespace Cr = Corrade;
 namespace Mg = Magnum;
-
-enum FunctionalType {
-    DirichletEnergy = 0,
-    DoubleWellPotential = 1,
-    Area = 2,
-    Connectedness = 3
-};
 
 enum ShaderType {
     FlatTextured = 0,
     PhongDiffuse = 1,
     MeshVisualizer = 2,
-    VertexColor = 3
+    MeshVisualizerObjectId = 3,
+    MeshVisualizerTangent = 4,
+    MeshVisualizerNormal = 5,
+    MeshVisualizerFull = 6,
+    VertexColor =7
 };
 
-struct FunctionalParameters { char const* name; Mg::Float weight; };
+struct PhasefieldData : Object3D, DrawableData {
 
-struct PhasefieldData : ColorMapDrawableData {
+    explicit PhasefieldData(Object3D * parent) : Object3D(parent) {}
 
     enum class Status: Magnum::UnsignedShort {
         NothingChanged,
-        NewMesh,
+        PrimitiveNewMesh,
         Subdivided,
-        PhasefieldUpdated
+        OptimizationUpdated,
+        BrushUpdated
     };
 
-    Cr::Containers::Array<Magnum::Vector3> V;
+    Cr::Containers::Array<Magnum::Vector3d> V;
     Cr::Containers::Array<Magnum::UnsignedInt> F;
-    Cr::Containers::Array<Magnum::Float> phasefield;
+    Cr::Containers::Array<Magnum::Double> phasefield;
 
     Mg::Trade::MeshData original{Magnum::MeshPrimitive::Points, 0};
     Mg::Trade::MeshData meshData{Magnum::MeshPrimitive::Points, 0};
     Mg::UnsignedInt numSubdivisions = 0;
+
     Status status = Status::NothingChanged;
 
-    Drawable* drawable = nullptr;
-    DrawableType type;
+    Cr::Containers::Array<Cr::Containers::Pointer<Mg::GL::AbstractShaderProgram>> shaders;
+    Cr::Containers::Array<Magnum::GL::Texture2D> textures;
 
-    struct Shader { Cr::Containers::Pointer<Mg::GL::AbstractShaderProgram> shader; ShaderType type;};
-    Cr::Containers::Array<Shader> shaders;
-
-    Cr::Containers::Array<Cr::Containers::Pointer<Functional>> functionals;
+    solver::Problem problem;
 
     //void serialize(std::string const& path){
     //    auto sizeOriginal = original.serializedSize();

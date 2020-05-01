@@ -26,12 +26,10 @@
 
 
 #include <cstddef>
-#include <initializer_list>
-#include <memory>
 #include <type_traits>
 #include <utility>
-#include "robin_hash.h"
 
+#include "robin_hash.h"
 
 namespace tsl {
 
@@ -113,7 +111,7 @@ private:
     };
     
     using ht = detail_robin_hash::robin_hash<std::pair<Key, T>, KeySelect, ValueSelect,
-                                             Hash, KeyEqual, Allocator, StoreHash, GrowthPolicy>;  
+                                             Hash, KeyEqual, StoreHash, GrowthPolicy>;
                                              
 public:
     using key_type = typename ht::key_type;
@@ -123,7 +121,6 @@ public:
     using difference_type = typename ht::difference_type;
     using hasher = typename ht::hasher;
     using key_equal = typename ht::key_equal;
-    using allocator_type = typename ht::allocator_type;
     using reference = typename ht::reference;
     using const_reference = typename ht::const_reference;
     using pointer = typename ht::pointer;
@@ -141,9 +138,8 @@ public:
     
     explicit robin_map(size_type bucket_count, 
                        const Hash& hash = Hash(),
-                       const KeyEqual& equal = KeyEqual(),
-                       const Allocator& alloc = Allocator()): 
-                m_ht(bucket_count, hash, equal, alloc)
+                       const KeyEqual& equal = KeyEqual()):
+                m_ht(bucket_count, hash, equal)
     {
     }
     
@@ -218,9 +214,6 @@ public:
         
         return *this;
     }
-    
-    allocator_type get_allocator() const { return m_ht.get_allocator(); }
-    
     
     /*
      * Iterators

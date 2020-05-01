@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include <assert.h>
+#include <cassert>
 #include <type_traits>
 #include <cstddef>
 #include <cstdint>

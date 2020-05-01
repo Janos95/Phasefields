@@ -3,12 +3,14 @@
 // taken from some imgui github issue
 //
 
-#include "toggle_button.hpp"
+#include "custom_widgets.hpp"
+
 #include <imgui.h>
 #include <imgui_internal.h>
 
 bool toggleButton(const char* str_id, bool* v)
 {
+
     bool clicked = false;
     ImVec2 p = ImGui::GetCursorScreenPos();
     ImDrawList* draw_list = ImGui::GetWindowDrawList();
@@ -43,4 +45,32 @@ bool toggleButton(const char* str_id, bool* v)
     draw_list->AddCircleFilled(ImVec2(p.x + radius + t * (width - radius * 2.0f), p.y + radius), radius - 1.5f, IM_COL32(255, 255, 255, 255));
 
     return clicked;
+}
+
+bool dragDoubleRange2(const char* label, double* v_current_min, double* v_current_max, float v_speed, double v_min, double v_max, const char* format, const char* format_max, float power)
+{
+    ImGuiWindow* window = ImGui::GetCurrentWindow();
+    if (window->SkipItems)
+        return false;
+
+    ImGuiContext& g = *GImGui;
+    ImGui::PushID(label);
+    ImGui::BeginGroup();
+    ImGui::PushMultiItemsWidths(2, ImGui::CalcItemWidth());
+
+    auto min = (v_min >= v_max) ? -DBL_MAX : v_min;
+    auto max = (v_min >= v_max) ? *v_current_max : ImMin(v_max, *v_current_max);
+    bool value_changed = ImGui::DragScalar("##min", ImGuiDataType_Double, v_current_min, v_speed, &min, &max, format, power);
+    ImGui::PopItemWidth();
+    ImGui::SameLine(0, g.Style.ItemInnerSpacing.x);
+    min = (v_min >= v_max) ? *v_current_min : ImMax(v_min, *v_current_min);
+    max = (v_min >= v_max) ? FLT_MAX : v_max;
+    value_changed |= ImGui::DragScalar("##max", ImGuiDataType_Double, v_current_max, v_speed, &min, &max, format_max ? format_max : format, power);
+    ImGui::PopItemWidth();
+    ImGui::SameLine(0, g.Style.ItemInnerSpacing.x);
+
+    ImGui::TextEx(label, ImGui::FindRenderedTextEnd(label));
+    ImGui::EndGroup();
+    ImGui::PopID();
+    return value_changed;
 }

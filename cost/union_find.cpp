@@ -13,8 +13,12 @@ UnionFind::UnionFind(int n): Containers::Array<Node>(Containers::NoInit, n)
     }
 }
 
-int UnionFind::parent(int x) const {
+int& UnionFind::parent(int x) {
     return (*this)[x].parent;
+}
+
+int& UnionFind::rank(int x) {
+    return (*this)[x].rank;
 }
 
 
@@ -33,22 +37,18 @@ int UnionFind::find(int x) {
     return root;
 }
 
-int UnionFind::unite(int x, int y){
+void UnionFind::unite(int x, int y){
     auto xRoot = find(x);
     auto yRoot = find(y);
 
     if(xRoot == yRoot)
-        return xRoot;
+        return;
 
-    auto* xNode = &(*this)[xRoot];
-    auto* yNode = &(*this)[yRoot];
-    if(xNode->rank < yNode->rank){
-        std::swap(xNode, yNode);
-    }
+    if(rank(xRoot) < rank(yRoot))
+        std::swap(xRoot, yRoot);
 
-    yNode->parent = xRoot;
-    if(xNode->rank == yNode->rank)
-        ++(xNode->rank);
-    return xNode->parent;
+    parent(yRoot) = xRoot; //
+    if(rank(xRoot) == rank(yRoot))
+        ++rank(xRoot);
 }
 

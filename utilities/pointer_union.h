@@ -18,7 +18,6 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <algorithm>
 
 template <typename T> struct PointerUnionTypeSelectorReturn {
   using Return = T;
@@ -50,6 +49,8 @@ struct PointerUnionTypeSelectorReturn<
       typename PointerUnionTypeSelector<T1, T2, RET_EQ, RET_NE>::Return;
 };
 
+
+
 namespace pointer_union_detail {
   /// Determine the number of bits required to store integers with values < n.
   /// This is ceil(log2(n)).
@@ -58,7 +59,12 @@ namespace pointer_union_detail {
   }
 
   template <typename... Ts> constexpr int lowBitsAvailable() {
-    return std::min<int>({PointerLikeTypeTraits<Ts>::NumLowBitsAvailable...});
+      int min = std::numeric_limits<int>::max();
+      for (auto v : {PointerLikeTypeTraits<Ts>::NumLowBitsAvailable...}) {
+         if(v < min)
+             min = v;
+      }
+    return min;
   }
 
   /// Find the index of a type in a list of types. TypeIndex<T, Us...>::Index

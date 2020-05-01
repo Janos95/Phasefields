@@ -11,6 +11,9 @@ namespace enoki {
     inline void set_requires_gradient(T &a, bool value);
 
     template<typename T>
+    inline auto detach(T const& a) -> typename T::UnderlyingType;
+
+    template<typename T>
     void backward(const T &a, bool free_graph);
 
     template<typename T>
@@ -45,6 +48,7 @@ template<IsDiffArray T>
         return x;
     }
 }
+
 #else
 namespace detail
 {

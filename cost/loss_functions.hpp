@@ -15,7 +15,9 @@ enum class LossType : Mg::UnsignedInt {
     Tolerant = 5,
     Tukey = 6,
     Composed = 7,
-    Scaled = 8
+    Scaled = 8,
+    Quadratic = 9,
+    Unknown = 10
 };
 
 struct LossFunction {
@@ -69,6 +71,11 @@ struct TrivialLoss final : LossFunction {
   void Evaluate(double, double*) const override;
 };
 
+struct QuadrationLoss final : LossFunction {
+    QuadrationLoss()  { type = LossType::Quadratic; };
+    void Evaluate(double, double*) const override;
+};
+
 // Scaling
 // -------
 // Given one robustifier
@@ -111,9 +118,9 @@ struct HuberLoss final : LossFunction {
   explicit HuberLoss(double a_) : a(a_), b(a_ * a_) { type = LossType::Huber; }
   void Evaluate(double, double*) const override;
 
-  const double a;
+  double a;
   // b = a^2.
-  const double b;
+  double b;
 };
 
 // Soft L1, similar to Huber but smooth.
@@ -122,13 +129,13 @@ struct HuberLoss final : LossFunction {
 //
 // At s = 0: rho = [0, 1, -1 / (2 * a^2)].
 struct SoftLOneLoss final : LossFunction {
-  explicit SoftLOneLoss(double a_) : b(a_ * a_), c(1.f / b) { type = LossType::SoftOne; }
+  explicit SoftLOneLoss(double a_) : b(a_ * a_), c(1. / b) { type = LossType::SoftOne; }
   void Evaluate(double, double*) const override;
 
   // b = a^2.
-  const double b;
+  double b;
   // c = 1 / a^2.
-  const double c;
+  double c;
 };
 
 // Inspired by the Cauchy distribution
@@ -137,13 +144,13 @@ struct SoftLOneLoss final : LossFunction {
 //
 // At s = 0: rho = [0, 1, -1 / a^2].
 struct CauchyLoss final : LossFunction {
-  explicit CauchyLoss(double a_) : b(a_ * a_), c(1.f / b) { type = LossType::Cauchy; }
+  explicit CauchyLoss(double a_) : b(a_ * a_), c(1. / b) { type = LossType::Cauchy; }
   void Evaluate(double, double*) const override;
 
   // b = a^2.
-  const double b;
+  double b;
   // c = 1 / a^2.
-  const double c;
+  double c;
 };
 
 // Loss that is capped beyond a certain level using the arc-tangent function.
@@ -156,12 +163,12 @@ struct CauchyLoss final : LossFunction {
 //
 // At s = 0: rho = [0, 1, 0].
 struct ArctanLoss final : LossFunction {
-  explicit ArctanLoss(double a_) : a(a_), b(1.f / (a_ * a_)) { type = LossType::Arctan; }
+  explicit ArctanLoss(double a_) : a(a_), b(1. / (a_ * a_)) { type = LossType::Arctan; }
   void Evaluate(double, double*) const override;
 
-  const double a;
+  double a;
   // b = 1 / a^2.
-  const double b;
+  double b;
 };
 
 // Loss function that maps to approximately zero cost in a range around the
@@ -196,7 +203,7 @@ struct TolerantLoss final : LossFunction {
   explicit TolerantLoss(double a_, double b_);
   void Evaluate(double, double*) const override;
 
-  const double a, b, c;
+  double a, b, c;
 };
 
 // This is the Tukey biweight loss function which aggressively
@@ -213,7 +220,7 @@ struct TukeyLoss : LossFunction {
   explicit TukeyLoss(double a) : a_squared(a * a) { type = LossType::Tukey; }
   void Evaluate(double, double*) const override;
 
-  const double a_squared;
+  double a_squared;
 };
 
 // Composition of two loss functions.  The error is the result of first
@@ -224,7 +231,7 @@ struct ComposedLoss final : LossFunction {
 
   void Evaluate(double, double*) const override;
 
-  Cr::Containers::Pointer<LossFunction> f, g;
+  Cr::Containers::Pointer<LossFunction> f = nullptr, g = nullptr;
 };
 
 // The discussion above has to do with length scaling: it affects the space
@@ -251,8 +258,8 @@ struct ScaledLoss : LossFunction {
 
   void Evaluate(double, double*) const override;
 
-  Cr::Containers::Pointer<LossFunction> f;
-  const double a;
+  Cr::Containers::Pointer<LossFunction> f = nullptr;
+  double a;
 };
 
 

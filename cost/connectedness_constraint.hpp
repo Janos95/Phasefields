@@ -4,18 +4,21 @@
 
 #pragma once
 
-#include "interpolation.hpp"
-#include "quadrature_ref_triangle.hpp"
 #include "dijkstra.hpp"
 #include "utility.hpp"
 #include "union_find.hpp"
 #include "bfs.hpp"
 #include "detach.hpp"
 #include "small_array.hpp"
-#include "robin_map.h"
+#include "hash.h"
+#include "c1_functions.hpp"
+
 #include <scoped_timer/scoped_timer.hpp>
 
 #include <Magnum/Magnum.h>
+#include <Magnum/MeshTools/GenerateIndices.h>
+
+#include <Corrade/Containers/GrowableArray.h>
 
 #include <ceres/first_order_function.h>
 
@@ -30,21 +33,19 @@ enum class GradientFlag : Magnum::UnsignedByte {
 };
 
 
-
 template<class Scalar>
-struct ConnectednessConstraint : public ceres::FirstOrderFunction
+struct ConnectednessConstraint : Functional
 {
 
     ConnectednessConstraint(
-            Containers::ArrayView<const Vector3> const& vertices,
+            Containers::ArrayView<const Vector3d> const& vertices,
             Containers::ArrayView<const Vector3ui> const& faces,
-            Float epsilon,
             Float a,
             Float b);
 
-    bool Evaluate(double const* parameters, double* cost, double* jacobian) const override ;
+    bool evaluate(double const* parameters, double* cost, double* jacobian) const override ;
 
-    int NumParameters() const override;
+    int numParameters() const override;
 
     struct Neighbor {
         Neighbor(int v, double w) : vertex(v), weight(w) {}
@@ -54,9 +55,8 @@ struct ConnectednessConstraint : public ceres::FirstOrderFunction
     };
 
     struct Edge {
-        Edge(const int v1_, const int v2_) : v1(std::min(v1_, v2_)), v2(std::max(v1_, v2_)) {}
-
-        int v1, v2;
+        Edge(Mg::UnsignedInt v1_, Mg::UnsignedInt v2_) : v1(std::min(v1_, v2_)), v2(std::max(v1_, v2_)) {}
+        Mg::UnsignedInt v1, v2;
 
 #ifdef __cpp_impl_three_way_comparison
         auto operator<=>(const Edge&) const = default;
@@ -73,41 +73,50 @@ struct ConnectednessConstraint : public ceres::FirstOrderFunction
     };
 
     Containers::ArrayView<const Vector3ui> triangles;
-    Containers::ArrayView<const Vector3> vertices;
+    Containers::ArrayView<const Vector3d> vertices;
 
     Containers::Array<Edge> dualEdges;
-    Containers::Array<SmallArray<3, Neighbor>> adjacencyList;
+    mutable Containers::Array<SmallArray<3, Neighbor>> adjacencyList;
 
-    Containers::Array<Float> lineElements;
-    Containers::Array<Float> areas;
-    Containers::Array<Float> diams;
+    Containers::Array<Mg::Double> lineElements;
+    Containers::Array<Mg::Double> areas;
+    Containers::Array<Mg::Double> diams;
 
-    Float epsilon;
-    Float a, b;
+    Mg::Double a, b;
 
-    using graph_type = Dijkstra<Containers::Array<SmallArray<3, Neighbor>>>;
+    using graph_type = Cr::Containers::Array<SmallArray<3, Neighbor>>;
 
-    struct ShortestPathTree{
-        Dijkstra<graph_type> dijkstra;
-        StoppingCriteria stop;
-    };
+    mutable Containers::Array<bool> inInterface;
+    mutable Containers::Array<Scalar> ws;
+    mutable Containers::Array<Scalar> uT;
+    mutable Containers::Array<int> components;
+    int numComponents;
 
-    Containers::Array<ShortestPathTree> shortestPaths;
+    bool* drawLineStrips = nullptr;
+    bool generateLineStrips() const { return drawLineStrips && *drawLineStrips; }
+    mutable Cr::Containers::Array<Mg::Trade::MeshData> lineStrips;
 };
+
 
 template<class Scalar>
 ConnectednessConstraint<Scalar>::ConnectednessConstraint(
-        Containers::ArrayView<const Vector3> const& vertices_,
+        Containers::ArrayView<const Vector3d> const& vertices_,
         Containers::ArrayView<const Vector3ui> const& triangles_,
-        Float epsilon_,
         Float a_,
         Float b_):
     vertices(vertices_),
     triangles(triangles_),
-    epsilon(epsilon_), a(a_), b(b_) {
-
+    adjacencyList(Containers::DirectInit, triangles_.size(), Containers::NoInit),
+    a(a_), b(b_),
+    inInterface(Containers::NoInit, triangles_.size()),
+    ws(Containers::NoInit, triangles_.size()),
+    uT(Containers::NoInit, triangles_.size()),
+    components(Containers::NoInit, triangles_.size())
+{
+    type = FunctionalType::Connectedness;
     //compute edges in dual graph
-    tsl::robin_map<Edge, int> edges;
+    auto hash = [](Edge const& e) noexcept { return hash_int(reinterpret_cast<uint64_t const&>(e)); };
+    std::unordered_map<Edge, int, decltype(hash)> edges(3 * triangles.size(), hash);
     edges.reserve(3 * triangles.size());
     Containers::arrayReserve(dualEdges, 3 * triangles.size());
     for (int i = 0; i < triangles.size(); ++i) {
@@ -121,13 +130,13 @@ ConnectednessConstraint<Scalar>::ConnectednessConstraint(
     }
 
     Containers::arrayResize(lineElements, Containers::ValueInit, dualEdges.size());
-    adjacencyList.resize(triangles.size(), SmallArray<3, Neighbor>{Containers::NoInit});
     for (auto[v1, v2] : dualEdges) {
         adjacencyList[v1].emplace_back(v2, .0);
         adjacencyList[v2].emplace_back(v1, .0);
     }
 
     Containers::arrayResize(diams, triangles.size());
+    Containers::arrayResize(areas, triangles.size());
     for (int i = 0; i < triangles.size(); ++i) {
         auto t = triangles[i];
 
@@ -142,12 +151,12 @@ ConnectednessConstraint<Scalar>::ConnectednessConstraint(
 #ifndef NODEBUG
     BreadthFirstSearch bfs(adjacencyList, 0);
     bfs.run();
-    CORRADE_INTERNAL_ASSERT(bfs.isConnected());
+    CORRADE_ASSERT(bfs.isConnected(), "Connectedness Constraint : Dual Graph not connected",);
 #endif
 }
 
 template<class Scalar>
-bool ConnectednessConstraint<Scalar>::Evaluate(double const *phasefield,
+bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
                             double *cost,
                             double *jacobian) const {
 
@@ -171,18 +180,12 @@ bool ConnectednessConstraint<Scalar>::Evaluate(double const *phasefield,
     }
 
     UnionFind set(numFaces);
-    Containers::Array<bool> inInterface(Containers::DirectInit, numFaces, false);
-    Containers::Array<Scalar> ws(Containers::DirectInit, numFaces, -1.);
-    Containers::Array<Scalar> uT(Containers::DirectInit, numFaces, Scalar(0.));
 
     for (int i = 0; i < numFaces; i++) {
-        auto t = triangles[i];
+        auto const& t = triangles[i];
         uT[i] = 1. / 3. * (U[t[0]] + U[t[1]] + U[t[2]]);
-        bool in = a <= detail::detach(uT[i]) && detail::detach(uT[i]) <= b;
-        if (in) {
-            ws[i] = bump(uT[i]);
-            inInterface[i] = true;
-        }
+        inInterface[i] = a <= detail::detach(uT[i]) && detail::detach(uT[i]) <= b;
+        ws[i] = inInterface[i] ? bump(uT[i]) : -1.;
     }
 
     for (auto [dualV1, dualV2] : dualEdges) {
@@ -195,7 +198,6 @@ bool ConnectednessConstraint<Scalar>::Evaluate(double const *phasefield,
             set.unite(dualV1, dualV2);
     }
 
-    Containers::Array<int> components(Containers::NoInit, set.size());
     Containers::Array<int> roots;
     for (std::size_t i = 0; i < components.size(); ++i) {
         if (inInterface[i]) {
@@ -208,7 +210,7 @@ bool ConnectednessConstraint<Scalar>::Evaluate(double const *phasefield,
     std::sort(roots.begin(), roots.end());
     Containers::arrayResize(roots, std::unique(roots.begin(), roots.end()) - roots.begin());
 
-    auto numComponents = roots.size();
+    numComponents = roots.size();
     Debug{} << "Phase [" << a << ',' << b << "] has " << numComponents << "connected components";
     if (numComponents <= 1){
         *cost = 0.;
@@ -232,17 +234,18 @@ bool ConnectednessConstraint<Scalar>::Evaluate(double const *phasefield,
     }
 
     //run dijkstra from each connected component except last one
-    Containers::arrayResize(shortestPaths, numComponents - 1);
+    Containers::Array<Dijkstra<graph_type>> dijkstras(numComponents - 1);
+    Containers::Array<StoppingCriteria> stops(numComponents - 1);
     {
         ScopedTimer t("dijkstra");
         for (std::size_t i = 0; i < numComponents - 1; ++i) {
             StoppingCriteria stop(roots[i], numComponents, components);
             Dijkstra dijk(adjacencyList);
             dijk.setSource(roots[i]);
-            dijk.run({stop});
+            dijk.run(stop);
             CORRADE_INTERNAL_ASSERT(stop.foundAll());
-            shortestPaths[i].dijkstra = std::move(dijk);
-            shortestPaths[i].stop = std::move(stop);
+            dijkstras[i] = std::move(dijk);
+            stops[i] = std::move(stop);
         }
     }
 
@@ -255,15 +258,24 @@ bool ConnectednessConstraint<Scalar>::Evaluate(double const *phasefield,
 
     {
         ScopedTimer tDiff("connectedness diff");
-        auto& [dijkstras, stops] = shortestPaths;
+        if(generateLineStrips()) lineStrips = Containers::Array<Mg::Trade::MeshData>{};
 
         for (std::size_t i = 0; i < numComponents; ++i) {
             for (std::size_t j = i + 1; j < numComponents; ++j) {
+                Mg::UnsignedInt numEdgesInPath = 0;
+                Containers::Array<Mg::Vector3> pathVertices;
+                Containers::Array<Mg::UnsignedInt> pathIndices;
 
                 Scalar dij = 0;
                 auto Wij = W[i] * W[j];
 
                 for (auto&& [a, b]: dijkstras[i].getShortestPathReversed(roots[i], stops[i].target(j))) {
+
+                    if(generateLineStrips()){
+                        if(!numEdgesInPath)
+                            Containers::arrayAppend(pathVertices, Containers::InPlaceInit, vertices[a].x(), vertices[a].y(), vertices[a].z());
+                        Containers::arrayAppend(pathVertices, Containers::InPlaceInit, vertices[b].x(), vertices[b].y(), vertices[b].z());
+                    }
 
                     auto &av = adjacencyList[a];
                     auto it = std::find_if(av.begin(), av.end(), [b = b](const auto &n) { return b == n.vertex; });
@@ -275,10 +287,10 @@ bool ConnectednessConstraint<Scalar>::Evaluate(double const *phasefield,
                         const double fgrada = weightGrad(detail::detach(uT[a]));
                         const double fgradb = weightGrad(detail::detach(uT[b]));
                         auto weightedFGrad = detail::detach(Wij) * lineElement * .5 * (1. / 3.);
-                        for (auto v : triangles[a])
-                            jacobian[v] += weightedFGrad * fgrada;
-                        for (auto v : triangles[b])
-                            jacobian[v] += weightedFGrad * fgradb;
+                        for (int k = 0; k < 3; ++k) {
+                            jacobian[triangles[a][k]] = weightedFGrad * fgrada;
+                            jacobian[triangles[b][k]] = weightedFGrad * fgradb;
+                        }
                     }
                 }
 
@@ -286,6 +298,14 @@ bool ConnectednessConstraint<Scalar>::Evaluate(double const *phasefield,
                 if (jacobian && !detail::IsDiffArray<Scalar>) {
                     distances[i][j] = dij;
                     distances[j][i] = dij;
+                }
+
+                if(generateLineStrips()){
+                    Containers::ArrayView<Mg::Vector3> pathVerticesView(pathVertices);
+                    Mg::Trade::MeshAttributeData pathVerticesData{Mg::Trade::MeshAttribute::Position, pathVerticesView};
+                    Mg::Trade::MeshData md(Mg::MeshPrimitive::LineStrip,
+                            Containers::arrayAllocatorCast<char>(std::move(pathVertices)), {pathVerticesData});
+                    Containers::arrayAppend(lineStrips, std::move(md));
                 }
             }
         }
@@ -302,7 +322,7 @@ bool ConnectednessConstraint<Scalar>::Evaluate(double const *phasefield,
                     for (std::size_t j = 0; j < numComponents; ++j) {
                         if (i == j)
                             continue;
-                        double weightedGrad = distances(i, j) * W[j] * wgrad * areas[k] / 3.;
+                        double weightedGrad = distances[i][j] * W[j] * wgrad * areas[k] / 3.;
                         //each incident vertex has the same influence
                         for (int l = 0; l < 3; ++l)
                             jacobian[triangles[k][l]] += weightedGrad;
@@ -312,7 +332,7 @@ bool ConnectednessConstraint<Scalar>::Evaluate(double const *phasefield,
         }
     }
 
-    auto scaleFactor = (1. / std::pow(epsilon, 2)) * 2.; // 1/(eps * eps)
+    auto scaleFactor = 2.;
     d *= scaleFactor;
     *cost = detail::detach(d);
 
@@ -328,11 +348,12 @@ bool ConnectednessConstraint<Scalar>::Evaluate(double const *phasefield,
                 jacobian[i] *= scaleFactor;
         }
     }
+
     return true;
 }
 
 template<class Scalar>
-int ConnectednessConstraint<Scalar>::NumParameters() const {
+int ConnectednessConstraint<Scalar>::numParameters() const {
     return vertices.size();
 }
 

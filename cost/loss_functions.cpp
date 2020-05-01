@@ -8,6 +8,13 @@
 
 using namespace Corrade;
 
+
+void QuadrationLoss::Evaluate(double s, double rho[3]) const {
+    rho[0] = 0.5 * s * s;
+    rho[1] = s;
+    rho[2] = 1.0;
+}
+
 void TrivialLoss::Evaluate(double s, double rho[3]) const {
     rho[0] = s;
     rho[1] = 1.0;
@@ -122,6 +129,10 @@ void ComposedLoss::Evaluate(double s, double rho[3]) const {
 }
 
 void ScaledLoss::Evaluate(double s, double rho[3]) const {
+    if(a < std::numeric_limits<double>::epsilon()) {
+        std::fill_n(rho, 3, .0);
+        return;
+    }
     if (!f) {
         rho[0] = a * s;
         rho[1] = a;

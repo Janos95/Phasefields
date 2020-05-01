@@ -5,84 +5,104 @@
 #pragma once
 
 #include "functional.hpp"
+#include "c1_functions.hpp"
+#include "utility.hpp"
+#include "fem.hpp"
 
 #include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Containers/Array.h>
 
-namespace Eigen {
-    template<typename _Scalar, int _Options, typename _StorageIndex>
-    class SparseMatrix;
-}
+#include <Eigen/SparseCore>
+#include <numeric>
+#include <Corrade/Containers/GrowableArray.h>
 
 namespace Cr = Corrade;
 namespace Mg = Magnum;
+
 
 struct DirichletEnergy :  Functional
 {
 
     DirichletEnergy(
-            Cr::Containers::ArrayView<const Vector3> const& vertices,
-            Cr::Containers::ArrayView<const Vector3ui> const& faces,
-            Float epsilon);
+            Cr::Containers::ArrayView<const Mg::Vector3d> const& vertices,
+            Cr::Containers::ArrayView<const Mg::Vector3ui> const& faces);
 
-    int NumParameters() const override;
+    int numParameters() const override;
 
-    bool Evaluate(double const* parameters,
+    bool evaluate(double const* parameters,
                   double* residual,
                   double* jacobians) const override;
 
-    double m_epsilon;
+    Cr::Containers::ArrayView<const Mg::Vector3ui> triangles;
+    Cr::Containers::ArrayView<const Mg::Vector3d> vertices;
+    Cr::Containers::Array<Mg::Double> areas;
 
-    Cr::Containers::ArrayView<const Vector3ui> m_triangles;
-    Cr::Containers::ArrayView<const Vector3> m_vertices;
-    Cr::Containers::Array<Mg::Float> areas;
-
-    Cr::Containers::Pointer<Eigen::SparseMatrix<Mg::Float, 0 /* ColMajor */, int>> m_GSQ;
+    Eigen::SparseMatrix<Mg::Double> stiffnessMatrix;
+    Eigen::VectorXd diagonal;
 };
 
-
-struct DoubleWellPotential :  ceres::FirstOrderFunction
+template<class F>
+struct IntegralFunctional : Functional
 {
+    IntegralFunctional(
+            Cr::Containers::ArrayView<const Mg::Vector3d> const& vs,
+            Cr::Containers::ArrayView<const Mg::Vector3ui> const& ts,
+            F f_ = {}):
+                triangles(ts),
+                vertices(vs),
+                f((F&&)f_),
+                integralOperator(computeIntegralOperator(ts,vs))
+        {
+        }
 
-    DoubleWellPotential(
-        Cr::Containers::ArrayView<const Vector3> const& vertices,
-        Cr::Containers::ArrayView<const Vector3ui> const& faces,
-        Mg::Float epsilon);
+    int numParameters() const override {
+        return vertices.size();
+    }
 
-    int NumParameters() const override;
-
-    bool Evaluate(double const* parameters,
+    bool evaluate(double const* params,
                   double* cost,
-                  double* jacobians) const override;
+                  double* jacobians) const override{
+        *cost = 0.;
+        for (int i = 0; i < vertices.size(); ++i){
+            *cost += f.eval(params[i]) * integralOperator[i];
+            if(jacobians) jacobians[i] = f.grad(params[i]) * integralOperator[i];
+        }
 
-    Cr::Containers::ArrayView<const Vector3ui> m_triangles;
-    Cr::Containers::ArrayView<const Vector3> m_vertices;
-    Cr::Containers::Array<Mg::Float> areas;
+        return true;
+    }
 
-    Mg::Float m_epsilon;
+    F f;
+    Cr::Containers::ArrayView<const Mg::Vector3ui> triangles;
+    Cr::Containers::ArrayView<const Mg::Vector3d> vertices;
+    Cr::Containers::Array<Mg::Double> integralOperator;
 };
 
 
-struct AreaRegularizer : public ceres::FirstOrderFunction
-{
+template<class F>
+struct AreaRegularizer : IntegralFunctional<F> {
 
     AreaRegularizer(
-        Cr::Containers::ArrayView<const Vector3> const& vertices,
-        Cr::Containers::ArrayView<const Vector3ui> const& faces,
-        Mg::Float areaRatio = .5f);
+            Cr::Containers::ArrayView<const Mg::Vector3d> const& vs,
+            Cr::Containers::ArrayView<const Mg::Vector3ui> const& ts) :
+        IntegralFunctional<F>(vs, ts)
+    {
+        auto areas = computeAreas(ts, vs);
+        area = std::accumulate(areas.begin(), areas.end(), 0.);
+        this->loss = Cr::Containers::pointer<QuadrationLoss>();
+    }
 
-    int NumParameters() const override;
-
-    bool Evaluate(double const* parameters,
+    bool evaluate(double const* params,
                   double* cost,
-                  double* jacobians) const override;
+                  double* jacobians) const override{
+        IntegralFunctional<F>::evaluate(params, &currentArea, jacobians);
+        *cost = currentArea - areaRatio * area;
+        return true;
+    }
 
-
-    Cr::Containers::ArrayView<const Vector3ui> triangles;
-    Cr::Containers::ArrayView<const Vector3> vertices;
-    Cr::Containers::Array<Mg::Float> areas;
-
-    Mg::Float area;
-    Mg::Float areaRatio;
-    Mg::Float currentArea;
+    mutable Mg::Double currentArea;
+    Mg::Double areaRatio = 0.5, area;
 };
 
+using AreaRegularizer1 = AreaRegularizer<Indicator<Mg::Double>>;
+using AreaRegularizer2 = AreaRegularizer<SmoothStep<Mg::Double>>;
+using DoubleWellPotential = IntegralFunctional<DoubleWell<Mg::Double>>;

@@ -11,18 +11,16 @@ struct Node{
     int parent;
 };
 
-class UnionFind : public Corrade::Containers::Array<Node> {
-public:
+struct UnionFind : public Corrade::Containers::Array<Node> {
 
     explicit UnionFind(int n);
 
-    int parent(int x) const;
+    [[nodiscard]] int& parent(int x);
+    [[nodiscard]] int& rank(int x);
 
     int find(int x);
 
-    int unite(int x, int y);
-
-    bool isValid(int k) const;
+    void unite(int x, int y);
 
 };
 

@@ -1,22 +1,26 @@
 
 high priority
     * debug connectedness_constraint
-    * add genus g surface as primitive
-    * debug subdivision
-    * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!MATHEMATIK!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    * think about cut graph which is defined by metric
+    * primitives should not have duplicate vertices...
+        * factor out the deduplication of vertices and move it to the preprocess stage
 
 medium prioritiy
     * add ipopt
     * add path visualization
     * get rid of igl
-    * use eigen only in implementation files (if possible)
+    * write mkl wrapper instead of using eigen?
     * use imgui docking branch
+    * images of color map
+    * signal slots? Or better put everything into viewer, iteration times need to be better.
+    * add serialization
+    * implicit surface : fix normals + sample randomly to find multiple connected comp
 
 
 low priority
-    * add pbr shader
-    * describe two phases as two different materials?
+    * add pbr shader and describe phases by varying material properties.
     * add background/tabletop
     * debug kd tree
-    * figure out a way to have incremental geodesics
+    * figure out a way to have incremental geodesics (look into cgal implementation)
+    * conan for package management?
 

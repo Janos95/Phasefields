@@ -31,7 +31,6 @@ struct Problem {
         double cost;
     };
 
-    [[nodiscard]] Cr::Containers::Array<Cost> evaluateFunctionals(double const *parameters) const;
 
     bool evaluate(const double *parameters,
                   double *cost,

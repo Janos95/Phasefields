@@ -2,12 +2,18 @@
 // Created by janos on 13.03.20.
 //
 
+#pragma once
+
 #include <Magnum/Trade/MeshData.h>
-#include <Magnum/ImageView.h>
+#include <Magnum/GL/Mesh.h>
+#include <Magnum/GL/Buffer.h>
+#include <Corrade/Containers/EnumSet.h>
 
-#include "drawable_data.hpp"
 
-enum class CompileFlag: Magnum::UnsignedShort {
+namespace Mg = Magnum;
+namespace Cr = Corrade;
+
+enum class CompileFlag : Mg::UnsignedInt {
     GenerateFlatNormals = 1u << 0u,
     GenerateSmoothNormals = 1u << 1u,
     AddColorAttribute = 1u << 2u,
@@ -15,14 +21,13 @@ enum class CompileFlag: Magnum::UnsignedShort {
     AddTextureCoordinates = 1u << 4u
 };
 
-using CompileFlags = Corrade::Containers::EnumSet<CompileFlag>;
+using CompileFlags = Cr::Containers::EnumSet<CompileFlag>;
 
 CORRADE_ENUMSET_OPERATORS(CompileFlags)
 
-Magnum::Trade::MeshData preprocess(Magnum::Trade::MeshData const& meshData, CompileFlags flags = {});
+Mg::Trade::MeshData preprocess(Mg::Trade::MeshData const& meshData, CompileFlags flags = {});
 
-void upload(DrawableData& drawableData, Magnum::Trade::MeshData& meshData);
+void upload(Mg::GL::Mesh& mesh, Mg::GL::Buffer& vertices, Mg::GL::Buffer& indices, Mg::Trade::MeshData& meshData);
 
-void reuploadVertices(DrawableData& drawableData, Trade::MeshData const& meshData);
+void reuploadVertices(Mg::GL::Buffer& vertices, Mg::Trade::MeshData const& meshData);
 
-void reuploadIndices(DrawableData& drawableData, Trade::MeshData const& meshData);

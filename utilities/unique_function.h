@@ -33,7 +33,8 @@
 
 #include "pointer_int_pair.h"
 #include "pointer_union.h"
-#include <memory>
+#include <utility>
+#include <new>
 
 inline void *allocate_buffer(size_t Size, size_t Alignment) {
     return ::operator new(Size

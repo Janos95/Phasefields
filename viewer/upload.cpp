@@ -13,6 +13,8 @@
 #include <Magnum/MeshTools/Duplicate.h>
 #include <Magnum/MeshTools/Interleave.h>
 #include <Magnum/MeshTools/GenerateFlatNormals.h>
+#include <Magnum/Math/Vector3.h>
+#include <Magnum/Math/Color.h>
 #include <Magnum/MeshTools/GenerateNormals.h>
 #include <Magnum/Shaders/Generic.h>
 
@@ -20,10 +22,7 @@ using namespace Magnum;
 using namespace Corrade;
 
 
-void upload(DrawableData& drawableData, Trade::MeshData& meshData) {
-    auto& vertices = drawableData.vertices;
-    auto& indices = drawableData.indices;
-    auto& mesh = drawableData.mesh;
+void upload(GL::Mesh& mesh, GL::Buffer& vertices, GL::Buffer& indices, Trade::MeshData& meshData) {
 
     vertices.setData(meshData.vertexData());
     indices.setData(meshData.indexData());
@@ -154,9 +153,8 @@ Trade::MeshData preprocess(Trade::MeshData const& meshData, CompileFlags flags) 
 //    phasefieldData.type = DrawableType::ColorMapPhong;
 //}
 
-void reuploadVertices(DrawableData& drawableData, Trade::MeshData const& meshData)
+void reuploadVertices(GL::Buffer& vertices, Trade::MeshData const& meshData)
 {
-    GL::Buffer& vertices = drawableData.vertices;
     auto data = vertices.map(0,
                              vertices.size(),
                              GL::Buffer::MapFlag::Write);
@@ -166,16 +164,4 @@ void reuploadVertices(DrawableData& drawableData, Trade::MeshData const& meshDat
     vertices.unmap();
 }
 
-void reuploadIndices(DrawableData& drawableData, Trade::MeshData const& meshData)
-{
-    Debug{} << "Reuploading Indices";
-    GL::Buffer& indices = drawableData.indices;
-    auto data = indices.map(0,
-                            indices.size(),
-                            GL::Buffer::MapFlag::Write);
-
-    CORRADE_CONSTEXPR_ASSERT(data, "could not map vertex data");
-    Utility::copy(meshData.indexData(), data);
-    indices.unmap();
-}
 

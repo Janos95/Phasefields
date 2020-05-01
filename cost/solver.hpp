@@ -31,6 +31,7 @@ namespace solver{
     struct Options {
         int max_num_iterations = 100;
         bool minimizer_progress_to_stdout = false;
+        bool update_state_every_iteration = true;
         Solver solver = Solver::CERES;
         Cr::Containers::Array<unique_function<Status(IterationSummary const&)>> callbacks;
     };
@@ -39,7 +40,7 @@ namespace solver{
 
     };
 
-};
+}
 
 void solve(solver::Options& options, solver::Problem& problem, double*, solver::Summary* summary = nullptr);
 

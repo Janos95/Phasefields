@@ -20,9 +20,10 @@ template<class R>
 class Dijkstra
 {
 public:
+    Dijkstra() = default;
 
     explicit Dijkstra(R const& adjacencyList):
-        m_adjacencyList(adjacencyList),
+        m_adjacencyList(&adjacencyList),
         m_dist(adjacencyList.size(), std::numeric_limits<double>::infinity()),
         m_prev(adjacencyList.size(), -1)
     {
@@ -47,7 +48,7 @@ public:
         if(d > m_dist[u])
             return true;
 
-        for(const auto& [v, w]: m_adjacencyList[u]){
+        for(const auto& [v, w]: (*m_adjacencyList)[u]){
             auto alt = detail::detach(w) + detail::detach(d);
             if(alt < m_dist[v]){
                 m_dist[v] = alt;
@@ -58,12 +59,13 @@ public:
         return true;
     }
 
-    auto run(std::initializer_list<unique_function<bool(int)>> cbs)
+    template<class... F>
+    auto run(F&&... cbs)
     {
         int u;
         double d;
         while(step(u, d)){
-            if(std::any_of(cbs.begin(), cbs.end(),[u](auto& cb){ return cb(u); }))
+            if((cbs(u) || ... ))
                 break;
         }
     }
@@ -93,7 +95,7 @@ private:
     };
 
     std::priority_queue<HeapElement,  std::vector<HeapElement>, InverseDistanceCompare> m_heap;
-    R const& m_adjacencyList;
+    R const* m_adjacencyList;
     std::vector<double> m_dist;
     std::vector<int> m_prev;
 };

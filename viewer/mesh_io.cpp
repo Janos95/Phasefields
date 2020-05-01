@@ -11,7 +11,7 @@
 #include <assimp/scene.h>
 
 
-void MeshIO::drawImGui() {
+void MeshIO::drawImGui(Viewer&) {
     if (ImGui::TreeNode("Mesh IO"))
     {
         ImGui::InputText("Mesh Path (Loading)", m_inputMesh.data(), m_inputMesh.size());
