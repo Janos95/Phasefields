@@ -482,6 +482,7 @@ Containers::Pointer<Functional> Viewer::makeFunctional(FunctionalType type) {
         case FunctionalType::Connectedness :
             auto p = Containers::pointer<ConnectednessConstraint<Double>>(vertices, ts);
             p->metaData->scaling = connectednessScaling;
+            p->getMetaData().viewer = this;
             return p;
     }
     return nullptr;

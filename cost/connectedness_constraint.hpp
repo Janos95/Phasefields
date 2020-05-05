@@ -251,10 +251,10 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
     }
 
     std::sort(roots.begin(), roots.end());
-    Containers::arrayResize(roots, std::unique(roots.begin(), roots.end()) - roots.begin());
+    auto numComponents = std::unique(roots.begin(), roots.end()) - roots.begin();
+    Containers::arrayResize(roots, numComponents);
 
-    auto numComponents = roots.size();
-    Debug{} << "Phase [" << a << ',' << b << "] has " << numComponents << "connected components";
+    Debug{} << "Phase [" << a << "," << b << "] has " << numComponents << "connected components";
     if (numComponents <= 1){
         *cost = 0.;
         if(jacobian)
@@ -269,12 +269,14 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
         if (c != -1) {
             auto it = std::lower_bound(roots.begin(), roots.end(), c);
             CORRADE_INTERNAL_ASSERT(it != roots.end() && *it == c);
-            auto k = std::distance(roots.begin(), it);
+            auto k = it - roots.begin();
             CORRADE_INTERNAL_ASSERT(std::abs(-1 - detail::detach(ws[i])) > 1e-6);
             W[k] += ws[i] * areas[i];
             c = k;
         }
     }
+
+    Debug{} << W;
 
     //run dijkstra from each connected component except last one
     Containers::Array<Dijkstra<graph_type>> dijkstras(numComponents - 1);
