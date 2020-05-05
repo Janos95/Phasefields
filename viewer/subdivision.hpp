@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "phasefield_data.hpp"
 #include "viewer.hpp"
 
 void subdivide(

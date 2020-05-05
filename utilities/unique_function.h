@@ -31,8 +31,8 @@
 
 #pragma once
 
-#include "pointer_int_pair.h"
-#include "pointer_union.h"
+#include "detail/pointer_int_pair.h"
+#include "detail/pointer_union.h"
 #include <utility>
 #include <new>
 

@@ -9,43 +9,20 @@
 #include <Magnum/Magnum.h>
 #include <Magnum/Math/FunctionsBatch.h>
 
-#include <igl/cotmatrix.h>
-#include <igl/massmatrix.h>
-
-
 using namespace Magnum;
 using namespace Corrade;
 
 DirichletEnergy::DirichletEnergy(
         Containers::ArrayView<const Vector3d> const& vertices_,
         Containers::ArrayView<const Vector3ui> const& triangles_):
+    Functional(Functional::MetaData::AllocateFromLoss(TrivialLoss()), FunctionalType::DirichletEnergy),
     triangles(triangles_),
     vertices(vertices_),
     areas(computeAreas(triangles_, vertices_)),
     stiffnessMatrix(computeStiffnessMatrix(triangles_, vertices_)),
     diagonal(stiffnessMatrix.diagonal())
 {
-    type = FunctionalType::DirichletEnergy;
     CORRADE_ASSERT(!Math::isNan(areas), "Dirichlet Energy : areas contains NaN",);
-
-#ifndef NDEBUG
-    Eigen::MatrixXd V(vertices.size(), 3);
-    for (int j = 0; j < vertices.size(); ++j) {
-        for (int i = 0; i < 3; ++i) {
-            V(j,i) = vertices[j][i];
-        }
-    }
-    Eigen::MatrixXi F(triangles.size(), 3);
-    for (int k = 0; k < triangles.size(); ++k) {
-        for (int j = 0; j < 3; ++j) {
-            F(k,j) = triangles[k][j];
-        }
-    }
-    Eigen::SparseMatrix<Double> L, M;
-    igl::cotmatrix(V, F, L);
-    CORRADE_ASSERT(!Math::isNan(Containers::ArrayView(stiffnessMatrix.valuePtr(), stiffnessMatrix.nonZeros())), "gradient matrix contains nan",);
-    CORRADE_ASSERT(L.isApprox(-stiffnessMatrix), "Dirichlet Energy : stiffness matrix is wrong",);
-#endif
 }
 
 

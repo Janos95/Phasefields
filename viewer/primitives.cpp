@@ -5,15 +5,13 @@
 #include "primitives.hpp"
 #include "upload.hpp"
 #include "custom_widgets.hpp"
-#include "polygonize_expression.hpp"
+//#include "polygonize_expression.hpp"
 
-#include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Containers/Pointer.h>
 
 #include <Magnum/Primitives/Capsule.h>
 #include <Magnum/MeshTools/Interleave.h>
 #include <Magnum/MeshTools/Transform.h>
-#include <Magnum/MeshTools/RemoveDuplicates.h>
 #include <Magnum/Math/Matrix4.h>
 
 #include <imgui.h>
@@ -24,6 +22,12 @@ using namespace Corrade;
 using namespace Magnum;
 
 namespace {
+
+    struct ComboElement {
+        std::string name;
+        PrimitiveType type;
+        Corrade::Containers::Pointer<AbstractPrimitiveOptions> options;
+    };
 
     auto makeComboMap(){
         std::vector<ComboElement> map;
@@ -166,10 +170,9 @@ bool handlePrimitive(Trade::MeshData& original, std::string& expression){
                     hasChanged = displayCapsuleOptions(optC);
                     if ((hasChanged && track) || buttonPressed) {
                         auto capsule = Primitives::capsule3DSolid(optC.hemisphereRings, optC.cylinderRings,
-                                                                  optC.segments, .5f * optC.length / optC.radius,
-                                                                  Primitives::CapsuleFlag::Tangents);
+                                                                  optC.segments, .5f * optC.length / optC.radius);
                         MeshTools::transformPointsInPlace(
-                                Math::Matrix4<float>::scaling({optC.radius, optC.radius, optC.radius}),
+                                Matrix4::scaling({optC.radius, optC.radius, optC.radius}),
                                 capsule.mutableAttribute<Vector3>(Trade::MeshAttribute::Position));
                         original = std::move(capsule);
                         newMesh = true;
@@ -189,8 +192,8 @@ bool handlePrimitive(Trade::MeshData& original, std::string& expression){
                     auto& optP = dynamic_cast<PolygonizationOptions&>(*current->options);
                     displayImplicitFunctionOptions(optP, expression);
                     if(buttonPressed){
-                        original = polygonizeExpression(expression, optP);
-                        newMesh = true;
+                        //original = polygonizeExpression(expression, optP);
+                        //newMesh = true;
                     }
             }
             ImGui::Text("Track Options");

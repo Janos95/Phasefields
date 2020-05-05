@@ -3,6 +3,7 @@
 //
 
 #include "solver.hpp"
+#include "problem.hpp"
 
 #include <ceres/iteration_callback.h>
 #include <ceres/gradient_problem_solver.h>
@@ -30,11 +31,11 @@ struct FirstOrderWrapper : ceres::FirstOrderFunction {
 };
 
 struct CeresCallbackWrapper : ceres::IterationCallback {
-    using callback_type = unique_function<solver::Status(solver::IterationSummary const&)>;
+    using callback_type = function_ref<solver::Status(solver::IterationSummary const&)>;
 
     CeresCallbackWrapper(callback_type& cb) : callback(cb) {}
 
-    callback_type& callback;
+    callback_type callback;
     ceres::CallbackReturnType operator()(const ceres::IterationSummary& summary) override {
         solver::IterationSummary solverSummary;
         switch (callback(solverSummary)) {
@@ -63,7 +64,7 @@ void solve(solver::Options& options, solver::Problem& problem, double* params, s
         ceres::Solve(ceresOptions, ceresProblem, params, &ceresSummary);
     } else if(options.solver == solver::Solver::IPOPT){
         Utility::Debug{} << "NOT IMPLEMENTED YET";
-    } else CORRADE_ASSERT(false, "Unkown solver type", );
+    } else CORRADE_ASSERT(false, "Unkown solver type",);
 }
 
 

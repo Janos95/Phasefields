@@ -1,6 +1,8 @@
 //
 // Created by janos on 29.04.20.
 //
+// barebones (e.g. not thread safe) shared_ptr for trivial types
+//
 
 #pragma once
 

@@ -8,7 +8,6 @@ add_library(viewer SHARED
         arc_ball.cpp
         arc_ball.hpp
         arc_ball_camera.hpp
-        camera.hpp
         upload.cpp
         upload.hpp
         drawables.cpp
@@ -19,6 +18,11 @@ add_library(viewer SHARED
         shader_options.cpp
         subdivision.hpp
         subdivision.cpp
+        optimization_context.hpp
+        optimization_context.cpp
+        custom_widgets.hpp
+        custom_widgets.cpp
+        types.hpp
         ${viewer_RESOURCES})
 
 target_include_directories(viewer PUBLIC ${CMAKE_CURRENT_LIST_DIR})
@@ -28,7 +32,6 @@ target_link_libraries(viewer
             phasefields::scoped_timer
             phasefields::cost
             phasefields::exact_geodesics
-            phasefields::polygonizer
             Magnum::GL
             Magnum::SceneGraph
             Magnum::Magnum
@@ -38,6 +41,7 @@ target_link_libraries(viewer
             Magnum::Shaders
             Magnum::DebugTools
             MagnumIntegration::ImGui
+            ImGui::SourcesMiscCpp
         )
 
 add_library(phasefields::viewer ALIAS viewer)

@@ -12,11 +12,15 @@
 #include "small_array.hpp"
 #include "hash.h"
 #include "c1_functions.hpp"
+#include "types.hpp"
+#include "viewer.hpp"
 
 #include <scoped_timer/scoped_timer.hpp>
 
+#include <Corrade/Utility/Algorithms.h>
 #include <Magnum/Magnum.h>
 #include <Magnum/MeshTools/GenerateIndices.h>
+#include <Magnum/Math/Matrix4.h>
 
 #include <Corrade/Containers/GrowableArray.h>
 
@@ -32,16 +36,52 @@ enum class GradientFlag : Magnum::UnsignedByte {
     Automatic = 1
 };
 
+template<class Scalar>
+struct UpdateConnectednessVis;
+
+
+template<class Scalar>
+struct ConnectednessMetaData : Functional::MetaData {
+
+    Viewer* viewer;
+    Mg::Double a = 0.05, b = 0.95;
+
+    Cr::Containers::Array<int> components;
+    Cr::Containers::Array<Double> ws;
+    Cr::Containers::Array<InstanceData> instanceData;
+    Mg::Double pathThickness = 0.01;
+    Mg::Color3 pathColor = Mg::Color3::green();
+    int numComponents;
+
+    solver::Status operator()(solver::IterationSummary const&) {
+        std::lock_guard l(viewer->mutex);
+        if(flags & VisualizationFlag::Paths){
+            viewer->instanceData = std::move(instanceData);
+            viewer->update |= VisualizationFlag::Paths;
+        }
+        if(flags & VisualizationFlag::ConnectedComponents){
+            Utility::copy(components, viewer->components);
+            viewer->numComponents = numComponents;
+            viewer->update = VisualizationFlag::ConnectedComponents;
+        }
+        if(flags & VisualizationFlag::GeodesicWeights){
+            Utility::copy(ws, viewer->ws);
+            viewer->update = VisualizationFlag::GeodesicWeights;
+        }
+        return solver::Status::CONTINUE;
+    }
+
+    void reset() override {
+        flags &= VisualizationFlag::Paths;
+    }
+};
 
 template<class Scalar>
 struct ConnectednessConstraint : Functional
 {
-
     ConnectednessConstraint(
             Containers::ArrayView<const Vector3d> const& vertices,
-            Containers::ArrayView<const Vector3ui> const& faces,
-            Float a,
-            Float b);
+            Containers::ArrayView<const Vector3ui> const& faces);
 
     bool evaluate(double const* parameters, double* cost, double* jacobian) const override ;
 
@@ -82,42 +122,28 @@ struct ConnectednessConstraint : Functional
     Containers::Array<Mg::Double> areas;
     Containers::Array<Mg::Double> diams;
 
-    Mg::Double a, b;
-
     using graph_type = Cr::Containers::Array<SmallArray<3, Neighbor>>;
 
     mutable Containers::Array<bool> inInterface;
-    mutable Containers::Array<Scalar> ws;
     mutable Containers::Array<Scalar> uT;
-    mutable Containers::Array<int> components;
-    int numComponents;
 
-    bool* drawLineStrips = nullptr;
-    bool generateLineStrips() const { return drawLineStrips && *drawLineStrips; }
-    mutable Cr::Containers::Array<Mg::Trade::MeshData> lineStrips;
+    decltype(auto) getMetaData() const { return dynamic_cast<ConnectednessMetaData<Scalar>&>(*metaData); }
 };
-
 
 template<class Scalar>
 ConnectednessConstraint<Scalar>::ConnectednessConstraint(
         Containers::ArrayView<const Vector3d> const& vertices_,
-        Containers::ArrayView<const Vector3ui> const& triangles_,
-        Float a_,
-        Float b_):
+        Containers::ArrayView<const Vector3ui> const& triangles_):
+    Functional(Containers::pointer<ConnectednessMetaData<Scalar>>(), FunctionalType::Connectedness),
     vertices(vertices_),
     triangles(triangles_),
     adjacencyList(Containers::DirectInit, triangles_.size(), Containers::NoInit),
-    a(a_), b(b_),
     inInterface(Containers::NoInit, triangles_.size()),
-    ws(Containers::NoInit, triangles_.size()),
-    uT(Containers::NoInit, triangles_.size()),
-    components(Containers::NoInit, triangles_.size())
+    uT(Containers::NoInit, triangles_.size())
 {
-    type = FunctionalType::Connectedness;
     //compute edges in dual graph
     auto hash = [](Edge const& e) noexcept { return hash_int(reinterpret_cast<uint64_t const&>(e)); };
     std::unordered_map<Edge, int, decltype(hash)> edges(3 * triangles.size(), hash);
-    edges.reserve(3 * triangles.size());
     Containers::arrayReserve(dualEdges, 3 * triangles.size());
     for (int i = 0; i < triangles.size(); ++i) {
         for (int j = 0; j < 3; ++j) {
@@ -162,6 +188,18 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
 
     ScopedTimer timer("Connectedness");
 
+    Mg::Double a,b, pathThickness;
+    Mg::Color3 pathColor;
+    bool generateLineStrips;
+    auto& meta = getMetaData();
+    {
+        std::lock_guard l(meta.viewer->mutex);
+        a = meta.a; b = meta.b;
+        generateLineStrips = static_cast<bool>(meta.flags & VisualizationFlag::Paths);
+        pathColor = meta.pathColor;
+        pathThickness = meta.pathThickness;
+    }
+
     F weight(a, b);
     FGrad weightGrad(a, b);
     W bump(a, b);
@@ -179,7 +217,10 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
                 enoki::set_requires_gradient(u);
     }
 
-    UnionFind set(numFaces);
+    Containers::Array<Mg::Double> weights(Containers::NoInit, numVertices);
+    for (int i = 0; i < numVertices; ++i) weights[i] = bump(U[i]);
+
+    Containers::Array<Mg::Double> ws(Containers::NoInit, numFaces);
 
     for (int i = 0; i < numFaces; i++) {
         auto const& t = triangles[i];
@@ -188,6 +229,7 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
         ws[i] = inInterface[i] ? bump(uT[i]) : -1.;
     }
 
+    UnionFind set(numFaces);
     for (auto [dualV1, dualV2] : dualEdges) {
         auto fuT1 = weight(uT[dualV1]);
         auto fuT2 = weight(uT[dualV2]);
@@ -199,6 +241,7 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
     }
 
     Containers::Array<int> roots;
+    Containers::Array<int> components(Containers::NoInit, numFaces);
     for (std::size_t i = 0; i < components.size(); ++i) {
         if (inInterface[i]) {
             components[i] = set.find(i);
@@ -210,7 +253,7 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
     std::sort(roots.begin(), roots.end());
     Containers::arrayResize(roots, std::unique(roots.begin(), roots.end()) - roots.begin());
 
-    numComponents = roots.size();
+    auto numComponents = roots.size();
     Debug{} << "Phase [" << a << ',' << b << "] has " << numComponents << "connected components";
     if (numComponents <= 1){
         *cost = 0.;
@@ -256,25 +299,31 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
     if(jacobian && !detail::IsDiffArray<Scalar>)
         std::fill_n(jacobian, numVertices, Scalar{0});
 
+    Cr::Containers::Array<InstanceData> instanceData;
     {
         ScopedTimer tDiff("connectedness diff");
-        if(generateLineStrips()) lineStrips = Containers::Array<Mg::Trade::MeshData>{};
 
         for (std::size_t i = 0; i < numComponents; ++i) {
             for (std::size_t j = i + 1; j < numComponents; ++j) {
                 Mg::UnsignedInt numEdgesInPath = 0;
-                Containers::Array<Mg::Vector3> pathVertices;
-                Containers::Array<Mg::UnsignedInt> pathIndices;
 
                 Scalar dij = 0;
                 auto Wij = W[i] * W[j];
 
                 for (auto&& [a, b]: dijkstras[i].getShortestPathReversed(roots[i], stops[i].target(j))) {
 
-                    if(generateLineStrips()){
-                        if(!numEdgesInPath)
-                            Containers::arrayAppend(pathVertices, Containers::InPlaceInit, vertices[a].x(), vertices[a].y(), vertices[a].z());
-                        Containers::arrayAppend(pathVertices, Containers::InPlaceInit, vertices[b].x(), vertices[b].y(), vertices[b].z());
+                    if(generateLineStrips){
+                        Float l = (vertices[b] - vertices[a]).length();
+                        Vector3 dir{(vertices[b] - vertices[a]) / l};
+                        Vector3 orthogonal{dir[2], dir[2], -dir[0]-dir[1]};
+                        if(!orthogonal.dot()) orthogonal = Vector3{dir[1] - dir[2], dir[0], dir[0]};
+                        orthogonal = orthogonal.normalized();
+                        Mg::Matrix3 rot{orthogonal, dir, Math::cross(orthogonal, dir)};
+                        Mg::Matrix3 rotScaling = {rot[0] * pathThickness, rot[1] * l, rot[2] * pathThickness};
+                        Vector3 mid{.5f * (vertices[b] + vertices[a])};
+                        auto tf = Mg::Matrix4::from(rotScaling, mid);
+                        CORRADE_ASSERT(rotScaling.isOrthogonal(), "Connectedness : tf for path vis not orthonormal",false);
+                        Containers::arrayAppend(instanceData, Containers::InPlaceInit, tf, rot, pathColor);
                     }
 
                     auto &av = adjacencyList[a];
@@ -298,14 +347,6 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
                 if (jacobian && !detail::IsDiffArray<Scalar>) {
                     distances[i][j] = dij;
                     distances[j][i] = dij;
-                }
-
-                if(generateLineStrips()){
-                    Containers::ArrayView<Mg::Vector3> pathVerticesView(pathVertices);
-                    Mg::Trade::MeshAttributeData pathVerticesData{Mg::Trade::MeshAttribute::Position, pathVerticesView};
-                    Mg::Trade::MeshData md(Mg::MeshPrimitive::LineStrip,
-                            Containers::arrayAllocatorCast<char>(std::move(pathVertices)), {pathVerticesData});
-                    Containers::arrayAppend(lineStrips, std::move(md));
                 }
             }
         }
@@ -347,6 +388,11 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
             for (int i = 0; i < numVertices; ++i)
                 jacobian[i] *= scaleFactor;
         }
+    }
+
+    if(generateLineStrips) {
+        std::lock_guard l(meta.viewer->mutex);
+        meta.instanceData = std::move(instanceData);
     }
 
     return true;

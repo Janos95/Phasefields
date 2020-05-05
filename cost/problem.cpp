@@ -5,9 +5,7 @@
 #include "problem.hpp"
 
 #include <tbb/task_group.h>
-
 #include <Corrade/Utility/Assert.h>
-#include <Corrade/Utility/Algorithms.h>
 
 #include <mutex>
 
@@ -38,11 +36,11 @@ bool Problem::evaluate(double const *parameters,
 
 
             Double rho[3], scaling[3] = {residual, 1., 0.};
-            if(functional->scaling){
-                auto s = *functional->scaling;
+            if(functional->metaData->scaling){
+                auto s = *functional->metaData->scaling;
                 for (auto& r : scaling) r *= s;
             }
-            functional->loss->Evaluate(scaling[0], rho);
+            functional->metaData->loss->Evaluate(scaling[0], rho);
             if (jacobians) {
                 auto derivative = rho[1] * scaling[1];
                 std::lock_guard l(m1);

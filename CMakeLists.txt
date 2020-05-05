@@ -22,7 +22,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 list(APPEND CMAKE_CXX_FLAGS "-frounding-math")
 
 add_subdirectory(utilities)
-add_subdirectory(polygonizer)
+#add_subdirectory(polygonizer)
 add_subdirectory(scoped_timer)
 add_subdirectory(cost)
 add_subdirectory(exact_geodesics)

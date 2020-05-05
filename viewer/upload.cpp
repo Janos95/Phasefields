@@ -6,6 +6,7 @@
 
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Utility/Algorithms.h>
+#include <Corrade/Containers/Optional.h>
 
 #include <Magnum/GL/TextureFormat.h>
 #include <Magnum/GL/Sampler.h>
@@ -134,6 +135,7 @@ Trade::MeshData preprocess(Trade::MeshData const& meshData, CompileFlags flags) 
     else
         generated = MeshTools::interleave(meshData, extra);
 
+
     /* Generate the normals. @todo what if mesh is not indexed?*/
     if (flags & CompileFlag::GenerateFlatNormals)
         MeshTools::generateFlatNormalsInto(
@@ -144,6 +146,7 @@ Trade::MeshData preprocess(Trade::MeshData const& meshData, CompileFlags flags) 
                                              generated.attribute<Vector3>(Trade::MeshAttribute::Position),
                                              generated.mutableAttribute<Vector3>(Trade::MeshAttribute::Normal));
 
+    CORRADE_ASSERT(generated.hasAttribute(Trade::MeshAttribute::TextureCoordinates),"error", generated);
     return generated;
 }
 

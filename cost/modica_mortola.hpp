@@ -22,7 +22,6 @@ namespace Mg = Magnum;
 
 struct DirichletEnergy :  Functional
 {
-
     DirichletEnergy(
             Cr::Containers::ArrayView<const Mg::Vector3d> const& vertices,
             Cr::Containers::ArrayView<const Mg::Vector3ui> const& faces);
@@ -41,19 +40,20 @@ struct DirichletEnergy :  Functional
     Eigen::VectorXd diagonal;
 };
 
-template<class F>
+template<class F, class L, FunctionalType type>
 struct IntegralFunctional : Functional
 {
     IntegralFunctional(
             Cr::Containers::ArrayView<const Mg::Vector3d> const& vs,
             Cr::Containers::ArrayView<const Mg::Vector3ui> const& ts,
             F f_ = {}):
+                Functional(Functional::MetaData::AllocateFromLoss(L{}), type),
                 triangles(ts),
                 vertices(vs),
                 f((F&&)f_),
                 integralOperator(computeIntegralOperator(ts,vs))
-        {
-        }
+    {
+    }
 
     int numParameters() const override {
         return vertices.size();
@@ -78,23 +78,22 @@ struct IntegralFunctional : Functional
 };
 
 
-template<class F>
-struct AreaRegularizer : IntegralFunctional<F> {
+template<class F, class L, FunctionalType type>
+struct AreaRegularizer : IntegralFunctional<F, L, type> {
 
     AreaRegularizer(
             Cr::Containers::ArrayView<const Mg::Vector3d> const& vs,
             Cr::Containers::ArrayView<const Mg::Vector3ui> const& ts) :
-        IntegralFunctional<F>(vs, ts)
+        IntegralFunctional<F, L, type>(vs, ts)
     {
         auto areas = computeAreas(ts, vs);
         area = std::accumulate(areas.begin(), areas.end(), 0.);
-        this->loss = Cr::Containers::pointer<QuadrationLoss>();
     }
 
     bool evaluate(double const* params,
                   double* cost,
                   double* jacobians) const override{
-        IntegralFunctional<F>::evaluate(params, &currentArea, jacobians);
+        IntegralFunctional<F, L, type>::evaluate(params, &currentArea, jacobians);
         *cost = currentArea - areaRatio * area;
         return true;
     }
@@ -103,6 +102,6 @@ struct AreaRegularizer : IntegralFunctional<F> {
     Mg::Double areaRatio = 0.5, area;
 };
 
-using AreaRegularizer1 = AreaRegularizer<Indicator<Mg::Double>>;
-using AreaRegularizer2 = AreaRegularizer<SmoothStep<Mg::Double>>;
-using DoubleWellPotential = IntegralFunctional<DoubleWell<Mg::Double>>;
+using AreaRegularizer1 = AreaRegularizer<Indicator<Mg::Double>, QuadrationLoss, FunctionalType::Area1>;
+using AreaRegularizer2 = AreaRegularizer<SmoothStep<Mg::Double>, QuadrationLoss, FunctionalType::Area2>;
+using DoubleWellPotential = IntegralFunctional<DoubleWell<Mg::Double>, TrivialLoss, FunctionalType::DoubleWellPotential>;

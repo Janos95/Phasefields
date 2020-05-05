@@ -3,7 +3,6 @@
 //
 
 #include "drawables.hpp"
-#include "drawable_data.hpp"
 
 #include <Magnum/Shaders/Flat.h>
 

@@ -14,12 +14,8 @@ add_library(cost STATIC ${cost_sources} ${cost_headers})
 target_include_directories(cost PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
-find_package(libigl CONFIG REQUIRED)
-
 target_link_libraries(cost PRIVATE
         ceres
-        igl::core
-        Eigen3::Eigen
         autodiff
         TBB::tbb
         phasefields::scoped_timer
@@ -28,8 +24,11 @@ target_link_libraries(cost PRIVATE
 target_link_libraries(cost PUBLIC
         PkgConfig::Ipopt
         PkgConfig::Adolc
+        Eigen3::Eigen
         phasefields::utilities
         )
+
+set_property(TARGET cost PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 add_library(phasefields::cost ALIAS cost)
 

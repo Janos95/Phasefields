@@ -5,11 +5,12 @@ target_sources(utilities INTERFACE
         robin_growth_policy.h
         robin_hash.h
         unique_function.h
-        pointer_union.h
-        pointer_int_pair.h
-        pointer_like_type_traits.h
+        detail/pointer_union.h
+        detail/pointer_int_pair.h
+        detail/pointer_like_type_traits.h
         variant.hpp
         shared_ressource.hpp
+        function_ref.hpp
         )
 
 target_link_libraries(utilities INTERFACE Boost::mp11)

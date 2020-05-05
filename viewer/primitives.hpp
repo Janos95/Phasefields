@@ -4,7 +4,16 @@
 
 #pragma once
 
-#include "primitive_options.hpp"
+#include "../polygonizer/primitive_options.hpp"
+
+#include <Magnum/Magnum.h>
+#include <Magnum/Trade/MeshData.h>
+#include <Corrade/Containers/Pointer.h>
+
+#include <string>
+
+namespace Mg = Magnum;
+namespace Cr = Corrade;
 
 enum class PrimitiveType: Magnum::UnsignedShort {
     Capsule,
@@ -12,11 +21,6 @@ enum class PrimitiveType: Magnum::UnsignedShort {
     ImplicitFunction
 };
 
-struct ComboElement {
-    std::string name;
-    PrimitiveType type;
-    Corrade::Containers::Pointer<AbstractPrimitiveOptions> options;
-};
 
 bool handlePrimitive(Mg::Trade::MeshData& original, std::string& expression);
 

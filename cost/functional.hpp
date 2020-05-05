@@ -6,6 +6,8 @@
 
 #include "loss_functions.hpp"
 #include "shared_ressource.hpp"
+#include "solver.hpp"
+#include "../viewer/types.hpp"
 
 #include <Corrade/Containers/Pointer.h>
 #include <string>
@@ -25,9 +27,31 @@ enum class FunctionalType : Mg::UnsignedInt {
 
 
 struct Functional{
-    std::string name;
-    Cr::Containers::Pointer<LossFunction> loss = Cr::Containers::pointer<TrivialLoss>();
-    SharedRessource<Mg::Double> scaling = nullptr;
+
+    struct MetaData {
+        Cr::Containers::Pointer<LossFunction> loss = Cr::Containers::pointer<TrivialLoss>();
+        SharedRessource<Mg::Double> scaling = nullptr;
+        VisualizationFlags flags = {};
+        virtual ~MetaData() = default;
+        virtual void reset() {}
+        virtual solver::Status operator()(solver::IterationSummary const&) { return solver::Status::CONTINUE; };
+
+        using Ptr = Cr::Containers::Pointer<MetaData>;
+
+        template<class L>
+        static Ptr AllocateFromLoss(L&& l) {
+            auto meta = Cr::Containers::pointer<MetaData>();
+            meta->loss= Cr::Containers::pointer<std::remove_reference_t<L>>((L&&)l);
+            return meta;
+        }
+    };
+
+    Functional(Cr::Containers::Pointer<MetaData> meta, FunctionalType t) : type(t), metaData(std::move(meta))
+    {
+
+    }
+
+    mutable Cr::Containers::Pointer<MetaData> metaData = nullptr;
     FunctionalType type;
 
     virtual bool evaluate(double const* parameter, double* cost, double* jacobian) const = 0;

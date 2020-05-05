@@ -35,7 +35,6 @@ target_link_libraries(modifier PRIVATE
         Eigen3::Eigen
         Magnum::Primitives
         MagnumPlugins::AssimpImporter
-        ImGui::SourcesMiscCpp
         )
 
 add_library(phasefields::modifier ALIAS modifier)
