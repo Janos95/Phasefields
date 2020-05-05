@@ -126,13 +126,13 @@ solver::Status UpdatePhasefield::operator ()(solver::IterationSummary const&){
 
 void Viewer::drawSubdivisionOptions() {
     if (ImGui::TreeNode("Subdivisions")) {
-        ImGui::Text("Currently we have %d vertices and %d faces", numVertices, numFaces);
+        ImGui::Text("Currently we have %d vertices and %d faces", (int)vertices.size(), (int)indices.size() / 3);
         constexpr int step = 1;
         static std::uint32_t subs = 0;
         ImGui::InputScalar("Number of Sibdivision (wrt. orignal mesh)", ImGuiDataType_U32, &subs, &step, nullptr, "%d");
         if (ImGui::Button("do subdivision")) {
-            if(subs >= numSubdivisions) subdivide(subs - numSubdivisions, meshData, phasefield, vertices, triangles, meshData);
-            else subdivide(subs, original, phasefield, vertices, triangles, meshData);
+            if(subs >= numSubdivisions) subdivide(subs - numSubdivisions, meshData, phasefield, vertices, indices, meshData);
+            else subdivide(subs, original, phasefield, vertices, indices, meshData);
             upload(mesh, vertexBuffer, indexBuffer, meshData);
             updateFunctionals(problem.functionals);
             updateFunctionals(problem.constraints);
@@ -295,6 +295,7 @@ bool Viewer::drawConnectednessConstraintOptions(ConnectednessConstraint<Double>&
             std::lock_guard l(mutex);
             meta.flags &= NonExclusiveFlags; // deselect all
             meta.flags |= VisualizationFlag::ConnectedComponents;
+            makeExclusive = true;
         }
         else meta.flags &= ~VisualizationFlag::ConnectedComponents;
     }
@@ -305,6 +306,7 @@ bool Viewer::drawConnectednessConstraintOptions(ConnectednessConstraint<Double>&
         if(visGeodesicWeights) {
             meta.flags &= NonExclusiveFlags; // deselect all
             meta.flags |= VisualizationFlag::GeodesicWeights;
+            makeExclusive = true;
         }
         else meta.flags &= ~VisualizationFlag::GeodesicWeights;
     }
@@ -418,6 +420,25 @@ void Viewer::drawOptimizationContext() {
         constexpr static std::uint32_t step = 1;
         ImGui::InputScalar("iterations", ImGuiDataType_S32, &options.max_num_iterations, &step, nullptr, "%u");
 
+        static std::map<solver::LineSearchDirectionType, std::string> searchDirectionMapping= {
+                {solver::LineSearchDirectionType::STEEPEST_DESCENT, "Steepest Descent"},
+                {solver::LineSearchDirectionType::NONLINEAR_CONJUGATE_GRADIENT, "Nonlinear Conjugate Gradient"},
+                {solver::LineSearchDirectionType::LBFGS, "LBFGS"},
+                {solver::LineSearchDirectionType::BFGS, "BFGS"}
+        };
+
+        if (ImGui::BeginCombo("##descent direction", searchDirectionMapping[options.line_search_direction_type].c_str())) {
+            for (auto& [type, name] : searchDirectionMapping) {
+                bool isSelected = (options.line_search_direction_type == type);
+                if (ImGui::Selectable(name.c_str(), isSelected)){
+                    options.line_search_direction_type = type;
+                }
+                if (isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
         if (ImGui::Button("Optimize") && !problem.functionals.empty())
             startOptimization();
 
@@ -456,7 +477,7 @@ void Viewer::stopOptimization() {
 }
 
 Containers::Pointer<Functional> Viewer::makeFunctional(FunctionalType type) {
-    auto ts = Containers::arrayCast<Vector3ui>(triangles);
+    auto ts = Containers::arrayCast<Vector3ui>(indices);
     switch (type) {
         case FunctionalType::Area1 : {
             auto p = Containers::pointer<AreaRegularizer1>(vertices, ts);
@@ -513,7 +534,7 @@ void Viewer::geodesicSearch() {
     geodesic::Mesh geomesh;
     //@todo this does not need to be done on every new mouse click
     //maybe check out the cgal geodesic module?
-    geomesh.initialize_mesh_data(Containers::arrayCast<const Double>(vertices), triangles);		//create internal mesh data structure including edges
+    geomesh.initialize_mesh_data(Containers::arrayCast<const Double>(vertices), indices);		//create internal mesh data structure including edges
     geodesic::GeodesicAlgorithmExact exactGeodesics(&geomesh);
 
     Containers::arrayResize(distances, vertices.size());
@@ -571,7 +592,7 @@ void Viewer::finalize(){
     Containers::arrayResize(vertices, points.size());
     for (int i = 0; i < vertexCount; ++i)
         vertices[i] = Vector3d(points[i]);
-    triangles = meshData.indicesAsArray();
+    indices = meshData.indicesAsArray();
     Containers::arrayResize(phasefield, vertexCount);
     if(!meshData.hasAttribute(Trade::MeshAttribute::TextureCoordinates))
         Debug{} << "No texture coordinates?";
@@ -663,7 +684,7 @@ void Viewer::keyPressEvent(KeyEvent& event) {
         case KeyEvent::Key::R:
             camera->reset();
             break;
-        case KeyEvent::Key::LeftShift :
+        case KeyEvent::Key::LeftCtrl :
             brushing = true;
             GL::defaultFramebuffer.mapForRead(GL::DefaultFramebuffer::ReadAttachment::Front);
             break;
@@ -681,7 +702,7 @@ void Viewer::keyReleaseEvent(KeyEvent& event) {
         return;
     }
 
-    if(event.key() == Viewer::KeyEvent::Key::LeftShift){
+    if(event.key() == Viewer::KeyEvent::Key::LeftCtrl){
         brushing = false;
         GL::defaultFramebuffer.mapForRead(GL::DefaultFramebuffer::ReadAttachment::None);
         event.setAccepted();

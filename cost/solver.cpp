@@ -47,15 +47,25 @@ struct CeresCallbackWrapper : ceres::IterationCallback {
     }
 };
 
+ceres::LineSearchDirectionType mapLineSearchType(solver::LineSearchDirectionType type){
+    switch (type) {
+        case solver::LineSearchDirectionType::NONLINEAR_CONJUGATE_GRADIENT : return ceres::NONLINEAR_CONJUGATE_GRADIENT;
+        case solver::LineSearchDirectionType::LBFGS : return ceres::LBFGS;
+        case solver::LineSearchDirectionType::BFGS : return ceres::BFGS;
+        case solver::LineSearchDirectionType::STEEPEST_DESCENT : return ceres::STEEPEST_DESCENT;
+        default : CORRADE_ASSERT(false, "Line Search Type Wrong", {});
+    }
+}
+
 void solve(solver::Options& options, solver::Problem& problem, double* params, solver::Summary* summary){
     if(options.solver == solver::Solver::CERES){
         ceres::GradientProblemSolver::Summary ceresSummary;
         ceres::GradientProblem ceresProblem(new FirstOrderWrapper(problem));
         ceres::GradientProblemSolver::Options ceresOptions{
+            .line_search_direction_type = mapLineSearchType(options.line_search_direction_type),
             .max_num_iterations = options.max_num_iterations,
             .minimizer_progress_to_stdout = options.minimizer_progress_to_stdout,
             .update_state_every_iteration = options.update_state_every_iteration
-
         };
         Containers::Array<Containers::Pointer<CeresCallbackWrapper>> cbs(options.callbacks.size());
         for (int i = 0; i < cbs.size(); ++i)

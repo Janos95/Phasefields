@@ -26,6 +26,13 @@ namespace solver{
         FINISHED = 2
     };
 
+    enum class LineSearchDirectionType : Mg::UnsignedInt {
+        STEEPEST_DESCENT,
+        NONLINEAR_CONJUGATE_GRADIENT,
+        LBFGS,
+        BFGS
+    };
+
     struct IterationSummary {
     };
 
@@ -35,6 +42,7 @@ namespace solver{
         int max_num_iterations = 100;
         bool minimizer_progress_to_stdout = false;
         bool update_state_every_iteration = true;
+        LineSearchDirectionType line_search_direction_type = LineSearchDirectionType::LBFGS;
         Solver solver = Solver::CERES;
         Cr::Containers::Array<iteration_callback_type> callbacks;
     };

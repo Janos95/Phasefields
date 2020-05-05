@@ -127,12 +127,10 @@ struct Viewer: public Magnum::Platform::Application{
     ImGuiIntegration::Context imgui{NoCreate};
     bool trackingMouse = false;
 
-    int numFaces = 0;
-    int numVertices = 0;
     Mg::UnsignedInt numSubdivisions = 0;
 
     Cr::Containers::Array<Magnum::Vector3d> vertices;
-    Cr::Containers::Array<Magnum::UnsignedInt> triangles;
+    Cr::Containers::Array<Magnum::UnsignedInt> indices;
 
     Mg::Trade::MeshData original{Magnum::MeshPrimitive::Points, 0};
     Mg::Trade::MeshData meshData{Magnum::MeshPrimitive::Points, 0};

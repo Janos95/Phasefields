@@ -27,6 +27,12 @@
 #include <ceres/first_order_function.h>
 
 #include <numeric>
+#include <ostream>
+#include <sstream>
+
+
+#include <assimp/Exporter.hpp>
+#include <assimp/scene.h>
 
 namespace Mn = Magnum;
 namespace Cr = Corrade;
@@ -313,18 +319,20 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
                 auto Wij = W[i] * W[j];
 
                 for (auto&& [a, b]: dijkstras[i].getShortestPathReversed(roots[i], stops[i].target(j))) {
-
                     if(generateLineStrips){
-                        Float l = (vertices[b] - vertices[a]).length();
-                        Vector3 dir{(vertices[b] - vertices[a]) / l};
+                        auto getMidPoint = [this](auto& t){ return 1. / 3. * (vertices[t[0]] + vertices[t[1]] + vertices[t[2]]); };
+                        Vector3 v1{getMidPoint(triangles[a])}, v2{getMidPoint(triangles[b])};
+                        Float l = (v2 - v1).length();
+                        CORRADE_ASSERT("Connectedness Constraint : edge length is zero", (l > std::numeric_limits<Float>::epsilon()), false);
+                        Vector3 dir{(v2 - v1) / l};
                         Vector3 orthogonal{dir[2], dir[2], -dir[0]-dir[1]};
-                        if(!orthogonal.dot()) orthogonal = Vector3{dir[1] - dir[2], dir[0], dir[0]};
+                        if(orthogonal.dot() < std::numeric_limits<Float>::epsilon()) orthogonal = Vector3{dir[1] - dir[2], dir[0], dir[0]};
                         orthogonal = orthogonal.normalized();
                         Mg::Matrix3 rot{orthogonal, dir, Math::cross(orthogonal, dir)};
+                        CORRADE_ASSERT(rot.isOrthogonal(), "Connectedness : tf for path vis not orthonormal",false);
                         Mg::Matrix3 rotScaling = {rot[0] * pathThickness, rot[1] * l, rot[2] * pathThickness};
                         Vector3 mid{.5f * (vertices[b] + vertices[a])};
                         auto tf = Mg::Matrix4::from(rotScaling, mid);
-                        CORRADE_ASSERT(rotScaling.isOrthogonal(), "Connectedness : tf for path vis not orthonormal",false);
                         Containers::arrayAppend(instanceData, Containers::InPlaceInit, tf, rot, pathColor);
                     }
 
@@ -396,6 +404,39 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
         std::lock_guard l(meta.viewer->mutex);
         meta.instanceData = std::move(instanceData);
     }
+
+    //int modifyMe = 0;
+    //if(modifyMe)
+    //{
+    //    std::ofstream out("/tmp/phase.ply");
+    //    out << "ply" << std::endl;
+    //    out << "format ascii 1.0\n";
+    //    out << "element vertex " << vertices.size() << '\n';
+    //    out << "property float x\n";
+    //    out << "property float y\n";
+    //    out << "property float z\n";
+    //    out << "property float u\n";
+    //    out << "element face " << triangles.size() << '\n';
+    //    out << "property list uchar int vertex_indices\n";
+    // //   out << "property float w\n";
+    // //   out << "property int c\n";
+    //    out << "end_header\n";
+
+    //    for (int i = 0; i < vertices.size(); ++i) {
+    //        for (int j = 0; j < 3; ++j) {
+    //            out << vertices[i][j] << ' ';
+    //        }
+    //        out << phasefield[i] << '\n';
+    //    }
+
+    //    for (int i = 0; i < triangles.size(); ++i) {
+    //        out << "3 ";
+    //        for (int j = 0; j < 3; ++j) {
+    //            out << triangles[i][j] << ' ';
+    //        }
+    //        out /*<< ws[i] << ' ' << components[i]*/ << '\n';
+    //    }
+    //}
 
     return true;
 }

@@ -28,7 +28,7 @@ Play with example1.m – example5.m; they are self-explanatory.
 
 Limitations and known issues.
 
-The mesh should be edge-connected. I.e. for every two faces of the mesh there should exist a connecting path on the surface of the mesh that does not go through any vertex. This property implies the simple connectivity of the mesh. In particular, there should be no vertices that are not used by any of the triangles.
+The mesh should be edge-connected. I.e. for every two faces of the mesh there should exist a connecting path on the surface of the mesh that does not go through any vertex. This property implies the simple connectivity of the mesh. In particular, there should be no vertices that are not used by any of the indices.
 
 There is a list of possible features and improvements that could be done to the algorithm. 
 - Memory is currently a bottleneck for large meshes. In theory, it is possible to overcome it if all destinations are known BEFORE the propagation step.
