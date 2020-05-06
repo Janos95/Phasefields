@@ -202,7 +202,6 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
         std::lock_guard l(meta.viewer->mutex);
         a = meta.a; b = meta.b;
         generateLineStrips = static_cast<bool>(meta.flags & VisualizationFlag::Paths);
-        pathColor = meta.pathColor;
         pathThickness = meta.pathThickness;
     }
 
@@ -308,6 +307,7 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
         std::fill_n(jacobian, numVertices, Scalar{0});
 
     Cr::Containers::Array<InstanceData> instanceData;
+    Deg hue = 42.0_degf;
     {
         ScopedTimer tDiff("connectedness diff");
 
@@ -317,6 +317,8 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
 
                 Scalar dij = 0;
                 auto Wij = W[i] * W[j];
+
+                auto color = Color3::fromHsv({hue += 137.5_degf, 0.75f, 0.9f});
 
                 for (auto&& [a, b]: dijkstras[i].getShortestPathReversed(roots[i], stops[i].target(j))) {
                     if(generateLineStrips){
@@ -330,10 +332,11 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
                         orthogonal = orthogonal.normalized();
                         Mg::Matrix3 rot{orthogonal, dir, Math::cross(orthogonal, dir)};
                         CORRADE_ASSERT(rot.isOrthogonal(), "Connectedness : tf for path vis not orthonormal",false);
-                        Mg::Matrix3 rotScaling = {rot[0] * pathThickness, rot[1] * l, rot[2] * pathThickness};
-                        Vector3 mid{.5f * (vertices[b] + vertices[a])};
-                        auto tf = Mg::Matrix4::from(rotScaling, mid);
-                        Containers::arrayAppend(instanceData, Containers::InPlaceInit, tf, rot, pathColor);
+                        Mg::Matrix4 scaling = Matrix4::scaling({pathThickness, l, pathThickness});
+                        Vector3 mid{.5f * (v1 + v2)};
+                        //rot = Mg::Matrix3{Mg::Math::IdentityInit};
+                        auto tf = Matrix4::from(rot, mid) * scaling;
+                        Containers::arrayAppend(instanceData, Containers::InPlaceInit, tf, rot, color);
                     }
 
                     auto &av = adjacencyList[a];

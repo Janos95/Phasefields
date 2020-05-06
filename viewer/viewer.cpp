@@ -4,7 +4,6 @@
 
 #include "viewer.hpp"
 #include "subdivision.hpp"
-#include "shader_options.hpp"
 #include "primitives.hpp"
 #include "upload.hpp"
 #include "optimization_context.hpp"
@@ -36,6 +35,46 @@ using namespace Corrade;
 using namespace Magnum;
 
 using namespace Math::Literals;
+
+std::unordered_map<ShaderType, Cr::Containers::Pointer<Mg::GL::AbstractShaderProgram>> makeShaders() {
+    std::unordered_map<ShaderType, Cr::Containers::Pointer<Mg::GL::AbstractShaderProgram>> map;
+
+    auto Wireframe = Shaders::MeshVisualizer3D::Flag::Wireframe;
+    auto PrimitiveColored = Shaders::MeshVisualizer3D::Flag::PrimitiveId;
+
+    map.emplace(ShaderType::PhongDiffuse, new Shaders::Phong(Shaders::Phong::Flag::DiffuseTexture));
+    map.emplace(ShaderType::MeshVisualizer, new Shaders::MeshVisualizer3D(Wireframe));
+    map.emplace(ShaderType::MeshVisualizerPrimitiveId, new Shaders::MeshVisualizer3D(PrimitiveColored));
+    map.emplace(ShaderType::FlatTextured, new Shaders::Flat3D(Shaders::Flat3D::Flag::Textured));
+    map.emplace(ShaderType::VertexColor, new Shaders::VertexColor3D());
+
+    return map;
+}
+
+
+std::unordered_map<ColorMapType, Mg::GL::Texture2D> makeColorMapTextures(){
+    std::unordered_map<ColorMapType, Mg::GL::Texture2D> map;
+    using L = std::initializer_list<std::pair<ColorMapType, Containers::StaticArrayView<256, const Vector3ub>>>;
+    for(auto&& [type, colorMap] : L{
+            {ColorMapType::Turbo, Magnum::DebugTools::ColorMap::turbo()},
+            {ColorMapType::Magma, Magnum::DebugTools::ColorMap::magma()},
+            {ColorMapType::Plasma, Magnum::DebugTools::ColorMap::plasma()},
+            {ColorMapType::Inferno, Magnum::DebugTools::ColorMap::inferno()},
+            {ColorMapType::Viridis, Magnum::DebugTools::ColorMap::viridis()}
+    })
+    {
+        const Magnum::Vector2i size{Magnum::Int(colorMap.size()), 1};
+        GL::Texture2D texture;
+        texture.setMinificationFilter(Magnum::SamplerFilter::Linear)
+                .setMagnificationFilter(Magnum::SamplerFilter::Linear)
+                .setWrapping(Magnum::SamplerWrapping::ClampToEdge) // or Repeat
+                .setStorage(1, Magnum::GL::TextureFormat::RGB8, size) // or SRGB8
+                .setSubImage(0, {}, ImageView2D{Magnum::PixelFormat::RGB8Srgb, size, colorMap});
+        map.emplace(type, std::move(texture));
+    }
+    return map;
+}
+
 
 
 
@@ -143,96 +182,34 @@ void Viewer::drawSubdivisionOptions() {
 
 void Viewer::makeDrawableCurrent(DrawableType type) {
     if(!object) return;
-    object->children().clear();
+    object->features().clear();
+    drawableType = type;
     switch(type){
         case DrawableType::FaceColored : {
-            auto d = new PhongDiffuseDrawable(*object, mesh, *shaders[ShaderType::PhongDiffuse], &drawableGroup);
-            d->texture = &colorMapTextures[colorMapType];
+            auto d = new FaceColorDrawable(*object, mesh, *shaders[ShaderType::MeshVisualizerPrimitiveId], &drawableGroup);
+            d->texture = nullptr;
             drawable = d;
-            drawableType = DrawableType::PhongDiffuse;
             break;
         }
         case DrawableType::PhongDiffuse : {
             auto d = new PhongDiffuseDrawable(*object, mesh, *shaders[ShaderType::PhongDiffuse], &drawableGroup);
             d->texture = &colorMapTextures[colorMapType];
             drawable = d;
-            drawableType = DrawableType::PhongDiffuse;
+            break;
+        }
+        case DrawableType::FlatTextured : {
+            auto d = new FlatDrawable(*object, mesh, *shaders[ShaderType::FlatTextured], &drawableGroup);
+            d->texture = &colorMapTextures[colorMapType];
+            drawable = d;
+            break;
+        }
+        case DrawableType::MeshVisualizer : {
+            drawable = new MeshVisualizerDrawable(*object, mesh, *shaders[ShaderType::MeshVisualizer], &drawableGroup);
             break;
         }
         default: CORRADE_ASSERT(false, "drawable type supported atm",);
     }
 }
-
-//void Viewer::drawShaderOptions() {
-//    if(!drawable) return;
-//
-//    if (ImGui::TreeNode("Shader Options"))
-//    {
-//        if(ImGui::ColorEdit3("Clear Color", clearColor.data()))
-//            GL::Renderer::setClearColor(clearColor);
-//
-//        static constexpr std::pair<char const*, DrawableType> drawablesMap[] = {
-//                {"Mesh Visualization", DrawableType::MeshVisualizer},
-//                {"Phong Diffuse Textured", DrawableType::PhongDiffuse},
-//                {"Flat", DrawableType::FlatTextured}
-//        };
-//
-//        static auto* current = drawablesMap + 1;
-//        bool newDrawable = false;
-//        if (ImGui::BeginCombo("##combo", current->first)) {
-//            for (auto it = drawablesMap; it != drawablesMap + 3; ++it) {
-//                bool isSelected = (current == it);
-//                if (ImGui::Selectable(it->first, isSelected)){
-//                    newDrawable = true;
-//                    current = it;
-//                }
-//                if (isSelected)
-//                    ImGui::SetItemDefaultFocus();
-//            }
-//            ImGui::EndCombo();
-//        }
-//
-//        if(newDrawable)
-//            object->features().clear();
-//
-//        switch (current->second) {
-//            case DrawableType::MeshVisualizer : {
-//                if (newDrawable)
-//                    drawable = new MeshVisualizerDrawable(*object, mesh, &drawableGroup);
-//                auto &meshVis = dynamic_cast<MeshVisualizerDrawable &>(*drawable);
-//                if(drawMeshVisualizerOptions(meshVis) || newDrawable){
-//                    if(meshVis.drawTangentSpace && meshVis.drawNormals){
-//                        meshVis.shader = dynamic_cast<Shaders::MeshVisualizer3D*>(shaders[ShaderType::MeshVisualizerFull].get());
-//                    } else if(meshVis.drawTangentSpace){
-//                        meshVis.shader = dynamic_cast<Shaders::MeshVisualizer3D*>(shaders[ShaderType::MeshVisualizerTangent].get());
-//                    } else if(meshVis.drawNormals){
-//                        meshVis.shader = dynamic_cast<Shaders::MeshVisualizer3D*>(shaders[ShaderType::MeshVisualizerNormal].get());
-//                    } else {
-//                        meshVis.shader = dynamic_cast<Shaders::MeshVisualizer3D*>(shaders[ShaderType::MeshVisualizer].get());
-//                    }
-//                }
-//                break;
-//            }
-//            case DrawableType::PhongDiffuse : {
-//                if (newDrawable)
-//                    drawable = new PhongDiffuseDrawable(*object, mesh, *shaders[ShaderType::PhongDiffuse], &drawableGroup);
-//                auto& phongVis = dynamic_cast<PhongDiffuseDrawable&>(*drawable);
-//                if(drawColorMapOptions(colorMap) || newDrawable)
-//                    phongVis.texture = &colorMapTextures[colorMap];
-//                break;
-//            }
-//            case DrawableType::FlatTextured : {
-//                if (newDrawable)
-//                    drawable = new FlatDrawable(*object, mesh, *shaders[ShaderType::FlatTextured], &drawableGroup);
-//                auto& flatVis = dynamic_cast<FlatDrawable&>(*drawable);
-//                if(drawColorMapOptions(colorMap) || newDrawable)
-//                    flatVis.texture = &colorMapTextures[colorMap];
-//                break;
-//            }
-//        }
-//        ImGui::TreePop();
-//    }
-//}
 
 void Viewer::drawPrimitiveOptions() {
     if(handlePrimitive(original, expression)){
@@ -258,7 +235,7 @@ void Viewer::drawBrushOptions() {
 
         const auto colBrushing = ImVec4(0.56f, 0.83f, 0.26f, 1.0f);
         const auto colNotBrushing = ImVec4(0.85f, 0.85f, 0.85f, 1.0f);
-        ImGui::TextColored(brushing ? colBrushing : colNotBrushing, "Press (Left) Shift To Enable Brushing");
+        ImGui::TextColored(brushing ? colBrushing : colNotBrushing, "Press Left Control To Enable Brushing");
         ImGui::SameLine();
         ImVec2 p = ImGui::GetCursorScreenPos();
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
@@ -310,6 +287,7 @@ bool Viewer::drawConnectednessConstraintOptions(ConnectednessConstraint<Double>&
         }
         else meta.flags &= ~VisualizationFlag::GeodesicWeights;
     }
+    fl = meta.flags;
     return makeExclusive;
 }
 
@@ -368,13 +346,14 @@ void Viewer::drawOptimizationContext() {
                     ImGui::Text("Connectedness Constraint");
                     VisualizationFlags flags;
                     if(drawConnectednessConstraintOptions(dynamic_cast<ConnectednessConstraint<Double>&>(f), flags)){
-                        if(exclusiveVisualizer) {
+                        auto funcPtr = fs[i].get();
+                        if(exclusiveVisualizer && exclusiveVisualizer != funcPtr) {
                             std::lock_guard l(mutex);
                             exclusiveVisualizer->metaData->flags &= NonExclusiveFlags;
                         }
                         exclusiveVisualizer = fs[i].get();
                         visFlags &= flags | NonExclusiveFlags; //set exclusive flags from functional
-                    }
+                    } else visFlags |= flags;
                     break;
             }
 
@@ -395,7 +374,7 @@ void Viewer::drawOptimizationContext() {
         }
 
         bool visPhasefield = static_cast<bool>(visFlags & VisualizationFlag::Phasefield);
-        if(ImGui::Checkbox("Phasefield", &visPhasefield)){
+        if(ImGui::Checkbox("Draw Phasefield", &visPhasefield)){
             if(visPhasefield){
                 visFlags &= NonExclusiveFlags;
                 visFlags |= VisualizationFlag::Phasefield;
@@ -438,6 +417,8 @@ void Viewer::drawOptimizationContext() {
             }
             ImGui::EndCombo();
         }
+        ImGui::SameLine();
+        ImGui::Text("Descent Direction");
 
         if (ImGui::Button("Optimize") && !problem.functionals.empty())
             startOptimization();
@@ -651,6 +632,64 @@ GL::Texture2D Viewer::weightsTexture() {
             .setSubImage(0, {}, ImageView2D{Magnum::PixelFormat::RGB8Srgb, size, colors});
 
     return texture;
+}
+
+void Viewer::drawShaderOptions(){
+    if(!drawable) return;
+    if(ImGui::TreeNode("Shader Options")) {
+        ImGui::Text("Rendering: %3.2f FPS", Double(ImGui::GetIO().Framerate));
+        static std::map<DrawableType, std::string> drawablemap{
+                {DrawableType::MeshVisualizer, "Mesh Visualizer"},
+                {DrawableType::PhongDiffuse,   "Phong Diffuse"},
+                {DrawableType::FlatTextured,   "Flat Textured"}
+        };
+
+        if (ImGui::BeginCombo("##combodrawble", drawablemap[drawableType].c_str())) {
+            for (auto const&[drtype, name] : drawablemap) {
+                bool isSelected = (drawableType == drtype);
+                if (ImGui::Selectable(name.c_str(), isSelected)) {
+                    drawableType = drtype;
+                    makeDrawableCurrent(drawableType);
+                }
+                if (isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
+        if (drawableType == DrawableType::MeshVisualizer) {
+            constexpr Float min = 0.f, max = 10.f;
+            auto &d = dynamic_cast<MeshVisualizerDrawable &>(*drawable);
+            ImGui::DragScalar("Wireframe Width", ImGuiDataType_Float, &d.wireframeWidth, .01f, &min, &max, "%f", 1);
+            ImGui::ColorEdit3("Wireframe Color", d.wireframeColor.data());
+            ImGui::ColorEdit3("Color", d.color.data());
+            ImGui::DragScalar("Smoothness", ImGuiDataType_Float, &d.smoothness, .01f, &min, &max, "%f", 1);
+        }
+
+        static std::map<ColorMapType, std::string> colormapmap{
+                {ColorMapType::Turbo,   "Turbo"},
+                {ColorMapType::Magma,   "Magma"},
+                {ColorMapType::Plasma,  "Plasma"},
+                {ColorMapType::Inferno, "Inferno"},
+                {ColorMapType::Viridis, "Viridis"}
+        };
+
+        if (drawableType == DrawableType::PhongDiffuse || drawableType == DrawableType::FlatTextured) {
+            if (ImGui::BeginCombo("##combocmm", colormapmap[colorMapType].c_str())) {
+                for (auto const&[cmtype, name] : colormapmap) {
+                    bool isSelected = (colorMapType == cmtype);
+                    if (ImGui::Selectable(name.c_str(), isSelected)) {
+                        colorMapType = cmtype;
+                    }
+                    if (isSelected)
+                        ImGui::SetItemDefaultFocus();
+                }
+                ImGui::EndCombo();
+            }
+        }
+
+        ImGui::TreePop();
+    }
 }
 
 void Viewer::viewportEvent(ViewportEvent& event) {
@@ -871,7 +910,7 @@ void Viewer::drawEvent() {
     drawPrimitiveOptions();
     drawBrushOptions();
     drawOptimizationContext();
-    //drawShaderOptions();
+    drawShaderOptions();
 
     imgui.updateApplicationCursor(*this);
 

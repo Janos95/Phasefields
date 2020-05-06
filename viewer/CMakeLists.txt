@@ -14,8 +14,6 @@ add_library(viewer SHARED
         drawables.hpp
         primitives.hpp
         primitives.cpp
-        shader_options.hpp
-        shader_options.cpp
         subdivision.hpp
         subdivision.cpp
         optimization_context.hpp

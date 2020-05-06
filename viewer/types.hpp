@@ -24,13 +24,9 @@ enum class ColorMapType : Magnum::UnsignedInt {
 
 enum class ShaderType : Magnum::UnsignedInt {
     FlatTextured = 0,
-    FlatColored = 1,
     PhongDiffuse = 2,
     MeshVisualizer = 3,
-    MeshVisualizerObjectId = 4,
-    MeshVisualizerTangent = 5,
-    MeshVisualizerNormal = 6,
-    MeshVisualizerFull = 7,
+    MeshVisualizerPrimitiveId = 4,
     VertexColor = 8
 };
 
@@ -48,8 +44,3 @@ CORRADE_ENUMSET_OPERATORS(VisualizationFlags)
 constexpr VisualizationFlags ExclusivesFlags = ~VisualizationFlag::Paths;
 constexpr VisualizationFlags NonExclusiveFlags = ~ExclusivesFlags;
 
-enum class ShaderFlag : Magnum::UnsignedInt {
-    VertexColors = 1u << 0u,
-    FaceColors = 1u << 1u,
-    ColorMaps = 1u << 2u,
-};

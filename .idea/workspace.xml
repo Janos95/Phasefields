@@ -2,15 +2,15 @@
 <project version="4">
   <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
     <generated>
-      <config projectName="phasefields" targetName="dijkstra_test" />
-      <config projectName="phasefields" targetName="segmentation" />
-      <config projectName="phasefields" targetName="viewer_RESOURCES-dependencies" />
-      <config projectName="phasefields" targetName="scoped_timer" />
       <config projectName="phasefields" targetName="shaders" />
+      <config projectName="phasefields" targetName="dijkstra_test" />
+      <config projectName="phasefields" targetName="scoped_timer" />
+      <config projectName="phasefields" targetName="segmentation" />
+      <config projectName="phasefields" targetName="fw_test" />
+      <config projectName="phasefields" targetName="viewer_RESOURCES-dependencies" />
       <config projectName="phasefields" targetName="viewer" />
       <config projectName="phasefields" targetName="shader_RCS-dependencies" />
       <config projectName="phasefields" targetName="cost" />
-      <config projectName="phasefields" targetName="fw_test" />
     </generated>
   </component>
   <component name="CMakeSettings">
@@ -22,9 +22,10 @@
     <list default="true" id="11b62d60-32b8-46a0-9c5e-70e1f1122bcc" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cost/connectedness_constraint.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/connectedness_constraint.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/solver.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/solver.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/solver.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/exact_geodesics/readme.txt" beforeDir="false" afterPath="$PROJECT_DIR$/exact_geodesics/readme.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/shader_options.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/shader_options.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/types.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/types.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/viewer/viewer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/viewer.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/viewer/viewer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/viewer.hpp" afterDir="false" />
     </list>
@@ -273,7 +274,8 @@
       <workItem from="1588403241584" duration="24115000" />
       <workItem from="1588496669630" duration="17883000" />
       <workItem from="1588573529668" duration="28745000" />
-      <workItem from="1588660324547" duration="39399000" />
+      <workItem from="1588660324547" duration="41755000" />
+      <workItem from="1588744744206" duration="7939000" />
     </task>
     <servers />
   </component>
@@ -298,18 +300,18 @@
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="1603" y="208" width="624" height="525" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog/0.0.2560.1080@0.0.2560.1080" timestamp="1586943382229" />
-    <state x="501" y="25" width="524" height="495" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog" timestamp="1588498777343">
+    <state x="501" y="7" width="524" height="495" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog" timestamp="1588749962224">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="501" y="25" width="524" height="495" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.2560.1080@0.0.2560.1080" timestamp="1588498777343" />
+    <state x="501" y="7" width="524" height="495" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.2560.1080@0.0.2560.1080" timestamp="1588749962224" />
     <state x="785" y="258" width="575" height="647" key="#xdebugger.XInspectDialog" timestamp="1588266024208">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="785" y="258" width="575" height="647" key="#xdebugger.XInspectDialog/0.0.2560.1080@0.0.2560.1080" timestamp="1588266024208" />
-    <state x="1555" y="55" width="693" height="574" key="#xdebugger.evaluate" timestamp="1588702847569">
+    <state x="1555" y="19" width="693" height="574" key="#xdebugger.evaluate" timestamp="1588708427334">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="1555" y="55" width="693" height="574" key="#xdebugger.evaluate/0.0.2560.1080@0.0.2560.1080" timestamp="1588702847569" />
+    <state x="1555" y="19" width="693" height="574" key="#xdebugger.evaluate/0.0.2560.1080@0.0.2560.1080" timestamp="1588708427334" />
     <state width="429" height="486" key="DebuggerActiveHint" timestamp="1583782207147">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
@@ -318,46 +320,46 @@
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="1063" y="72" width="424" height="472" key="FileChooserDialogImpl/0.0.2560.1080@0.0.2560.1080" timestamp="1588681553832" />
-    <state width="1228" height="202" key="GridCell.Tab.0.bottom" timestamp="1588702861400">
+    <state width="2508" height="80" key="GridCell.Tab.0.bottom" timestamp="1588752716511">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.0.bottom/0.0.1600.900@0.0.1600.900" timestamp="1583084150064" />
-    <state width="1228" height="202" key="GridCell.Tab.0.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1588702861400" />
-    <state width="1228" height="202" key="GridCell.Tab.0.center" timestamp="1588702861400">
+    <state width="2508" height="80" key="GridCell.Tab.0.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1588752716511" />
+    <state width="2508" height="80" key="GridCell.Tab.0.center" timestamp="1588752716511">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.0.center/0.0.1600.900@0.0.1600.900" timestamp="1583084150063" />
-    <state width="1228" height="202" key="GridCell.Tab.0.center/0.0.2560.1080@0.0.2560.1080" timestamp="1588702861400" />
-    <state width="1228" height="202" key="GridCell.Tab.0.left" timestamp="1588702861400">
+    <state width="2508" height="80" key="GridCell.Tab.0.center/0.0.2560.1080@0.0.2560.1080" timestamp="1588752716511" />
+    <state width="2508" height="80" key="GridCell.Tab.0.left" timestamp="1588752716511">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.0.left/0.0.1600.900@0.0.1600.900" timestamp="1583084150063" />
-    <state width="1228" height="202" key="GridCell.Tab.0.left/0.0.2560.1080@0.0.2560.1080" timestamp="1588702861400" />
-    <state width="1228" height="202" key="GridCell.Tab.0.right" timestamp="1588702861400">
+    <state width="2508" height="80" key="GridCell.Tab.0.left/0.0.2560.1080@0.0.2560.1080" timestamp="1588752716511" />
+    <state width="2508" height="80" key="GridCell.Tab.0.right" timestamp="1588752716511">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.0.right/0.0.1600.900@0.0.1600.900" timestamp="1583084150064" />
-    <state width="1228" height="202" key="GridCell.Tab.0.right/0.0.2560.1080@0.0.2560.1080" timestamp="1588702861400" />
-    <state width="1228" height="423" key="GridCell.Tab.1.bottom" timestamp="1588704428602">
+    <state width="2508" height="80" key="GridCell.Tab.0.right/0.0.2560.1080@0.0.2560.1080" timestamp="1588752716511" />
+    <state width="2508" height="80" key="GridCell.Tab.1.bottom" timestamp="1588752716451">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.1.bottom/0.0.1600.900@0.0.1600.900" timestamp="1583084159011" />
-    <state width="1228" height="423" key="GridCell.Tab.1.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1588704428602" />
-    <state width="1228" height="423" key="GridCell.Tab.1.center" timestamp="1588704428602">
+    <state width="2508" height="80" key="GridCell.Tab.1.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1588752716451" />
+    <state width="2508" height="80" key="GridCell.Tab.1.center" timestamp="1588752716451">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.1.center/0.0.1600.900@0.0.1600.900" timestamp="1583084159010" />
-    <state width="1228" height="423" key="GridCell.Tab.1.center/0.0.2560.1080@0.0.2560.1080" timestamp="1588704428602" />
-    <state width="1228" height="423" key="GridCell.Tab.1.left" timestamp="1588704428601">
+    <state width="2508" height="80" key="GridCell.Tab.1.center/0.0.2560.1080@0.0.2560.1080" timestamp="1588752716451" />
+    <state width="2508" height="80" key="GridCell.Tab.1.left" timestamp="1588752716451">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.1.left/0.0.1600.900@0.0.1600.900" timestamp="1583084159010" />
-    <state width="1228" height="423" key="GridCell.Tab.1.left/0.0.2560.1080@0.0.2560.1080" timestamp="1588704428601" />
-    <state width="1228" height="423" key="GridCell.Tab.1.right" timestamp="1588704428602">
+    <state width="2508" height="80" key="GridCell.Tab.1.left/0.0.2560.1080@0.0.2560.1080" timestamp="1588752716451" />
+    <state width="2508" height="80" key="GridCell.Tab.1.right" timestamp="1588752716451">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1558" height="167" key="GridCell.Tab.1.right/0.0.1600.900@0.0.1600.900" timestamp="1583084159010" />
-    <state width="1228" height="423" key="GridCell.Tab.1.right/0.0.2560.1080@0.0.2560.1080" timestamp="1588704428602" />
+    <state width="2508" height="80" key="GridCell.Tab.1.right/0.0.2560.1080@0.0.2560.1080" timestamp="1588752716451" />
     <state width="2508" height="277" key="GridCell.Tab.2.bottom" timestamp="1582978449601">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
@@ -383,11 +385,11 @@
     </state>
     <state x="283" y="40" key="SettingsEditor/0.0.1600.900@0.0.1600.900" timestamp="1583072829889" />
     <state x="412" y="-3" width="1731" height="730" key="SettingsEditor/0.0.2560.1080@0.0.2560.1080" timestamp="1588676100965" />
-    <state x="893" y="-339" width="764" height="646" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1588693076653">
+    <state x="893" y="-357" width="764" height="646" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1588751840987">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="656" y="87" width="422" height="521" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.1600.900@0.0.1600.900" timestamp="1582548138283" />
-    <state x="893" y="-339" width="764" height="646" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.2560.1080@0.0.2560.1080" timestamp="1588693076653" />
+    <state x="893" y="-357" width="764" height="646" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.2560.1080@0.0.2560.1080" timestamp="1588751840987" />
     <state x="575" y="361" width="439" height="150" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1582537820504">
       <screen x="0" y="0" width="1600" height="900" />
     </state>
@@ -412,26 +414,17 @@
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="944" y="253" width="672" height="681" key="run.anything.popup/0.0.2560.1080@0.0.2560.1080" timestamp="1588575253676" />
-    <state x="741" y="248" width="1076" height="814" key="search.everywhere.popup" timestamp="1588589535370">
+    <state x="741" y="248" width="1076" height="814" key="search.everywhere.popup" timestamp="1588749870584">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="463" y="207" width="672" height="678" key="search.everywhere.popup/0.0.1600.900@0.0.1600.900" timestamp="1582484707865" />
-    <state x="741" y="248" width="1076" height="814" key="search.everywhere.popup/0.0.2560.1080@0.0.2560.1080" timestamp="1588589535370" />
+    <state x="741" y="248" width="1076" height="814" key="search.everywhere.popup/0.0.2560.1080@0.0.2560.1080" timestamp="1588749870584" />
     <state x="365" y="343" width="540" height="362" key="vcs.readOnlyHandler.ReadOnlyStatusDialog" timestamp="1586625572663">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="365" y="343" width="540" height="362" key="vcs.readOnlyHandler.ReadOnlyStatusDialog/0.0.2560.1080@0.0.2560.1080" timestamp="1586625572663" />
   </component>
   <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/viewer/viewer.cpp</url>
-          <line>370</line>
-          <option name="timeStamp" value="58" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
     <watches-manager>
       <configuration name="CMakeRunConfiguration">
         <watch expression="this-&gt;pd.original._indexData._data" />

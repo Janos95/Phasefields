@@ -9,7 +9,6 @@
 #include "primitives.hpp"
 #include "subdivision.hpp"
 #include "optimization_context.hpp"
-#include "shader_options.hpp"
 #include "solver.hpp"
 #include "functional.hpp"
 #include "problem.hpp"
@@ -75,13 +74,16 @@ struct Paths : Object3D, Drawable {
 
     void draw(const Matrix4& transformation, SceneGraph::Camera3D& camera) override {
         if(!instanceData) return;
-        for(auto& [tf, normalTf, _] : instanceData) {
-            tf = transformation * tf;
-            normalTf = transformation.normalMatrix() * normalTf;
+        Containers::arrayResize(instanceDataTransformed, Containers::NoInit, instanceData.size());
+
+        for (int i = 0; i < instanceData.size(); ++i) {
+            instanceDataTransformed[i].normalMatrix = transformation.normalMatrix() * instanceData[i].normalMatrix;
+            instanceDataTransformed[i].tf = transformation * instanceData[i].tf;
+            instanceDataTransformed[i].color = instanceData[i].color;
         }
 
-        instanceBuffer.setData(instanceData, GL::BufferUsage::DynamicDraw);
-        cylinder.setInstanceCount(instanceData.size());
+        instanceBuffer.setData(instanceDataTransformed, GL::BufferUsage::DynamicDraw);
+        cylinder.setInstanceCount(instanceDataTransformed.size());
         shader.setProjectionMatrix(camera.projectionMatrix())
               .draw(cylinder);
     }
@@ -90,6 +92,7 @@ struct Paths : Object3D, Drawable {
     GL::Mesh cylinder;
     GL::Buffer instanceBuffer;
     Containers::Array<InstanceData> instanceData;
+    Containers::Array<InstanceData> instanceDataTransformed;
 };
 
 struct Viewer: public Magnum::Platform::Application{
@@ -113,6 +116,7 @@ struct Viewer: public Magnum::Platform::Application{
     void drawBrushOptions();
     void drawOptimizationContext();
     bool drawConnectednessConstraintOptions(ConnectednessConstraint<Mg::Double>&, VisualizationFlags&);
+    void drawShaderOptions();
     void startOptimization();
     void stopOptimization();
     Cr::Containers::Pointer<Functional> makeFunctional(FunctionalType);
