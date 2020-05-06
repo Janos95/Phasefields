@@ -15,7 +15,7 @@ using namespace Corrade;
 DirichletEnergy::DirichletEnergy(
         Containers::ArrayView<const Vector3d> const& vertices_,
         Containers::ArrayView<const Vector3ui> const& triangles_):
-    Functional(Functional::MetaData::AllocateFromLoss(TrivialLoss()), FunctionalType::DirichletEnergy),
+    Functional(Functional::MetaData::AllocateFromLoss(TrivialLoss{}), FunctionalType::DirichletEnergy),
     triangles(triangles_),
     vertices(vertices_),
     areas(computeAreas(triangles_, vertices_)),

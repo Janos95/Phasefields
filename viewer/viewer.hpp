@@ -42,6 +42,9 @@ struct Viewer;
 template<class T>
 struct ConnectednessConstraint;
 
+template<class T>
+struct ConnectednessMetaData;
+
 struct UpdatePhasefield{
     Viewer& viewer;
     solver::Status operator()(solver::IterationSummary const&);
@@ -73,7 +76,7 @@ struct Paths : Object3D, Drawable {
     }
 
     void draw(const Matrix4& transformation, SceneGraph::Camera3D& camera) override {
-        if(!instanceData) return;
+        if(!instanceData || muted) return;
         Containers::arrayResize(instanceDataTransformed, Containers::NoInit, instanceData.size());
 
         for (int i = 0; i < instanceData.size(); ++i) {
@@ -93,6 +96,7 @@ struct Paths : Object3D, Drawable {
     GL::Buffer instanceBuffer;
     Containers::Array<InstanceData> instanceData;
     Containers::Array<InstanceData> instanceDataTransformed;
+    bool muted = false;
 };
 
 struct Viewer: public Magnum::Platform::Application{
@@ -116,6 +120,7 @@ struct Viewer: public Magnum::Platform::Application{
     void drawBrushOptions();
     void drawOptimizationContext();
     bool drawConnectednessConstraintOptions(ConnectednessConstraint<Mg::Double>&, VisualizationFlags&);
+    void dumpToPly(std::string const& path, ConnectednessMetaData<Double> const&);
     void drawShaderOptions();
     void startOptimization();
     void stopOptimization();
@@ -123,9 +128,9 @@ struct Viewer: public Magnum::Platform::Application{
     void updateFunctionals(Cr::Containers::Array<Cr::Containers::Pointer<Functional>>&);
     void paint();
     void geodesicSearch();
-    void finalize();
-    Mg::GL::Texture2D componentsTexture();
-    Mg::GL::Texture2D weightsTexture();
+    void updateIntenalDataStrucutres();
+    void updateFaceColorTextureWithComponents();
+    void updateFaceColorTextureWithWeights();
     Vector3 unproject(Mg::Vector2i const&);
 
     ImGuiIntegration::Context imgui{NoCreate};
@@ -139,7 +144,7 @@ struct Viewer: public Magnum::Platform::Application{
     Mg::Trade::MeshData original{Magnum::MeshPrimitive::Points, 0};
     Mg::Trade::MeshData meshData{Magnum::MeshPrimitive::Points, 0};
 
-    DrawableType drawableType = DrawableType::FaceColored;
+    DrawableType drawableType = DrawableType::PhongDiffuse;
     std::unordered_map<ShaderType, Cr::Containers::Pointer<Mg::GL::AbstractShaderProgram>> shaders;
 
     ColorMapType colorMapType = ColorMapType::Turbo;
@@ -166,15 +171,18 @@ struct Viewer: public Magnum::Platform::Application{
 
     UpdatePhasefield phasefieldCallback;
     VisualizationFlags visFlags = VisualizationFlag::Phasefield;
-    Functional* exclusiveVisualizer = nullptr;
     VisualizationFlags update = {};
+    Functional* exclusiveVisualizer = nullptr;
     Cr::Containers::Array<Magnum::Double> phasefield;
     Cr::Containers::Array<Magnum::Double> parameters;
 
+    //connectedness exclusive data
     Cr::Containers::Array<int> components;
-    int numComponents;
+    int numComponents = 0;
     Cr::Containers::Array<Double> ws;
-    Mg::GL::Texture2D faceTexture{Mg::NoCreate}; //containing per face colors
+    Cr::Containers::Array<Double> gradient;
+    Cr::Containers::Pointer<Mg::GL::Texture2D> componentsTexture;
+    Cr::Containers::Pointer<Mg::GL::Texture2D> wsTexture;
 
     SharedRessource<Mg::Double> doubleWellScaling;
     SharedRessource<Mg::Double> dirichletScaling;

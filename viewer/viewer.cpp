@@ -175,6 +175,7 @@ void Viewer::drawSubdivisionOptions() {
             upload(mesh, vertexBuffer, indexBuffer, meshData);
             updateFunctionals(problem.functionals);
             updateFunctionals(problem.constraints);
+            makeDrawableCurrent(drawableType);
         }
         ImGui::TreePop();
     }
@@ -187,7 +188,8 @@ void Viewer::makeDrawableCurrent(DrawableType type) {
     switch(type){
         case DrawableType::FaceColored : {
             auto d = new FaceColorDrawable(*object, mesh, *shaders[ShaderType::MeshVisualizerPrimitiveId], &drawableGroup);
-            d->texture = nullptr;
+            d->texture = visFlags & VisualizationFlag::ConnectedComponents ? componentsTexture.get() : wsTexture.get();
+            d->offset = 0; d->scale = 3.f/static_cast<Float>(indices.size());
             drawable = d;
             break;
         }
@@ -207,17 +209,17 @@ void Viewer::makeDrawableCurrent(DrawableType type) {
             drawable = new MeshVisualizerDrawable(*object, mesh, *shaders[ShaderType::MeshVisualizer], &drawableGroup);
             break;
         }
-        default: CORRADE_ASSERT(false, "drawable type supported atm",);
     }
 }
 
 void Viewer::drawPrimitiveOptions() {
     if(handlePrimitive(original, expression)){
-        finalize();
+        updateIntenalDataStrucutres();
         upload(mesh, vertexBuffer, indexBuffer, meshData);
-        if(!drawable) makeDrawableCurrent(DrawableType::PhongDiffuse);
         updateFunctionals(problem.functionals);
         updateFunctionals(problem.constraints);
+
+        makeDrawableCurrent(drawableType);
     }
 }
 
@@ -246,6 +248,41 @@ void Viewer::drawBrushOptions() {
         ImGui::TreePop();
     }
 }
+
+
+void Viewer::dumpToPly(std::string const& path, ConnectednessMetaData<Double> const& meta){
+    auto triangles = Cr::Containers::arrayCast<Vector3ui>(indices);
+    std::ofstream out("/tmp/phase.ply");
+    out << "ply" << std::endl;
+    out << "format ascii 1.0\n";
+    out << "element vertex " << vertices.size() << '\n';
+    out << "property float x\n";
+    out << "property float y\n";
+    out << "property float z\n";
+    out << "property float j\n";
+    out << "property float u\n";
+    out << "element face " << triangles.size() << '\n';
+    out << "property list uchar int vertex_indices\n";
+    out << "property int c\n";
+    out << "property float w\n";
+    out << "end_header\n";
+
+    for (int i = 0; i < vertices.size(); ++i) {
+        for (int j = 0; j < 3; ++j) {
+            out << vertices[i][j] << ' ';
+        }
+        out << gradient[i] << ' ' << phasefield[i] << '\n';
+    }
+
+    for (int i = 0; i < triangles.size(); ++i) {
+        out << "3 ";
+        for (int j = 0; j < 3; ++j) {
+            out << triangles[i][j] << ' ';
+        }
+        out << components[i] << ' ' << ws[i] << '\n';
+    }
+}
+
 /**
  * returns true if functional is now handling exclusive visualizations
  * Also note that we can safely read from meta.flags since the optimization thread
@@ -262,30 +299,53 @@ bool Viewer::drawConnectednessConstraintOptions(ConnectednessConstraint<Double>&
     bool visPaths = static_cast<bool>(meta.flags & VisualizationFlag::Paths);
     if(ImGui::Checkbox("Visualize Shortest Paths", &visPaths)){
         std::lock_guard l(mutex);
-        if(visPaths) meta.flags |= VisualizationFlag::Paths;
-        else meta.flags &= ~VisualizationFlag::Paths;
+        if(visPaths) {
+            paths->muted = false;
+            meta.flags |= VisualizationFlag::Paths;
+        }
+        else {
+            meta.flags &= ~VisualizationFlag::Paths;
+            paths->muted = true;
+        }
     }
     ImGui::SameLine();
     bool visComponents = static_cast<bool>(meta.flags & VisualizationFlag::ConnectedComponents);
     if(ImGui::Checkbox("Connected Components", &visComponents)){
+        std::lock_guard l(mutex);
         if(visComponents) {
-            std::lock_guard l(mutex);
+            makeDrawableCurrent(DrawableType::FaceColored);
             meta.flags &= NonExclusiveFlags; // deselect all
             meta.flags |= VisualizationFlag::ConnectedComponents;
+            update |= VisualizationFlag::ConnectedComponents;
             makeExclusive = true;
         }
         else meta.flags &= ~VisualizationFlag::ConnectedComponents;
     }
-    ImGui::SameLine();
     bool visGeodesicWeights = static_cast<bool>(meta.flags & VisualizationFlag::GeodesicWeights);
     if(ImGui::Checkbox("Geodesic Weights", &visGeodesicWeights)){
         std::lock_guard l(mutex);
         if(visGeodesicWeights) {
+            makeDrawableCurrent(DrawableType::FaceColored);
             meta.flags &= NonExclusiveFlags; // deselect all
             meta.flags |= VisualizationFlag::GeodesicWeights;
+            update |= VisualizationFlag::GeodesicWeights;
             makeExclusive = true;
         }
         else meta.flags &= ~VisualizationFlag::GeodesicWeights;
+    }
+
+    ImGui::SameLine();
+    bool visGradient = static_cast<bool>(meta.flags & VisualizationFlag::Gradient);
+    if(ImGui::Checkbox("Gradient", &visGradient)){
+        std::lock_guard l(mutex);
+        if(visGradient) {
+            makeDrawableCurrent(DrawableType::PhongDiffuse);
+            meta.flags &= NonExclusiveFlags; // deselect all
+            meta.flags |= VisualizationFlag::Gradient;
+            update |= VisualizationFlag::Gradient;
+            makeExclusive = true;
+        }
+        else meta.flags &= ~VisualizationFlag::Gradient;
     }
     fl = meta.flags;
     return makeExclusive;
@@ -376,8 +436,13 @@ void Viewer::drawOptimizationContext() {
         bool visPhasefield = static_cast<bool>(visFlags & VisualizationFlag::Phasefield);
         if(ImGui::Checkbox("Draw Phasefield", &visPhasefield)){
             if(visPhasefield){
+                makeDrawableCurrent(DrawableType::PhongDiffuse);
+                auto textureCoords = meshData.mutableAttribute<Vector2>(Trade::MeshAttribute::TextureCoordinates);
+                for (int i = 0; i < phasefield.size(); ++i)
+                    textureCoords[i].x() = .5f * (phasefield[i] + 1.f);
                 visFlags &= NonExclusiveFlags;
                 visFlags |= VisualizationFlag::Phasefield;
+                update |= VisualizationFlag::Phasefield;
                 if(exclusiveVisualizer){
                     std::lock_guard l(mutex);
                     exclusiveVisualizer->metaData->flags &= NonExclusiveFlags;
@@ -564,74 +629,71 @@ Vector3 Viewer::unproject(Vector2i const& windowPosition) {
     return (camera->transformationMatrix() * camera->projectionMatrix().inverted()).transformPoint(in);
 }
 
-void Viewer::finalize(){
+void Viewer::updateIntenalDataStrucutres(){
     meshData = preprocess(original, CompileFlag::GenerateSmoothNormals|CompileFlag::AddTextureCoordinates);
     CORRADE_ASSERT(meshData.hasAttribute(Trade::MeshAttribute::TextureCoordinates),"error", );
-    auto vertexCount = meshData.vertexCount();
-    Containers::arrayResize(phasefield, vertexCount);
     auto points = meshData.attribute<Vector3>(Trade::MeshAttribute::Position);
     Containers::arrayResize(vertices, points.size());
-    for (int i = 0; i < vertexCount; ++i)
+    for (int i = 0; i < points.size(); ++i)
         vertices[i] = Vector3d(points[i]);
     indices = meshData.indicesAsArray();
-    Containers::arrayResize(phasefield, vertexCount);
-    if(!meshData.hasAttribute(Trade::MeshAttribute::TextureCoordinates))
-        Debug{} << "No texture coordinates?";
-    auto textureView = meshData.mutableAttribute<Vector2>(Trade::MeshAttribute::TextureCoordinates);
-    for (int i = 0; i < vertexCount; ++i) {
-        textureView[i].x() = .5f * (phasefield[i] + 1);
-    }
+    Containers::arrayResize(phasefield, vertices.size());
     upload(mesh, vertexBuffer, indexBuffer, meshData);
+    const Magnum::Vector2i size(indices.size() / 3, 1);
+    wsTexture.reset(new GL::Texture2D{});
+    wsTexture->setStorage(1, Magnum::GL::TextureFormat::RGB8, size);
+    componentsTexture.reset(new GL::Texture2D{});
+    componentsTexture->setStorage(1, Magnum::GL::TextureFormat::RGB8, size);
+    Containers::arrayResize(gradient, vertices.size());
+    Containers::arrayResize(ws, indices.size() / 3);
+    Containers::arrayResize(components, indices.size() / 3);
+    numComponents = 0;
+    update = visFlags; //update everything
 }
 
 
-GL::Texture2D Viewer::componentsTexture() {
+void Viewer::updateFaceColorTextureWithComponents() {
     Deg hue = 42.0_degf;
-    Containers::Array<Color3ub> colors(Containers::NoInit, numComponents);
+    Containers::Array<Color3ub> randomColors(Containers::NoInit, numComponents);
     for (int i = 0; i < numComponents; ++i)
-        colors[i] = Color3ub::fromHsv({hue += 137.5_degf, 0.75f, 0.9f});
+        randomColors[i] = Color3ub::fromHsv({hue += 137.5_degf, 0.75f, 0.9f});
 
-    Containers::Array<Vector3ub> colorMap(Containers::NoInit, components.size());
+    Containers::Array<Vector3ub> colors(Containers::NoInit, components.size());
     for (int i = 0; i < components.size(); ++i) {
-        if (components[i] >= 0)
-            colorMap[i] = colors[components[i]];
+        if (components[i] >= 0 && !randomColors.empty())
+            colors[i] = randomColors[components[i]];
         else
-            colorMap[i] = Color3ub(0xFFF5EE_rgbf);
+            colors[i] = Color3ub(255,253,208);
     }
 
     const Magnum::Vector2i size(components.size(), 1);
-    GL::Texture2D texture;
-    texture.setMinificationFilter(Magnum::SamplerFilter::Nearest)
-            .setMagnificationFilter(Magnum::SamplerFilter::Nearest)
-            .setWrapping(Magnum::SamplerWrapping::ClampToEdge) // or Repeat
-            .setStorage(1, Magnum::GL::TextureFormat::RGB8, size) // or SRGB8
-            .setSubImage(0, {}, ImageView2D{Magnum::PixelFormat::RGB8Srgb, size, colorMap});
+    componentsTexture->setMinificationFilter(Magnum::SamplerFilter::Nearest)
+                      .setMagnificationFilter(Magnum::SamplerFilter::Nearest)
+                      .setWrapping(Magnum::SamplerWrapping::ClampToEdge) // or Repeat
+                      .setSubImage(0, {}, ImageView2D{Magnum::PixelFormat::RGB8Srgb, size, colors});
 
-    return texture;
 }
 
-GL::Texture2D Viewer::weightsTexture() {
+void Viewer::updateFaceColorTextureWithWeights() {
 
     Containers::Array<Vector3ub> colors(Containers::NoInit, ws.size());
     auto colorMap = DebugTools::ColorMap::turbo();
-    Double min, max;
-    std::tie(min, max) = Math::minmax(ws);
+    auto [min,max] = Math::minmax(ws);
     Double length = max - min;
-    for (int i = 0; i < ws.size(); ++i) {
-        int idx = static_cast<int>((ws[i] - min) / length * (colorMap.size() - 1.));
-        CORRADE_ASSERT(0 <= idx && idx <= 255, "Bad index for colormap", GL::Texture2D{});
-        colors[i] = colorMap[idx];
+    if(length < std::numeric_limits<Double>::epsilon())
+        std::fill(colors.begin(), colors.end(), Color3ub(255,253,208));
+    else{
+        for (int i = 0; i < ws.size(); ++i) {
+            int idx = static_cast<int>((ws[i] - min) / length * (colorMap.size() - 1.));
+            CORRADE_ASSERT(0 <= idx && idx <= 255, "Bad index for colormap", );
+            colors[i] = colorMap[idx];
+        }
     }
-
     const Magnum::Vector2i size(ws.size(), 1);
-    GL::Texture2D texture;
-    texture.setMinificationFilter(Magnum::SamplerFilter::Nearest)
-            .setMagnificationFilter(Magnum::SamplerFilter::Nearest)
-            .setWrapping(Magnum::SamplerWrapping::ClampToEdge) // or Repeat
-            .setStorage(1, Magnum::GL::TextureFormat::RGB8, size) // or SRGB8
-            .setSubImage(0, {}, ImageView2D{Magnum::PixelFormat::RGB8Srgb, size, colors});
-
-    return texture;
+    wsTexture->setMinificationFilter(Magnum::SamplerFilter::Nearest)
+              .setMagnificationFilter(Magnum::SamplerFilter::Nearest)
+              .setWrapping(Magnum::SamplerWrapping::ClampToEdge) // or Repeat
+              .setSubImage(0, {}, ImageView2D{Magnum::PixelFormat::RGB8Srgb, size, colors});
 }
 
 void Viewer::drawShaderOptions(){
@@ -641,6 +703,7 @@ void Viewer::drawShaderOptions(){
         static std::map<DrawableType, std::string> drawablemap{
                 {DrawableType::MeshVisualizer, "Mesh Visualizer"},
                 {DrawableType::PhongDiffuse,   "Phong Diffuse"},
+                {DrawableType::FaceColored,   "Face Colored"},
                 {DrawableType::FlatTextured,   "Flat Textured"}
         };
 
@@ -680,6 +743,7 @@ void Viewer::drawShaderOptions(){
                     bool isSelected = (colorMapType == cmtype);
                     if (ImGui::Selectable(name.c_str(), isSelected)) {
                         colorMapType = cmtype;
+                        makeDrawableCurrent(drawableType);
                     }
                     if (isSelected)
                         ImGui::SetItemDefaultFocus();
@@ -863,28 +927,29 @@ void Viewer::tickEvent()
             update &= ~VisualizationFlag::Paths;
         }
         if (update & visFlags & VisualizationFlag::ConnectedComponents) {
-            if(drawableType != DrawableType::FaceColored)
-                makeDrawableCurrent(DrawableType::FaceColored);
-            faceTexture = componentsTexture();
+            auto& f = dynamic_cast<ConnectednessConstraint<Double>&>(*exclusiveVisualizer);
+            updateFaceColorTextureWithComponents();
             auto& d = dynamic_cast<FaceColorDrawable&>(*drawable);
-            d.offset = 0; d.scale = 1.f/static_cast<Float>(components.size());
-            d.texture = &faceTexture;
             update &= ~VisualizationFlag::ConnectedComponents;
         }
         if (update & visFlags & VisualizationFlag::GeodesicWeights) {
-            if(drawableType != DrawableType::FaceColored)
-                makeDrawableCurrent(DrawableType::FaceColored);
-            faceTexture = weightsTexture();
+            auto& f = dynamic_cast<ConnectednessConstraint<Double>&>(*exclusiveVisualizer);
+            updateFaceColorTextureWithWeights();
             update &= ~VisualizationFlag::GeodesicWeights;
+        }
+        if (update & visFlags & VisualizationFlag::Gradient) {
+            auto textureCoords = meshData.mutableAttribute<Vector2>(Trade::MeshAttribute::TextureCoordinates);
+            for (int i = 0; i < gradient.size(); ++i)
+                textureCoords[i].x() = gradient[i]; /* @note gradient needs to be normalized */
+            reuploadVertices(vertexBuffer, meshData);
+            update &= ~VisualizationFlag::Gradient;
         }
         if (update & visFlags & VisualizationFlag::Phasefield) {
             auto textureCoords = meshData.mutableAttribute<Vector2>(Trade::MeshAttribute::TextureCoordinates);
-            if(drawableType != DrawableType::PhongDiffuse)
-                makeDrawableCurrent(DrawableType::PhongDiffuse);
             for (int i = 0; i < phasefield.size(); ++i)
                 textureCoords[i].x() = .5f * (phasefield[i] + 1.f);
-            update &= ~VisualizationFlag::Phasefield;
             reuploadVertices(vertexBuffer, meshData);
+            update &= ~VisualizationFlag::Phasefield;
         }
     }
 }

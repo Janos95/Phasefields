@@ -33,12 +33,14 @@ enum class DrawableType : Magnum::Int {
 };
 
 struct MeshDrawable : Drawable {
-    MeshDrawable(Object3D& obj, Mg::GL::Mesh& m, DrawableGroup* group):
+    MeshDrawable(Object3D& obj, Mg::GL::Mesh& m, DrawableGroup* group, Mg::GL::Texture2D* t = nullptr):
         Drawable(obj, group),
-        mesh(&m)
+        mesh(m),
+        texture(t)
     {
     }
-    Mg::GL::Mesh* mesh;
+    Mg::GL::Mesh& mesh;
+    Mg::GL::Texture2D* texture;
 };
 
 struct FlatDrawable : MeshDrawable
@@ -46,19 +48,18 @@ struct FlatDrawable : MeshDrawable
 
     explicit FlatDrawable(Object3D& object, Mg::GL::Mesh& m, Mg::GL::AbstractShaderProgram& shader, DrawableGroup* group):
             MeshDrawable(object, m, group),
-            shader(&dynamic_cast<Magnum::Shaders::Flat3D&>(shader))
+            shader(dynamic_cast<Magnum::Shaders::Flat3D&>(shader))
     {
     }
 
     void draw(const Magnum::Matrix4& transformationMatrix, Magnum::SceneGraph::Camera3D& camera) override {
-        if(texture) shader->bindTexture(*texture);
-        else shader->setColor(color);
-        shader->setTransformationProjectionMatrix(camera.projectionMatrix() * transformationMatrix)
-              .draw(*mesh);
+        if(texture) shader.bindTexture(*texture);
+        else shader.setColor(color);
+        shader.setTransformationProjectionMatrix(camera.projectionMatrix() * transformationMatrix)
+              .draw(mesh);
     }
 
-    Mg::Shaders::Flat3D* shader = nullptr;
-    Mg::GL::Texture2D* texture = nullptr;
+    Mg::Shaders::Flat3D& shader;
     Mg::Color4 color;
 };
 
@@ -73,7 +74,7 @@ struct VertexColorDrawable : MeshDrawable
 
     void draw(const Magnum::Matrix4& transformationMatrix, Mg::SceneGraph::Camera3D& camera) override {
         shader->setTransformationProjectionMatrix(camera.projectionMatrix() * transformationMatrix)
-              .draw(*mesh);
+              .draw(mesh);
     }
 
     Magnum::Shaders::VertexColor3D* shader = nullptr;
@@ -97,11 +98,10 @@ public:
               .setTransformationMatrix(transformationMatrix)
               .setNormalMatrix(transformationMatrix.normalMatrix())
               .setProjectionMatrix(camera.projectionMatrix())
-              .draw(*mesh);
+              .draw(mesh);
     }
 
     Mg::Shaders::Phong& shader;
-    Mg::GL::Texture2D* texture;
 };
 
 struct MeshVisualizerDrawable : MeshDrawable
@@ -122,7 +122,7 @@ struct MeshVisualizerDrawable : MeshDrawable
               .setWireframeColor(wireframeColor)
               .setSmoothness(smoothness)
               .setColor(color)
-              .draw(*mesh);
+              .draw(mesh);
     }
 
     Mg::Float wireframeWidth = 1.f;
@@ -149,12 +149,10 @@ struct FaceColorDrawable : MeshDrawable
               .setProjectionMatrix(camera.projectionMatrix())
               .setColorMapTransformation(offset, scale)
               .bindColorMapTexture(*texture)
-              .draw(*mesh);
+              .draw(mesh);
     }
 
 
     Mg::Shaders::MeshVisualizer3D& shader;
-    Mg::GL::Texture2D* texture;
     Mg::Float offset = 0., scale = 1.f;
-    bool drawNormals = false, drawTangentSpace = false;
 };

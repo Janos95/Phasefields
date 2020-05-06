@@ -10,6 +10,8 @@
 #include "../viewer/types.hpp"
 
 #include <Corrade/Containers/Pointer.h>
+#include <Corrade/Containers/GrowableArray.h>
+
 #include <string>
 
 namespace Cr = Corrade;
@@ -29,11 +31,11 @@ enum class FunctionalType : Mg::UnsignedInt {
 struct Functional{
 
     struct MetaData {
+
         Cr::Containers::Pointer<LossFunction> loss = Cr::Containers::pointer<TrivialLoss>();
         SharedRessource<Mg::Double> scaling = nullptr;
         VisualizationFlags flags = {};
         virtual ~MetaData() = default;
-        virtual void reset() {}
         virtual solver::Status operator()(solver::IterationSummary const&) { return solver::Status::CONTINUE; };
 
         using Ptr = Cr::Containers::Pointer<MetaData>;

@@ -21,8 +21,10 @@
 #include <Magnum/Magnum.h>
 #include <Magnum/MeshTools/GenerateIndices.h>
 #include <Magnum/Math/Matrix4.h>
+#include <Magnum/Math/FunctionsBatch.h>
 
 #include <Corrade/Containers/GrowableArray.h>
+#include <Magnum/GL/TextureFormat.h>
 
 #include <ceres/first_order_function.h>
 
@@ -48,46 +50,18 @@ struct UpdateConnectednessVis;
 
 template<class Scalar>
 struct ConnectednessMetaData : Functional::MetaData {
-
     Viewer* viewer;
     Mg::Double a = 0.05, b = 0.95;
-
-    Cr::Containers::Array<int> components;
-    Cr::Containers::Array<Double> ws;
-    Cr::Containers::Array<InstanceData> instanceData;
     Mg::Double pathThickness = 0.01;
-    Mg::Color3 pathColor = Mg::Color3::green();
-    int numComponents;
 
-    solver::Status operator()(solver::IterationSummary const&) {
-        std::lock_guard l(viewer->mutex);
-        if(flags & VisualizationFlag::Paths){
-            viewer->instanceData = std::move(instanceData);
-            viewer->update |= VisualizationFlag::Paths;
-        }
-        if(flags & VisualizationFlag::ConnectedComponents){
-            Utility::copy(components, viewer->components);
-            viewer->numComponents = numComponents;
-            viewer->update = VisualizationFlag::ConnectedComponents;
-        }
-        if(flags & VisualizationFlag::GeodesicWeights){
-            Utility::copy(ws, viewer->ws);
-            viewer->update = VisualizationFlag::GeodesicWeights;
-        }
-        return solver::Status::CONTINUE;
-    }
-
-    void reset() override {
-        flags &= VisualizationFlag::Paths;
-    }
 };
 
 template<class Scalar>
 struct ConnectednessConstraint : Functional
 {
     ConnectednessConstraint(
-            Containers::ArrayView<const Vector3d> const& vertices,
-            Containers::ArrayView<const Vector3ui> const& faces);
+            Containers::ArrayView<const Vector3d> const& vertices_,
+            Containers::ArrayView<const Vector3ui> const& triangles_);
 
     bool evaluate(double const* parameters, double* cost, double* jacobian) const override ;
 
@@ -140,7 +114,7 @@ template<class Scalar>
 ConnectednessConstraint<Scalar>::ConnectednessConstraint(
         Containers::ArrayView<const Vector3d> const& vertices_,
         Containers::ArrayView<const Vector3ui> const& triangles_):
-    Functional(Containers::pointer<ConnectednessMetaData<Scalar>>(), FunctionalType::Connectedness),
+    Functional(Cr::Containers::pointer<ConnectednessMetaData<Scalar>>(), FunctionalType::Connectedness),
     vertices(vertices_),
     triangles(triangles_),
     adjacencyList(Containers::DirectInit, triangles_.size(), Containers::NoInit),
@@ -196,12 +170,17 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
 
     Mg::Double a,b, pathThickness;
     Mg::Color3 pathColor;
-    bool generateLineStrips;
+    bool updateVis, generateLineStrips;
     auto& meta = getMetaData();
     {
         std::lock_guard l(meta.viewer->mutex);
         a = meta.a; b = meta.b;
         generateLineStrips = static_cast<bool>(meta.flags & VisualizationFlag::Paths);
+        updateVis = static_cast<bool>(meta.flags & (
+                VisualizationFlag::ConnectedComponents |
+                VisualizationFlag::Gradient |
+                VisualizationFlag::GeodesicWeights));
+
         pathThickness = meta.pathThickness;
     }
 
@@ -403,43 +382,28 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
         }
     }
 
-    if(generateLineStrips) {
+    {
         std::lock_guard l(meta.viewer->mutex);
-        meta.instanceData = std::move(instanceData);
+        auto viewer = meta.viewer;
+        if(updateVis){
+            viewer->numComponents = numComponents;
+            viewer->components = std::move(components);
+            viewer->update |= VisualizationFlag::ConnectedComponents;
+
+            viewer->ws = std::move(ws);
+            viewer->update |= VisualizationFlag::GeodesicWeights;
+
+            Containers::ArrayView jacView(jacobian, numVertices);
+            auto [min, max] = Math::minmax(jacView);
+            for (int i = 0; i < numVertices; ++i)
+                viewer->gradient[i] = (jacView[i] - min) / (max - min);
+            viewer->update |= VisualizationFlag::Gradient;
+        }
+        if(generateLineStrips){
+            viewer->instanceData = std::move(instanceData);
+            viewer->update |= VisualizationFlag::Paths;
+        }
     }
-
-    //int modifyMe = 0;
-    //if(modifyMe)
-    //{
-    //    std::ofstream out("/tmp/phase.ply");
-    //    out << "ply" << std::endl;
-    //    out << "format ascii 1.0\n";
-    //    out << "element vertex " << vertices.size() << '\n';
-    //    out << "property float x\n";
-    //    out << "property float y\n";
-    //    out << "property float z\n";
-    //    out << "property float u\n";
-    //    out << "element face " << triangles.size() << '\n';
-    //    out << "property list uchar int vertex_indices\n";
-    // //   out << "property float w\n";
-    // //   out << "property int c\n";
-    //    out << "end_header\n";
-
-    //    for (int i = 0; i < vertices.size(); ++i) {
-    //        for (int j = 0; j < 3; ++j) {
-    //            out << vertices[i][j] << ' ';
-    //        }
-    //        out << phasefield[i] << '\n';
-    //    }
-
-    //    for (int i = 0; i < triangles.size(); ++i) {
-    //        out << "3 ";
-    //        for (int j = 0; j < 3; ++j) {
-    //            out << triangles[i][j] << ' ';
-    //        }
-    //        out /*<< ws[i] << ' ' << components[i]*/ << '\n';
-    //    }
-    //}
 
     return true;
 }

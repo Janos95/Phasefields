@@ -35,7 +35,8 @@ enum class VisualizationFlag : Magnum::UnsignedInt {
     Phasefield = 1u << 0u,
     GeodesicWeights = 1u << 1u,
     ConnectedComponents = 1u << 2u,
-    Paths = 1u << 3u
+    Gradient = 1u << 3u,
+    Paths = 1u << 4u,
 };
 
 using VisualizationFlags = Corrade::Containers::EnumSet<VisualizationFlag>;
