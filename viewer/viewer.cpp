@@ -856,17 +856,17 @@ void Viewer::mousePressEvent(MouseEvent& event) {
         return;
     }
 
-    if(!camera) return;
+    if(event.button() == MouseEvent::Button::Middle){
+            trackingMouse = true;
+            ///* Enable mouse capture so the mouse can drag outside of the window */
+            ///** @todo replace once https://github.com/mosra/magnum/pull/419 is in */
+            SDL_CaptureMouse(SDL_TRUE);
 
-    trackingMouse = true;
-    ///* Enable mouse capture so the mouse can drag outside of the window */
-    ///** @todo replace once https://github.com/mosra/magnum/pull/419 is in */
-    SDL_CaptureMouse(SDL_TRUE);
+            camera->initTransformation(event.position());
 
-    camera->initTransformation(event.position());
-
-    event.setAccepted();
-    redraw(); /* camera has changed, redraw! */
+            event.setAccepted();
+            redraw(); /* camera has changed, redraw! */
+    }
 }
 
 void Viewer::mouseReleaseEvent(MouseEvent& event) {
@@ -881,13 +881,14 @@ void Viewer::mouseReleaseEvent(MouseEvent& event) {
         return;
     }
 
-    if(!camera) return;
-    /* Disable mouse capture again */
-    /** @todo replace once https://github.com/mosra/magnum/pull/419 is in */
-    if(trackingMouse){
-        SDL_CaptureMouse(SDL_FALSE);
-        trackingMouse = false;
-        event.setAccepted();
+    if(event.button() == MouseEvent::Button::Middle) {
+        /* Disable mouse capture again */
+        /** @todo replace once https://github.com/mosra/magnum/pull/419 is in */
+        if (trackingMouse) {
+            SDL_CaptureMouse(SDL_FALSE);
+            trackingMouse = false;
+            event.setAccepted();
+        }
     }
 }
 
@@ -903,14 +904,14 @@ void Viewer::mouseMoveEvent(MouseMoveEvent& event) {
     //    return;
     //}
 
-    if(!camera || !event.buttons()) return;
+    if(trackingMouse) {
+        if (event.modifiers() & MouseMoveEvent::Modifier::Shift)
+            camera->translate(event.position());
+        else camera->rotate(event.position());
 
-    if(event.modifiers() & MouseMoveEvent::Modifier::Shift)
-        camera->translate(event.position());
-    else camera->rotate(event.position());
-
-    event.setAccepted();
-    redraw(); /* camera has changed, redraw! */
+        event.setAccepted();
+        redraw(); /* camera has changed, redraw! */
+    }
 }
 
 void Viewer::mouseScrollEvent(MouseScrollEvent& event) {

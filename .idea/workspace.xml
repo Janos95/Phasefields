@@ -20,10 +20,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="11b62d60-32b8-46a0-9c5e-70e1f1122bcc" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/c1_functions.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/c1_functions.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/connectedness_constraint.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/connectedness_constraint.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/utility.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/utility.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/viewer/viewer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/viewer.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -273,7 +269,7 @@
       <workItem from="1588573529668" duration="28745000" />
       <workItem from="1588660324547" duration="41755000" />
       <workItem from="1588744744206" duration="32153000" />
-      <workItem from="1588832751883" duration="28399000" />
+      <workItem from="1588832751883" duration="28804000" />
     </task>
     <servers />
   </component>
