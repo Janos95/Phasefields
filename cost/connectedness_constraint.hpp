@@ -51,7 +51,7 @@ struct UpdateConnectednessVis;
 template<class Scalar>
 struct ConnectednessMetaData : Functional::MetaData {
     Viewer* viewer;
-    Mg::Double a = 0.05, b = 0.95;
+    Mg::Double a = 0.05, b = 1.;
     Mg::Double pathThickness = 0.01;
 
     Cr::Containers::Array<InstanceData> instanceData; //tf from cylinder to path section
@@ -192,8 +192,7 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
         pathThickness = meta.pathThickness;
     }
 
-    F weight(a, b);
-    FGrad weightGrad(a, b);
+    F<Scalar> f{a, b};
     W bump(a, b);
     WGrad bumpGrad(a, b);
 
@@ -221,8 +220,8 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
 
     UnionFind set(numFaces);
     for (auto [dualV1, dualV2] : dualEdges) {
-        auto fuT1 = weight(uT[dualV1]);
-        auto fuT2 = weight(uT[dualV2]);
+        auto fuT1 = f.eval(uT[dualV1]);
+        auto fuT2 = f.eval(uT[dualV2]);
         auto w = .5 * (diams[dualV1] + diams[dualV2]) * .5 * (fuT1 + fuT2);
         updateWeight(dualV1, w, adjacencyList[dualV2]);
         updateWeight(dualV2, w, adjacencyList[dualV1]);
@@ -280,7 +279,7 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
                 Dijkstra dijk(adjacencyList);
                 dijk.setSource(roots[i]);
                 dijk.run(stop);
-                CORRADE_INTERNAL_ASSERT(stop.foundAll());
+                CORRADE_ASSERT(stop.foundAll(), "Connectedness : dijkstra did not find all components",false);
                 dijkstras[i] = std::move(dijk);
                 stops[i] = std::move(stop);
             }
@@ -335,8 +334,8 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
 
                         if (jacobian && !detail::IsDiffArray<Scalar>) {
                             auto lineElement = .5 * (diams[a] + diams[b]);
-                            const double fgrada = weightGrad(detail::detach(uT[a]));
-                            const double fgradb = weightGrad(detail::detach(uT[b]));
+                            const double fgrada = f.grad(detail::detach(uT[a]));
+                            const double fgradb = f.grad(detail::detach(uT[b]));
                             auto weightedFGrad = detail::detach(Wij) * lineElement * .5 * (1. / 3.);
                             for (int k = 0; k < 3; ++k) {
                                 jacobian[triangles[a][k]] += weightedFGrad * fgrada;

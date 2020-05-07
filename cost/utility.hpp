@@ -26,10 +26,8 @@ void updateWeight(const int target, const T& w, R& neighbors){
     it->weight = w;
 }
 
-class StoppingCriteria
+struct StoppingCriteria
 {
-public:
-
     StoppingCriteria() = default;
     StoppingCriteria(int source, int numComponents, Cr::Containers::Array<int>& components);
 
@@ -39,7 +37,6 @@ public:
 
     [[nodiscard]] int target(int i) const;
 
-private:
     int m_startComponent;
     int m_numComponentsToFind;
     Cr::Containers::Array<int> * m_components;

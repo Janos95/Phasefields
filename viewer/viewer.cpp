@@ -464,7 +464,7 @@ void Viewer::drawOptimizationContext() {
             }
         }
 
-        static Double epsilon = 0.1;
+        static Double epsilon = 0.3;
         if(dirichletScaling.refCount() > 1 || doubleWellScaling.refCount() > 1 || connectednessScaling.refCount() > 1){
             constexpr Mg::Double minEps = 0.f, maxEps = 1.;
             ImGui::DragScalar("epsilon", ImGuiDataType_Double, &epsilon, .01f, &minEps, &maxEps, "%f", 2);
@@ -525,7 +525,6 @@ void Viewer::startOptimization() {
         Containers::arrayAppend(callbacks, Containers::InPlaceInit, *f->metaData);
     Containers::arrayAppend(callbacks, Containers::InPlaceInit, phasefieldCallback);
     options.callbacks = std::move(callbacks);
-
     optimizing = true;
     g.run([this]{
         solver::Summary summary;

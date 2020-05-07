@@ -6,29 +6,21 @@
 
 #include <Corrade/Utility/StlMath.h>
 
-class F
-{
-public:
-    F(const double a, const double b):
-            m_a(a), m_b(b), m_c1(1./std::pow(1.+a, 2)), m_c2(1./std::pow(b-1., 2))
-    {
+
+template<class T>
+struct F{
+    T eval(const T x) const{
+        if(x < a) return pow(x-a,2);
+        if(x < b) return T{0};
+        return pow(x-b,2);
     }
-
-    template<class T>
-    T operator()(const T& x) const {
-        if(x < m_a)
-            return pow(x - m_a, 2) * m_c1;
-        if(x < m_b)
-            return 0.;
-
-        return pow(m_b - x, 2) * m_c2;
+    T grad(const T x) const{
+        if(x < a) return 2 * (x - a);
+        if(x < b) return T{0};
+        return 2 * (x - b);
     }
-
-
-private:
-    const double m_a,m_b,m_c1,m_c2;
+    T a, b;
 };
-
 
 class W
 {
@@ -51,30 +43,6 @@ private:
     const double m_a,m_b,m_c3;
 };
 
-
-class FGrad
-{
-public:
-    FGrad(const double a, const double b):
-            m_a(a), m_b(b), m_c1(1./std::pow(1.+a, 2)), m_c2(1./std::pow(b-1., 2))
-    {
-    }
-
-    inline double operator()(const double x) const {
-        if(x < m_a)
-            return 2.*(x-m_a) * m_c1;
-        if(x < m_b)
-            return 0;
-
-        return 2.*(x - m_b) * m_c2;
-    }
-
-
-private:
-    const double m_a,m_b,m_c1,m_c2;
-};
-
-
 class WGrad
 {
 public:
@@ -93,8 +61,6 @@ public:
 private:
     const double m_a,m_b,m_c3;
 };
-
-
 
 template<typename T>
 struct DoubleWell
