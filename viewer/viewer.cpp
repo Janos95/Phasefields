@@ -188,7 +188,7 @@ void Viewer::makeDrawableCurrent(DrawableType type) {
     switch(type){
         case DrawableType::FaceColored : {
             auto d = new FaceColorDrawable(*object, mesh, *shaders[ShaderType::MeshVisualizerPrimitiveId], &drawableGroup);
-            d->texture = visFlags & VisualizationFlag::ConnectedComponents ? componentsTexture.get() : wsTexture.get();
+            d->texture = texture;
             d->offset = 0; d->scale = 3.f/static_cast<Float>(indices.size());
             drawable = d;
             break;
@@ -313,9 +313,10 @@ bool Viewer::drawConnectednessConstraintOptions(ConnectednessConstraint<Double>&
     if(ImGui::Checkbox("Connected Components", &visComponents)){
         std::lock_guard l(mutex);
         if(visComponents) {
-            makeDrawableCurrent(DrawableType::FaceColored);
             meta.flags &= NonExclusiveFlags; // deselect all
             meta.flags |= VisualizationFlag::ConnectedComponents;
+            texture = componentsTexture.get();
+            makeDrawableCurrent(DrawableType::FaceColored);
             update |= VisualizationFlag::ConnectedComponents;
             makeExclusive = true;
         }
@@ -325,9 +326,10 @@ bool Viewer::drawConnectednessConstraintOptions(ConnectednessConstraint<Double>&
     if(ImGui::Checkbox("Geodesic Weights", &visGeodesicWeights)){
         std::lock_guard l(mutex);
         if(visGeodesicWeights) {
-            makeDrawableCurrent(DrawableType::FaceColored);
             meta.flags &= NonExclusiveFlags; // deselect all
             meta.flags |= VisualizationFlag::GeodesicWeights;
+            texture = wsTexture.get();
+            makeDrawableCurrent(DrawableType::FaceColored);
             update |= VisualizationFlag::GeodesicWeights;
             makeExclusive = true;
         }

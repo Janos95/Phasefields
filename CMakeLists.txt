@@ -41,5 +41,4 @@ target_link_libraries(segmentation PRIVATE
         phasefields::viewer
 
         )
-
 #add_subdirectory(tests)

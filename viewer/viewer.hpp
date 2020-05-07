@@ -183,6 +183,7 @@ struct Viewer: public Magnum::Platform::Application{
     Cr::Containers::Array<Double> gradient;
     Cr::Containers::Pointer<Mg::GL::Texture2D> componentsTexture;
     Cr::Containers::Pointer<Mg::GL::Texture2D> wsTexture;
+    GL::Texture2D* texture = nullptr;
 
     SharedRessource<Mg::Double> doubleWellScaling;
     SharedRessource<Mg::Double> dirichletScaling;
