@@ -28,7 +28,7 @@
 #include <Magnum/Primitives/Cylinder.h>
 #include <Magnum/MeshTools/Compile.h>
 
-#include <thread>
+#include <tbb/task_group.h>
 #include <mutex>
 #include <atomic>
 
@@ -76,7 +76,7 @@ struct Paths : Object3D, Drawable {
     }
 
     void draw(const Matrix4& transformation, SceneGraph::Camera3D& camera) override {
-        if(!instanceData || muted) return;
+        if(!drawPaths || instanceData.empty()) return;
         Containers::arrayResize(instanceDataTransformed, Containers::NoInit, instanceData.size());
 
         for (int i = 0; i < instanceData.size(); ++i) {
@@ -96,7 +96,7 @@ struct Paths : Object3D, Drawable {
     GL::Buffer instanceBuffer;
     Containers::Array<InstanceData> instanceData;
     Containers::Array<InstanceData> instanceDataTransformed;
-    bool muted = false;
+    bool drawPaths = false;
 };
 
 struct Viewer: public Magnum::Platform::Application{
@@ -119,8 +119,8 @@ struct Viewer: public Magnum::Platform::Application{
     void drawPrimitiveOptions();
     void drawBrushOptions();
     void drawOptimizationContext();
-    bool drawConnectednessConstraintOptions(ConnectednessConstraint<Mg::Double>&, VisualizationFlags&);
-    void dumpToPly(std::string const& path, ConnectednessMetaData<Double> const&);
+    bool drawConnectednessConstraintOptions(ConnectednessConstraint<Mg::Double>&, bool&);
+    void dumpToPly(std::string const& path);
     void drawShaderOptions();
     void startOptimization();
     void stopOptimization();
@@ -165,7 +165,7 @@ struct Viewer: public Magnum::Platform::Application{
 
     solver::Problem problem;
     solver::Options options;
-    std::thread thread;
+    tbb::task_group g;
     std::mutex mutex;
     std::atomic_bool optimizing = false;
 
@@ -174,13 +174,12 @@ struct Viewer: public Magnum::Platform::Application{
     VisualizationFlags update = {};
     Functional* exclusiveVisualizer = nullptr;
     Cr::Containers::Array<Magnum::Double> phasefield;
-    Cr::Containers::Array<Magnum::Double> parameters;
+    Cr::Containers::Array<Double> gradient;
 
-    //connectedness exclusive data
+    //connectedness vis data
     Cr::Containers::Array<int> components;
     int numComponents = 0;
     Cr::Containers::Array<Double> ws;
-    Cr::Containers::Array<Double> gradient;
     Cr::Containers::Pointer<Mg::GL::Texture2D> componentsTexture;
     Cr::Containers::Pointer<Mg::GL::Texture2D> wsTexture;
     GL::Texture2D* texture = nullptr;
@@ -189,8 +188,7 @@ struct Viewer: public Magnum::Platform::Application{
     SharedRessource<Mg::Double> dirichletScaling;
     SharedRessource<Mg::Double> connectednessScaling;
 
-    Cr::Containers::Array<InstanceData> instanceData; //tf from cylinder to path section
-    Paths* paths = nullptr;
+
 
     Mg::Double phase = 0;
     Mg::Double targetDist;

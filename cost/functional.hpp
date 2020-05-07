@@ -37,6 +37,7 @@ struct Functional{
         VisualizationFlags flags = {};
         virtual ~MetaData() = default;
         virtual solver::Status operator()(solver::IterationSummary const&) { return solver::Status::CONTINUE; };
+        virtual void updateVis() { } /*this is called from gui thread so we can update some opengl stuff if we want to */
 
         using Ptr = Cr::Containers::Pointer<MetaData>;
 

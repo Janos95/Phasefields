@@ -38,6 +38,9 @@ struct Problem {
 
     [[nodiscard]] int numParameters() const;
 
+    Cr::Containers::Array<Mg::Double> parameters;
+    mutable Cr::Containers::Array<Mg::Double> gradient;
+
     Cr::Containers::Array<Cr::Containers::Pointer<Functional>> functionals;
     Cr::Containers::Array<Cr::Containers::Pointer<Functional>> constraints;
 };

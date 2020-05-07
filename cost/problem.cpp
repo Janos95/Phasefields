@@ -8,6 +8,7 @@
 #include <Corrade/Utility/Assert.h>
 
 #include <mutex>
+#include <Corrade/Utility/Algorithms.h>
 
 using namespace Corrade;
 using namespace Magnum;
@@ -22,7 +23,7 @@ bool Problem::evaluate(double const *parameters,
 
     *cost = 0.;
     if (jacobians)
-        std::fill_n(jacobians, n, 0.);
+        std::fill(gradient.begin(), gradient.end(), 0.);
 
     std::mutex m1;
     std::mutex m2;
@@ -45,13 +46,14 @@ bool Problem::evaluate(double const *parameters,
                 auto derivative = rho[1] * scaling[1];
                 std::lock_guard l(m1);
                 for (int i = 0; i < n; ++i)
-                    jacobians[i] += derivative * grad[i];
+                    gradient[i] += derivative * grad[i];
             }
             std::lock_guard l(m2);
             *cost += rho[0];
        // });
     }
     //g.wait();
+    Cr::Utility::copy(gradient, {jacobians, n});
     return true;
 }
 

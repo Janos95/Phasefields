@@ -28,8 +28,8 @@
 #include <Magnum/GL/TextureFormat.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/ImageView.h>
-#include <Magnum/GL/Renderer.h>
 #include <Magnum/DebugTools/ColorMap.h>
+
 
 using namespace Corrade;
 using namespace Magnum;
@@ -76,6 +76,18 @@ std::unordered_map<ColorMapType, Mg::GL::Texture2D> makeColorMapTextures(){
 }
 
 
+solver::Status UpdatePhasefield::operator ()(solver::IterationSummary const&){
+    std::lock_guard l(viewer.mutex);
+    if(viewer.visFlags & VisualizationFlag::Phasefield){
+        Utility::copy(viewer.problem.parameters, viewer.phasefield);
+        viewer.update |= VisualizationFlag::Phasefield;
+    }
+    if(viewer.visFlags & VisualizationFlag::Gradient){
+        Utility::copy(viewer.problem.gradient, viewer.gradient);
+        viewer.update |= VisualizationFlag::Gradient;
+    }
+    return solver::Status::CONTINUE;
+}
 
 
 Viewer::Viewer(int argc, char** argv):
@@ -144,7 +156,6 @@ Viewer::Viewer(int argc, char** argv):
 
 
 
-    paths = new Paths(&scene, drawableGroup);
     object = new Object3D(&scene);
 
     GL::Renderer::enable(GL::Renderer::Feature::DepthTest);
@@ -155,13 +166,7 @@ Viewer::Viewer(int argc, char** argv):
     setMinimalLoopPeriod(16);
 }
 
-solver::Status UpdatePhasefield::operator ()(solver::IterationSummary const&){
-    std::lock_guard l(viewer.mutex);
-    if(viewer.visFlags & VisualizationFlag::Phasefield)
-        Utility::copy(viewer.parameters, viewer.phasefield);
-    viewer.update |= VisualizationFlag::Phasefield;
-    return solver::Status::CONTINUE;
-}
+
 
 void Viewer::drawSubdivisionOptions() {
     if (ImGui::TreeNode("Subdivisions")) {
@@ -250,7 +255,7 @@ void Viewer::drawBrushOptions() {
 }
 
 
-void Viewer::dumpToPly(std::string const& path, ConnectednessMetaData<Double> const& meta){
+void Viewer::dumpToPly(std::string const& path){
     auto triangles = Cr::Containers::arrayCast<Vector3ui>(indices);
     std::ofstream out("/tmp/phase.ply");
     out << "ply" << std::endl;
@@ -284,11 +289,11 @@ void Viewer::dumpToPly(std::string const& path, ConnectednessMetaData<Double> co
 }
 
 /**
- * returns true if functional is now handling exclusive visualizations
+ * returns true if an event triggered an exclusive visualizations options.
  * Also note that we can safely read from meta.flags since the optimization thread
  * only reads from those as well (even taking the lock in case we modify)
  */
-bool Viewer::drawConnectednessConstraintOptions(ConnectednessConstraint<Double>& f, VisualizationFlags& fl){
+bool Viewer::drawConnectednessConstraintOptions(ConnectednessConstraint<Double>& f, bool& evaluateProblem){
     auto& meta = f.getMetaData();
     double a = meta.a, b = meta.b;
     bool makeExclusive = false;
@@ -296,60 +301,54 @@ bool Viewer::drawConnectednessConstraintOptions(ConnectednessConstraint<Double>&
         std::lock_guard l(mutex);
         meta.a = a; meta.b = b;
     }
-    bool visPaths = static_cast<bool>(meta.flags & VisualizationFlag::Paths);
-    if(ImGui::Checkbox("Visualize Shortest Paths", &visPaths)){
+
+    ImGui::BeginGroup();
+    if(ImGui::Checkbox("Visualize Shortest Paths", &meta.paths->drawPaths) ){
         std::lock_guard l(mutex);
-        if(visPaths) {
-            paths->muted = false;
-            meta.flags |= VisualizationFlag::Paths;
-        }
-        else {
-            meta.flags &= ~VisualizationFlag::Paths;
-            paths->muted = true;
+        if(meta.paths->drawPaths){
+            evaluateProblem = true;
+            meta.generateLineStrips = true;
+        } else {
+            meta.generateLineStrips = false;
         }
     }
-    ImGui::SameLine();
-    bool visComponents = static_cast<bool>(meta.flags & VisualizationFlag::ConnectedComponents);
-    if(ImGui::Checkbox("Connected Components", &visComponents)){
-        std::lock_guard l(mutex);
-        if(visComponents) {
-            meta.flags &= NonExclusiveFlags; // deselect all
-            meta.flags |= VisualizationFlag::ConnectedComponents;
-            texture = componentsTexture.get();
-            makeDrawableCurrent(DrawableType::FaceColored);
-            update |= VisualizationFlag::ConnectedComponents;
-            makeExclusive = true;
-        }
-        else meta.flags &= ~VisualizationFlag::ConnectedComponents;
-    }
+
     bool visGeodesicWeights = static_cast<bool>(meta.flags & VisualizationFlag::GeodesicWeights);
     if(ImGui::Checkbox("Geodesic Weights", &visGeodesicWeights)){
         std::lock_guard l(mutex);
         if(visGeodesicWeights) {
-            meta.flags &= NonExclusiveFlags; // deselect all
-            meta.flags |= VisualizationFlag::GeodesicWeights;
             texture = wsTexture.get();
             makeDrawableCurrent(DrawableType::FaceColored);
-            update |= VisualizationFlag::GeodesicWeights;
+            meta.flags = VisualizationFlag::GeodesicWeights;
             makeExclusive = true;
         }
         else meta.flags &= ~VisualizationFlag::GeodesicWeights;
     }
-
+    ImGui::EndGroup();
     ImGui::SameLine();
+    ImGui::BeginGroup();
+    bool visComponents = static_cast<bool>(meta.flags & VisualizationFlag::ConnectedComponents);
+    if(ImGui::Checkbox("Connected Components", &visComponents)){
+        std::lock_guard l(mutex);
+        if(visComponents) {
+            texture = componentsTexture.get();
+            makeDrawableCurrent(DrawableType::FaceColored);
+            meta.flags = VisualizationFlag::ConnectedComponents;
+            makeExclusive = true;
+        }
+        else meta.flags &= ~VisualizationFlag::ConnectedComponents;
+    }
     bool visGradient = static_cast<bool>(meta.flags & VisualizationFlag::Gradient);
     if(ImGui::Checkbox("Gradient", &visGradient)){
         std::lock_guard l(mutex);
         if(visGradient) {
             makeDrawableCurrent(DrawableType::PhongDiffuse);
-            meta.flags &= NonExclusiveFlags; // deselect all
-            meta.flags |= VisualizationFlag::Gradient;
-            update |= VisualizationFlag::Gradient;
+            meta.flags = VisualizationFlag::Gradient;
             makeExclusive = true;
         }
         else meta.flags &= ~VisualizationFlag::Gradient;
     }
-    fl = meta.flags;
+    ImGui::EndGroup();
     return makeExclusive;
 }
 
@@ -380,6 +379,7 @@ void Viewer::drawOptimizationContext() {
 
         int nodeCount = 0;
         int toRemove = -1;
+        bool evaluateProblem = false;
         auto& fs = problem.functionals;
         for(int i = 0; i < fs.size(); ++i){
             auto& f = *fs[i];
@@ -406,16 +406,16 @@ void Viewer::drawOptimizationContext() {
                     break;
                 case FunctionalType::Connectedness :
                     ImGui::Text("Connectedness Constraint");
-                    VisualizationFlags flags;
-                    if(drawConnectednessConstraintOptions(dynamic_cast<ConnectednessConstraint<Double>&>(f), flags)){
+                    if(drawConnectednessConstraintOptions(dynamic_cast<ConnectednessConstraint<Double>&>(f), evaluateProblem)){
+                        evaluateProblem = true;
                         auto funcPtr = fs[i].get();
                         if(exclusiveVisualizer && exclusiveVisualizer != funcPtr) {
                             std::lock_guard l(mutex);
-                            exclusiveVisualizer->metaData->flags &= NonExclusiveFlags;
+                            exclusiveVisualizer->metaData->flags = {};
                         }
-                        exclusiveVisualizer = fs[i].get();
-                        visFlags &= flags | NonExclusiveFlags; //set exclusive flags from functional
-                    } else visFlags |= flags;
+                        exclusiveVisualizer = funcPtr;
+                        visFlags = {};
+                    }
                     break;
             }
 
@@ -427,7 +427,6 @@ void Viewer::drawOptimizationContext() {
 
         if(toRemove >= 0){
             auto f = problem.functionals[toRemove].get();
-            visFlags &= ~f->metaData->flags; //clear everything it was displaying
             if(f == exclusiveVisualizer)
                 exclusiveVisualizer = nullptr;
 
@@ -436,21 +435,33 @@ void Viewer::drawOptimizationContext() {
         }
 
         bool visPhasefield = static_cast<bool>(visFlags & VisualizationFlag::Phasefield);
-        if(ImGui::Checkbox("Draw Phasefield", &visPhasefield)){
-            if(visPhasefield){
+        if(ImGui::Checkbox("Phasefield", &visPhasefield)){
+            if(visPhasefield) {
                 makeDrawableCurrent(DrawableType::PhongDiffuse);
-                auto textureCoords = meshData.mutableAttribute<Vector2>(Trade::MeshAttribute::TextureCoordinates);
-                for (int i = 0; i < phasefield.size(); ++i)
-                    textureCoords[i].x() = .5f * (phasefield[i] + 1.f);
-                visFlags &= NonExclusiveFlags;
-                visFlags |= VisualizationFlag::Phasefield;
+                std::lock_guard l(mutex);
+                visFlags = VisualizationFlag::Phasefield;
                 update |= VisualizationFlag::Phasefield;
-                if(exclusiveVisualizer){
-                    std::lock_guard l(mutex);
-                    exclusiveVisualizer->metaData->flags &= NonExclusiveFlags;
+                evaluateProblem = true;
+                if (exclusiveVisualizer) {
+                    exclusiveVisualizer->metaData->flags = {};
                     exclusiveVisualizer = nullptr;
                 }
-            } else visFlags &= ~VisualizationFlag::Phasefield;
+            }
+        }
+        ImGui::SameLine();
+        bool visGradient = static_cast<bool>(visFlags & VisualizationFlag::Gradient);
+        if(ImGui::Checkbox("Gradient", &visGradient)){
+            if(visGradient) {
+                makeDrawableCurrent(DrawableType::PhongDiffuse);
+                std::lock_guard l(mutex);
+                visFlags = VisualizationFlag::Gradient;
+                update |= VisualizationFlag::Gradient;
+                evaluateProblem = true;
+                if (exclusiveVisualizer) {
+                    exclusiveVisualizer->metaData->flags = {};
+                    exclusiveVisualizer = nullptr;
+                }
+            }
         }
 
         static Double epsilon = 0.1;
@@ -487,6 +498,13 @@ void Viewer::drawOptimizationContext() {
         ImGui::SameLine();
         ImGui::Text("Descent Direction");
 
+
+        if(evaluateProblem && !optimizing){
+            double r;
+            Utility::copy(problem.parameters, phasefield);
+            problem.evaluate(phasefield.data(), &r, gradient.data());
+        }
+
         if (ImGui::Button("Optimize") && !problem.functionals.empty())
             startOptimization();
 
@@ -502,9 +520,6 @@ void Viewer::drawOptimizationContext() {
 void Viewer::startOptimization() {
     stopOptimization();
 
-    Containers::arrayResize(parameters, phasefield.size());
-    Utility::copy(phasefield, parameters);
-
     Containers::Array<solver::iteration_callback_type> callbacks;
     for(auto& f : problem.functionals)
         Containers::arrayAppend(callbacks, Containers::InPlaceInit, *f->metaData);
@@ -512,24 +527,26 @@ void Viewer::startOptimization() {
     options.callbacks = std::move(callbacks);
 
     optimizing = true;
-    thread = std::thread([this]{
+    g.run([this]{
         solver::Summary summary;
-        solve(options, problem, parameters.data(), &summary);
+        solve(options, problem, problem.parameters.data(), &summary);
+        optimizing = false;
         //Debug{} << summary.briefReport().c_str();
     });
 }
 
 void Viewer::stopOptimization() {
-    if(optimizing.exchange(false))
-        thread.join();
+    optimizing = false;
+    g.wait();
 }
 
+/* @todo would be nice to rework this at some point to handle hard deps in constructors.. */
 Containers::Pointer<Functional> Viewer::makeFunctional(FunctionalType type) {
     auto ts = Containers::arrayCast<Vector3ui>(indices);
     switch (type) {
         case FunctionalType::Area1 : {
             auto p = Containers::pointer<AreaRegularizer1>(vertices, ts);
-            p->type = FunctionalType::Area1; //@todo somehow this is not working
+            p->type = FunctionalType::Area1; //@todo somehow this does not pick up the type from ctor
             return p;
         }
         case FunctionalType::Area2 : {
@@ -551,7 +568,8 @@ Containers::Pointer<Functional> Viewer::makeFunctional(FunctionalType type) {
         case FunctionalType::Connectedness :
             auto p = Containers::pointer<ConnectednessConstraint<Double>>(vertices, ts);
             p->metaData->scaling = connectednessScaling;
-            p->getMetaData().viewer = this;
+            p->getMetaData().viewer = this; /* urgh, but easy */
+            p->getMetaData().paths = new Paths(&scene, drawableGroup);
             return p;
     }
     return nullptr;
@@ -572,8 +590,8 @@ void Viewer::paint(){
     auto textureCoords = meshData.mutableAttribute<Vector2>(Trade::MeshAttribute::TextureCoordinates);
     for(auto [d, i] : distances) {
         if(d > targetDist) break;
-        auto u = (1.f - recursiveFilterFactor) * phasefield[i] + recursiveFilterFactor * phase;
-        phasefield[i] = u;
+        auto u = (1.f - recursiveFilterFactor) * problem.parameters[i] + recursiveFilterFactor * phase;
+        problem.parameters[i] = u;
         textureCoords[i].x() = .5f * (u + 1.f);
     }
 }
@@ -649,6 +667,8 @@ void Viewer::updateIntenalDataStrucutres(){
     Containers::arrayResize(gradient, vertices.size());
     Containers::arrayResize(ws, indices.size() / 3);
     Containers::arrayResize(components, indices.size() / 3);
+    Containers::arrayResize(problem.parameters, phasefield.size());
+    Containers::arrayResize(problem.gradient, phasefield.size());
     numComponents = 0;
     update = visFlags; //update everything
 }
@@ -912,6 +932,19 @@ void Viewer::mouseScrollEvent(MouseScrollEvent& event) {
     redraw(); /* camera has changed, redraw! */
 }
 
+void normalizeInto(Containers::ArrayView<Double> xs, Containers::StridedArrayView1D<Vector2> ys){
+    CORRADE_ASSERT(xs.size() == ys.size(), "normalizeInto : arrays dont have the same length",);
+    auto [min, max] = Math::minmax(xs);
+    auto l = max - min;
+    if(l < std::numeric_limits<Double>::epsilon()){ //handle zero gradient corretly
+        for (auto& y : ys) y.x() = .5f;
+    } else {
+        for (int i = 0; i < xs.size(); ++i) {
+            ys[i].x() = static_cast<Float>((xs[i] - min) / l);
+        }
+    }
+}
+
 void Viewer::tickEvent()
 {
     if(!stopPainting) {
@@ -921,39 +954,38 @@ void Viewer::tickEvent()
         return;
     }
 
+    //exclusive events
     {
         std::lock_guard l(mutex);
-        if (update & visFlags & VisualizationFlag::Paths) {
-            Containers::arrayResize(paths->instanceData, Containers::NoInit, instanceData.size());
-            Utility::copy(instanceData, paths->instanceData);
-            update &= ~VisualizationFlag::Paths;
-        }
-        if (update & visFlags & VisualizationFlag::ConnectedComponents) {
+        if (update & VisualizationFlag::ConnectedComponents) {
             auto& f = dynamic_cast<ConnectednessConstraint<Double>&>(*exclusiveVisualizer);
             updateFaceColorTextureWithComponents();
             auto& d = dynamic_cast<FaceColorDrawable&>(*drawable);
             update &= ~VisualizationFlag::ConnectedComponents;
         }
-        if (update & visFlags & VisualizationFlag::GeodesicWeights) {
+        if (update & VisualizationFlag::GeodesicWeights) {
             auto& f = dynamic_cast<ConnectednessConstraint<Double>&>(*exclusiveVisualizer);
             updateFaceColorTextureWithWeights();
             update &= ~VisualizationFlag::GeodesicWeights;
         }
-        if (update & visFlags & VisualizationFlag::Gradient) {
+        if (update & VisualizationFlag::Gradient) {
             auto textureCoords = meshData.mutableAttribute<Vector2>(Trade::MeshAttribute::TextureCoordinates);
-            for (int i = 0; i < gradient.size(); ++i)
-                textureCoords[i].x() = gradient[i]; /* @note gradient needs to be normalized */
+            normalizeInto(gradient, textureCoords);
             reuploadVertices(vertexBuffer, meshData);
             update &= ~VisualizationFlag::Gradient;
         }
-        if (update & visFlags & VisualizationFlag::Phasefield) {
+        if (update & VisualizationFlag::Phasefield) {
             auto textureCoords = meshData.mutableAttribute<Vector2>(Trade::MeshAttribute::TextureCoordinates);
             for (int i = 0; i < phasefield.size(); ++i)
                 textureCoords[i].x() = .5f * (phasefield[i] + 1.f);
             reuploadVertices(vertexBuffer, meshData);
             update &= ~VisualizationFlag::Phasefield;
         }
+        for (auto const& f : problem.functionals) {
+            f->metaData->updateVis();
+        }
     }
+
 }
 
 void Viewer::drawEvent() {

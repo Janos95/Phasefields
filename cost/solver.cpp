@@ -65,7 +65,7 @@ void solve(solver::Options& options, solver::Problem& problem, double* params, s
             .line_search_direction_type = mapLineSearchType(options.line_search_direction_type),
             .max_num_iterations = options.max_num_iterations,
             .minimizer_progress_to_stdout = options.minimizer_progress_to_stdout,
-            .update_state_every_iteration = options.update_state_every_iteration
+            .update_state_every_iteration = options.update_state_every_iteration,
         };
         Containers::Array<Containers::Pointer<CeresCallbackWrapper>> cbs(options.callbacks.size());
         for (int i = 0; i < cbs.size(); ++i)

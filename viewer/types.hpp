@@ -36,12 +36,9 @@ enum class VisualizationFlag : Magnum::UnsignedInt {
     GeodesicWeights = 1u << 1u,
     ConnectedComponents = 1u << 2u,
     Gradient = 1u << 3u,
-    Paths = 1u << 4u,
 };
 
 using VisualizationFlags = Corrade::Containers::EnumSet<VisualizationFlag>;
 CORRADE_ENUMSET_OPERATORS(VisualizationFlags)
 
-constexpr VisualizationFlags ExclusivesFlags = ~VisualizationFlag::Paths;
-constexpr VisualizationFlags NonExclusiveFlags = ~ExclusivesFlags;
 
