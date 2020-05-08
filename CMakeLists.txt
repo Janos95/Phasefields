@@ -22,8 +22,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 list(APPEND CMAKE_CXX_FLAGS "-frounding-math")
 
 add_subdirectory(utilities)
-#add_subdirectory(polygonizer)
 add_subdirectory(scoped_timer)
+add_subdirectory(visualization)
+add_subdirectory(polygonizer)
 add_subdirectory(cost)
 add_subdirectory(exact_geodesics)
 add_subdirectory(shaders)
@@ -33,12 +34,11 @@ add_subdirectory(viewer)
 #set(CMAKE_CXX_STANDARD_LIBRARIES tbb)
 #set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES /usr/local/include/c++/10.0.1)
 
-add_executable(segmentation
-        main.cpp
-        )
+#add_executable(segmentation
+#        main.cpp
+#        )
 
-target_link_libraries(segmentation PRIVATE
-        phasefields::viewer
-
-        )
+#target_link_libraries(segmentation PRIVATE
+#        phasefields::viewer
+#        )
 #add_subdirectory(tests)

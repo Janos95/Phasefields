@@ -18,19 +18,17 @@ using namespace Corrade;
 
 void subdivide(
         std::uint32_t numSubdivisions,
-        Trade::MeshData& data,
+        Trade::MeshData const& original,
         Containers::Array<Double>& phasefield,
-        Containers::Array<Vector3d>& V,
-        Containers::Array<UnsignedInt>& T,
         Trade::MeshData& meshData) {
 
-    Containers::Array<Float> phasefieldF(Containers::NoInit, data.vertexCount());
-    for(auto i = 0; i < data.vertexCount(); ++i) phasefieldF[i] = phasefield[i];
-    auto indices = data.indicesAsArray();
-    auto vertexData = MeshTools::interleave(data.attribute<Vector3>(Trade::MeshAttribute::Position), phasefieldF);
+    Containers::Array<Float> phasefieldF(Containers::NoInit, original.vertexCount());
+    for(auto i = 0; i < original.vertexCount(); ++i) phasefieldF[i] = phasefield[i];
+    auto indices = original.indicesAsArray();
+    auto vertexData = MeshTools::interleave(original.attribute<Vector3>(Trade::MeshAttribute::Position), phasefieldF);
 
     auto indicesSizeCurrent = indices.size();
-    auto verticesSizeCurrent = data.vertexCount();
+    auto verticesSizeCurrent = original.vertexCount();
     auto indicesSize = indicesSizeCurrent * std::pow(4, numSubdivisions);
     auto verticesSize = verticesSizeCurrent + (indicesSize - indicesSizeCurrent)/3;
 
@@ -61,14 +59,9 @@ void subdivide(
     //update everything
     meshData = preprocess(md, CompileFlag::GenerateSmoothNormals|CompileFlag::AddTextureCoordinates);
     Containers::arrayResize(phasefield, sizeAfterRemoving);
-    Containers::arrayResize(V, sizeAfterRemoving);
-    auto textureView = meshData.mutableAttribute<Vector2>(Trade::MeshAttribute::TextureCoordinates);
     for (int j = 0; j < sizeAfterRemoving; ++j) {
         auto u = vertices[j].w();
         phasefield[j] = u;
-        textureView[j].x() = .5f * (u + 1.f);
-        V[j] = Vector3d(vertices[j].xyz());
     }
-    T = std::move(indices);
 }
 

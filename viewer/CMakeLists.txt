@@ -8,10 +8,6 @@ add_library(viewer SHARED
         arc_ball.cpp
         arc_ball.hpp
         arc_ball_camera.hpp
-        upload.cpp
-        upload.hpp
-        drawables.cpp
-        drawables.hpp
         primitives.hpp
         primitives.cpp
         subdivision.hpp
@@ -20,8 +16,9 @@ add_library(viewer SHARED
         optimization_context.cpp
         custom_widgets.hpp
         custom_widgets.cpp
-        types.hpp
         ${viewer_RESOURCES})
+
+
 
 target_include_directories(viewer PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(viewer
@@ -30,6 +27,7 @@ target_link_libraries(viewer
             phasefields::scoped_timer
             phasefields::cost
             phasefields::exact_geodesics
+            phasefields::visualization
             Magnum::GL
             Magnum::SceneGraph
             Magnum::Magnum

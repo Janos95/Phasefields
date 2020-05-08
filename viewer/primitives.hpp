@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../polygonizer/primitive_options.hpp"
+#include "primitive_options.hpp"
 
 #include <Magnum/Magnum.h>
 #include <Magnum/Trade/MeshData.h>

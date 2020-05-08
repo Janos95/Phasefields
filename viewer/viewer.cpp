@@ -76,14 +76,17 @@ std::unordered_map<ColorMapType, Mg::GL::Texture2D> makeColorMapTextures(){
 }
 
 
+
 solver::Status UpdatePhasefield::operator ()(solver::IterationSummary const&){
     std::lock_guard l(viewer.mutex);
+    auto coords = viewer.meshData.mutableAttribute(Trade::MeshAttribute::TextureCoordinates);
+    auto xcoords = Containers::arrayCast<2, Float>(coords).slice<1>();
     if(viewer.visFlags & VisualizationFlag::Phasefield){
-        Utility::copy(viewer.problem.parameters, viewer.phasefield);
+        normalizeInto(viewer.problem.parameters, xcoords, -1, 1);
         viewer.update |= VisualizationFlag::Phasefield;
     }
     if(viewer.visFlags & VisualizationFlag::Gradient){
-        Utility::copy(viewer.problem.gradient, viewer.gradient);
+        normalizeInto(viewer.problem.parameters, xcoords);
         viewer.update |= VisualizationFlag::Gradient;
     }
     return solver::Status::CONTINUE;
@@ -172,11 +175,10 @@ void Viewer::drawSubdivisionOptions() {
     if (ImGui::TreeNode("Subdivisions")) {
         ImGui::Text("Currently we have %d vertices and %d faces", (int)vertices.size(), (int)indices.size() / 3);
         constexpr int step = 1;
-        static std::uint32_t subs = 0;
-        ImGui::InputScalar("Number of Sibdivision (wrt. orignal mesh)", ImGuiDataType_U32, &subs, &step, nullptr, "%d");
+        ImGui::InputScalar("Number of Sibdivision (wrt. orignal mesh)", ImGuiDataType_U32, &numSubdivisions, &step, nullptr, "%d");
         if (ImGui::Button("do subdivision")) {
-            if(subs >= numSubdivisions) subdivide(subs - numSubdivisions, meshData, phasefield, vertices, indices, meshData);
-            else subdivide(subs, original, phasefield, vertices, indices, meshData);
+            subdivide(numSubdivisions, original, problem.parameters, meshData);
+            updateInternalDataStructures();
             upload(mesh, vertexBuffer, indexBuffer, meshData);
             updateFunctionals(problem.functionals);
             updateFunctionals(problem.constraints);
@@ -193,7 +195,7 @@ void Viewer::makeDrawableCurrent(DrawableType type) {
     switch(type){
         case DrawableType::FaceColored : {
             auto d = new FaceColorDrawable(*object, mesh, *shaders[ShaderType::MeshVisualizerPrimitiveId], &drawableGroup);
-            d->texture = texture;
+            d->texture = faceTexture.get();
             d->offset = 0; d->scale = 3.f/static_cast<Float>(indices.size());
             drawable = d;
             break;
@@ -219,12 +221,10 @@ void Viewer::makeDrawableCurrent(DrawableType type) {
 
 void Viewer::drawPrimitiveOptions() {
     if(handlePrimitive(original, expression)){
-        updateIntenalDataStrucutres();
+        updateInternalDataStructures();
         upload(mesh, vertexBuffer, indexBuffer, meshData);
         updateFunctionals(problem.functionals);
         updateFunctionals(problem.constraints);
-
-        makeDrawableCurrent(drawableType);
     }
 }
 
@@ -254,38 +254,13 @@ void Viewer::drawBrushOptions() {
     }
 }
 
-
-void Viewer::dumpToPly(std::string const& path){
-    auto triangles = Cr::Containers::arrayCast<Vector3ui>(indices);
-    std::ofstream out("/tmp/phase.ply");
-    out << "ply" << std::endl;
-    out << "format ascii 1.0\n";
-    out << "element vertex " << vertices.size() << '\n';
-    out << "property float x\n";
-    out << "property float y\n";
-    out << "property float z\n";
-    out << "property float j\n";
-    out << "property float u\n";
-    out << "element face " << triangles.size() << '\n';
-    out << "property list uchar int vertex_indices\n";
-    out << "property int c\n";
-    out << "property float w\n";
-    out << "end_header\n";
-
-    for (int i = 0; i < vertices.size(); ++i) {
-        for (int j = 0; j < 3; ++j) {
-            out << vertices[i][j] << ' ';
-        }
-        out << gradient[i] << ' ' << phasefield[i] << '\n';
+void Viewer::makeExclusiveVisualizer(Functional* funcPtr) {
+    if(exclusiveVisualizer && exclusiveVisualizer != funcPtr) {
+        std::lock_guard l(mutex);
+        exclusiveVisualizer->metaData->flags = {};
     }
-
-    for (int i = 0; i < triangles.size(); ++i) {
-        out << "3 ";
-        for (int j = 0; j < 3; ++j) {
-            out << triangles[i][j] << ' ';
-        }
-        out << components[i] << ' ' << ws[i] << '\n';
-    }
+    exclusiveVisualizer = funcPtr;
+    visFlags = {};
 }
 
 /**
@@ -293,10 +268,10 @@ void Viewer::dumpToPly(std::string const& path){
  * Also note that we can safely read from meta.flags since the optimization thread
  * only reads from those as well (even taking the lock in case we modify)
  */
-bool Viewer::drawConnectednessConstraintOptions(ConnectednessConstraint<Double>& f, bool& evaluateProblem){
+bool Viewer::drawConnectednessConstraintOptions(ConnectednessConstraint<Double>& f){
     auto& meta = f.getMetaData();
     double a = meta.a, b = meta.b;
-    bool makeExclusive = false;
+    bool evaluateFunctional = false;
     if(dragDoubleRange2("Positive Interval", &a, &b, 0.01f, -1.f, 1.f, "Min: %.2f", "Max: %.2f",1.f)){
         std::lock_guard l(mutex);
         meta.a = a; meta.b = b;
@@ -306,7 +281,7 @@ bool Viewer::drawConnectednessConstraintOptions(ConnectednessConstraint<Double>&
     if(ImGui::Checkbox("Visualize Shortest Paths", &meta.paths->drawPaths) ){
         std::lock_guard l(mutex);
         if(meta.paths->drawPaths){
-            evaluateProblem = true;
+            evaluateFunctional = true;
             meta.generateLineStrips = true;
         } else {
             meta.generateLineStrips = false;
@@ -317,10 +292,10 @@ bool Viewer::drawConnectednessConstraintOptions(ConnectednessConstraint<Double>&
     if(ImGui::Checkbox("Geodesic Weights", &visGeodesicWeights)){
         std::lock_guard l(mutex);
         if(visGeodesicWeights) {
-            texture = wsTexture.get();
             makeDrawableCurrent(DrawableType::FaceColored);
+            makeExclusiveVisualizer(&f);
             meta.flags = VisualizationFlag::GeodesicWeights;
-            makeExclusive = true;
+            evaluateFunctional = true;
         }
         else meta.flags &= ~VisualizationFlag::GeodesicWeights;
     }
@@ -331,10 +306,10 @@ bool Viewer::drawConnectednessConstraintOptions(ConnectednessConstraint<Double>&
     if(ImGui::Checkbox("Connected Components", &visComponents)){
         std::lock_guard l(mutex);
         if(visComponents) {
-            texture = componentsTexture.get();
             makeDrawableCurrent(DrawableType::FaceColored);
+            makeExclusiveVisualizer(&f);
             meta.flags = VisualizationFlag::ConnectedComponents;
-            makeExclusive = true;
+            evaluateFunctional = true;
         }
         else meta.flags &= ~VisualizationFlag::ConnectedComponents;
     }
@@ -343,13 +318,14 @@ bool Viewer::drawConnectednessConstraintOptions(ConnectednessConstraint<Double>&
         std::lock_guard l(mutex);
         if(visGradient) {
             makeDrawableCurrent(DrawableType::PhongDiffuse);
+            makeExclusiveVisualizer(&f);
             meta.flags = VisualizationFlag::Gradient;
-            makeExclusive = true;
+            evaluateFunctional = true;
         }
         else meta.flags &= ~VisualizationFlag::Gradient;
     }
     ImGui::EndGroup();
-    return makeExclusive;
+    return evaluateFunctional;
 }
 
 void Viewer::drawOptimizationContext() {
@@ -406,16 +382,8 @@ void Viewer::drawOptimizationContext() {
                     break;
                 case FunctionalType::Connectedness :
                     ImGui::Text("Connectedness Constraint");
-                    if(drawConnectednessConstraintOptions(dynamic_cast<ConnectednessConstraint<Double>&>(f), evaluateProblem)){
-                        evaluateProblem = true;
-                        auto funcPtr = fs[i].get();
-                        if(exclusiveVisualizer && exclusiveVisualizer != funcPtr) {
-                            std::lock_guard l(mutex);
-                            exclusiveVisualizer->metaData->flags = {};
-                        }
-                        exclusiveVisualizer = funcPtr;
-                        visFlags = {};
-                    }
+                    evaluateProblem |= drawConnectednessConstraintOptions(
+                            dynamic_cast<ConnectednessConstraint<Double>&>(f));
                     break;
             }
 
@@ -501,8 +469,7 @@ void Viewer::drawOptimizationContext() {
 
         if(evaluateProblem && !optimizing){
             double r;
-            Utility::copy(problem.parameters, phasefield);
-            problem.evaluate(phasefield.data(), &r, gradient.data());
+            problem.evaluate(problem.parameters.data(), &r, problem.gradient.data());
         }
 
         if (ImGui::Button("Optimize") && !problem.functionals.empty())
@@ -565,10 +532,10 @@ Containers::Pointer<Functional> Viewer::makeFunctional(FunctionalType type) {
             return p;
         }
         case FunctionalType::Connectedness :
-            auto p = Containers::pointer<ConnectednessConstraint<Double>>(vertices, ts);
+            auto meta = Containers::pointer<ConnectednessMetaData<Double>>(meshData, faceColors, update, mutex);
+            meta->paths = new Paths(&scene, drawableGroup);
+            auto p = Containers::pointer<ConnectednessConstraint<Double>>(vertices, ts, std::move(meta));
             p->metaData->scaling = connectednessScaling;
-            p->getMetaData().viewer = this; /* urgh, but easy */
-            p->getMetaData().paths = new Paths(&scene, drawableGroup);
             return p;
     }
     return nullptr;
@@ -648,7 +615,7 @@ Vector3 Viewer::unproject(Vector2i const& windowPosition) {
     return (camera->transformationMatrix() * camera->projectionMatrix().inverted()).transformPoint(in);
 }
 
-void Viewer::updateIntenalDataStrucutres(){
+void Viewer::updateInternalDataStructures(){
     meshData = preprocess(original, CompileFlag::GenerateSmoothNormals|CompileFlag::AddTextureCoordinates);
     CORRADE_ASSERT(meshData.hasAttribute(Trade::MeshAttribute::TextureCoordinates),"error", );
     auto points = meshData.attribute<Vector3>(Trade::MeshAttribute::Position);
@@ -656,66 +623,23 @@ void Viewer::updateIntenalDataStrucutres(){
     for (int i = 0; i < points.size(); ++i)
         vertices[i] = Vector3d(points[i]);
     indices = meshData.indicesAsArray();
-    Containers::arrayResize(phasefield, vertices.size());
     upload(mesh, vertexBuffer, indexBuffer, meshData);
     const Magnum::Vector2i size(indices.size() / 3, 1);
-    wsTexture.reset(new GL::Texture2D{});
-    wsTexture->setStorage(1, Magnum::GL::TextureFormat::RGB8, size);
-    componentsTexture.reset(new GL::Texture2D{});
-    componentsTexture->setStorage(1, Magnum::GL::TextureFormat::RGB8, size);
-    Containers::arrayResize(gradient, vertices.size());
-    Containers::arrayResize(ws, indices.size() / 3);
-    Containers::arrayResize(components, indices.size() / 3);
-    Containers::arrayResize(problem.parameters, phasefield.size());
-    Containers::arrayResize(problem.gradient, phasefield.size());
-    numComponents = 0;
+
+    faceTexture.reset(new GL::Texture2D{});
+    faceTexture->setStorage(1, Magnum::GL::TextureFormat::RGB8, size)
+                .setMinificationFilter(Magnum::SamplerFilter::Nearest)
+                .setMagnificationFilter(Magnum::SamplerFilter::Nearest)
+                .setWrapping(Magnum::SamplerWrapping::ClampToEdge);
+
+    Containers::arrayResize(faceColors, indices.size() / 3);
+    Containers::arrayResize(problem.parameters, vertices.size());
+    Containers::arrayResize(problem.gradient, vertices.size());
+
     update = visFlags; //update everything
 }
 
 
-void Viewer::updateFaceColorTextureWithComponents() {
-    Deg hue = 42.0_degf;
-    Containers::Array<Color3ub> randomColors(Containers::NoInit, numComponents);
-    for (int i = 0; i < numComponents; ++i)
-        randomColors[i] = Color3ub::fromHsv({hue += 137.5_degf, 0.75f, 0.9f});
-
-    Containers::Array<Vector3ub> colors(Containers::NoInit, components.size());
-    for (int i = 0; i < components.size(); ++i) {
-        if (components[i] >= 0 && !randomColors.empty())
-            colors[i] = randomColors[components[i]];
-        else
-            colors[i] = Color3ub(255,253,208);
-    }
-
-    const Magnum::Vector2i size(components.size(), 1);
-    componentsTexture->setMinificationFilter(Magnum::SamplerFilter::Nearest)
-                      .setMagnificationFilter(Magnum::SamplerFilter::Nearest)
-                      .setWrapping(Magnum::SamplerWrapping::ClampToEdge) // or Repeat
-                      .setSubImage(0, {}, ImageView2D{Magnum::PixelFormat::RGB8Srgb, size, colors});
-
-}
-
-void Viewer::updateFaceColorTextureWithWeights() {
-
-    Containers::Array<Vector3ub> colors(Containers::NoInit, ws.size());
-    auto colorMap = DebugTools::ColorMap::turbo();
-    auto [min,max] = Math::minmax(ws);
-    Double length = max - min;
-    if(length < std::numeric_limits<Double>::epsilon())
-        std::fill(colors.begin(), colors.end(), Color3ub(255,253,208));
-    else{
-        for (int i = 0; i < ws.size(); ++i) {
-            int idx = static_cast<int>((ws[i] - min) / length * (colorMap.size() - 1.));
-            CORRADE_ASSERT(0 <= idx && idx <= 255, "Bad index for colormap", );
-            colors[i] = colorMap[idx];
-        }
-    }
-    const Magnum::Vector2i size(ws.size(), 1);
-    wsTexture->setMinificationFilter(Magnum::SamplerFilter::Nearest)
-              .setMagnificationFilter(Magnum::SamplerFilter::Nearest)
-              .setWrapping(Magnum::SamplerWrapping::ClampToEdge) // or Repeat
-              .setSubImage(0, {}, ImageView2D{Magnum::PixelFormat::RGB8Srgb, size, colors});
-}
 
 void Viewer::drawShaderOptions(){
     if(!drawable) return;
@@ -932,18 +856,6 @@ void Viewer::mouseScrollEvent(MouseScrollEvent& event) {
     redraw(); /* camera has changed, redraw! */
 }
 
-void normalizeInto(Containers::ArrayView<Double> xs, Containers::StridedArrayView1D<Vector2> ys){
-    CORRADE_ASSERT(xs.size() == ys.size(), "normalizeInto : arrays dont have the same length",);
-    auto [min, max] = Math::minmax(xs);
-    auto l = max - min;
-    if(l < std::numeric_limits<Double>::epsilon()){ //handle zero gradient corretly
-        for (auto& y : ys) y.x() = .5f;
-    } else {
-        for (int i = 0; i < xs.size(); ++i) {
-            ys[i].x() = static_cast<Float>((xs[i] - min) / l);
-        }
-    }
-}
 
 void Viewer::tickEvent()
 {
@@ -958,26 +870,24 @@ void Viewer::tickEvent()
     {
         std::lock_guard l(mutex);
         if (update & VisualizationFlag::ConnectedComponents) {
-            auto& f = dynamic_cast<ConnectednessConstraint<Double>&>(*exclusiveVisualizer);
-            updateFaceColorTextureWithComponents();
-            auto& d = dynamic_cast<FaceColorDrawable&>(*drawable);
+            faceTexture->setSubImage(0, {}, ImageView2D{Magnum::PixelFormat::RGB8Srgb, {(Int)faceColors.size(), 1}, faceColors});
             update &= ~VisualizationFlag::ConnectedComponents;
         }
         if (update & VisualizationFlag::GeodesicWeights) {
-            auto& f = dynamic_cast<ConnectednessConstraint<Double>&>(*exclusiveVisualizer);
-            updateFaceColorTextureWithWeights();
+            faceTexture->setSubImage(0, {}, ImageView2D{Magnum::PixelFormat::RGB8Srgb, {(Int)faceColors.size(), 1}, faceColors});
             update &= ~VisualizationFlag::GeodesicWeights;
         }
         if (update & VisualizationFlag::Gradient) {
-            auto textureCoords = meshData.mutableAttribute<Vector2>(Trade::MeshAttribute::TextureCoordinates);
-            normalizeInto(gradient, textureCoords);
+            auto coords = meshData.mutableAttribute<Vector2>(Trade::MeshAttribute::TextureCoordinates);
+            auto xcoords = Containers::arrayCast<2, Float>(coords).slice<1>();
+            normalizeInto(problem.gradient, xcoords);
             reuploadVertices(vertexBuffer, meshData);
             update &= ~VisualizationFlag::Gradient;
         }
         if (update & VisualizationFlag::Phasefield) {
-            auto textureCoords = meshData.mutableAttribute<Vector2>(Trade::MeshAttribute::TextureCoordinates);
-            for (int i = 0; i < phasefield.size(); ++i)
-                textureCoords[i].x() = .5f * (phasefield[i] + 1.f);
+            auto coords = meshData.mutableAttribute<Vector2>(Trade::MeshAttribute::TextureCoordinates);
+            auto xcoords = Containers::arrayCast<2, Float>(coords).slice<1>();
+            normalizeInto(problem.parameters, xcoords, -1., 1.);
             reuploadVertices(vertexBuffer, meshData);
             update &= ~VisualizationFlag::Phasefield;
         }

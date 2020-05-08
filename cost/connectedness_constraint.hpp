@@ -13,7 +13,8 @@
 #include "hash.h"
 #include "c1_functions.hpp"
 #include "types.hpp"
-#include "viewer.hpp"
+#include "normalizeInto.hpp"
+#include "paths.hpp"
 
 #include <scoped_timer/scoped_timer.hpp>
 
@@ -25,32 +26,33 @@
 
 #include <Corrade/Containers/GrowableArray.h>
 #include <Magnum/GL/TextureFormat.h>
+#include <Magnum/DebugTools/ColorMap.h>
 
 #include <ceres/first_order_function.h>
 
 #include <numeric>
-#include <ostream>
-#include <sstream>
-
-
-#include <assimp/Exporter.hpp>
-#include <assimp/scene.h>
+#include <mutex>
 
 namespace Mn = Magnum;
 namespace Cr = Corrade;
 
-enum class GradientFlag : Magnum::UnsignedByte {
-    Analytic = 0,
-    Automatic = 1
-};
-
-template<class Scalar>
-struct UpdateConnectednessVis;
-
-
 template<class Scalar>
 struct ConnectednessMetaData : Functional::MetaData {
-    Viewer* viewer;
+
+    ConnectednessMetaData(
+        Mg::Trade::MeshData& md,
+        Cr::Containers::Array<Mg::Color3ub>& fc,
+        VisualizationFlags& u,
+        std::mutex& m) :
+            meshData(md), faceColors(fc), update(u), mutex(m)
+    {
+    }
+
+    Mg::Trade::MeshData& meshData;
+    Cr::Containers::Array<Color3ub>& faceColors;
+    VisualizationFlags& update;
+    std::mutex& mutex;
+
     Mg::Double a = 0.05, b = 1.;
     Mg::Double pathThickness = 0.01;
 
@@ -73,10 +75,11 @@ template<class Scalar>
 struct ConnectednessConstraint : Functional
 {
     ConnectednessConstraint(
-            Containers::ArrayView<const Vector3d> const& vertices_,
-            Containers::ArrayView<const Vector3ui> const& triangles_);
+            Containers::ArrayView<const Vector3d> const&,
+            Containers::ArrayView<const Vector3ui> const&,
+            Cr::Containers::Pointer<ConnectednessMetaData<Scalar>>);
 
-    bool evaluate(double const* parameters, double* cost, double* jacobian) const override ;
+    bool evaluate(double const* phasefield, double* cost, double* jacobian) const override ;
 
     int numParameters() const override;
 
@@ -125,8 +128,9 @@ struct ConnectednessConstraint : Functional
 template<class Scalar>
 ConnectednessConstraint<Scalar>::ConnectednessConstraint(
         Containers::ArrayView<const Vector3d> const& vertices_,
-        Containers::ArrayView<const Vector3ui> const& triangles_):
-    Functional(Cr::Containers::pointer<ConnectednessMetaData<Scalar>>(), FunctionalType::Connectedness),
+        Containers::ArrayView<const Vector3ui> const& triangles_,
+        Cr::Containers::Pointer<ConnectednessMetaData<Scalar>> md):
+    Functional(std::move(md), FunctionalType::Connectedness),
     vertices(vertices_),
     triangles(triangles_),
     adjacencyList(Containers::DirectInit, triangles_.size(), Containers::NoInit)
@@ -183,7 +187,7 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
     bool updateComponents, updateWs, updateGrad, generateLineStrips;
     auto& meta = getMetaData();
     {
-        std::lock_guard l(meta.viewer->mutex);
+        std::lock_guard l(meta.mutex);
         a = meta.a; b = meta.b;
         generateLineStrips = meta.generateLineStrips;
         updateComponents = bool (meta.flags & VisualizationFlag::ConnectedComponents);
@@ -393,20 +397,42 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
     }
 
     {
-        std::lock_guard l(meta.viewer->mutex);
-        auto viewer = meta.viewer;
+        std::lock_guard l(meta.mutex);
         if(updateComponents) {
-            viewer->numComponents = numComponents;
-            viewer->components = std::move(components);
-            viewer->update |= VisualizationFlag::ConnectedComponents;
+            Deg hue = 42.0_degf;
+            Containers::Array<Color3ub> randomColors(Containers::NoInit, numComponents);
+            for (int i = 0; i < numComponents; ++i)
+                randomColors[i] = Color3ub::fromHsv({hue += 137.5_degf, 0.75f, 0.9f});
+
+            for (int i = 0; i < components.size(); ++i) {
+                if (components[i] >= 0 && !randomColors.empty())
+                    meta.faceColors[i] = randomColors[components[i]];
+                else
+                    meta.faceColors[i] = Color3ub(255,253,208);
+            }
+
+            meta.update |= VisualizationFlag::ConnectedComponents;
         }
         if(updateWs) {
-            viewer->ws = std::move(ws);
-            viewer->update |= VisualizationFlag::GeodesicWeights;
+            auto colorMap = Mg::DebugTools::ColorMap::turbo();
+            auto [min,max] = Math::minmax(ws);
+            Double length = max - min;
+            if(length < std::numeric_limits<Double>::epsilon())
+                std::fill(meta.faceColors.begin(), meta.faceColors.end(), Color3ub(255,253,208));
+            else{
+                for (int i = 0; i < ws.size(); ++i) {
+                    int idx = static_cast<int>((ws[i] - min) / length * (colorMap.size() - 1.));
+                    CORRADE_ASSERT(0 <= idx && idx <= 255, "Bad index for colormap", false);
+                    meta.faceColors[i] = colorMap[idx];
+                }
+            }
+            meta.update |= VisualizationFlag::GeodesicWeights;
         }
         if(updateGrad){
-            Utility::copy({jacobian, numVertices}, viewer->gradient);
-            viewer->update |= VisualizationFlag::Gradient;
+            auto coords = meta.meshData.mutableAttribute(Trade::MeshAttribute::TextureCoordinates);
+            auto xcoords = Containers::arrayCast<2, Float>(coords).template slice<1>();
+            normalizeInto({jacobian, numVertices}, xcoords);
+            meta.update |= VisualizationFlag::Gradient;
         }
         if(generateLineStrips){
             meta.instanceData = std::move(instanceData);

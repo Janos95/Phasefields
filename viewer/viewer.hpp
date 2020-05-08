@@ -11,6 +11,7 @@
 #include "optimization_context.hpp"
 #include "solver.hpp"
 #include "functional.hpp"
+#include "connectedness_constraint.hpp"
 #include "problem.hpp"
 
 #include <Corrade/Containers/Reference.h>
@@ -24,7 +25,6 @@
 #include <Magnum/SceneGraph/Object.h>
 #include <Magnum/SceneGraph/Scene.h>
 #include <Magnum/SceneGraph/Drawable.h>
-
 #include <Magnum/Primitives/Cylinder.h>
 #include <Magnum/MeshTools/Compile.h>
 
@@ -39,65 +39,11 @@ namespace Cr = Corrade;
 
 struct Viewer;
 
-template<class T>
-struct ConnectednessConstraint;
-
-template<class T>
-struct ConnectednessMetaData;
-
 struct UpdatePhasefield{
     Viewer& viewer;
     solver::Status operator()(solver::IterationSummary const&);
 };
 
-struct InstanceData {
-    Mg::Matrix4 tf;
-    Mg::Matrix3 normalMatrix;
-    Mg::Color3 color;
-};
-
-struct Paths : Object3D, Drawable {
-    explicit Paths(Object3D* parent, SceneGraph::DrawableGroup3D& drawables):
-        Object(parent),
-        Drawable{*this, &drawables},
-        shader{Shaders::Phong::Flag::VertexColor|Shaders::Phong::Flag::InstancedTransformation},
-        cylinder{MeshTools::compile(Primitives::cylinderSolid(3,5,0.5f))}
-    {
-        shader.setAmbientColor(0x111111_rgbf)
-              .setSpecularColor(0x330000_rgbf)
-              .setLightPosition({10.0f, 15.0f, 5.0f});
-
-        /* cylinder mesh, with an (initially empty) instance buffer */
-        cylinder.addVertexBufferInstanced(instanceBuffer, 1, 0,
-                                          Shaders::Phong::TransformationMatrix{},
-                                          Shaders::Phong::NormalMatrix{},
-                                          Shaders::Phong::Color3{});
-
-    }
-
-    void draw(const Matrix4& transformation, SceneGraph::Camera3D& camera) override {
-        if(!drawPaths || instanceData.empty()) return;
-        Containers::arrayResize(instanceDataTransformed, Containers::NoInit, instanceData.size());
-
-        for (int i = 0; i < instanceData.size(); ++i) {
-            instanceDataTransformed[i].normalMatrix = transformation.normalMatrix() * instanceData[i].normalMatrix;
-            instanceDataTransformed[i].tf = transformation * instanceData[i].tf;
-            instanceDataTransformed[i].color = instanceData[i].color;
-        }
-
-        instanceBuffer.setData(instanceDataTransformed, GL::BufferUsage::DynamicDraw);
-        cylinder.setInstanceCount(instanceDataTransformed.size());
-        shader.setProjectionMatrix(camera.projectionMatrix())
-              .draw(cylinder);
-    }
-
-    Shaders::Phong shader;
-    GL::Mesh cylinder;
-    GL::Buffer instanceBuffer;
-    Containers::Array<InstanceData> instanceData;
-    Containers::Array<InstanceData> instanceDataTransformed;
-    bool drawPaths = false;
-};
 
 struct Viewer: public Magnum::Platform::Application{
 
@@ -119,8 +65,8 @@ struct Viewer: public Magnum::Platform::Application{
     void drawPrimitiveOptions();
     void drawBrushOptions();
     void drawOptimizationContext();
-    bool drawConnectednessConstraintOptions(ConnectednessConstraint<Mg::Double>&, bool&);
-    void dumpToPly(std::string const& path);
+    void makeExclusiveVisualizer(Functional*);
+    bool drawConnectednessConstraintOptions(ConnectednessConstraint<Mg::Double>&);
     void drawShaderOptions();
     void startOptimization();
     void stopOptimization();
@@ -128,9 +74,7 @@ struct Viewer: public Magnum::Platform::Application{
     void updateFunctionals(Cr::Containers::Array<Cr::Containers::Pointer<Functional>>&);
     void paint();
     void geodesicSearch();
-    void updateIntenalDataStrucutres();
-    void updateFaceColorTextureWithComponents();
-    void updateFaceColorTextureWithWeights();
+    void updateInternalDataStructures();
     Vector3 unproject(Mg::Vector2i const&);
 
     ImGuiIntegration::Context imgui{NoCreate};
@@ -173,22 +117,15 @@ struct Viewer: public Magnum::Platform::Application{
     VisualizationFlags visFlags = VisualizationFlag::Phasefield;
     VisualizationFlags update = {};
     Functional* exclusiveVisualizer = nullptr;
-    Cr::Containers::Array<Magnum::Double> phasefield;
-    Cr::Containers::Array<Double> gradient;
 
     //connectedness vis data
-    Cr::Containers::Array<int> components;
-    int numComponents = 0;
-    Cr::Containers::Array<Double> ws;
-    Cr::Containers::Pointer<Mg::GL::Texture2D> componentsTexture;
-    Cr::Containers::Pointer<Mg::GL::Texture2D> wsTexture;
+    Cr::Containers::Array<Mg::Color3ub> faceColors;
+    Cr::Containers::Pointer<Mg::GL::Texture2D> faceTexture;
     GL::Texture2D* texture = nullptr;
 
     SharedRessource<Mg::Double> doubleWellScaling;
     SharedRessource<Mg::Double> dirichletScaling;
     SharedRessource<Mg::Double> connectednessScaling;
-
-
 
     Mg::Double phase = 0;
     Mg::Double targetDist;

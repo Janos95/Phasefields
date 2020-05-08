@@ -7,7 +7,7 @@
 #include "loss_functions.hpp"
 #include "shared_ressource.hpp"
 #include "solver.hpp"
-#include "../viewer/types.hpp"
+#include "types.hpp"
 
 #include <Corrade/Containers/Pointer.h>
 #include <Corrade/Containers/GrowableArray.h>
@@ -49,9 +49,8 @@ struct Functional{
         }
     };
 
-    Functional(Cr::Containers::Pointer<MetaData> meta, FunctionalType t) : type(t), metaData(std::move(meta))
+    Functional(Cr::Containers::Pointer<MetaData> meta, FunctionalType t) : metaData(std::move(meta)), type(t)
     {
-
     }
 
     mutable Cr::Containers::Pointer<MetaData> metaData = nullptr;

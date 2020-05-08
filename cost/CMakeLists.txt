@@ -16,7 +16,6 @@ target_include_directories(cost PUBLIC
 
 target_link_libraries(cost PRIVATE
         ceres
-        autodiff
         TBB::tbb
         phasefields::scoped_timer
         )
@@ -26,6 +25,7 @@ target_link_libraries(cost PUBLIC
         PkgConfig::Adolc
         Eigen3::Eigen
         phasefields::utilities
+        phasefields::visualization
         )
 
 set_property(TARGET cost PROPERTY POSITION_INDEPENDENT_CODE ON)

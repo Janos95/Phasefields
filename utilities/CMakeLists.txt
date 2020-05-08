@@ -10,6 +10,8 @@ target_sources(utilities INTERFACE
         variant.hpp
         shared_ressource.hpp
         function_ref.hpp
+        normalizeInto.cpp
+        normalizeInto.hpp
         )
 
 target_include_directories(utilities INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
