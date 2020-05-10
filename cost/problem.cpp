@@ -3,12 +3,14 @@
 //
 
 #include "problem.hpp"
+#include "normalizeInto.hpp"
 
-#include <tbb/task_group.h>
 #include <Corrade/Utility/Assert.h>
+#include <Corrade/Containers/Array.h>
 
 #include <mutex>
-#include <Corrade/Utility/Algorithms.h>
+#include <tbb/task_group.h>
+#include <Magnum/Trade/MeshData.h>
 
 using namespace Corrade;
 using namespace Magnum;
@@ -23,7 +25,7 @@ bool Problem::evaluate(double const *parameters,
 
     *cost = 0.;
     if (jacobians)
-        std::fill(gradient.begin(), gradient.end(), 0.);
+        std::fill_n(jacobians, numParameters(), 0.);
 
     std::mutex m1;
     std::mutex m2;
@@ -35,7 +37,6 @@ bool Problem::evaluate(double const *parameters,
             Double residual = 0;
             functional->evaluate(parameters, &residual, jacobians ? grad.data() : nullptr);
 
-
             Double rho[3], scaling[3] = {residual, 1., 0.};
             if(functional->metaData->scaling){
                 auto s = *functional->metaData->scaling;
@@ -44,16 +45,31 @@ bool Problem::evaluate(double const *parameters,
             functional->metaData->loss->Evaluate(scaling[0], rho);
             if (jacobians) {
                 auto derivative = rho[1] * scaling[1];
+                for(auto& x : grad) x *= derivative;
+                functional->metaData->visualizeGradient(grad);
                 std::lock_guard l(m1);
                 for (int i = 0; i < n; ++i)
-                    gradient[i] += derivative * grad[i];
+                    jacobians[i] += grad[i];
             }
             std::lock_guard l(m2);
             *cost += rho[0];
        // });
     }
     //g.wait();
-    Cr::Utility::copy(gradient, {jacobians, n});
+    {
+        if(!meshData || !jacobians || !mutex) return true;
+        std::lock_guard l(*mutex);
+        auto coords = meshData->mutableAttribute(Mg::Trade::MeshAttribute::TextureCoordinates);
+        auto xcoords = Cr::Containers::arrayCast<2, Mg::Float>(coords).slice<1>();
+        if(flags & VisualizationFlag::Gradient){
+            normalizeInto({jacobians, n}, xcoords);
+            *update |= VisualizationFlag::Gradient;
+        }
+        if(flags & VisualizationFlag::Phasefield){
+            normalizeInto({parameters, n}, xcoords, -1., 1.);
+            *update |= VisualizationFlag::Phasefield;
+        }
+    }
     return true;
 }
 

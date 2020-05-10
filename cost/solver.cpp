@@ -11,6 +11,7 @@
 #include <ceres/first_order_function.h>
 
 #include <Corrade/Utility/Debug.h>
+#include <Corrade/Containers/Array.h>
 
 
 using namespace Corrade;
@@ -72,6 +73,7 @@ void solve(solver::Options& options, solver::Problem& problem, double* params, s
             cbs[i].reset(new CeresCallbackWrapper(options.callbacks[i]));
         for(auto& cb : cbs) ceresOptions.callbacks.push_back(cb.get());
         ceres::Solve(ceresOptions, ceresProblem, params, &ceresSummary);
+        Mg::Debug{} << ceresSummary.BriefReport().c_str();
     } else if(options.solver == solver::Solver::IPOPT){
         Utility::Debug{} << "NOT IMPLEMENTED YET";
     } else CORRADE_ASSERT(false, "Unkown solver type",);

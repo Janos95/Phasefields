@@ -18,6 +18,9 @@
 #include <Magnum/Math/Color.h>
 #include <Magnum/MeshTools/GenerateNormals.h>
 #include <Magnum/Shaders/Generic.h>
+#include <Magnum/GL/Buffer.h>
+#include <Magnum/GL/Mesh.h>
+#include <Magnum/Trade/MeshData.h>
 
 using namespace Magnum;
 using namespace Corrade;

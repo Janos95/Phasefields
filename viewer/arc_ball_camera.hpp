@@ -16,18 +16,18 @@
 class ArcBallCamera: public ArcBall {
 public:
     template<class Transformation> ArcBallCamera(
-            SceneGraph::Scene<Transformation>& scene,
-            const Vector3& cameraPosition, const Vector3& viewCenter,
-            const Vector3& upDir, Deg fov, const Vector2i& windowSize,
-            const Vector2i& viewportSize):
+            Mg::SceneGraph::Scene<Transformation>& scene,
+            const Mg::Vector3& cameraPosition, const Mg::Vector3& viewCenter,
+            const Mg::Vector3& upDir, Mg::Deg fov, const Mg::Vector2i& windowSize,
+            const Mg::Vector2i& viewportSize):
             ArcBall{cameraPosition, viewCenter, upDir, fov, windowSize}
     {
         /* Create a camera object of a concrete type */
-        auto* cameraObject = new SceneGraph::Object<Transformation>{&scene};
-        (*(_camera = new SceneGraph::Camera3D{*cameraObject}))
-                .setAspectRatioPolicy(SceneGraph::AspectRatioPolicy::Extend)
-                .setProjectionMatrix(Matrix4::perspectiveProjection(
-                        fov, Vector2{windowSize}.aspectRatio(), 0.01f, 100.0f))
+        auto* cameraObject = new Mg::SceneGraph::Object<Transformation>{&scene};
+        (*(_camera = new Mg::SceneGraph::Camera3D{*cameraObject}))
+                .setAspectRatioPolicy(Mg::SceneGraph::AspectRatioPolicy::Extend)
+                .setProjectionMatrix(Mg::Matrix4::perspectiveProjection(
+                        fov, Mg::Vector2{windowSize}.aspectRatio(), 0.01f, 100.0f))
                 .setViewport(viewportSize);
 
         /* Save the abstract transformation interface and initialize the
@@ -38,7 +38,7 @@ public:
     }
 
     /* Update screen and viewport size after the window has been resized */
-    void reshape(const Vector2i& windowSize, const Vector2i& viewportSize) {
+    void reshape(const Mg::Vector2i& windowSize, const Mg::Vector2i& viewportSize) {
         _windowSize = windowSize;
         _camera->setViewport(viewportSize);
     }
@@ -56,11 +56,11 @@ public:
     }
 
     /* Draw objects using the internal scenegraph camera */
-    void draw(SceneGraph::DrawableGroup3D& drawables) {
+    void draw(Mg::SceneGraph::DrawableGroup3D& drawables) {
         _camera->draw(drawables);
     }
 
-    Vector2i viewport() const {
+    Mg::Vector2i viewport() const {
         return _camera->viewport();
     }
 
@@ -69,6 +69,6 @@ public:
     }
 
 private:
-    SceneGraph::AbstractTranslationRotation3D* _cameraObject{};
-    SceneGraph::Camera3D* _camera{};
+    Mg::SceneGraph::AbstractTranslationRotation3D* _cameraObject{};
+    Mg::SceneGraph::Camera3D* _camera{};
 };

@@ -8,7 +8,7 @@
 
 void subdivide(
         std::uint32_t numSubdivisions,
-        Trade::MeshData const& original,
-        Containers::Array<Double>& phasefield,
-        Trade::MeshData& meshData);
+        Mg::Trade::MeshData const& original,
+        Cr::Containers::Array<Mg::Double>& phasefield,
+        Mg::Trade::MeshData& meshData);
 

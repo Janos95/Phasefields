@@ -40,7 +40,7 @@ namespace solver{
 
     struct Options {
         int max_num_iterations = 100;
-        bool minimizer_progress_to_stdout = false;
+        bool minimizer_progress_to_stdout = true;
         bool update_state_every_iteration = true;
         LineSearchDirectionType line_search_direction_type = LineSearchDirectionType::LBFGS;
         Solver solver = Solver::CERES;

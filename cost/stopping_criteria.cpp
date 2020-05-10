@@ -2,7 +2,7 @@
 // Created by janos on 22.04.20.
 //
 
-#include "utility.hpp"
+#include "stopping_criteria.hpp"
 
 using namespace Corrade;
 using namespace Magnum;

@@ -5,7 +5,7 @@
 #pragma once
 
 #include "dijkstra.hpp"
-#include "utility.hpp"
+#include "stopping_criteria.hpp"
 #include "union_find.hpp"
 #include "bfs.hpp"
 #include "detach.hpp"
@@ -30,8 +30,8 @@
 
 #include <ceres/first_order_function.h>
 
-#include <numeric>
 #include <mutex>
+#include <numeric>
 
 namespace Mn = Magnum;
 namespace Cr = Corrade;
@@ -49,7 +49,7 @@ struct ConnectednessMetaData : Functional::MetaData {
     }
 
     Mg::Trade::MeshData& meshData;
-    Cr::Containers::Array<Color3ub>& faceColors;
+    Cr::Containers::Array<Mg::Color3ub>& faceColors;
     VisualizationFlags& update;
     std::mutex& mutex;
 
@@ -75,11 +75,12 @@ template<class Scalar>
 struct ConnectednessConstraint : Functional
 {
     ConnectednessConstraint(
-            Containers::ArrayView<const Vector3d> const&,
-            Containers::ArrayView<const Vector3ui> const&,
+            Cr::Containers::ArrayView<const Mg::Vector3d> const&,
+            Cr::Containers::ArrayView<const Mg::Vector3ui> const&,
             Cr::Containers::Pointer<ConnectednessMetaData<Scalar>>);
 
     bool evaluate(double const* phasefield, double* cost, double* jacobian) const override ;
+
 
     int numParameters() const override;
 
@@ -108,15 +109,15 @@ struct ConnectednessConstraint : Functional
 #endif
     };
 
-    Containers::ArrayView<const Vector3ui> triangles;
-    Containers::ArrayView<const Vector3d> vertices;
+    Cr::Containers::ArrayView<const Mg::Vector3ui> triangles;
+    Cr::Containers::ArrayView<const Mg::Vector3d> vertices;
 
-    Containers::Array<Edge> dualEdges;
-    mutable Containers::Array<SmallArray<3, Neighbor>> adjacencyList;
+    Cr::Containers::Array<Edge> dualEdges;
+    mutable Cr::Containers::Array<SmallArray<3, Neighbor>> adjacencyList;
 
-    Containers::Array<Mg::Double> lineElements;
-    Containers::Array<Mg::Double> areas;
-    Containers::Array<Mg::Double> diams;
+    Cr::Containers::Array<Mg::Double> lineElements;
+    Cr::Containers::Array<Mg::Double> areas;
+    Cr::Containers::Array<Mg::Double> diams;
 
     using graph_type = Cr::Containers::Array<SmallArray<3, Neighbor>>;
 
@@ -127,36 +128,36 @@ struct ConnectednessConstraint : Functional
 
 template<class Scalar>
 ConnectednessConstraint<Scalar>::ConnectednessConstraint(
-        Containers::ArrayView<const Vector3d> const& vertices_,
-        Containers::ArrayView<const Vector3ui> const& triangles_,
+        Cr::Containers::ArrayView<const Mg::Vector3d> const& vertices_,
+        Cr::Containers::ArrayView<const Mg::Vector3ui> const& triangles_,
         Cr::Containers::Pointer<ConnectednessMetaData<Scalar>> md):
     Functional(std::move(md), FunctionalType::Connectedness),
     vertices(vertices_),
     triangles(triangles_),
-    adjacencyList(Containers::DirectInit, triangles_.size(), Containers::NoInit)
+    adjacencyList(Cr::Containers::DirectInit, triangles_.size(), Cr::Containers::NoInit)
 {
     //compute edges in dual graph
     auto hash = [](Edge const& e) noexcept { return hash_int(reinterpret_cast<uint64_t const&>(e)); };
     std::unordered_map<Edge, int, decltype(hash)> edges(3 * triangles.size(), hash);
-    Containers::arrayReserve(dualEdges, 3 * triangles.size());
+    Cr::Containers::arrayReserve(dualEdges, 3 * triangles.size());
     for (int i = 0; i < triangles.size(); ++i) {
         for (int j = 0; j < 3; ++j) {
             auto[it, inserted] = edges.try_emplace(Edge{triangles[i][j], triangles[i][(j + 1) % 3]}, i);
             if (!inserted) {
                 //both faces share edge F(i,j) - F(i,j+1mod3)
-                Containers::arrayAppend(dualEdges, Containers::InPlaceInit, it->second, i);
+                Cr::Containers::arrayAppend(dualEdges, Cr::Containers::InPlaceInit, it->second, i);
             }
         }
     }
 
-    Containers::arrayResize(lineElements, Containers::ValueInit, dualEdges.size());
+    Cr::Containers::arrayResize(lineElements, Cr::Containers::ValueInit, dualEdges.size());
     for (auto[v1, v2] : dualEdges) {
         adjacencyList[v1].emplace_back(v2, .0);
         adjacencyList[v2].emplace_back(v1, .0);
     }
 
-    Containers::arrayResize(diams, triangles.size());
-    Containers::arrayResize(areas, triangles.size());
+    Cr::Containers::arrayResize(diams, triangles.size());
+    Cr::Containers::arrayResize(areas, triangles.size());
     for (int i = 0; i < triangles.size(); ++i) {
         auto t = triangles[i];
 
@@ -165,7 +166,7 @@ ConnectednessConstraint<Scalar>::ConnectednessConstraint(
         auto z = vertices[t[1]] - vertices[t[2]];
 
         diams[i] = std::sqrt(std::max({(x-y).dot(), (y-z).dot(), (x-z).dot()}));
-        areas[i] = Math::cross(x, y).length() * .5f;
+        areas[i] = Mg::Math::cross(x, y).length() * .5f;
     }
 
 #ifndef NODEBUG
@@ -176,7 +177,7 @@ ConnectednessConstraint<Scalar>::ConnectednessConstraint(
 }
 
 template<class Scalar>
-bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
+bool ConnectednessConstraint<Scalar>::evaluate(double const *U,
                             double *cost,
                             double *jacobian) const {
 
@@ -203,18 +204,9 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
     int numFaces = triangles.size();
     int numVertices = vertices.size();
 
-    Containers::Array<Scalar> U(Containers::ValueInit, numVertices);
-    std::copy_n(phasefield, numVertices, U.begin());
-
-    if constexpr(detail::IsDiffArray<Scalar>) {
-        if (jacobian)
-            for (auto &u : U)
-                enoki::set_requires_gradient(u);
-    }
-
-    Containers::Array<Mg::Double> ws(Containers::NoInit, numFaces);
-    Containers::Array<bool> inInterface(Containers::NoInit, numFaces);
-    Containers::Array<Scalar> uT(Containers::NoInit, numFaces);
+    Cr::Containers::Array<Mg::Double> ws(Cr::Containers::NoInit, numFaces);
+    Cr::Containers::Array<bool> inInterface(Cr::Containers::NoInit, numFaces);
+    Cr::Containers::Array<Scalar> uT(Cr::Containers::NoInit, numFaces);
     for (int i = 0; i < numFaces; i++) {
         auto const& t = triangles[i];
         uT[i] = 1. / 3. * (U[t[0]] + U[t[1]] + U[t[2]]);
@@ -233,21 +225,21 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
             set.unite(dualV1, dualV2);
     }
 
-    Containers::Array<int> roots;
-    Containers::Array<int> components(Containers::NoInit, numFaces);
+    Cr::Containers::Array<int> roots;
+    Cr::Containers::Array<int> components(Cr::Containers::NoInit, numFaces);
     for (std::size_t i = 0; i < components.size(); ++i) {
         if (inInterface[i]) {
             components[i] = set.find(i);
-            Containers::arrayAppend(roots, components[i]);
+            Cr::Containers::arrayAppend(roots, components[i]);
         } else
             components[i] = -1;
     }
 
     std::sort(roots.begin(), roots.end());
     auto numComponents = std::unique(roots.begin(), roots.end()) - roots.begin();
-    Containers::arrayResize(roots, numComponents);
+    Cr::Containers::arrayResize(roots, numComponents);
 
-    Debug{} << "Phase [" << a << "," << b << "] has " << numComponents << "connected components";
+    Mg::Debug{} << "Phase [" << a << "," << b << "] has " << numComponents << "connected components";
 
     Cr::Containers::Array<InstanceData> instanceData;
     if (numComponents <= 1){
@@ -256,8 +248,7 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
             std::fill_n(jacobian, numVertices, 0.);
     } else {
 
-
-        Containers::Array<Scalar> W(Containers::DirectInit, numComponents, 0.);
+        Cr::Containers::Array<Scalar> W(Cr::Containers::DirectInit, numComponents, 0.);
 
         for (int i = 0; i < numFaces; ++i) {
             auto &c = components[i];
@@ -271,11 +262,11 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
             }
         }
 
-        Debug{} << W;
+        Mg::Debug{} << W;
 
         //run dijkstra from each connected component except last one
-        Containers::Array<Dijkstra<graph_type>> dijkstras(numComponents - 1);
-        Containers::Array<StoppingCriteria> stops(numComponents - 1);
+        Cr::Containers::Array<Dijkstra<graph_type>> dijkstras(numComponents - 1);
+        Cr::Containers::Array<StoppingCriteria> stops(numComponents - 1);
         {
             ScopedTimer t("dijkstra");
             for (std::size_t i = 0; i < numComponents - 1; ++i) {
@@ -290,13 +281,13 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
         }
 
         Scalar d = 0;
-        Containers::Array<Scalar> distancesData(Containers::ValueInit, numComponents * numComponents);
-        Containers::StridedArrayView2D<Scalar> distances(distancesData, {numComponents, numComponents});
+        Cr::Containers::Array<Scalar> distancesData(Cr::Containers::ValueInit, numComponents * numComponents);
+        Cr::Containers::StridedArrayView2D<Scalar> distances(distancesData, {numComponents, numComponents});
 
-        if (jacobian && !detail::IsDiffArray<Scalar>)
+        if (jacobian)
             std::fill_n(jacobian, numVertices, Scalar{0});
 
-        Deg hue = 42.0_degf;
+        Mg::Deg hue = 42.0_degf;
         {
             ScopedTimer tDiff("connectedness diff");
 
@@ -307,28 +298,29 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
                     Scalar dij = 0;
                     auto Wij = W[i] * W[j];
 
-                    auto color = Color3::fromHsv({hue += 137.5_degf, 0.75f, 0.9f});
+                    auto color = Mg::Color3::fromHsv({hue += 137.5_degf, 0.75f, 0.9f});
 
                     for (auto&&[a, b]: dijkstras[i].getShortestPathReversed(roots[i], stops[i].target(j))) {
                         if (generateLineStrips) {
                             auto getMidPoint = [this](auto &t) {
                                 return 1. / 3. * (vertices[t[0]] + vertices[t[1]] + vertices[t[2]]);
                             };
-                            Vector3 v1{getMidPoint(triangles[a])}, v2{getMidPoint(triangles[b])};
-                            Float l = (v2 - v1).length();
+                            Mg::Vector3 v1{getMidPoint(triangles[a])}, v2{getMidPoint(triangles[b])};
+                            Mg::Float l = (v2 - v1).length();
                             CORRADE_ASSERT("Connectedness Constraint : edge length is zero",
-                                           (l > std::numeric_limits<Float>::epsilon()), false);
-                            Vector3 dir{(v2 - v1) / l};
-                            Vector3 orthogonal{dir[2], dir[2], -dir[0] - dir[1]};
-                            if (orthogonal.dot() < std::numeric_limits<Float>::epsilon())
-                                orthogonal = Vector3{dir[1] - dir[2], dir[0], dir[0]};
+                                           (l > std::numeric_limits<Mg::Float>::epsilon()), false);
+                            Mg::Vector3 dir{(v2 - v1) / l};
+                            Mg::Vector3 orthogonal{dir[2], dir[2], -dir[0] - dir[1]};
+                            if (orthogonal.dot() < std::numeric_limits<Mg::Float>::epsilon())
+                                orthogonal = Mg::Vector3{-dir[1] - dir[2], dir[0], dir[0]};
                             orthogonal = orthogonal.normalized();
-                            Mg::Matrix3 rot{orthogonal, dir, Math::cross(orthogonal, dir)};
+                            Mg::Matrix3 rot{orthogonal, dir, Mg::Math::cross(orthogonal, dir)};
                             CORRADE_ASSERT(rot.isOrthogonal(), "Connectedness : tf for path vis not orthogonal", false);
-                            Mg::Matrix4 scaling = Matrix4::scaling({pathThickness, l, pathThickness});
-                            Vector3 mid{.5f * (v1 + v2)};
-                            auto tf = Matrix4::from(rot, mid) * scaling;
-                            Containers::arrayAppend(instanceData, Containers::InPlaceInit, tf, rot, color);
+                            /* overestimate length slightly for better visual appeal */
+                            Mg::Matrix4 scaling = Mg::Matrix4::scaling({pathThickness, 1.1 * l, pathThickness});
+                            Mg::Vector3 mid{.5f * (v1 + v2)};
+                            auto tf = Mg::Matrix4::from(rot, mid) * scaling;
+                            Cr::Containers::arrayAppend(instanceData, Cr::Containers::InPlaceInit, tf, rot, color);
                         }
 
                         auto &av = adjacencyList[a];
@@ -336,7 +328,7 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
                         CORRADE_INTERNAL_ASSERT(it != av.end());
                         dij += it->weight;
 
-                        if (jacobian && !detail::IsDiffArray<Scalar>) {
+                        if (jacobian) {
                             auto lineElement = .5 * (diams[a] + diams[b]);
                             const double fgrada = f.grad(detail::detach(uT[a]));
                             const double fgradb = f.grad(detail::detach(uT[b]));
@@ -349,76 +341,66 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
                     }
 
                     d += dij * Wij;
-                    if (jacobian && !detail::IsDiffArray<Scalar>) {
+                    if (jacobian) {
                         distances[i][j] = dij;
                         distances[j][i] = dij;
                     }
                 }
             }
 
-            if constexpr (!detail::IsDiffArray<Scalar>) {
-                if (jacobian) {
-                    for (int k = 0; k < numFaces; ++k) {
-                        if (components[k] < 0) //not in interface
+            if (jacobian) {
+                for (int k = 0; k < numFaces; ++k) {
+                    if (components[k] < 0) //not in interface
+                        continue;
+                    auto wgrad = bumpGrad(uT[k]);
+                    if (std::abs(wgrad) < std::numeric_limits<double>::epsilon())
+                        continue;
+                    std::size_t i = components[k];
+                    for (std::size_t j = 0; j < numComponents; ++j) {
+                        if (i == j)
                             continue;
-                        auto wgrad = bumpGrad(uT[k]);
-                        if (std::abs(wgrad) < std::numeric_limits<double>::epsilon())
-                            continue;
-                        std::size_t i = components[k];
-                        for (std::size_t j = 0; j < numComponents; ++j) {
-                            if (i == j)
-                                continue;
-                            double weightedGrad = distances[i][j] * W[j] * wgrad * areas[k] / 3.;
-                            //each incident vertex has the same influence
-                            for (int l = 0; l < 3; ++l)
-                                jacobian[triangles[k][l]] += weightedGrad;
-                        }
+                        double weightedGrad = distances[i][j] * W[j] * wgrad * areas[k] / 3.;
+                        //each incident vertex has the same influence
+                        for (int l = 0; l < 3; ++l)
+                            jacobian[triangles[k][l]] += weightedGrad;
                     }
                 }
             }
         }
 
-        auto scaleFactor = 2.;
+        auto scaleFactor = 2.; //scale everything by two because we only computed half the integral
         d *= scaleFactor;
-        *cost = detail::detach(d);
+        *cost = d;
 
         if (jacobian) {
-            if constexpr(detail::IsDiffArray<Scalar>) {
-                Scalar::simplify_graph_();
-                enoki::backward(d);
-                for (int i = 0; i < numVertices; ++i) {
-                    jacobian[i] = enoki::gradient(U[i]);
-                }
-            } else {
-                for (int i = 0; i < numVertices; ++i)
-                    jacobian[i] *= scaleFactor;
-            }
+            for (int i = 0; i < numVertices; ++i)
+                jacobian[i] *= scaleFactor;
         }
     }
 
     {
         std::lock_guard l(meta.mutex);
         if(updateComponents) {
-            Deg hue = 42.0_degf;
-            Containers::Array<Color3ub> randomColors(Containers::NoInit, numComponents);
+            Mg::Deg hue = 42.0_degf;
+            Cr::Containers::Array<Mg::Color3ub> randomColors(Cr::Containers::NoInit, numComponents);
             for (int i = 0; i < numComponents; ++i)
-                randomColors[i] = Color3ub::fromHsv({hue += 137.5_degf, 0.75f, 0.9f});
+                randomColors[i] = Mg::Color3ub::fromHsv({hue += 137.5_degf, 0.75f, 0.9f});
 
             for (int i = 0; i < components.size(); ++i) {
                 if (components[i] >= 0 && !randomColors.empty())
                     meta.faceColors[i] = randomColors[components[i]];
                 else
-                    meta.faceColors[i] = Color3ub(255,253,208);
+                    meta.faceColors[i] = Mg::Color3ub(255,253,208);
             }
 
-            meta.update |= VisualizationFlag::ConnectedComponents;
+            meta.update = VisualizationFlag::ConnectedComponents;
         }
         if(updateWs) {
             auto colorMap = Mg::DebugTools::ColorMap::turbo();
-            auto [min,max] = Math::minmax(ws);
-            Double length = max - min;
-            if(length < std::numeric_limits<Double>::epsilon())
-                std::fill(meta.faceColors.begin(), meta.faceColors.end(), Color3ub(255,253,208));
+            auto [min,max] = Mg::Math::minmax(ws);
+            Mg::Double length = max - min;
+            if(length < std::numeric_limits<Mg::Double>::epsilon())
+                std::fill(meta.faceColors.begin(), meta.faceColors.end(), Mg::Color3ub(255,253,208));
             else{
                 for (int i = 0; i < ws.size(); ++i) {
                     int idx = static_cast<int>((ws[i] - min) / length * (colorMap.size() - 1.));
@@ -426,20 +408,19 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *phasefield,
                     meta.faceColors[i] = colorMap[idx];
                 }
             }
-            meta.update |= VisualizationFlag::GeodesicWeights;
+            meta.update = VisualizationFlag::GeodesicWeights;
         }
         if(updateGrad){
-            auto coords = meta.meshData.mutableAttribute(Trade::MeshAttribute::TextureCoordinates);
-            auto xcoords = Containers::arrayCast<2, Float>(coords).template slice<1>();
+            auto coords = meta.meshData.mutableAttribute(Mg::Trade::MeshAttribute::TextureCoordinates);
+            auto xcoords = Cr::Containers::arrayCast<2, Mg::Float>(coords).template slice<1>();
             normalizeInto({jacobian, numVertices}, xcoords);
-            meta.update |= VisualizationFlag::Gradient;
+            meta.update = VisualizationFlag::Gradient;
         }
         if(generateLineStrips){
             meta.instanceData = std::move(instanceData);
             meta.updateInstanceData = true;
         }
     }
-
 
     return true;
 }

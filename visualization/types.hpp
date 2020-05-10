@@ -5,9 +5,9 @@
 #pragma once
 
 #include <Magnum/Magnum.h>
-#include <Magnum/SceneGraph/Object.h>
-#include <Magnum/SceneGraph/Scene.h>
-#include <Magnum/SceneGraph/MatrixTransformation3D.h>
+#include <Magnum/SceneGraph/SceneGraph.h>
+#include <Corrade/Containers/EnumSet.h>
+
 
 using Object3D = Magnum::SceneGraph::Object<Magnum::SceneGraph::MatrixTransformation3D>;
 using Scene3D = Magnum::SceneGraph::Scene<Magnum::SceneGraph::MatrixTransformation3D>;

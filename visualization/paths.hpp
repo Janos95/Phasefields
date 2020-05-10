@@ -13,8 +13,11 @@
 #include <Magnum/Math/Color.h>
 #include <Magnum/Shaders/Phong.h>
 #include <Magnum/GL/Mesh.h>
-#include <Magnum/Trade/MeshData.h>
-#include <Corrade/Containers/GrowableArray.h>
+#include <Magnum/GL/Buffer.h>
+#include <Magnum/SceneGraph/Object.h>
+#include <Magnum/SceneGraph/MatrixTransformation3D.h>
+
+#include <Corrade/Containers/Array.h>
 
 using namespace Mg::Math::Literals;
 

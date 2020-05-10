@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <string>
+#include <Corrade/Utility/StlForwardString.h>
 #include <Corrade/Containers/Pointer.h>
 
 class ScopedTimer

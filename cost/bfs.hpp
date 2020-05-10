@@ -21,8 +21,8 @@ public:
 
     explicit BreadthFirstSearch(const R& adjacencyList, int source):
             m_adjacencyList(adjacencyList),
-            m_prev(Containers::DirectInit, adjacencyList.size(), -1),
-            m_visited(Containers::DirectInit, adjacencyList.size(), false)
+            m_prev(Cr::Containers::DirectInit, adjacencyList.size(), -1),
+            m_visited(Cr::Containers::DirectInit, adjacencyList.size(), false)
     {
         m_q.push_back(source);
     }
@@ -67,8 +67,8 @@ private:
     friend graph::ReversedPathIterator<BreadthFirstSearch>;
 
     const R& m_adjacencyList;
-    Containers::Array<int> m_prev;
-    Containers::Array<bool> m_visited;
+    Cr::Containers::Array<int> m_prev;
+    Cr::Containers::Array<bool> m_visited;
     std::deque<int> m_q;
 };
 

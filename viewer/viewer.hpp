@@ -12,40 +12,31 @@
 #include "solver.hpp"
 #include "functional.hpp"
 #include "connectedness_constraint.hpp"
+#include "modica_mortola.hpp"
 #include "problem.hpp"
-
-#include <Corrade/Containers/Reference.h>
-#include <Corrade/Containers/Optional.h>
-#include <Corrade/Containers/Pointer.h>
-#include <Corrade/Containers/GrowableArray.h>
+#include "types.hpp"
 
 #include <Magnum/Platform/Sdl2Application.h>
 #include <Magnum/ImGuiIntegration/Context.h>
-#include <Magnum/SceneGraph/MatrixTransformation3D.h>
-#include <Magnum/SceneGraph/Object.h>
-#include <Magnum/SceneGraph/Scene.h>
-#include <Magnum/SceneGraph/Drawable.h>
-#include <Magnum/Primitives/Cylinder.h>
-#include <Magnum/MeshTools/Compile.h>
 
 #include <tbb/task_group.h>
 #include <mutex>
 #include <atomic>
 
-using namespace Math::Literals;
+using namespace Mg::Math::Literals;
 
 namespace Mg = Magnum;
 namespace Cr = Corrade;
 
 struct Viewer;
 
-struct UpdatePhasefield{
-    Viewer& viewer;
+struct OptimizationCallback{
+    std::atomic_bool& optimize;
     solver::Status operator()(solver::IterationSummary const&);
 };
 
 
-struct Viewer: public Magnum::Platform::Application{
+struct Viewer: public Mg::Platform::Application {
 
     explicit Viewer(int argc, char** argv);
 
@@ -66,7 +57,8 @@ struct Viewer: public Magnum::Platform::Application{
     void drawBrushOptions();
     void drawOptimizationContext();
     void makeExclusiveVisualizer(Functional*);
-    bool drawConnectednessConstraintOptions(ConnectednessConstraint<Mg::Double>&);
+    bool drawGradientMetaData(GradientMetaData&, bool&, bool&);
+    void drawConnectednessConstraintOptions(ConnectednessMetaData<Mg::Double>&, bool&, bool&);
     void drawShaderOptions();
     void startOptimization();
     void stopOptimization();
@@ -75,9 +67,9 @@ struct Viewer: public Magnum::Platform::Application{
     void paint();
     void geodesicSearch();
     void updateInternalDataStructures();
-    Vector3 unproject(Mg::Vector2i const&);
+    Mg::Vector3 unproject(Mg::Vector2i const&);
 
-    ImGuiIntegration::Context imgui{NoCreate};
+    Mg::ImGuiIntegration::Context imgui{Mg::NoCreate};
     bool trackingMouse = false;
 
     Mg::UnsignedInt numSubdivisions = 0;
@@ -109,19 +101,19 @@ struct Viewer: public Magnum::Platform::Application{
 
     solver::Problem problem;
     solver::Options options;
+    Cr::Containers::Array<Mg::Double> phasefield;
     tbb::task_group g;
     std::mutex mutex;
     std::atomic_bool optimizing = false;
 
-    UpdatePhasefield phasefieldCallback;
-    VisualizationFlags visFlags = VisualizationFlag::Phasefield;
+    OptimizationCallback optimizationCallback;
     VisualizationFlags update = {};
-    Functional* exclusiveVisualizer = nullptr;
+    Functional::MetaData* exclusiveVisualizer = nullptr;
 
     //connectedness vis data
     Cr::Containers::Array<Mg::Color3ub> faceColors;
     Cr::Containers::Pointer<Mg::GL::Texture2D> faceTexture;
-    GL::Texture2D* texture = nullptr;
+    Mg::GL::Texture2D* texture = nullptr;
 
     SharedRessource<Mg::Double> doubleWellScaling;
     SharedRessource<Mg::Double> dirichletScaling;
@@ -134,6 +126,6 @@ struct Viewer: public Magnum::Platform::Application{
     Mg::Double maxDist = 20.f;
     bool brushing = false;
     bool stopPainting = true;
-    Containers::Array<std::pair<double, int>> distances;
+    Cr::Containers::Array<std::pair<double, int>> distances;
     Mg::Vector3d point;
 };

@@ -4,7 +4,12 @@
 
 #include "paths.hpp"
 
+#include <Corrade/Containers/GrowableArray.h>
+
 #include <Magnum/MeshTools/Compile.h>
+#include <Magnum/Primitives/Cylinder.h>
+#include <Magnum/Trade/MeshData.h>
+#include <Magnum/SceneGraph/Camera.h>
 
 Paths::Paths(Object3D* parent, Mg::SceneGraph::DrawableGroup3D& drawables):
         Object(parent),

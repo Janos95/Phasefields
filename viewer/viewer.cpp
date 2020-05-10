@@ -18,14 +18,23 @@
 
 #include <Magnum/GL/DefaultFramebuffer.h>
 #include <Magnum/GL/Renderer.h>
-#include <Magnum/Math/Matrix4.h>
 #include <Magnum/GL/PixelFormat.h>
+#include <Magnum/GL/TextureFormat.h>
+#include <Magnum/GL/Buffer.h>
+#include <Magnum/GL/DefaultFramebuffer.h>
+#include <Magnum/GL/Mesh.h>
+
+#include <Magnum/Math/Matrix4.h>
 #include <Magnum/Math/FunctionsBatch.h>
+
+#include <Magnum/Shaders/Flat.h>
+#include <Magnum/Shaders/MeshVisualizer.h>
+#include <Magnum/Shaders/Phong.h>
+#include <Magnum/Shaders/VertexColor.h>
+#include <Magnum/SceneGraph/Object.h>
 #include <Magnum/ImGuiIntegration/Context.hpp>
 #include <Magnum/Trade/MeshData.h>
-#include <Magnum/Shaders/Flat.h>
 #include <Magnum/Image.h>
-#include <Magnum/GL/TextureFormat.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/DebugTools/ColorMap.h>
@@ -75,20 +84,8 @@ std::unordered_map<ColorMapType, Mg::GL::Texture2D> makeColorMapTextures(){
     return map;
 }
 
-
-
-solver::Status UpdatePhasefield::operator ()(solver::IterationSummary const&){
-    std::lock_guard l(viewer.mutex);
-    auto coords = viewer.meshData.mutableAttribute(Trade::MeshAttribute::TextureCoordinates);
-    auto xcoords = Containers::arrayCast<2, Float>(coords).slice<1>();
-    if(viewer.visFlags & VisualizationFlag::Phasefield){
-        normalizeInto(viewer.problem.parameters, xcoords, -1, 1);
-        viewer.update |= VisualizationFlag::Phasefield;
-    }
-    if(viewer.visFlags & VisualizationFlag::Gradient){
-        normalizeInto(viewer.problem.parameters, xcoords);
-        viewer.update |= VisualizationFlag::Gradient;
-    }
+solver::Status OptimizationCallback::operator ()(solver::IterationSummary const&){
+    if(!optimize) return solver::Status::ABORT;
     return solver::Status::CONTINUE;
 }
 
@@ -96,8 +93,14 @@ solver::Status UpdatePhasefield::operator ()(solver::IterationSummary const&){
 Viewer::Viewer(int argc, char** argv):
     Platform::Application{{argc,argv},NoCreate},
     dirichletScaling(1.), doubleWellScaling(1.), connectednessScaling(1.),
-    phasefieldCallback{*this}
+    optimizationCallback{optimizing}
 {
+    {
+        Containers::arrayAppend(options.callbacks, Containers::InPlaceInit, optimizationCallback);
+        problem.meshData = &meshData;
+        problem.update = &update;
+        problem.mutex = &mutex;
+    }
     /* Setup window */
     {
         const Vector2 dpiScaling = this->dpiScaling({});
@@ -157,8 +160,6 @@ Viewer::Viewer(int argc, char** argv):
                        windowSize(), framebufferSize());
     }
 
-
-
     object = new Object3D(&scene);
 
     GL::Renderer::enable(GL::Renderer::Feature::DepthTest);
@@ -177,7 +178,7 @@ void Viewer::drawSubdivisionOptions() {
         constexpr int step = 1;
         ImGui::InputScalar("Number of Sibdivision (wrt. orignal mesh)", ImGuiDataType_U32, &numSubdivisions, &step, nullptr, "%d");
         if (ImGui::Button("do subdivision")) {
-            subdivide(numSubdivisions, original, problem.parameters, meshData);
+            subdivide(numSubdivisions, original, phasefield, meshData);
             updateInternalDataStructures();
             upload(mesh, vertexBuffer, indexBuffer, meshData);
             updateFunctionals(problem.functionals);
@@ -221,10 +222,12 @@ void Viewer::makeDrawableCurrent(DrawableType type) {
 
 void Viewer::drawPrimitiveOptions() {
     if(handlePrimitive(original, expression)){
+        meshData = preprocess(original, CompileFlag::GenerateSmoothNormals|CompileFlag::AddTextureCoordinates);
         updateInternalDataStructures();
         upload(mesh, vertexBuffer, indexBuffer, meshData);
         updateFunctionals(problem.functionals);
         updateFunctionals(problem.constraints);
+        makeDrawableCurrent(drawableType); //for first time
     }
 }
 
@@ -255,12 +258,30 @@ void Viewer::drawBrushOptions() {
 }
 
 void Viewer::makeExclusiveVisualizer(Functional* funcPtr) {
-    if(exclusiveVisualizer && exclusiveVisualizer != funcPtr) {
+    if(exclusiveVisualizer && exclusiveVisualizer != funcPtr->metaData.get()) {
         std::lock_guard l(mutex);
-        exclusiveVisualizer->metaData->flags = {};
+        exclusiveVisualizer->flags = {};
     }
-    exclusiveVisualizer = funcPtr;
-    visFlags = {};
+    exclusiveVisualizer = funcPtr->metaData.get();
+    problem.flags = {};
+}
+
+bool Viewer::drawGradientMetaData(
+        GradientMetaData& meta,
+        bool& makeExclusive,
+        bool& evaluateProblem){
+    bool drawGrad = bool(meta.flags & VisualizationFlag::Gradient);
+    if(ImGui::Checkbox("Gradient", &drawGrad) ){
+        std::lock_guard l(mutex);
+        if(drawGrad){
+            makeDrawableCurrent(DrawableType::PhongDiffuse);
+            meta.flags = VisualizationFlag::Gradient;
+            makeExclusive = true;
+            evaluateProblem = true;
+        } else {
+            meta.flags = {};
+        };
+    }
 }
 
 /**
@@ -268,10 +289,11 @@ void Viewer::makeExclusiveVisualizer(Functional* funcPtr) {
  * Also note that we can safely read from meta.flags since the optimization thread
  * only reads from those as well (even taking the lock in case we modify)
  */
-bool Viewer::drawConnectednessConstraintOptions(ConnectednessConstraint<Double>& f){
-    auto& meta = f.getMetaData();
+void Viewer::drawConnectednessConstraintOptions(
+        ConnectednessMetaData<Double>& meta,
+        bool& makeExclusive,
+        bool& evaluateProblem){
     double a = meta.a, b = meta.b;
-    bool evaluateFunctional = false;
     if(dragDoubleRange2("Positive Interval", &a, &b, 0.01f, -1.f, 1.f, "Min: %.2f", "Max: %.2f",1.f)){
         std::lock_guard l(mutex);
         meta.a = a; meta.b = b;
@@ -281,7 +303,7 @@ bool Viewer::drawConnectednessConstraintOptions(ConnectednessConstraint<Double>&
     if(ImGui::Checkbox("Visualize Shortest Paths", &meta.paths->drawPaths) ){
         std::lock_guard l(mutex);
         if(meta.paths->drawPaths){
-            evaluateFunctional = true;
+            evaluateProblem = true;
             meta.generateLineStrips = true;
         } else {
             meta.generateLineStrips = false;
@@ -293,9 +315,9 @@ bool Viewer::drawConnectednessConstraintOptions(ConnectednessConstraint<Double>&
         std::lock_guard l(mutex);
         if(visGeodesicWeights) {
             makeDrawableCurrent(DrawableType::FaceColored);
-            makeExclusiveVisualizer(&f);
+            makeExclusive = true;
             meta.flags = VisualizationFlag::GeodesicWeights;
-            evaluateFunctional = true;
+            evaluateProblem = true;
         }
         else meta.flags &= ~VisualizationFlag::GeodesicWeights;
     }
@@ -307,9 +329,9 @@ bool Viewer::drawConnectednessConstraintOptions(ConnectednessConstraint<Double>&
         std::lock_guard l(mutex);
         if(visComponents) {
             makeDrawableCurrent(DrawableType::FaceColored);
-            makeExclusiveVisualizer(&f);
+            makeExclusive = true;
             meta.flags = VisualizationFlag::ConnectedComponents;
-            evaluateFunctional = true;
+            evaluateProblem = true;
         }
         else meta.flags &= ~VisualizationFlag::ConnectedComponents;
     }
@@ -318,14 +340,13 @@ bool Viewer::drawConnectednessConstraintOptions(ConnectednessConstraint<Double>&
         std::lock_guard l(mutex);
         if(visGradient) {
             makeDrawableCurrent(DrawableType::PhongDiffuse);
-            makeExclusiveVisualizer(&f);
+            makeExclusive = true;
             meta.flags = VisualizationFlag::Gradient;
-            evaluateFunctional = true;
+            evaluateProblem = true;
         }
         else meta.flags &= ~VisualizationFlag::Gradient;
     }
     ImGui::EndGroup();
-    return evaluateFunctional;
 }
 
 void Viewer::drawOptimizationContext() {
@@ -358,36 +379,51 @@ void Viewer::drawOptimizationContext() {
         bool evaluateProblem = false;
         auto& fs = problem.functionals;
         for(int i = 0; i < fs.size(); ++i){
-            auto& f = *fs[i];
+            auto f = fs[i].get();
             ImGui::PushID(++nodeCount);
             ImGui::Separator();
 
             if(ImGui::Button("Remove")) toRemove = i;
             ImGui::SameLine();
 
-            switch(f.type){
+            bool makeExclusive = false;
+            constexpr double min = 0.f, max = 1.;
+
+            switch(f->type){
                 case FunctionalType::DoubleWellPotential :
                     ImGui::Text("Double Well Potential");
+                    drawGradientMetaData(dynamic_cast<GradientMetaData&>(*f->metaData), makeExclusive, evaluateProblem);
                     break;
                 case FunctionalType::DirichletEnergy :
                     ImGui::Text("Dirichlet Energy");
+                    drawGradientMetaData(dynamic_cast<GradientMetaData&>(*f->metaData), makeExclusive, evaluateProblem);
                     break;
-                case FunctionalType::Area1 :
+                case FunctionalType::Area1 : {
                     ImGui::Text("Area Regularization Quadratic");
-                    drawAreaRegularization1Options(dynamic_cast<AreaRegularizer1&>(f));
+                    drawGradientMetaData(dynamic_cast<GradientMetaData&>(*f->metaData), makeExclusive, evaluateProblem);
+                    auto& farea1 = dynamic_cast<AreaRegularizer1&>(*f);
+                    ImGui::SliderScalar("Area Ratio", ImGuiDataType_Double, &farea1.areaRatio, &min, &max, "%.5f", 1.0f);
                     break;
-                case FunctionalType::Area2 :
+                }
+                case FunctionalType::Area2 : {
                     ImGui::Text("Area Regularization Smooth Step");
-                    drawAreaRegularization2Options(dynamic_cast<AreaRegularizer2&>(f));
+                    drawGradientMetaData(dynamic_cast<GradientMetaData&>(*f->metaData), makeExclusive, evaluateProblem);
+                    auto& farea2 = dynamic_cast<AreaRegularizer2&>(*f);
+                    ImGui::SliderScalar("Area Ratio", ImGuiDataType_Double, &farea2.areaRatio, &min, &max, "%.5f", 1.0f);
                     break;
+                }
                 case FunctionalType::Connectedness :
                     ImGui::Text("Connectedness Constraint");
-                    evaluateProblem |= drawConnectednessConstraintOptions(
-                            dynamic_cast<ConnectednessConstraint<Double>&>(f));
+                    drawConnectednessConstraintOptions(
+                            dynamic_cast<ConnectednessMetaData<Double>&>(*f->metaData),
+                            makeExclusive,
+                            evaluateProblem);
                     break;
             }
 
-            drawLoss(f.metaData->loss, nodeCount);
+            if(makeExclusive) makeExclusiveVisualizer(f);
+
+            drawLoss(f->metaData->loss, nodeCount);
             ImGui::PopID();
         }
 
@@ -395,38 +431,38 @@ void Viewer::drawOptimizationContext() {
 
         if(toRemove >= 0){
             auto f = problem.functionals[toRemove].get();
-            if(f == exclusiveVisualizer)
+            if(f->metaData.get() == exclusiveVisualizer)
                 exclusiveVisualizer = nullptr;
 
             std::swap(fs[toRemove], fs.back());
             Containers::arrayResize(fs, fs.size() - 1);
         }
 
-        bool visPhasefield = static_cast<bool>(visFlags & VisualizationFlag::Phasefield);
+        bool visPhasefield = static_cast<bool>(problem.flags & VisualizationFlag::Phasefield);
         if(ImGui::Checkbox("Phasefield", &visPhasefield)){
             if(visPhasefield) {
                 makeDrawableCurrent(DrawableType::PhongDiffuse);
                 std::lock_guard l(mutex);
-                visFlags = VisualizationFlag::Phasefield;
-                update |= VisualizationFlag::Phasefield;
+                problem.flags = VisualizationFlag::Phasefield;
+                update = VisualizationFlag::Phasefield;
                 evaluateProblem = true;
                 if (exclusiveVisualizer) {
-                    exclusiveVisualizer->metaData->flags = {};
+                    exclusiveVisualizer->flags = {};
                     exclusiveVisualizer = nullptr;
                 }
             }
         }
         ImGui::SameLine();
-        bool visGradient = static_cast<bool>(visFlags & VisualizationFlag::Gradient);
+        bool visGradient = static_cast<bool>(problem.flags & VisualizationFlag::Gradient);
         if(ImGui::Checkbox("Gradient", &visGradient)){
             if(visGradient) {
                 makeDrawableCurrent(DrawableType::PhongDiffuse);
                 std::lock_guard l(mutex);
-                visFlags = VisualizationFlag::Gradient;
-                update |= VisualizationFlag::Gradient;
+                problem.flags = VisualizationFlag::Gradient;
+                update = VisualizationFlag::Gradient;
                 evaluateProblem = true;
                 if (exclusiveVisualizer) {
-                    exclusiveVisualizer->metaData->flags = {};
+                    exclusiveVisualizer->flags = {};
                     exclusiveVisualizer = nullptr;
                 }
             }
@@ -469,7 +505,8 @@ void Viewer::drawOptimizationContext() {
 
         if(evaluateProblem && !optimizing){
             double r;
-            problem.evaluate(problem.parameters.data(), &r, problem.gradient.data());
+            Containers::Array<Mg::Double> grad(Containers::NoInit, phasefield.size());
+            problem.evaluate(phasefield.data(), &r, grad.data());
         }
 
         if (ImGui::Button("Optimize") && !problem.functionals.empty())
@@ -487,15 +524,10 @@ void Viewer::drawOptimizationContext() {
 void Viewer::startOptimization() {
     stopOptimization();
 
-    Containers::Array<solver::iteration_callback_type> callbacks;
-    for(auto& f : problem.functionals)
-        Containers::arrayAppend(callbacks, Containers::InPlaceInit, *f->metaData);
-    Containers::arrayAppend(callbacks, Containers::InPlaceInit, phasefieldCallback);
-    options.callbacks = std::move(callbacks);
     optimizing = true;
     g.run([this]{
         solver::Summary summary;
-        solve(options, problem, problem.parameters.data(), &summary);
+        solve(options, problem, phasefield.data(), &summary);
         optimizing = false;
         //Debug{} << summary.briefReport().c_str();
     });
@@ -512,21 +544,33 @@ Containers::Pointer<Functional> Viewer::makeFunctional(FunctionalType type) {
     switch (type) {
         case FunctionalType::Area1 : {
             auto p = Containers::pointer<AreaRegularizer1>(vertices, ts);
+            auto meta = Containers::pointer<GradientMetaData>(meshData, update, mutex);
+            meta->loss = std::move(p->metaData->loss);
+            p->metaData = std::move(meta) ;
             p->type = FunctionalType::Area1; //@todo somehow this does not pick up the type from ctor
             return p;
         }
         case FunctionalType::Area2 : {
             auto p = Containers::pointer<AreaRegularizer2>(vertices, ts);
+            auto meta = Containers::pointer<GradientMetaData>(meshData, update, mutex);
+            meta->loss = std::move(p->metaData->loss);
+            p->metaData = std::move(meta);
             p->type = FunctionalType::Area2;
             return p;
         }
         case FunctionalType::DirichletEnergy : {
             auto p = Containers::pointer<DirichletEnergy>(vertices, ts);
+            auto meta = Containers::pointer<GradientMetaData>(meshData, update, mutex);
+            meta->loss = std::move(p->metaData->loss);
+            p->metaData = std::move(meta);
             p->metaData->scaling = dirichletScaling;
             return p;
         }
         case FunctionalType::DoubleWellPotential : {
             auto p = Containers::pointer<DoubleWellPotential>(vertices, ts);
+            auto meta = Containers::pointer<GradientMetaData>(meshData, update, mutex);
+            meta->loss = std::move(p->metaData->loss);
+            p->metaData = std::move(meta);
             p->metaData->scaling = doubleWellScaling;
             p->type = FunctionalType::DoubleWellPotential;
             return p;
@@ -556,8 +600,8 @@ void Viewer::paint(){
     auto textureCoords = meshData.mutableAttribute<Vector2>(Trade::MeshAttribute::TextureCoordinates);
     for(auto [d, i] : distances) {
         if(d > targetDist) break;
-        auto u = (1.f - recursiveFilterFactor) * problem.parameters[i] + recursiveFilterFactor * phase;
-        problem.parameters[i] = u;
+        auto u = (1.f - recursiveFilterFactor) * phasefield[i] + recursiveFilterFactor * phase;
+        phasefield[i] = u;
         textureCoords[i].x() = .5f * (u + 1.f);
     }
 }
@@ -616,7 +660,6 @@ Vector3 Viewer::unproject(Vector2i const& windowPosition) {
 }
 
 void Viewer::updateInternalDataStructures(){
-    meshData = preprocess(original, CompileFlag::GenerateSmoothNormals|CompileFlag::AddTextureCoordinates);
     CORRADE_ASSERT(meshData.hasAttribute(Trade::MeshAttribute::TextureCoordinates),"error", );
     auto points = meshData.attribute<Vector3>(Trade::MeshAttribute::Position);
     Containers::arrayResize(vertices, points.size());
@@ -633,10 +676,7 @@ void Viewer::updateInternalDataStructures(){
                 .setWrapping(Magnum::SamplerWrapping::ClampToEdge);
 
     Containers::arrayResize(faceColors, indices.size() / 3);
-    Containers::arrayResize(problem.parameters, vertices.size());
-    Containers::arrayResize(problem.gradient, vertices.size());
-
-    update = visFlags; //update everything
+    Containers::arrayResize(phasefield, vertices.size());
 }
 
 
@@ -878,16 +918,10 @@ void Viewer::tickEvent()
             update &= ~VisualizationFlag::GeodesicWeights;
         }
         if (update & VisualizationFlag::Gradient) {
-            auto coords = meshData.mutableAttribute<Vector2>(Trade::MeshAttribute::TextureCoordinates);
-            auto xcoords = Containers::arrayCast<2, Float>(coords).slice<1>();
-            normalizeInto(problem.gradient, xcoords);
             reuploadVertices(vertexBuffer, meshData);
             update &= ~VisualizationFlag::Gradient;
         }
         if (update & VisualizationFlag::Phasefield) {
-            auto coords = meshData.mutableAttribute<Vector2>(Trade::MeshAttribute::TextureCoordinates);
-            auto xcoords = Containers::arrayCast<2, Float>(coords).slice<1>();
-            normalizeInto(problem.parameters, xcoords, -1., 1.);
             reuploadVertices(vertexBuffer, meshData);
             update &= ~VisualizationFlag::Phasefield;
         }

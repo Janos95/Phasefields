@@ -4,6 +4,7 @@
 
 #include "scoped_timer.hpp"
 
+#include <Corrade/Containers/Pointer.h>
 #include <mutex>
 #include <unordered_map>
 #include <chrono>

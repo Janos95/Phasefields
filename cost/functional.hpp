@@ -9,10 +9,8 @@
 #include "solver.hpp"
 #include "types.hpp"
 
-#include <Corrade/Containers/Pointer.h>
-#include <Corrade/Containers/GrowableArray.h>
-
-#include <string>
+#include <Corrade/Containers/Containers.h>
+#include <mutex>
 
 namespace Cr = Corrade;
 namespace Mg = Magnum;
@@ -26,18 +24,23 @@ enum class FunctionalType : Mg::UnsignedInt {
     Area2 = 5,
 };
 
-
-
 struct Functional{
 
     struct MetaData {
 
         Cr::Containers::Pointer<LossFunction> loss = Cr::Containers::pointer<TrivialLoss>();
         SharedRessource<Mg::Double> scaling = nullptr;
+
         VisualizationFlags flags = {};
+
+        VisualizationFlag* update;
+        std::mutex* mutex;
+
         virtual ~MetaData() = default;
         virtual solver::Status operator()(solver::IterationSummary const&) { return solver::Status::CONTINUE; };
+
         virtual void updateVis() { } /*this is called from gui thread so we can update some opengl stuff if we want to */
+        virtual void visualizeGradient(Cr::Containers::ArrayView<const Mg::Double> const& gradient) {};
 
         using Ptr = Cr::Containers::Pointer<MetaData>;
 
@@ -53,10 +56,13 @@ struct Functional{
     {
     }
 
-    mutable Cr::Containers::Pointer<MetaData> metaData = nullptr;
+    mutable Cr::Containers::Pointer<MetaData> metaData = Cr::Containers::pointer<MetaData>();
     FunctionalType type;
 
     virtual bool evaluate(double const* parameter, double* cost, double* jacobian) const = 0;
     virtual int numParameters() const = 0;
     virtual ~Functional() = default;
 };
+
+
+

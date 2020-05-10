@@ -29,13 +29,13 @@ struct ComboElementFunctional {
     FunctionalType type;
 };
 
-Containers::Array<ComboElementFunctional> makeComboMapFunctionals();
+Cr::Containers::Array<ComboElementFunctional> makeComboMapFunctionals();
 
 void drawAreaRegularization1Options(AreaRegularizer1& f);
 
 void drawAreaRegularization2Options(AreaRegularizer2& f);
 
-void drawLoss(Containers::Pointer<LossFunction>& loss, int& nodeCount);
+void drawLoss(Cr::Containers::Pointer<LossFunction>& loss, int& nodeCount);
 
 //struct OptimizationContext final : Viewer::AbstractEventHandler {
 //    explicit OptimizationContext(PhasefieldData&);

@@ -8,6 +8,7 @@
 //#include "polygonize_expression.hpp"
 
 #include <Corrade/Containers/Pointer.h>
+#include <Corrade/Containers/GrowableArray.h>
 
 #include <Magnum/Primitives/Capsule.h>
 #include <Magnum/MeshTools/Interleave.h>
@@ -30,10 +31,10 @@ namespace {
     };
 
     auto makeComboMap(){
-        std::vector<ComboElement> map;
-        map.push_back(ComboElement{"U Shaped Square", PrimitiveType::U, Containers::pointer<UOptions>()});
-        map.push_back(ComboElement{"Capsule", PrimitiveType::Capsule, Containers::pointer<CapsuleOptions>()});
-        map.push_back(ComboElement{"Implicit Function", PrimitiveType::ImplicitFunction, Containers::pointer<PolygonizationOptions>()});
+        Containers::Array<ComboElement> map;
+        Containers::arrayAppend(map, ComboElement{"U Shaped Square", PrimitiveType::U, Containers::pointer<UOptions>()});
+        Containers::arrayAppend(map, ComboElement{"Capsule", PrimitiveType::Capsule, Containers::pointer<CapsuleOptions>()});
+        Containers::arrayAppend(map, ComboElement{"Implicit Function", PrimitiveType::ImplicitFunction, Containers::pointer<PolygonizationOptions>()});
         return map;
     }
 

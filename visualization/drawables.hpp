@@ -6,24 +6,14 @@
 
 #include "types.hpp"
 
-#include <Magnum/Math/Matrix4.h>
-#include <Magnum/SceneGraph/Camera.h>
-#include <Magnum/GL/Mesh.h>
-#include <Magnum/Math/Color.h>
+#include <Magnum/GL/GL.h>
+#include <Magnum/Math/Math.h>
+#include <Magnum/Shaders/Shaders.h>
 #include <Magnum/SceneGraph/Drawable.h>
-#include <Magnum/Shaders/Flat.h>
-#include <Magnum/Shaders/VertexColor.h>
-#include <Magnum/Shaders/Phong.h>
-#include <Magnum/Shaders/MeshVisualizer.h>
-#include <Magnum/SceneGraph/Object.h>
-#include <Magnum/GL/AbstractShaderProgram.h>
-#include <Magnum/SceneGraph/MatrixTransformation3D.h>
-#include <Magnum/GL/Texture.h>
-#include <Magnum/GL/DefaultFramebuffer.h>
+#include <Magnum/Math/Color.h>
 
 namespace Cr = Corrade;
 namespace Mg = Magnum;
-
 
 enum class DrawableType : Magnum::Int {
     MeshVisualizer = 0,
@@ -33,12 +23,7 @@ enum class DrawableType : Magnum::Int {
 };
 
 struct MeshDrawable : Drawable {
-    MeshDrawable(Object3D& obj, Mg::GL::Mesh& m, DrawableGroup* group, Mg::GL::Texture2D* t = nullptr):
-        Drawable(obj, group),
-        mesh(m),
-        texture(t)
-    {
-    }
+    MeshDrawable(Object3D& obj, Mg::GL::Mesh& m, DrawableGroup* group, Mg::GL::Texture2D* t = nullptr);
     Mg::GL::Mesh& mesh;
     Mg::GL::Texture2D* texture;
 };
@@ -46,18 +31,9 @@ struct MeshDrawable : Drawable {
 struct FlatDrawable : MeshDrawable
 {
 
-    explicit FlatDrawable(Object3D& object, Mg::GL::Mesh& m, Mg::GL::AbstractShaderProgram& shader, DrawableGroup* group):
-            MeshDrawable(object, m, group),
-            shader(dynamic_cast<Magnum::Shaders::Flat3D&>(shader))
-    {
-    }
+    explicit FlatDrawable(Object3D&, Mg::GL::Mesh&, Mg::GL::AbstractShaderProgram&, DrawableGroup*);
 
-    void draw(const Magnum::Matrix4& transformationMatrix, Magnum::SceneGraph::Camera3D& camera) override {
-        if(texture) shader.bindTexture(*texture);
-        else shader.setColor(color);
-        shader.setTransformationProjectionMatrix(camera.projectionMatrix() * transformationMatrix)
-              .draw(mesh);
-    }
+    void draw(const Magnum::Matrix4&, Magnum::SceneGraph::Camera3D&) override;
 
     Mg::Shaders::Flat3D& shader;
     Mg::Color4 color;
@@ -65,17 +41,9 @@ struct FlatDrawable : MeshDrawable
 
 struct VertexColorDrawable : MeshDrawable
 {
+    explicit VertexColorDrawable(Object3D& object, Mg::GL::Mesh& m, Mg::GL::AbstractShaderProgram& shader, DrawableGroup* group);
 
-    explicit VertexColorDrawable(Object3D& object, Mg::GL::Mesh& m, Mg::GL::AbstractShaderProgram& shader, DrawableGroup* group):
-        MeshDrawable(object, m, group),
-        shader(&dynamic_cast<Mg::Shaders::VertexColor3D&>(shader))
-    {
-    }
-
-    void draw(const Magnum::Matrix4& transformationMatrix, Mg::SceneGraph::Camera3D& camera) override {
-        shader->setTransformationProjectionMatrix(camera.projectionMatrix() * transformationMatrix)
-              .draw(mesh);
-    }
+    void draw(const Magnum::Matrix4&, Mg::SceneGraph::Camera3D&) override;
 
     Magnum::Shaders::VertexColor3D* shader = nullptr;
 };
@@ -85,21 +53,9 @@ struct PhongDiffuseDrawable : MeshDrawable
 {
 public:
 
-    explicit PhongDiffuseDrawable(Object3D& object, Mg::GL::Mesh& m, Mg::GL::AbstractShaderProgram& shader, DrawableGroup* group):
-        MeshDrawable(object, m, group),
-        shader(dynamic_cast<Magnum::Shaders::Phong&>(shader))
-    {
-    }
+    explicit PhongDiffuseDrawable(Object3D&, Mg::GL::Mesh&, Mg::GL::AbstractShaderProgram&, DrawableGroup*);
 
-    void draw(const Mg::Matrix4& transformationMatrix, Mg::SceneGraph::Camera3D& camera) override {
-        if(!texture) return;
-        shader.bindDiffuseTexture(*texture)
-              .setLightPosition({10.0f, 10.0f, 10.0f})
-              .setTransformationMatrix(transformationMatrix)
-              .setNormalMatrix(transformationMatrix.normalMatrix())
-              .setProjectionMatrix(camera.projectionMatrix())
-              .draw(mesh);
-    }
+    void draw(const Mg::Matrix4&, Mg::SceneGraph::Camera3D&) override;
 
     Mg::Shaders::Phong& shader;
 };
@@ -107,23 +63,9 @@ public:
 struct MeshVisualizerDrawable : MeshDrawable
 {
 
-    explicit MeshVisualizerDrawable(Object3D& object, Mg::GL::Mesh& m, Mg::GL::AbstractShaderProgram& s, DrawableGroup* group):
-        MeshDrawable(object, m, group),
-        shader(dynamic_cast<Mg::Shaders::MeshVisualizer3D&>(s))
-    {
-    }
+    explicit MeshVisualizerDrawable(Object3D&, Mg::GL::Mesh&, Mg::GL::AbstractShaderProgram&, DrawableGroup*);
 
-    void draw(const Magnum::Matrix4& transformationMatrix, Magnum::SceneGraph::Camera3D& camera) override {
-
-        shader.setViewportSize(Mg::Vector2{Mg::GL::defaultFramebuffer.viewport().size()})
-              .setTransformationMatrix(transformationMatrix)
-              .setProjectionMatrix(camera.projectionMatrix())
-              .setWireframeWidth(wireframeWidth)
-              .setWireframeColor(wireframeColor)
-              .setSmoothness(smoothness)
-              .setColor(color)
-              .draw(mesh);
-    }
+    void draw(const Magnum::Matrix4&, Magnum::SceneGraph::Camera3D&) override;
 
     Mg::Float wireframeWidth = 1.f;
     Mg::Float smoothness = 2.f;
@@ -132,26 +74,11 @@ struct MeshVisualizerDrawable : MeshDrawable
     Mg::Shaders::MeshVisualizer3D& shader;
 };
 
-
 struct FaceColorDrawable : MeshDrawable
 {
+    explicit FaceColorDrawable(Object3D&, Mg::GL::Mesh&, Mg::GL::AbstractShaderProgram&, DrawableGroup*);
 
-    explicit FaceColorDrawable(Object3D& object, Mg::GL::Mesh& m, Mg::GL::AbstractShaderProgram& s, DrawableGroup* group):
-            MeshDrawable(object, m, group),
-            shader(dynamic_cast<Mg::Shaders::MeshVisualizer3D&>(s))
-    {
-    }
-
-    void draw(const Magnum::Matrix4& transformationMatrix, Magnum::SceneGraph::Camera3D& camera) override {
-        if(!texture) return;
-        shader.setViewportSize(Mg::Vector2{Mg::GL::defaultFramebuffer.viewport().size()})
-              .setTransformationMatrix(transformationMatrix)
-              .setProjectionMatrix(camera.projectionMatrix())
-              .setColorMapTransformation(offset, scale)
-              .bindColorMapTexture(*texture)
-              .draw(mesh);
-    }
-
+    void draw(const Magnum::Matrix4&, Magnum::SceneGraph::Camera3D&) override;
 
     Mg::Shaders::MeshVisualizer3D& shader;
     Mg::Float offset = 0., scale = 1.f;

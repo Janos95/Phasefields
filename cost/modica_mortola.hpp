@@ -6,18 +6,43 @@
 
 #include "functional.hpp"
 #include "c1_functions.hpp"
-#include "utility.hpp"
+#include "stopping_criteria.hpp"
 #include "fem.hpp"
 
 #include <Corrade/Containers/ArrayView.h>
-#include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/GrowableArray.h>
+#include <Magnum/Trade/MeshData.h>
 
 #include <Eigen/SparseCore>
 #include <numeric>
-#include <Corrade/Containers/GrowableArray.h>
+
+#include <normalizeInto.hpp>
+#include <mutex>
 
 namespace Cr = Corrade;
 namespace Mg = Magnum;
+
+struct GradientMetaData : Functional::MetaData {
+
+    GradientMetaData(Mg::Trade::MeshData& md, VisualizationFlags& u, std::mutex& m) :
+        meshData(md), update(u), mutex(m)
+    {
+    }
+
+    void visualizeGradient(Cr::Containers::ArrayView<const Mg::Double> const& gradient) override {
+        std::lock_guard l(mutex);
+        if(flags & VisualizationFlag::Gradient){
+            auto coords = meshData.mutableAttribute(Mg::Trade::MeshAttribute::TextureCoordinates);
+            auto xcoords = Cr::Containers::arrayCast<2, Mg::Float>(coords).template slice<1>();
+            normalizeInto(gradient, xcoords);
+            update = VisualizationFlag::Gradient;
+        }
+    }
+
+    Mg::Trade::MeshData& meshData;
+    VisualizationFlags& update;
+    std::mutex& mutex;
+};
 
 
 struct DirichletEnergy :  Functional

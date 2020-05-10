@@ -4,11 +4,9 @@
 
 #pragma once
 
-#include <Magnum/Trade/MeshData.h>
-#include <Magnum/GL/Mesh.h>
-#include <Magnum/GL/Buffer.h>
+#include <Magnum/Trade/Trade.h>
+#include <Magnum/GL/GL.h>
 #include <Corrade/Containers/EnumSet.h>
-
 
 namespace Mg = Magnum;
 namespace Cr = Corrade;

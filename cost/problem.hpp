@@ -7,39 +7,27 @@
 #include "unique_function.h"
 #include "functional.hpp"
 
-#include <Corrade/Containers/GrowableArray.h>
+#include <Magnum/Trade/Trade.h>
+#include <Corrade/Containers/Containers.h>
+#include <mutex>
 
 namespace Cr = Corrade;
 
-//struct IterationCallbackWrapper : public ceres::IterationCallback{
-//
-//    template<class F>
-//    IterationCallbackWrapper(F&& f) : callback((F&&)f){}
-//
-//    ceres::CallbackReturnType operator()(ceres::IterationSummary const& summary) override {
-//         return callback(summary);
-//    }
-//
-//     unique_function<ceres::CallbackReturnType(ceres::IterationSummary const&)> callback;
-//};
 namespace solver {
 
 struct Problem {
 
-    struct Cost {
-        std::string_view name;
-        double cost;
-    };
-
+    //hack these in :/
+    VisualizationFlags flags = VisualizationFlag::Phasefield;
+    VisualizationFlags* update = nullptr;
+    std::mutex* mutex = nullptr;
+    Mg::Trade::MeshData* meshData;
 
     bool evaluate(const double *parameters,
                   double *cost,
                   double *jacobians) const;
 
     [[nodiscard]] int numParameters() const;
-
-    Cr::Containers::Array<Mg::Double> parameters;
-    mutable Cr::Containers::Array<Mg::Double> gradient;
 
     Cr::Containers::Array<Cr::Containers::Pointer<Functional>> functionals;
     Cr::Containers::Array<Cr::Containers::Pointer<Functional>> constraints;

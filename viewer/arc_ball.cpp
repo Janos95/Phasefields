@@ -4,7 +4,6 @@
 
 #include "arc_ball.hpp"
 
-#include <Magnum/Math/Matrix3.h>
 #include <Magnum/Math/Quaternion.h>
 #include <Magnum/Magnum.h>
 

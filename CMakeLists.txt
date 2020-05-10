@@ -34,11 +34,11 @@ add_subdirectory(viewer)
 #set(CMAKE_CXX_STANDARD_LIBRARIES tbb)
 #set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES /usr/local/include/c++/10.0.1)
 
-#add_executable(segmentation
-#        main.cpp
-#        )
+add_executable(segmentation
+       main.cpp
+        )
 
-#target_link_libraries(segmentation PRIVATE
-#        phasefields::viewer
-#        )
+target_link_libraries(segmentation PRIVATE
+        phasefields::viewer
+        )
 #add_subdirectory(tests)
