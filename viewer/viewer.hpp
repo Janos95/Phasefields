@@ -57,7 +57,7 @@ struct Viewer: public Mg::Platform::Application {
     void drawBrushOptions();
     void drawOptimizationContext();
     void makeExclusiveVisualizer(Functional*);
-    bool drawGradientMetaData(GradientMetaData&, bool&, bool&);
+    void drawGradientMetaData(GradientMetaData&, bool&, bool&);
     void drawConnectednessConstraintOptions(ConnectednessMetaData<Mg::Double>&, bool&, bool&);
     void drawShaderOptions();
     void startOptimization();
@@ -120,7 +120,7 @@ struct Viewer: public Mg::Platform::Application {
     SharedRessource<Mg::Double> connectednessScaling;
 
     Mg::Double phase = 0;
-    Mg::Double targetDist;
+    Mg::Double targetDist = 0.;
     Mg::Double recursiveFilterFactor = 0.1;
     Mg::Double distStep = 0.1;
     Mg::Double maxDist = 20.f;

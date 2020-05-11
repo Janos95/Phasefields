@@ -258,15 +258,15 @@ void Viewer::drawBrushOptions() {
 }
 
 void Viewer::makeExclusiveVisualizer(Functional* funcPtr) {
+    std::lock_guard l(mutex);
     if(exclusiveVisualizer && exclusiveVisualizer != funcPtr->metaData.get()) {
-        std::lock_guard l(mutex);
         exclusiveVisualizer->flags = {};
     }
     exclusiveVisualizer = funcPtr->metaData.get();
     problem.flags = {};
 }
 
-bool Viewer::drawGradientMetaData(
+void Viewer::drawGradientMetaData(
         GradientMetaData& meta,
         bool& makeExclusive,
         bool& evaluateProblem){
@@ -564,6 +564,7 @@ Containers::Pointer<Functional> Viewer::makeFunctional(FunctionalType type) {
             meta->loss = std::move(p->metaData->loss);
             p->metaData = std::move(meta);
             p->metaData->scaling = dirichletScaling;
+            p->type = FunctionalType::DirichletEnergy;
             return p;
         }
         case FunctionalType::DoubleWellPotential : {
@@ -579,6 +580,7 @@ Containers::Pointer<Functional> Viewer::makeFunctional(FunctionalType type) {
             auto meta = Containers::pointer<ConnectednessMetaData<Double>>(meshData, faceColors, update, mutex);
             meta->paths = new Paths(&scene, drawableGroup);
             auto p = Containers::pointer<ConnectednessConstraint<Double>>(vertices, ts, std::move(meta));
+            p->type = FunctionalType::Connectedness;
             p->metaData->scaling = connectednessScaling;
             return p;
     }
@@ -633,6 +635,7 @@ void Viewer::geodesicSearch() {
         distances[i].second = i;
     }
     std::sort(distances.begin(), distances.end(),[](auto& a, auto& b){ return a.first < b.first; });
+    targetDist = 0.;
 }
 
 Vector3 Viewer::unproject(Vector2i const& windowPosition) {

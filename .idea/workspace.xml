@@ -6,7 +6,6 @@
       <config projectName="phasefields" targetName="viewer_RESOURCES-dependencies" />
       <config projectName="phasefields" targetName="scoped_timer" />
       <config projectName="phasefields" targetName="shaders" />
-      <config projectName="phasefields" targetName="polygonizer" />
       <config projectName="phasefields" targetName="viewer" />
       <config projectName="phasefields" targetName="shader_RCS-dependencies" />
       <config projectName="phasefields" targetName="visualization" />
@@ -15,45 +14,15 @@
   </component>
   <component name="CMakeSettings">
     <configurations>
-      <configuration PROFILE_NAME="Debug" CONFIG_NAME="Debug" GENERATION_OPTIONS="-DIMGUI_DIR=~/libraries/imgui -DTBB_DIR=~/libraries/prefix/tbb/cmake" />
+      <configuration PROFILE_NAME="RelWithDebInfo" CONFIG_NAME="RelWithDebInfo" GENERATION_OPTIONS="-DIMGUI_DIR=~/libraries/imgui -DTBB_DIR=~/libraries/prefix/tbb/cmake" />
     </configurations>
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7a218559-17cb-4777-b814-432adba0c7a1" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/cost/cost.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/viewer/arc_ball_camera.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/bfs.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/bfs.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/connectedness_constraint.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/connectedness_constraint.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/functional.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/functional.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/ipopt_problem.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/modica_mortola.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/modica_mortola.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/problem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/problem.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/problem.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/problem.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/small_array.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/small_array.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/solver.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/solver.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/solver.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/utility.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/stopping_criteria.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/utility.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/stopping_criteria.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scoped_timer/include/scoped_timer/scoped_timer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/scoped_timer/include/scoped_timer/scoped_timer.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scoped_timer/include/scoped_timer/scoped_timer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/scoped_timer/include/scoped_timer/scoped_timer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/fw_test.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/fw_test.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/arc_ball.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/arc_ball.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/arc_ball.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/arc_ball.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/arc_ball_camera.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/arc_ball_camera.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/optimization_context.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/optimization_context.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/primitives.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/primitives.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/subdivision.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/subdivision.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/viewer/viewer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/viewer.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/viewer/viewer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/viewer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/visualization/drawables.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/visualization/drawables.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/visualization/drawables.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/visualization/drawables.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/visualization/paths.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/visualization/paths.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/visualization/paths.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/visualization/paths.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/visualization/types.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/visualization/types.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/visualization/upload.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/visualization/upload.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/visualization/upload.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/visualization/upload.hpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,7 +32,7 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:RelWithDebInfo" />
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
@@ -97,47 +66,42 @@
     </key>
   </component>
   <component name="RunManager" selected="CMake Application.segmentation">
-    <configuration name="cost" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="cost" CONFIG_NAME="Debug">
+    <configuration name="cost" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="cost" CONFIG_NAME="RelWithDebInfo">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="polygonizer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="polygonizer" CONFIG_NAME="Debug">
+    <configuration name="scoped_timer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="scoped_timer" CONFIG_NAME="RelWithDebInfo">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="scoped_timer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="scoped_timer" CONFIG_NAME="Debug">
+    <configuration name="segmentation" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="segmentation" CONFIG_NAME="RelWithDebInfo" RUN_TARGET_PROJECT_NAME="phasefields" RUN_TARGET_NAME="segmentation">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="segmentation" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="segmentation" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="phasefields" RUN_TARGET_NAME="segmentation">
+    <configuration name="shader_RCS-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="shader_RCS-dependencies" CONFIG_NAME="RelWithDebInfo">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="shader_RCS-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="shader_RCS-dependencies" CONFIG_NAME="Debug">
+    <configuration name="shaders" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="shaders" CONFIG_NAME="RelWithDebInfo">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="shaders" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="shaders" CONFIG_NAME="Debug">
+    <configuration name="viewer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="viewer" CONFIG_NAME="RelWithDebInfo">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="viewer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="viewer" CONFIG_NAME="Debug">
+    <configuration name="viewer_RESOURCES-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="viewer_RESOURCES-dependencies" CONFIG_NAME="RelWithDebInfo">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="viewer_RESOURCES-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="viewer_RESOURCES-dependencies" CONFIG_NAME="Debug">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="visualization" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="visualization" CONFIG_NAME="Debug">
+    <configuration name="visualization" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="visualization" CONFIG_NAME="RelWithDebInfo">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -145,7 +109,6 @@
     <list>
       <item itemvalue="CMake Application.segmentation" />
       <item itemvalue="CMake Application.cost" />
-      <item itemvalue="CMake Application.polygonizer" />
       <item itemvalue="CMake Application.scoped_timer" />
       <item itemvalue="CMake Application.shader_RCS-dependencies" />
       <item itemvalue="CMake Application.shaders" />
@@ -166,7 +129,8 @@
       <updated>1588932991740</updated>
       <workItem from="1588932994762" duration="18513000" />
       <workItem from="1589011886944" duration="19505000" />
-      <workItem from="1589104518247" duration="10226000" />
+      <workItem from="1589104518247" duration="14102000" />
+      <workItem from="1589189209272" duration="972000" />
     </task>
     <servers />
   </component>
@@ -182,42 +146,42 @@
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="949" y="232" width="652" height="513" key="#cost/0.0.2560.1080@0.0.2560.1080" timestamp="1589012235464" />
-    <state width="2508" height="304" key="GridCell.Tab.0.bottom" timestamp="1589130497181">
+    <state width="2508" height="189" key="GridCell.Tab.0.bottom" timestamp="1589195444256">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2508" height="304" key="GridCell.Tab.0.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1589130497181" />
-    <state width="2508" height="304" key="GridCell.Tab.0.center" timestamp="1589130497180">
+    <state width="2508" height="189" key="GridCell.Tab.0.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1589195444256" />
+    <state width="2508" height="189" key="GridCell.Tab.0.center" timestamp="1589195444256">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2508" height="304" key="GridCell.Tab.0.center/0.0.2560.1080@0.0.2560.1080" timestamp="1589130497180" />
-    <state width="2508" height="304" key="GridCell.Tab.0.left" timestamp="1589130497180">
+    <state width="2508" height="189" key="GridCell.Tab.0.center/0.0.2560.1080@0.0.2560.1080" timestamp="1589195444256" />
+    <state width="2508" height="189" key="GridCell.Tab.0.left" timestamp="1589195444255">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2508" height="304" key="GridCell.Tab.0.left/0.0.2560.1080@0.0.2560.1080" timestamp="1589130497180" />
-    <state width="2508" height="304" key="GridCell.Tab.0.right" timestamp="1589130497180">
+    <state width="2508" height="189" key="GridCell.Tab.0.left/0.0.2560.1080@0.0.2560.1080" timestamp="1589195444255" />
+    <state width="2508" height="189" key="GridCell.Tab.0.right" timestamp="1589195444256">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2508" height="304" key="GridCell.Tab.0.right/0.0.2560.1080@0.0.2560.1080" timestamp="1589130497180" />
-    <state width="1228" height="304" key="GridCell.Tab.1.bottom" timestamp="1589130497119">
+    <state width="2508" height="189" key="GridCell.Tab.0.right/0.0.2560.1080@0.0.2560.1080" timestamp="1589195444256" />
+    <state width="1228" height="189" key="GridCell.Tab.1.bottom" timestamp="1589195456962">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="1228" height="304" key="GridCell.Tab.1.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1589130497119" />
-    <state width="1228" height="304" key="GridCell.Tab.1.center" timestamp="1589130497119">
+    <state width="1228" height="189" key="GridCell.Tab.1.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1589195456962" />
+    <state width="1228" height="189" key="GridCell.Tab.1.center" timestamp="1589195456961">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="1228" height="304" key="GridCell.Tab.1.center/0.0.2560.1080@0.0.2560.1080" timestamp="1589130497119" />
-    <state width="1228" height="304" key="GridCell.Tab.1.left" timestamp="1589130497118">
+    <state width="1228" height="189" key="GridCell.Tab.1.center/0.0.2560.1080@0.0.2560.1080" timestamp="1589195456961" />
+    <state width="1228" height="189" key="GridCell.Tab.1.left" timestamp="1589195456961">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="1228" height="304" key="GridCell.Tab.1.left/0.0.2560.1080@0.0.2560.1080" timestamp="1589130497118" />
-    <state width="1228" height="304" key="GridCell.Tab.1.right" timestamp="1589130497119">
+    <state width="1228" height="189" key="GridCell.Tab.1.left/0.0.2560.1080@0.0.2560.1080" timestamp="1589195456961" />
+    <state width="1228" height="189" key="GridCell.Tab.1.right" timestamp="1589195456962">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="1228" height="304" key="GridCell.Tab.1.right/0.0.2560.1080@0.0.2560.1080" timestamp="1589130497119" />
-    <state x="769" y="57" key="SettingsEditor" timestamp="1588937917480">
+    <state width="1228" height="189" key="GridCell.Tab.1.right/0.0.2560.1080@0.0.2560.1080" timestamp="1589195456962" />
+    <state x="769" y="111" key="SettingsEditor" timestamp="1589195194484">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="769" y="57" key="SettingsEditor/0.0.2560.1080@0.0.2560.1080" timestamp="1588937917480" />
+    <state x="769" y="111" key="SettingsEditor/0.0.2560.1080@0.0.2560.1080" timestamp="1589195194484" />
     <state x="891" y="114" width="768" height="604" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1589019283351">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
