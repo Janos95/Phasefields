@@ -4,11 +4,14 @@
 
 #pragma once
 
-#include "viewer.hpp"
+#include <Magnum/Magnum.h>
+#include <Corrade/Containers/Containers.h>
+
+namespace Cr = Corrade;
+namespace Mg = Magnum;
 
 void subdivide(
         std::uint32_t numSubdivisions,
-        Mg::Trade::MeshData const& original,
-        Cr::Containers::Array<Mg::Double>& phasefield,
-        Mg::Trade::MeshData& meshData);
-
+        Cr::Containers::Array<Mg::UnsignedInt>& indices,
+        Cr::Containers::Array<Mg::Vector3d>& vertices,
+        Cr::Containers::Array<Mg::Double>& phasefield);

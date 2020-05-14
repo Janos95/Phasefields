@@ -11,10 +11,16 @@
 #include "geodesic_algorithm_exact.h"
 #include "connectedness_constraint.hpp"
 #include "custom_widgets.hpp"
+#include "imguifilesystem.h"
+
+//#include "isotropic_remeshing.hpp"
 
 #include <scoped_timer/scoped_timer.hpp>
 
 #include <Corrade/Utility/Algorithms.h>
+#include <Corrade/PluginManager/Manager.h>
+#include <Corrade/Utility/Directory.h>
+#include <Corrade/PluginManager/PluginMetadata.h>
 
 #include <Magnum/GL/DefaultFramebuffer.h>
 #include <Magnum/GL/Renderer.h>
@@ -23,6 +29,7 @@
 #include <Magnum/GL/Buffer.h>
 #include <Magnum/GL/DefaultFramebuffer.h>
 #include <Magnum/GL/Mesh.h>
+#include <Magnum/DebugTools/ObjectRenderer.h>
 
 #include <Magnum/Math/Matrix4.h>
 #include <Magnum/Math/FunctionsBatch.h>
@@ -38,6 +45,8 @@
 #include <Magnum/PixelFormat.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/DebugTools/ColorMap.h>
+#include <Magnum/Trade/AbstractImporter.h>
+#include <Magnum/MeshTools/RemoveDuplicates.h>
 
 
 using namespace Corrade;
@@ -100,6 +109,7 @@ Viewer::Viewer(int argc, char** argv):
         problem.meshData = &meshData;
         problem.update = &update;
         problem.mutex = &mutex;
+        wireframeObject = new Object3D(&scene);
     }
     /* Setup window */
     {
@@ -153,14 +163,16 @@ Viewer::Viewer(int argc, char** argv):
 
     /* Setup the arcball after the camera objects */
     {
-        const Vector3 eye = Vector3::zAxis(-10.0f);
+        const Vector3 eye = Vector3::zAxis(-2.0f);
         const Vector3 center{};
         const Vector3 up = Vector3::yAxis();
-        camera.emplace(scene, eye, center, up, 45.0_degf,
+        camera.emplace(scene, eye, center, up, fov,
                        windowSize(), framebufferSize());
+
     }
 
     object = new Object3D(&scene);
+    manager.set("my", DebugTools::ObjectRendererOptions{}.setSize(1.f));
 
     GL::Renderer::enable(GL::Renderer::Feature::DepthTest);
     GL::Renderer::enable(GL::Renderer::Feature::FaceCulling);
@@ -170,20 +182,118 @@ Viewer::Viewer(int argc, char** argv):
     setMinimalLoopPeriod(16);
 }
 
+bool loadMesh(char const* path, Trade::MeshData& mesh) {
+    Cr::PluginManager::Manager <Trade::AbstractImporter> manager;
+    auto importer = manager.loadAndInstantiate("AssimpImporter");
+    auto name = importer->metadata()->name();
+    Debug{} << "Trying to load mesh using " << name.c_str();
+    if (!importer) std::exit(1);
 
+    Debug{} << "Opening file" << path;
+
+    if (!importer->openFile(path)) {
+        puts("could not open file");
+        std::exit(4);
+    }
+
+    Debug{} << "Imported " << importer->meshCount() << " meshes";
+
+    if (importer->meshCount() && importer->mesh(0)) {
+        mesh = *importer->mesh(0);
+        return true;
+    } else {
+        Debug{} << "Could not load mesh";
+        return false;
+    }
+
+}
+
+bool Viewer::saveMesh(std::string const& path) {
+    auto [stem, ext] = Cr::Utility::Directory::splitExtension(path);
+    if(ext != ".ply") return false;
+
+    Containers::Array<Double> gradient(Containers::NoInit, phasefield.size());
+    auto triangles = Containers::arrayCast<Vector3ui>(indices);
+
+    stopOptimization();
+    double r;
+    problem.evaluate(phasefield.data(), &r, gradient.data());
+
+    std::ofstream out(path);
+    out << "ply" << std::endl;
+    out << "format ascii 1.0\n";
+    out << "element vertex " << vertices.size() << '\n';
+    out << "property float x\n";
+    out << "property float y\n";
+    out << "property float z\n";
+    out << "property float u\n";
+    out << "property float j\n";
+    out << "element face " << triangles.size() << '\n';
+    out << "property list uchar int vertex_indices\n";
+    out << "end_header\n";
+
+    for (int i = 0; i < vertices.size(); ++i) {
+        for (int j = 0; j < 3; ++j) {
+            out << vertices[i][j] << ' ';
+        }
+        out << phasefield[i] << ' ' << gradient[i] << '\n';
+    }
+
+    for (int i = 0; i < triangles.size(); ++i) {
+        out << "3 ";
+        for (int j = 0; j < 3; ++j) {
+            out << triangles[i][j] << ' ';
+        }
+        out << '\n';
+    }
+    return true;
+}
+
+
+template<class T>
+Containers::Array<Vector3d> positionsAsArray(Trade::MeshData const& meshData){
+    auto view = meshData.attribute<Vector3>(Trade::MeshAttribute::Position);
+    Containers::Array<Vector3d> positions(Containers::NoInit, view.size());
+    for (int i = 0; i < view.size(); ++i) {
+        positions[i] = Vector3d{view[i]};
+    }
+    return positions;
+}
 
 void Viewer::drawSubdivisionOptions() {
     if (ImGui::TreeNode("Subdivisions")) {
         ImGui::Text("Currently we have %d vertices and %d faces", (int)vertices.size(), (int)indices.size() / 3);
         constexpr int step = 1;
+        auto old = numSubdivisions;
         ImGui::InputScalar("Number of Sibdivision (wrt. orignal mesh)", ImGuiDataType_U32, &numSubdivisions, &step, nullptr, "%d");
         if (ImGui::Button("do subdivision")) {
-            subdivide(numSubdivisions, original, phasefield, meshData);
+            if (numSubdivisions > old){
+                subdivide(numSubdivisions - old,
+                          indices,
+                          vertices,
+                          phasefield);
+            } else {
+                indices = original.indicesAsArray();
+                vertices = positionsAsArray<Double>(original);
+                Containers::arrayResize(phasefield, vertices.size());
+                subdivide(numSubdivisions,
+                          indices,
+                          vertices,
+                          phasefield);
+            }
+
             updateInternalDataStructures();
             upload(mesh, vertexBuffer, indexBuffer, meshData);
             updateFunctionals(problem.functionals);
             updateFunctionals(problem.constraints);
-            makeDrawableCurrent(drawableType);
+        }
+
+        if(ImGui::Button("Istropic Remeshing")){
+            //isotropicRemeshing(vertices, indices);
+            updateInternalDataStructures();
+            upload(mesh, vertexBuffer, indexBuffer, meshData);
+            updateFunctionals(problem.functionals);
+            updateFunctionals(problem.constraints);
         }
         ImGui::TreePop();
     }
@@ -191,7 +301,8 @@ void Viewer::drawSubdivisionOptions() {
 
 void Viewer::makeDrawableCurrent(DrawableType type) {
     if(!object) return;
-    object->features().clear();
+    if(drawable)
+        object->features().erase(drawable);
     drawableType = type;
     switch(type){
         case DrawableType::FaceColored : {
@@ -220,14 +331,92 @@ void Viewer::makeDrawableCurrent(DrawableType type) {
     }
 }
 
-void Viewer::drawPrimitiveOptions() {
-    if(handlePrimitive(original, expression)){
-        meshData = preprocess(original, CompileFlag::GenerateSmoothNormals|CompileFlag::AddTextureCoordinates);
-        updateInternalDataStructures();
-        upload(mesh, vertexBuffer, indexBuffer, meshData);
-        updateFunctionals(problem.functionals);
-        updateFunctionals(problem.constraints);
-        makeDrawableCurrent(drawableType); //for first time
+void normalizeMesh(Containers::Array<Vector3d>& vertices, Containers::Array<UnsignedInt>& indices){
+    Vector3d min{Math::Constants<Double>::inf()}, max{-Math::Constants<Double>::inf()};
+    for(auto const& p : vertices){
+        for (int i = 0; i < 3; ++i) {
+            min[i] = Math::min(min[i], p[i]);
+            max[i] = Math::max(max[i], p[i]);
+        }
+    }
+    auto scale = (max - min).lengthInverted();
+    for (auto& v : vertices) {
+        v = (v - min) * scale;
+    }
+
+    auto afterRemoving = MeshTools::removeDuplicatesIndexedInPlace<UnsignedInt, Vector3d>(indices, vertices);
+    Containers::arrayResize(vertices, afterRemoving);
+
+}
+
+
+void normalizeMesh(Trade::MeshData& meshData){
+    Containers::Array<char> is(Containers::NoInit, sizeof(UnsignedInt) * meshData.indexCount()),
+                            vs(Containers::NoInit, sizeof(Vector3) * meshData.vertexCount());
+    auto indices = Containers::arrayCast<UnsignedInt>(is);
+    Utility::copy(meshData.indices<UnsignedInt>(), indices);
+
+    auto vertices = Containers::arrayCast<Vector3>(vs);
+    auto points = meshData.attribute<Vector3>(Trade::MeshAttribute::Position);
+
+    Vector3 min{Math::Constants<Float>::inf()}, max{-Math::Constants<Float>::inf()};
+    for(auto const& p : points){
+        for (int i = 0; i < 3; ++i) {
+            min[i] = Math::min(min[i], p[i]);
+            max[i] = Math::max(max[i], p[i]);
+        }
+    }
+    auto scale = (max - min).lengthInverted();
+    auto mid = (max - min) * 0.5f;
+    for (int i = 0; i < vertices.size(); ++i) {
+         vertices[i] = (points[i]) * scale;
+    }
+
+    auto afterRemoving = MeshTools::removeDuplicatesIndexedInPlace<UnsignedInt, Vector3>(indices, vertices);
+
+    Containers::arrayResize(vs, afterRemoving * sizeof(Vector3));
+    vertices = Containers::arrayCast<Vector3>(vs);
+
+    Trade::MeshIndexData indexData{indices};
+    Trade::MeshAttributeData vertexData{Trade::MeshAttribute::Position, vertices};
+
+    meshData = Trade::MeshData(MeshPrimitive::Triangles, std::move(is), indexData, std::move(vs), {vertexData});
+}
+
+
+
+void Viewer::drawMeshIO() {
+
+    if (ImGui::TreeNode("Mesh IO")) {
+
+        bool newMesh = false;
+        newMesh |= handlePrimitive(original, expression);
+        ImGui::Separator();
+
+        const bool browseButtonPressed = ImGui::Button("Choose Mesh Path"); ImGui::SameLine();
+        const bool load = ImGui::Button("Load Mesh");
+        static ImGuiFs::Dialog dlg;
+        static std::string currentPath;
+        const char *chosenPath = dlg.chooseFileDialog(browseButtonPressed);
+        if (strlen(dlg.getChosenPath()) > 0) {
+            ImGui::Text("Chosen file: \"%s\"", dlg.getChosenPath());
+            if(load && loadMesh(dlg.getChosenPath(), original)) {
+                newMesh = true;
+            }
+        }
+
+        if (newMesh) {
+            normalizeMesh(original);
+            indices = original.indicesAsArray();
+            vertices = positionsAsArray<Vector3>(original);
+            updateInternalDataStructures();
+            upload(mesh, vertexBuffer, indexBuffer, meshData);
+            updateFunctionals(problem.functionals);
+            updateFunctionals(problem.constraints);
+            makeDrawableCurrent(drawableType); //for first time
+        }
+
+        ImGui::TreePop();
     }
 }
 
@@ -663,12 +852,7 @@ Vector3 Viewer::unproject(Vector2i const& windowPosition) {
 }
 
 void Viewer::updateInternalDataStructures(){
-    CORRADE_ASSERT(meshData.hasAttribute(Trade::MeshAttribute::TextureCoordinates),"error", );
-    auto points = meshData.attribute<Vector3>(Trade::MeshAttribute::Position);
-    Containers::arrayResize(vertices, points.size());
-    for (int i = 0; i < points.size(); ++i)
-        vertices[i] = Vector3d(points[i]);
-    indices = meshData.indicesAsArray();
+    meshData = preprocess(vertices, indices, CompileFlag::AddTextureCoordinates|CompileFlag::GenerateSmoothNormals);
     upload(mesh, vertexBuffer, indexBuffer, meshData);
     const Magnum::Vector2i size(indices.size() / 3, 1);
 
@@ -679,7 +863,8 @@ void Viewer::updateInternalDataStructures(){
                 .setWrapping(Magnum::SamplerWrapping::ClampToEdge);
 
     Containers::arrayResize(faceColors, indices.size() / 3);
-    Containers::arrayResize(phasefield, vertices.size());
+    Containers::arrayResize(phasefield, Containers::ValueInit, vertices.size());
+
 }
 
 
@@ -737,6 +922,23 @@ void Viewer::drawShaderOptions(){
                         ImGui::SetItemDefaultFocus();
                 }
                 ImGui::EndCombo();
+            }
+        }
+
+        if(ImGui::DragFloatRange2("range", &near, &far, 0.1f, 0.0f, 10.0f, "Min: %.1f", "Max: %.1f")){
+            camera->setProjectionMatrix(Matrix4::perspectiveProjection(
+                    fov,
+                    Mg::Vector2{windowSize()}.aspectRatio(),
+                    near, far));
+        }
+
+        if(ImGui::Checkbox("Draw Debug", &drawDebug)){
+            if(drawDebug){
+                debugDrawable = new DebugTools::ObjectRenderer3D{manager, *object, "my", &drawableGroup};
+            } else {
+                auto& features = object->features();
+                features.erase(debugDrawable);
+                debugDrawable = nullptr;
             }
         }
 
@@ -953,7 +1155,7 @@ void Viewer::drawEvent() {
 
     //draw modifiers
     drawSubdivisionOptions();
-    drawPrimitiveOptions();
+    drawMeshIO();
     drawBrushOptions();
     drawOptimizationContext();
     drawShaderOptions();

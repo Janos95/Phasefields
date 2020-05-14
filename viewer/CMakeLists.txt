@@ -16,6 +16,8 @@ add_library(viewer SHARED
         optimization_context.cpp
         custom_widgets.hpp
         custom_widgets.cpp
+        imguifilesystem.cpp
+        imguifilesystem.h
         ${viewer_RESOURCES})
 
 

@@ -5,6 +5,7 @@
 #include "upload.hpp"
 
 #include <Corrade/Containers/GrowableArray.h>
+#include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Containers/Optional.h>
 
@@ -14,6 +15,7 @@
 #include <Magnum/MeshTools/Duplicate.h>
 #include <Magnum/MeshTools/Interleave.h>
 #include <Magnum/MeshTools/GenerateFlatNormals.h>
+#include <Magnum/MeshTools/Transform.h>
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/MeshTools/GenerateNormals.h>
@@ -105,16 +107,13 @@ void upload(GL::Mesh& mesh, GL::Buffer& vertices, GL::Buffer& indices, Trade::Me
 }
 
 
-Trade::MeshData preprocess(Trade::MeshData const& meshData, CompileFlags flags) {
-
-    CORRADE_INTERNAL_ASSERT(meshData.primitive() == MeshPrimitive::Triangles);
-    CORRADE_INTERNAL_ASSERT(meshData.attributeCount(Trade::MeshAttribute::Position));
-    /* This could fire if we have 2D positions or for packed formats */
-    CORRADE_INTERNAL_ASSERT(meshData.attributeFormat(Trade::MeshAttribute::Position) == VertexFormat::Vector3);
-
-    /* If the data already has the necessary attribute array, reuse its location,
-       otherwise mix in an extra one */
+Trade::MeshData preprocess(
+        Containers::ArrayView<Mg::Vector3d const> const& vertices,
+        Containers::ArrayView<Mg::UnsignedInt const> const& indices,
+        CompileFlags flags)
+{
     Containers::Array<Trade::MeshAttributeData> extra;
+    Containers::arrayAppend(extra, Containers::InPlaceInit, Trade::MeshAttribute::Position, VertexFormat::Vector3, nullptr);
 
     using L = std::initializer_list<std::tuple<CompileFlags, VertexFormat, Trade::MeshAttribute>>;
     for(auto&& [flag, format, attribute] : L{
@@ -122,22 +121,29 @@ Trade::MeshData preprocess(Trade::MeshData const& meshData, CompileFlags flags) 
         {CompileFlag::AddColorAttribute, VertexFormat::Vector4, Trade::MeshAttribute::Color},
         {CompileFlag::AddTextureCoordinates, VertexFormat::Vector2, Trade::MeshAttribute::TextureCoordinates}})
     {
-        if (flags & flag && !meshData.hasAttribute(attribute)) {
+        if (flags & flag)
             Containers::arrayAppend(extra, Trade::MeshAttributeData{attribute, format, nullptr});
-            /* If we reuse the attribute location, expect correct type */
-        } else if(flags & flag)
-            CORRADE_INTERNAL_ASSERT(meshData.attributeFormat(attribute) == format);
     }
 
     /* If we want flat normals, we need to first duplicate everything using
        the index buffer. Otherwise just interleave the potential extra
        attributes in. */
-    Trade::MeshData generated{MeshPrimitive::Points, 0};
-    if (flags & CompileFlag::GenerateFlatNormals && meshData.isIndexed())
-        generated = MeshTools::duplicate(meshData, extra);
-    else
-        generated = MeshTools::interleave(meshData, extra);
+    Trade::MeshIndexData indexData{indices};
+    Trade::MeshData meshData(MeshPrimitive::Triangles,
+            {}, indices, indexData, vertices.size());
 
+    Trade::MeshData generated{MeshPrimitive::Points, 0};
+    if (flags & CompileFlag::GenerateFlatNormals){
+        generated = MeshTools::duplicate(meshData, extra);
+        auto positionsView = generated.mutableAttribute<Vector3>(Trade::MeshAttribute::Position);
+        for (int i = 0; i < indices.size(); ++i)
+            positionsView[i] = Vector3{vertices[indices[i]]};
+    } else {
+        generated = MeshTools::interleave(meshData, extra);
+        auto positionsView = generated.mutableAttribute<Vector3>(Trade::MeshAttribute::Position);
+        for (int i = 0; i < positionsView.size(); ++i)
+            positionsView[i] = Vector3{vertices[i]};
+    }
 
     /* Generate the normals. @todo what if mesh is not indexed?*/
     if (flags & CompileFlag::GenerateFlatNormals)
@@ -149,7 +155,6 @@ Trade::MeshData preprocess(Trade::MeshData const& meshData, CompileFlags flags) 
                                              generated.attribute<Vector3>(Trade::MeshAttribute::Position),
                                              generated.mutableAttribute<Vector3>(Trade::MeshAttribute::Normal));
 
-    CORRADE_ASSERT(generated.hasAttribute(Trade::MeshAttribute::TextureCoordinates),"error", generated);
     return generated;
 }
 

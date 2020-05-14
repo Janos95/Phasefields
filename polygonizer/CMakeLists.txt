@@ -4,6 +4,8 @@ find_package(CGAL CONFIG REQUIRED COMPONENTS Core)
 add_library(polygonizer STATIC
         polygonize_wireframe.cpp
         polygonize_wireframe.hpp
+        isotropic_remeshing.cpp
+        isotropic_remeshing.hpp
         )
 #target_precompile_headers(polygonizer PRIVATE
 #        exprtk.hpp

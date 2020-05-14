@@ -142,64 +142,61 @@ void displayImplicitFunctionOptions(PolygonizationOptions& options, std::string&
 
 bool handlePrimitive(Trade::MeshData& original, std::string& expression){
     bool newMesh = false;
-    if (ImGui::TreeNode("Primitives"))
-    {
-        static auto map = makeComboMap();
-        static auto current = map.end();
 
-        if (ImGui::BeginCombo("##combo", current != map.end() ? current->name.data() : nullptr)) {
-            for (auto it = map.begin(); it < map.end(); ++it){
-                bool isSelected = (current == it); // You can store your selection however you want, outside or inside your objects
-                if (ImGui::Selectable(it->name.c_str(), isSelected))
-                    current = it;
-                if (isSelected)
-                    ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
-            }
-            ImGui::EndCombo();
+    static auto map = makeComboMap();
+    static auto current = map.end();
+
+    if (ImGui::BeginCombo("##combo", current != map.end() ? current->name.data() : nullptr)) {
+        for (auto it = map.begin(); it < map.end(); ++it){
+            bool isSelected = (current == it); // You can store your selection however you want, outside or inside your objects
+            if (ImGui::Selectable(it->name.c_str(), isSelected))
+                current = it;
+            if (isSelected)
+                ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
         }
+        ImGui::EndCombo();
+    }
 
-        auto buttonPressed = ImGui::Button("Load");
-        ImGui::SameLine();
-        static bool track = false;
-        toggleButton("tracker", &track);
+    auto buttonPressed = ImGui::Button("Load");
+    ImGui::SameLine();
+    static bool track = false;
+    toggleButton("tracker", &track);
 
-        bool hasChanged = false;
-        if(current != map.end()){
-            switch (current->type) {
-                case PrimitiveType::Capsule : {
-                    auto optC = dynamic_cast<CapsuleOptions &>(*current->options);
-                    hasChanged = displayCapsuleOptions(optC);
-                    if ((hasChanged && track) || buttonPressed) {
-                        auto capsule = Primitives::capsule3DSolid(optC.hemisphereRings, optC.cylinderRings,
-                                                                  optC.segments, .5f * optC.length / optC.radius);
-                        MeshTools::transformPointsInPlace(
-                                Matrix4::scaling({optC.radius, optC.radius, optC.radius}),
-                                capsule.mutableAttribute<Vector3>(Trade::MeshAttribute::Position));
-                        original = std::move(capsule);
-                        newMesh = true;
-                    }
-                    break;
+    bool hasChanged = false;
+    if(current != map.end()){
+        switch (current->type) {
+            case PrimitiveType::Capsule : {
+                auto optC = dynamic_cast<CapsuleOptions &>(*current->options);
+                hasChanged = displayCapsuleOptions(optC);
+                if ((hasChanged && track) || buttonPressed) {
+                    auto capsule = Primitives::capsule3DSolid(optC.hemisphereRings, optC.cylinderRings,
+                                                              optC.segments, .5f * optC.length / optC.radius);
+                    MeshTools::transformPointsInPlace(
+                            Matrix4::scaling({optC.radius, optC.radius, optC.radius}),
+                            capsule.mutableAttribute<Vector3>(Trade::MeshAttribute::Position));
+                    original = std::move(capsule);
+                    newMesh = true;
                 }
-                case PrimitiveType::U : {
-                    auto& optU = dynamic_cast<UOptions &>(*current->options);
-                    hasChanged = displayUOptions(optU);
-                    if ((hasChanged && track) || buttonPressed) {
-                        original = uShapedSquare(optU.width, optU.height, optU.innerWidth, optU.innerHeight);
-                        newMesh = true;
-                    }
-                    break;
-                }
-                case PrimitiveType::ImplicitFunction :
-                    auto& optP = dynamic_cast<PolygonizationOptions&>(*current->options);
-                    displayImplicitFunctionOptions(optP, expression);
-                    if(buttonPressed){
-                        //original = polygonizeExpression(expression, optP);
-                        //newMesh = true;
-                    }
+                break;
             }
-            ImGui::Text("Track Options");
+            case PrimitiveType::U : {
+                auto& optU = dynamic_cast<UOptions &>(*current->options);
+                hasChanged = displayUOptions(optU);
+                if ((hasChanged && track) || buttonPressed) {
+                    original = uShapedSquare(optU.width, optU.height, optU.innerWidth, optU.innerHeight);
+                    newMesh = true;
+                }
+                break;
+            }
+            case PrimitiveType::ImplicitFunction :
+                auto& optP = dynamic_cast<PolygonizationOptions&>(*current->options);
+                displayImplicitFunctionOptions(optP, expression);
+                if(buttonPressed){
+                    //original = polygonizeExpression(expression, optP);
+                    //newMesh = true;
+                }
         }
-        ImGui::TreePop();
+        ImGui::Text("Track Options");
     }
     return newMesh;
 }

@@ -27,7 +27,7 @@ public:
         (*(_camera = new Mg::SceneGraph::Camera3D{*cameraObject}))
                 .setAspectRatioPolicy(Mg::SceneGraph::AspectRatioPolicy::Extend)
                 .setProjectionMatrix(Mg::Matrix4::perspectiveProjection(
-                        fov, Mg::Vector2{windowSize}.aspectRatio(), 0.01f, 100.0f))
+                        fov, Mg::Vector2{windowSize}.aspectRatio(), 0.01f, 10.0f))
                 .setViewport(viewportSize);
 
         /* Save the abstract transformation interface and initialize the
@@ -66,6 +66,10 @@ public:
 
     auto projectionMatrix() const {
         return _camera->projectionMatrix();
+    }
+
+    void setProjectionMatrix(Mg::Matrix4 const& m){
+        _camera->setProjectionMatrix(m);
     }
 
 private:

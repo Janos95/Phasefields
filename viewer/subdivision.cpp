@@ -18,50 +18,38 @@ using namespace Corrade;
 
 void subdivide(
         std::uint32_t numSubdivisions,
-        Trade::MeshData const& original,
-        Containers::Array<Double>& phasefield,
-        Trade::MeshData& meshData) {
-
-    Containers::Array<Float> phasefieldF(Containers::NoInit, original.vertexCount());
-    for(auto i = 0; i < original.vertexCount(); ++i) phasefieldF[i] = phasefield[i];
-    auto indices = original.indicesAsArray();
-    auto vertexData = MeshTools::interleave(original.attribute<Vector3>(Trade::MeshAttribute::Position), phasefieldF);
+        Containers::Array<UnsignedInt>& indices,
+        Containers::Array<Vector3d>& vertices,
+        Containers::Array<Double>& phasefield) {
+    auto vertexData = MeshTools::interleave(vertices, phasefield);
 
     auto indicesSizeCurrent = indices.size();
-    auto verticesSizeCurrent = original.vertexCount();
+    auto verticesSizeCurrent = vertices.size();
     auto indicesSize = indicesSizeCurrent * std::pow(4, numSubdivisions);
     auto verticesSize = verticesSizeCurrent + (indicesSize - indicesSizeCurrent)/3;
 
     Containers::arrayResize(indices,indicesSize);
     Containers::arrayResize(vertexData,verticesSize*sizeof(Vector4));
 
-    auto vertices = Containers::arrayCast<Vector4>(vertexData);
+    auto dataView = Containers::arrayCast<Vector4d>(vertexData);
 
     while(numSubdivisions--){
         Containers::ArrayView<UnsignedInt> indicesView{indices.data(), indicesSizeCurrent * 4};
-        Containers::StridedArrayView1D<Vector4> verticesView{vertices, verticesSizeCurrent + indicesSizeCurrent};
-
+        Containers::StridedArrayView1D<Vector4d> verticesView{dataView, verticesSizeCurrent + indicesSizeCurrent};
         MeshTools::subdivideInPlace(indicesView, verticesView, [](auto& v1, auto& v2){return .5f * (v1 + v2); });
 
         verticesSizeCurrent += indicesSizeCurrent;
         indicesSizeCurrent *= 4;
     }
 
-    auto sizeAfterRemoving = MeshTools::removeDuplicatesIndexedInPlace<UnsignedInt, Vector4>(indices, vertices);
+    auto sizeAfterRemoving = MeshTools::removeDuplicatesIndexedInPlace<UnsignedInt, Vector4d>(indices, dataView);
     printf("Old size was %d, new size after removing is %d\n", (int)verticesSize, (int)sizeAfterRemoving);
 
-    Containers::StridedArrayView1D<Vector3> stridedView{vertexData, &vertices[0].xyz(), sizeAfterRemoving, sizeof(Vector4)};
-    Trade::MeshAttributeData positionData{Trade::MeshAttribute::Position, stridedView};
-    Trade::MeshData md{MeshPrimitive::Triangles,
-                         {}, indices, Trade::MeshIndexData{indices},
-                         {}, vertexData, {positionData}};
-
-    //update everything
-    meshData = preprocess(md, CompileFlag::GenerateSmoothNormals|CompileFlag::AddTextureCoordinates);
     Containers::arrayResize(phasefield, sizeAfterRemoving);
+    Containers::arrayResize(vertices, sizeAfterRemoving);
     for (int j = 0; j < sizeAfterRemoving; ++j) {
-        auto u = vertices[j].w();
-        phasefield[j] = u;
+        phasefield[j] = dataView[j].w();
+        vertices[j] = dataView[j].xyz();
     }
 }
 
