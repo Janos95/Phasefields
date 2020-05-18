@@ -1,0 +1,8 @@
+[requires]
+boost/1.72.0
+openblas/0.3.9
+
+[generators]
+cmake_find_package_multi
+
+[options]
