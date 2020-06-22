@@ -14,8 +14,6 @@ add_library(viewer SHARED
         subdivision.cpp
         optimization_context.hpp
         optimization_context.cpp
-        custom_widgets.hpp
-        custom_widgets.cpp
         imguifilesystem.cpp
         imguifilesystem.h
         ${viewer_RESOURCES})
@@ -30,6 +28,7 @@ target_link_libraries(viewer
             phasefields::cost
             phasefields::exact_geodesics
             phasefields::visualization
+            #phasefields::polygonizer
             Magnum::GL
             Magnum::SceneGraph
             Magnum::Magnum

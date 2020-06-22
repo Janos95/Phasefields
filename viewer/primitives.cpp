@@ -110,6 +110,7 @@ bool displayCapsuleOptions(CapsuleOptions& options){
     hasChanged |= ImGui::SliderScalar("Number of (face) segments", ImGuiDataType_U32, &options.segments, &segmentsMin, &uintMax, "%u");
     hasChanged |= ImGui::SliderScalar("Radius of cylindinger", ImGuiDataType_Float, &options.radius, &floatMin, &floatMax, "%f");
     hasChanged |= ImGui::SliderScalar("Length of whole capsule", ImGuiDataType_Float, &options.length, &floatMin, &floatMax, "%f");
+
     return hasChanged;
 }
 
@@ -166,7 +167,7 @@ bool handlePrimitive(Trade::MeshData& original, std::string& expression){
     if(current != map.end()){
         switch (current->type) {
             case PrimitiveType::Capsule : {
-                auto optC = dynamic_cast<CapsuleOptions &>(*current->options);
+                auto& optC = dynamic_cast<CapsuleOptions &>(*current->options);
                 hasChanged = displayCapsuleOptions(optC);
                 if ((hasChanged && track) || buttonPressed) {
                     auto capsule = Primitives::capsule3DSolid(optC.hemisphereRings, optC.cylinderRings,

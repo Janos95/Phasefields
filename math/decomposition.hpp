@@ -4,10 +4,7 @@
 
 #pragma once
 
-#include <Magnum/Math/Algorithms/Qr.h>
-
 #include "detail.hpp"
-#include "vector.hpp"
 #include "matrix.hpp"
 
 #include <Magnum/Magnum.h>
@@ -94,7 +91,35 @@ struct HouseholderQR {
     }
 
     Vector<Scalar> solve(Vector<Scalar> const& y){
-        Vector<Scalar> yp = 
+    }
+
+    Matrix<Scalar> A;
+};
+
+
+template<class Scalar>
+struct OuterProductLU{
+
+    OuterProductLU(Matrix<Scalar> const& A_):
+        A(A_)
+    {
+        Mg::Int n = A.rows();
+        CORRADE_ASSERT(n == A.cols(), "LU : matrix needs to be square",);
+        for (int k = 0; k < n - 1; ++k) {
+            A({k + 1, k}, {n, k + 1}) = A({k + 1, k}, {n, k + 1}) / A(k,k);
+            A({k + 1, k + 1}, {n, n}) = A({k + 1, k}, {n, k + 1}) * A({k, k + 1}, {k + 1, n});
+        }
+    }
+
+    Scalar determinant(){
+        Scalar det{1.};
+        for (int i = 0; i < A.cols(); ++i) det *= A(i,i);
+        for (int i = 0; i < A.cols(); ++i) det *= A(i,i);
+        return Mg::Math::abs(det);
+    }
+
+    Vector<Scalar> solve(Vector<Scalar> const& y){
+        Vector<Scalar> yp =
     }
 
     Matrix<Scalar> A;

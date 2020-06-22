@@ -9,7 +9,7 @@
 using namespace Corrade;
 
 
-void QuadrationLoss::Evaluate(double s, double rho[3]) const {
+void QuadraticLoss::Evaluate(double s, double rho[3]) const {
     rho[0] = 0.5 * s * s;
     rho[1] = s;
     rho[2] = 1.0;

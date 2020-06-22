@@ -1,26 +1,24 @@
 
 high priority
-    * debug connectedness_constraint
-    * think about cut graph which is defined by metric
-    * primitives should not have duplicate vertices...
-        * factor out the deduplication of vertices and move it to the preprocess stage
+    * hierarchicall segmentation
+    * shape optimization
 
 medium prioritiy
-    * add ipopt
-    * add path visualization
-    * get rid of igl
-    * write mkl wrapper instead of using eigen?
+    ** port to emscripten and make a web demo?
+    * write template wrapper around gsl and use instead of eigen
     * use imgui docking branch
     * images of color map
-    * signal slots? Or better put everything into viewer, iteration times need to be better.
     * add serialization
     * implicit surface : fix normals + sample randomly to find multiple connected comp
 
+nice to have algorithms
+    * fast (compile + runtime) hash map
+    * fast marching method
+    * kd tree
+    * bounding volume hierarchy
+    * implicit surface meshing (https://hal.archives-ouvertes.fr/hal-00533568/document)
+    * parameterization, e.g. scaf (https://hal.archives-ouvertes.fr/hal-00533568/document)
+    * cutting to disk : https://jeffe.cs.illinois.edu/pubs/pdf/optcycles.pdf
+    * approximation to optimal cut graph
 
-low priority
-    * add pbr shader and describe phases by varying material properties.
-    * add background/tabletop
-    * debug kd tree
-    * figure out a way to have incremental geodesics (look into cgal implementation)
-    * conan for package management?
 

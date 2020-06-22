@@ -15,17 +15,15 @@
 namespace Cr = Corrade;
 namespace Mg = Magnum;
 
-enum class DrawableType : Magnum::Int {
-    MeshVisualizer = 0,
-    PhongDiffuse = 1,
-    FlatTextured = 2,
-    FaceColored = 3,
-};
+using namespace Mg::Math::Literals;
+
+
 
 struct MeshDrawable : Drawable {
     MeshDrawable(Object3D& obj, Mg::GL::Mesh& m, DrawableGroup* group, Mg::GL::Texture2D* t = nullptr);
     Mg::GL::Mesh& mesh;
     Mg::GL::Texture2D* texture;
+    bool show = true;
 };
 
 struct FlatDrawable : MeshDrawable
@@ -45,7 +43,7 @@ struct VertexColorDrawable : MeshDrawable
 
     void draw(const Magnum::Matrix4&, Mg::SceneGraph::Camera3D&) override;
 
-    Magnum::Shaders::VertexColor3D* shader = nullptr;
+    Magnum::Shaders::VertexColor3D& shader;
 };
 
 
@@ -58,6 +56,7 @@ public:
     void draw(const Mg::Matrix4&, Mg::SceneGraph::Camera3D&) override;
 
     Mg::Shaders::Phong& shader;
+    Mg::Color4 color{0x2f83cc_rgbf};
 };
 
 struct MeshVisualizerDrawable : MeshDrawable
@@ -69,8 +68,8 @@ struct MeshVisualizerDrawable : MeshDrawable
 
     Mg::Float wireframeWidth = 1.f;
     Mg::Float smoothness = 2.f;
-    Mg::Color4 color = Mg::Color4(1);
-    Mg::Color4 wireframeColor = Mg::Color4(0,0,0,1);
+    Mg::Color4 color{1};
+    Mg::Color4 wireframeColor{0,0,0,1};
     Mg::Shaders::MeshVisualizer3D& shader;
 };
 

@@ -6,7 +6,6 @@
 #include "modica_mortola.hpp"
 #include "upload.hpp"
 #include "loss_functions.hpp"
-#include "viewer.hpp"
 
 #include <Corrade/Containers/Pointer.h>
 
@@ -91,7 +90,7 @@ void drawLoss(Containers::Pointer<LossFunction>& loss, int& nodeCount){
             break;
         }
         case LossType::Quadratic : {
-            if(newLoss) loss = Containers::pointer<QuadrationLoss>();
+            if(newLoss) loss = Containers::pointer<QuadraticLoss>();
             break;
         }
         case LossType::Composed : {
@@ -146,22 +145,5 @@ void drawLoss(Containers::Pointer<LossFunction>& loss, int& nodeCount){
 
 
 
-void drawDirichletEnergyOptions(DirichletEnergy& f){
-    ImGui::Text("Dirichlet Energy");
-}
-
-void drawDoubleWellPotentialOptions(DoubleWellPotential& f){
-    ImGui::Text("Double Well Potential");
-}
-
-void drawAreaRegularization1Options(AreaRegularizer1& f){
-    constexpr double min = 0.f, max = 1.;
-    ImGui::SliderScalar("Area Ratio", ImGuiDataType_Double, &f.areaRatio, &min, &max, "%.5f", 1.0f);
-}
-
-void drawAreaRegularization2Options(AreaRegularizer2& f){
-    constexpr double min = 0.f, max = 1.;
-    ImGui::SliderScalar("Area Ratio", ImGuiDataType_Double, &f.areaRatio, &min, &max, "%.5f", 1.0f);
-}
 
 

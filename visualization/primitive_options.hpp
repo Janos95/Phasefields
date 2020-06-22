@@ -6,7 +6,10 @@
 
 #include <cstdint>
 
-struct AbstractPrimitiveOptions { virtual ~AbstractPrimitiveOptions() = default; };
+struct AbstractPrimitiveOptions {
+    virtual ~AbstractPrimitiveOptions() = default;
+    virtual bool drawImGui() { return false; };
+};
 
 struct CapsuleOptions : AbstractPrimitiveOptions {
     std::uint32_t hemisphereRings = 10; //	Number of (face) rings for each hemisphere. Must be larger or equal to 1.
@@ -28,4 +31,10 @@ struct PolygonizationOptions : AbstractPrimitiveOptions {
     float radiusBound = 0.1f;
     float distanceBound = 0.1f;
     float boundingSphereRadius = 2.f;
+
+    bool drawImGui() override;
+};
+
+struct WireframeOptions : PolygonizationOptions {
+    double thickness = 0.001;
 };

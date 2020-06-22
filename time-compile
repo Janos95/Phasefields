@@ -1,0 +1,2 @@
+#!/bin/bash
+{ time g++ "$@"; } 2> >(cat <(echo "g++ $@") - >> /tmp/results.txt)

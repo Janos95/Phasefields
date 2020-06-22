@@ -71,8 +71,8 @@ struct TrivialLoss final : LossFunction {
   void Evaluate(double, double*) const override;
 };
 
-struct QuadrationLoss final : LossFunction {
-    QuadrationLoss()  { type = LossType::Quadratic; };
+struct QuadraticLoss final : LossFunction {
+    QuadraticLoss()  { type = LossType::Quadratic; };
     void Evaluate(double, double*) const override;
 };
 

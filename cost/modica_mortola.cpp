@@ -2,7 +2,6 @@
 // Created by janos on 2/23/20.
 //
 #include "modica_mortola.hpp"
-#include "interpolation.hpp"
 
 #include <Corrade/Utility/Assert.h>
 #include <Corrade/Containers/GrowableArray.h>
@@ -12,25 +11,27 @@
 using namespace Magnum;
 using namespace Corrade;
 
-DirichletEnergy::DirichletEnergy(
-        Containers::ArrayView<const Vector3d> const& vertices_,
-        Containers::ArrayView<const Vector3ui> const& triangles_):
-    Functional(Functional::MetaData::AllocateFromLoss(TrivialLoss{}), FunctionalType::DirichletEnergy),
-    triangles(triangles_),
-    vertices(vertices_),
-    areas(computeAreas(triangles_, vertices_)),
-    stiffnessMatrix(computeStiffnessMatrix(triangles_, vertices_)),
+template<class Scalar>
+DirichletEnergy<Scalar>::DirichletEnergy(
+        Containers::Array<const Vector3d> const& vs,
+        Containers::Array<const UnsignedInt> const& is):
+    indices(is),
+    vertices(vs),
+    areas(computeAreas(triangles(), vertices)),
+    stiffnessMatrix(computeStiffnessMatrix(triangles(), vs)),
     diagonal(stiffnessMatrix.diagonal())
 {
     CORRADE_ASSERT(!Math::isNan(areas), "Dirichlet Energy : areas contains NaN",);
 }
 
 
-int DirichletEnergy::numParameters() const {
+template<class Scalar>
+uint32_t DirichletEnergy<Scalar>::numParameters() const {
     return vertices.size();
 }
 
-bool DirichletEnergy::evaluate(double const* parameters,
+template<class Scalar>
+bool DirichletEnergy<Scalar>::evaluate(double const* parameters,
               double* residual,
               double* jacobians) const
 {

@@ -11,6 +11,7 @@
 #include <Magnum/MeshTools/RemoveDuplicates.h>
 #include <Magnum/MeshTools/Interleave.h>
 #include <Magnum/Math/Vector4.h>
+#include <Magnum/Magnum.h>
 
 
 using namespace Magnum;
@@ -29,7 +30,7 @@ void subdivide(
     auto verticesSize = verticesSizeCurrent + (indicesSize - indicesSizeCurrent)/3;
 
     Containers::arrayResize(indices,indicesSize);
-    Containers::arrayResize(vertexData,verticesSize*sizeof(Vector4));
+    Containers::arrayResize(vertexData,verticesSize*sizeof(Vector4d));
 
     auto dataView = Containers::arrayCast<Vector4d>(vertexData);
 
@@ -42,7 +43,7 @@ void subdivide(
         indicesSizeCurrent *= 4;
     }
 
-    auto sizeAfterRemoving = MeshTools::removeDuplicatesIndexedInPlace<UnsignedInt, Vector4d>(indices, dataView);
+    auto sizeAfterRemoving = MeshTools::removeDuplicatesFuzzyIndexedInPlace(indices, Containers::arrayCast<2, double>(dataView));
     printf("Old size was %d, new size after removing is %d\n", (int)verticesSize, (int)sizeAfterRemoving);
 
     Containers::arrayResize(phasefield, sizeAfterRemoving);

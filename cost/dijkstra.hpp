@@ -15,7 +15,6 @@
 #include <numeric>
 #include <limits>
 
-
 template<class R>
 class Dijkstra
 {

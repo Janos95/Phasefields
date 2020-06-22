@@ -12,7 +12,9 @@
 #include <Magnum/SceneGraph/Object.h>
 #include <Magnum/SceneGraph/MatrixTransformation3D.h>
 #include <Magnum/SceneGraph/Camera.h>
+#include <Magnum/Math/Vector3.h>
 
+using namespace Magnum;
 
 MeshDrawable::MeshDrawable(Object3D& obj, Mg::GL::Mesh& m, DrawableGroup* group, Mg::GL::Texture2D* t):
         Drawable(obj, group),
@@ -37,16 +39,15 @@ void FlatDrawable::draw(const Magnum::Matrix4& transformationMatrix, Magnum::Sce
 
 VertexColorDrawable::VertexColorDrawable(Object3D& object, Mg::GL::Mesh& m, Mg::GL::AbstractShaderProgram& shader, DrawableGroup* group):
         MeshDrawable(object, m, group),
-        shader(&dynamic_cast<Mg::Shaders::VertexColor3D&>(shader))
+        shader(dynamic_cast<Mg::Shaders::VertexColor3D&>(shader))
 {
 }
 
 void VertexColorDrawable::draw(const Magnum::Matrix4& transformationMatrix, Mg::SceneGraph::Camera3D& camera) {
-    shader->setTransformationProjectionMatrix(camera.projectionMatrix() * transformationMatrix)
-            .draw(mesh);
+    if(!(this->show)) return;
+    shader.setTransformationProjectionMatrix(camera.projectionMatrix() * transformationMatrix)
+          .draw(mesh);
 }
-
-
 
 PhongDiffuseDrawable::PhongDiffuseDrawable(Object3D& object, Mg::GL::Mesh& m, Mg::GL::AbstractShaderProgram& shader, DrawableGroup* group):
         MeshDrawable(object, m, group),
@@ -55,13 +56,23 @@ PhongDiffuseDrawable::PhongDiffuseDrawable(Object3D& object, Mg::GL::Mesh& m, Mg
 }
 
 void PhongDiffuseDrawable::draw(const Mg::Matrix4& transformationMatrix, Mg::SceneGraph::Camera3D& camera) {
-    if(!texture) return;
-    shader.bindDiffuseTexture(*texture)
-            .setLightPosition({10.0f, 10.0f, 10.0f})
-            .setTransformationMatrix(transformationMatrix)
-            .setNormalMatrix(transformationMatrix.normalMatrix())
-            .setProjectionMatrix(camera.projectionMatrix())
-            .draw(mesh);
+    if(texture) {
+        shader.bindDiffuseTexture(*texture);
+    } else {
+        shader.setDiffuseColor(0x2f83cc_rgbf)
+                .setShininess(200.0f)
+                .setLightPosition({5.0f, 5.0f, 7.0f})
+                .setTransformationMatrix(transformationMatrix)
+                .setNormalMatrix(transformationMatrix.normalMatrix())
+                .setProjectionMatrix(camera.projectionMatrix())
+                .draw(mesh);
+        return;
+    }
+    shader.setLightPosition({10.0f, 10.0f, 10.0f})
+          .setTransformationMatrix(transformationMatrix)
+          .setNormalMatrix(transformationMatrix.normalMatrix())
+          .setProjectionMatrix(camera.projectionMatrix())
+          .draw(mesh);
 }
 
 
@@ -75,13 +86,13 @@ MeshVisualizerDrawable::MeshVisualizerDrawable(Object3D& object, Mg::GL::Mesh& m
 void MeshVisualizerDrawable::draw(const Magnum::Matrix4& transformationMatrix, Magnum::SceneGraph::Camera3D& camera) {
 
     shader.setViewportSize(Mg::Vector2{Mg::GL::defaultFramebuffer.viewport().size()})
-            .setTransformationMatrix(transformationMatrix)
-            .setProjectionMatrix(camera.projectionMatrix())
-            .setWireframeWidth(wireframeWidth)
-            .setWireframeColor(wireframeColor)
-            .setSmoothness(smoothness)
-            .setColor(color)
-            .draw(mesh);
+          .setTransformationMatrix(transformationMatrix)
+          .setProjectionMatrix(camera.projectionMatrix())
+          .setWireframeWidth(wireframeWidth)
+          .setWireframeColor(wireframeColor)
+          .setSmoothness(smoothness)
+          .setColor(color)
+          .draw(mesh);
 }
 
 
@@ -94,9 +105,9 @@ FaceColorDrawable::FaceColorDrawable(Object3D& object, Mg::GL::Mesh& m, Mg::GL::
 void FaceColorDrawable::draw(const Magnum::Matrix4& transformationMatrix, Magnum::SceneGraph::Camera3D& camera) {
     if(!texture) return;
     shader.setViewportSize(Mg::Vector2{Mg::GL::defaultFramebuffer.viewport().size()})
-            .setTransformationMatrix(transformationMatrix)
-            .setProjectionMatrix(camera.projectionMatrix())
-            .setColorMapTransformation(offset, scale)
-            .bindColorMapTexture(*texture)
-            .draw(mesh);
+          .setTransformationMatrix(transformationMatrix)
+          .setProjectionMatrix(camera.projectionMatrix())
+          .setColorMapTransformation(offset, scale)
+          .bindColorMapTexture(*texture)
+          .draw(mesh);
 }

@@ -6,6 +6,8 @@
 
 #include <Corrade/Containers/StaticArray.h>
 
+namespace Cr = Corrade;
+
 template<int N, class T>
 class SmallArray
 {

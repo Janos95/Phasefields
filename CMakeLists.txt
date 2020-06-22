@@ -16,16 +16,18 @@ find_package(TBB CONFIG REQUIRED)
 
 #set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-#list(APPEND CMAKE_CXX_FLAGS "-fsanitize=address -fsanitize=undefined")
-set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${CMAKE_COMMAND} -E time")
+set(DISABLE_WARNING_FLAGS "-Wno-old-style-cast")
+
+list(APPEND CMAKE_CXX_FLAGS "-Wno-old-style-cast")
 
 add_subdirectory(utilities)
 add_subdirectory(scoped_timer)
 add_subdirectory(visualization)
 #add_subdirectory(polygonizer)
+#add_subdirectory(math)
+#add_subdirectory(shaders)
 add_subdirectory(cost)
 add_subdirectory(exact_geodesics)
-add_subdirectory(shaders)
 add_subdirectory(viewer)
 
 

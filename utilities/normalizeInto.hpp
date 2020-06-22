@@ -4,8 +4,7 @@
 
 #pragma once
 
-#include <Corrade/Containers/StridedArrayView.h>
-#include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Containers/Containers.h>
 #include <Magnum/Magnum.h>
 
 namespace Cr = Corrade;

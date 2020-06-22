@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "tensor.hpp"
+
 template<unsigned dimensions, class Scalar>
 struct Expression {
 

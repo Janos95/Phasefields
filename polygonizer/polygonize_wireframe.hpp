@@ -15,6 +15,6 @@ namespace Cr = Corrade;
 Mg::Trade::MeshData polygonizeWireframe(
         Cr::Containers::ArrayView<const Mg::Vector3d> const& vertices,
         Cr::Containers::ArrayView<const Mg::Vector3ui> const& triangles,
-        PolygonizationOptions const& options);
+        WireframeOptions const& options);
 
 

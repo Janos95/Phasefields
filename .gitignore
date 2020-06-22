@@ -4,3 +4,4 @@ assets/
 shaders/
 cost/external/
 conan_modules/*
+math/openblas_modules/*

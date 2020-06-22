@@ -5,7 +5,7 @@
 #pragma once
 
 #include <Corrade/Utility/StlMath.h>
-
+#include <Magnum/Math/Functions.h>
 
 template<class T>
 struct F{
@@ -75,16 +75,24 @@ struct DoubleWell
 
 };
 
+
+
 template<class T>
-struct SmoothStep{
-    T eval(const T x) const{
-        if(x < T(0)) return T{0};
-        if(x < T(1.)) return -2. * std::pow(x, 3) + 3. * std::pow(x, 2);
+struct SmootherStep{
+    T eval(T x) const{
+        if(x <= -1) return T{0};
+        if(x <= 1.) {
+            x = .5 * (x + 1.);
+            return x * x * (3. - 2. * x);
+        }
         return T{1};
     }
-    T grad(const T x) const{
-        if(x < T(0)) return T{0};
-        if(x < T(1.)) return -6. * std::pow(x, 2) + 6. * x;
+    T grad(T x) const{
+        if(x <= -1) return T{0};
+        if(x <= 1.) {
+            x = .5 * (x + 1.);
+            return 3. * x * (1. - x);
+        }
         return T{0};
     }
 };
@@ -93,7 +101,7 @@ struct SmoothStep{
 template<class T>
 struct Indicator{
     auto eval(const T x) const{
-        return 1./4. * std::pow(x + 1., 2);
+        return 0.25 * std::pow(x + 1., 2);
     }
     auto grad(const T x) const{
         return .5 * (x + 1.);

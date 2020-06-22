@@ -1,0 +1,30 @@
+{
+ "options": [
+  [
+   "openblas:build_lapack",
+   "False"
+  ],
+  [
+   "openblas:dynamic_arch",
+   "False"
+  ],
+  [
+   "openblas:fPIC",
+   "True"
+  ],
+  [
+   "openblas:shared",
+   "False"
+  ],
+  [
+   "openblas:use_thread",
+   "True"
+  ]
+ ],
+ "root": {
+  "name": null,
+  "version": null,
+  "user": null,
+  "channel": null
+ }
+}

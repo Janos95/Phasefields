@@ -139,12 +139,12 @@ private:
 template<typename ValueType, bool StoreHash>
 class bucket_entry: public bucket_entry_hash<StoreHash> {
     using bucket_hash = bucket_entry_hash<StoreHash>;
-    
+
 public:
     using value_type = ValueType;
     using distance_type = std::int_least16_t;
     
-    
+
     bucket_entry() noexcept: bucket_hash(), m_dist_from_ideal_bucket(EMPTY_MARKER_DIST_FROM_IDEAL_BUCKET),
                              m_last_bucket(false)
     {
@@ -1149,7 +1149,6 @@ private:
             }
         }
  
-        
         if(m_buckets[ibucket].empty()) {
             m_buckets[ibucket].set_value_of_empty_bucket(dist_from_ideal_bucket, bucket_entry::truncate_hash(hash),
                                                          std::forward<Args>(value_type_args)...);
@@ -1158,7 +1157,6 @@ private:
             insert_value(ibucket, dist_from_ideal_bucket, bucket_entry::truncate_hash(hash), 
                          std::forward<Args>(value_type_args)...);
         }
-        
         
         m_nb_elements++;
         /*

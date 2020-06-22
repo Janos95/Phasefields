@@ -12,8 +12,10 @@
 #include "connectedness_constraint.hpp"
 #include "custom_widgets.hpp"
 #include "imguifilesystem.h"
+#include "types.hpp"
 
 //#include "isotropic_remeshing.hpp"
+//#include "polygonize_wireframe.hpp"
 
 #include <scoped_timer/scoped_timer.hpp>
 
@@ -27,9 +29,7 @@
 #include <Magnum/GL/PixelFormat.h>
 #include <Magnum/GL/TextureFormat.h>
 #include <Magnum/GL/Buffer.h>
-#include <Magnum/GL/DefaultFramebuffer.h>
 #include <Magnum/GL/Mesh.h>
-#include <Magnum/DebugTools/ObjectRenderer.h>
 
 #include <Magnum/Math/Matrix4.h>
 #include <Magnum/Math/FunctionsBatch.h>
@@ -38,16 +38,20 @@
 #include <Magnum/Shaders/MeshVisualizer.h>
 #include <Magnum/Shaders/Phong.h>
 #include <Magnum/Shaders/VertexColor.h>
-#include <Magnum/SceneGraph/Object.h>
-#include <Magnum/ImGuiIntegration/Context.hpp>
-#include <Magnum/Trade/MeshData.h>
-#include <Magnum/Image.h>
-#include <Magnum/PixelFormat.h>
-#include <Magnum/ImageView.h>
-#include <Magnum/DebugTools/ColorMap.h>
-#include <Magnum/Trade/AbstractImporter.h>
-#include <Magnum/MeshTools/RemoveDuplicates.h>
 
+#include <Magnum/SceneGraph/Object.h>
+#include <Magnum/Trade/MeshData.h>
+#include <Magnum/Trade/AbstractImporter.h>
+#include <Magnum/Image.h>
+#include <Magnum/Primitives/Axis.h>
+#include <Magnum/ImageView.h>
+#include <Magnum/PixelFormat.h>
+#include <Magnum/DebugTools/ColorMap.h>
+#include <Magnum/DebugTools/ObjectRenderer.h>
+#include <Magnum/ImGuiIntegration/Context.hpp>
+
+#include <Magnum/MeshTools/RemoveDuplicates.h>
+#include <Magnum/MeshTools/Compile.h>
 
 using namespace Corrade;
 using namespace Magnum;
@@ -61,6 +65,8 @@ std::unordered_map<ShaderType, Cr::Containers::Pointer<Mg::GL::AbstractShaderPro
     auto PrimitiveColored = Shaders::MeshVisualizer3D::Flag::PrimitiveId;
 
     map.emplace(ShaderType::PhongDiffuse, new Shaders::Phong(Shaders::Phong::Flag::DiffuseTexture));
+    map.emplace(ShaderType::PhongDiffuseColored, new Shaders::Phong(Shaders::Phong::Flag::VertexColor));
+    map.emplace(ShaderType::Phong, new Shaders::Phong{});
     map.emplace(ShaderType::MeshVisualizer, new Shaders::MeshVisualizer3D(Wireframe));
     map.emplace(ShaderType::MeshVisualizerPrimitiveId, new Shaders::MeshVisualizer3D(PrimitiveColored));
     map.emplace(ShaderType::FlatTextured, new Shaders::Flat3D(Shaders::Flat3D::Flag::Textured));
@@ -93,14 +99,14 @@ std::unordered_map<ColorMapType, Mg::GL::Texture2D> makeColorMapTextures(){
     return map;
 }
 
-solver::Status OptimizationCallback::operator ()(solver::IterationSummary const&){
+solver::Status::Value OptimizationCallback::operator ()(solver::IterationSummary const&){
     if(!optimize) return solver::Status::ABORT;
     return solver::Status::CONTINUE;
 }
 
 
 Viewer::Viewer(int argc, char** argv):
-    Platform::Application{{argc,argv},NoCreate},
+    Platform::Application{{argc,argv}, Mg::NoCreate},
     dirichletScaling(1.), doubleWellScaling(1.), connectednessScaling(1.),
     optimizationCallback{optimizing}
 {
@@ -109,7 +115,6 @@ Viewer::Viewer(int argc, char** argv):
         problem.meshData = &meshData;
         problem.update = &update;
         problem.mutex = &mutex;
-        wireframeObject = new Object3D(&scene);
     }
     /* Setup window */
     {
@@ -168,11 +173,20 @@ Viewer::Viewer(int argc, char** argv):
         const Vector3 up = Vector3::yAxis();
         camera.emplace(scene, eye, center, up, fov,
                        windowSize(), framebufferSize());
-
+        camera->setProjectionMatrix(Matrix4::perspectiveProjection(
+                fov,
+                Mg::Vector2{windowSize()}.aspectRatio(),
+                near, far));
     }
 
-    object = new Object3D(&scene);
-    manager.set("my", DebugTools::ObjectRendererOptions{}.setSize(1.f));
+    //set up scene
+    {
+        object = new Object3D(&scene);
+        axisObject = new Object3D(&scene);
+        axisMesh = MeshTools::compile(Primitives::axis3D());
+        axisDrawable = new VertexColorDrawable{*axisObject, axisMesh, *shaders[ShaderType::VertexColor], &drawableGroup};
+        axisDrawable->show = false;
+    }
 
     GL::Renderer::enable(GL::Renderer::Feature::DepthTest);
     GL::Renderer::enable(GL::Renderer::Feature::FaceCulling);
@@ -205,7 +219,6 @@ bool loadMesh(char const* path, Trade::MeshData& mesh) {
         Debug{} << "Could not load mesh";
         return false;
     }
-
 }
 
 bool Viewer::saveMesh(std::string const& path) {
@@ -217,7 +230,7 @@ bool Viewer::saveMesh(std::string const& path) {
 
     stopOptimization();
     double r;
-    problem.evaluate(phasefield.data(), &r, gradient.data());
+    problem.evaluate(phasefield.data(), &r, gradient.data(), nullptr, nullptr);
 
     std::ofstream out(path);
     out << "ply" << std::endl;
@@ -288,7 +301,7 @@ void Viewer::drawSubdivisionOptions() {
             updateFunctionals(problem.constraints);
         }
 
-        if(ImGui::Button("Istropic Remeshing")){
+        if(ImGui::Button("Isotropic Remeshing")){
             //isotropicRemeshing(vertices, indices);
             updateInternalDataStructures();
             upload(mesh, vertexBuffer, indexBuffer, meshData);
@@ -297,6 +310,10 @@ void Viewer::drawSubdivisionOptions() {
         }
         ImGui::TreePop();
     }
+}
+
+void updateFunctionls(Containers::Array<Pointer<FunctionalD>>& functionals){
+    for(auto& f : functionals) f->updateInternalDataStructures();
 }
 
 void Viewer::makeDrawableCurrent(DrawableType type) {
@@ -344,11 +361,10 @@ void normalizeMesh(Containers::Array<Vector3d>& vertices, Containers::Array<Unsi
         v = (v - min) * scale;
     }
 
-    auto afterRemoving = MeshTools::removeDuplicatesIndexedInPlace<UnsignedInt, Vector3d>(indices, vertices);
+    ArrayView<Vector3d> view{vertices, vertices.size()};
+    auto afterRemoving = MeshTools::removeDuplicatesFuzzyIndexedInPlace(indices, Containers::arrayCast<2, double>(view));
     Containers::arrayResize(vertices, afterRemoving);
-
 }
-
 
 void normalizeMesh(Trade::MeshData& meshData){
     Containers::Array<char> is(Containers::NoInit, sizeof(UnsignedInt) * meshData.indexCount()),
@@ -372,7 +388,8 @@ void normalizeMesh(Trade::MeshData& meshData){
          vertices[i] = (points[i]) * scale;
     }
 
-    auto afterRemoving = MeshTools::removeDuplicatesIndexedInPlace<UnsignedInt, Vector3>(indices, vertices);
+    ArrayView<Vector3> view{vertices, vertices.size()};
+    auto afterRemoving = MeshTools::removeDuplicatesFuzzyIndexedInPlace(indices, Containers::arrayCast<2, double>(view));
 
     Containers::arrayResize(vs, afterRemoving * sizeof(Vector3));
     vertices = Containers::arrayCast<Vector3>(vs);
@@ -382,8 +399,6 @@ void normalizeMesh(Trade::MeshData& meshData){
 
     meshData = Trade::MeshData(MeshPrimitive::Triangles, std::move(is), indexData, std::move(vs), {vertexData});
 }
-
-
 
 void Viewer::drawMeshIO() {
 
@@ -446,7 +461,7 @@ void Viewer::drawBrushOptions() {
     }
 }
 
-void Viewer::makeExclusiveVisualizer(Functional* funcPtr) {
+void Viewer::makeExclusiveVisualizer(FunctionalD* funcPtr) {
     std::lock_guard l(mutex);
     if(exclusiveVisualizer && exclusiveVisualizer != funcPtr->metaData.get()) {
         exclusiveVisualizer->flags = {};
@@ -473,70 +488,8 @@ void Viewer::drawGradientMetaData(
     }
 }
 
-/**
- * returns true if an event triggered an exclusive visualizations options.
- * Also note that we can safely read from meta.flags since the optimization thread
- * only reads from those as well (even taking the lock in case we modify)
- */
-void Viewer::drawConnectednessConstraintOptions(
-        ConnectednessMetaData<Double>& meta,
-        bool& makeExclusive,
-        bool& evaluateProblem){
-    double a = meta.a, b = meta.b;
-    if(dragDoubleRange2("Positive Interval", &a, &b, 0.01f, -1.f, 1.f, "Min: %.2f", "Max: %.2f",1.f)){
-        std::lock_guard l(mutex);
-        meta.a = a; meta.b = b;
-    }
 
-    ImGui::BeginGroup();
-    if(ImGui::Checkbox("Visualize Shortest Paths", &meta.paths->drawPaths) ){
-        std::lock_guard l(mutex);
-        if(meta.paths->drawPaths){
-            evaluateProblem = true;
-            meta.generateLineStrips = true;
-        } else {
-            meta.generateLineStrips = false;
-        }
-    }
 
-    bool visGeodesicWeights = static_cast<bool>(meta.flags & VisualizationFlag::GeodesicWeights);
-    if(ImGui::Checkbox("Geodesic Weights", &visGeodesicWeights)){
-        std::lock_guard l(mutex);
-        if(visGeodesicWeights) {
-            makeDrawableCurrent(DrawableType::FaceColored);
-            makeExclusive = true;
-            meta.flags = VisualizationFlag::GeodesicWeights;
-            evaluateProblem = true;
-        }
-        else meta.flags &= ~VisualizationFlag::GeodesicWeights;
-    }
-    ImGui::EndGroup();
-    ImGui::SameLine();
-    ImGui::BeginGroup();
-    bool visComponents = static_cast<bool>(meta.flags & VisualizationFlag::ConnectedComponents);
-    if(ImGui::Checkbox("Connected Components", &visComponents)){
-        std::lock_guard l(mutex);
-        if(visComponents) {
-            makeDrawableCurrent(DrawableType::FaceColored);
-            makeExclusive = true;
-            meta.flags = VisualizationFlag::ConnectedComponents;
-            evaluateProblem = true;
-        }
-        else meta.flags &= ~VisualizationFlag::ConnectedComponents;
-    }
-    bool visGradient = static_cast<bool>(meta.flags & VisualizationFlag::Gradient);
-    if(ImGui::Checkbox("Gradient", &visGradient)){
-        std::lock_guard l(mutex);
-        if(visGradient) {
-            makeDrawableCurrent(DrawableType::PhongDiffuse);
-            makeExclusive = true;
-            meta.flags = VisualizationFlag::Gradient;
-            evaluateProblem = true;
-        }
-        else meta.flags &= ~VisualizationFlag::Gradient;
-    }
-    ImGui::EndGroup();
-}
 
 void Viewer::drawOptimizationContext() {
     if (ImGui::TreeNode("Optimization Options"))
@@ -558,11 +511,6 @@ void Viewer::drawOptimizationContext() {
         if(ImGui::Button("Add Functional As Cost") && cur != map.end())
             Containers::arrayAppend(problem.functionals, makeFunctional(cur->type));
 
-        ImGui::SameLine();
-
-        if(ImGui::Button("Add Functional As Constraint") && cur != map.end())
-            Containers::arrayAppend(problem.functionals, makeFunctional(cur->type));
-
         int nodeCount = 0;
         int toRemove = -1;
         bool evaluateProblem = false;
@@ -578,41 +526,14 @@ void Viewer::drawOptimizationContext() {
             bool makeExclusive = false;
             constexpr double min = 0.f, max = 1.;
 
-            switch(f->type){
-                case FunctionalType::DoubleWellPotential :
-                    ImGui::Text("Double Well Potential");
-                    drawGradientMetaData(dynamic_cast<GradientMetaData&>(*f->metaData), makeExclusive, evaluateProblem);
-                    break;
-                case FunctionalType::DirichletEnergy :
-                    ImGui::Text("Dirichlet Energy");
-                    drawGradientMetaData(dynamic_cast<GradientMetaData&>(*f->metaData), makeExclusive, evaluateProblem);
-                    break;
-                case FunctionalType::Area1 : {
-                    ImGui::Text("Area Regularization Quadratic");
-                    drawGradientMetaData(dynamic_cast<GradientMetaData&>(*f->metaData), makeExclusive, evaluateProblem);
-                    auto& farea1 = dynamic_cast<AreaRegularizer1&>(*f);
-                    ImGui::SliderScalar("Area Ratio", ImGuiDataType_Double, &farea1.areaRatio, &min, &max, "%.5f", 1.0f);
-                    break;
-                }
-                case FunctionalType::Area2 : {
-                    ImGui::Text("Area Regularization Smooth Step");
-                    drawGradientMetaData(dynamic_cast<GradientMetaData&>(*f->metaData), makeExclusive, evaluateProblem);
-                    auto& farea2 = dynamic_cast<AreaRegularizer2&>(*f);
-                    ImGui::SliderScalar("Area Ratio", ImGuiDataType_Double, &farea2.areaRatio, &min, &max, "%.5f", 1.0f);
-                    break;
-                }
-                case FunctionalType::Connectedness :
-                    ImGui::Text("Connectedness Constraint");
-                    drawConnectednessConstraintOptions(
-                            dynamic_cast<ConnectednessMetaData<Double>&>(*f->metaData),
-                            makeExclusive,
-                            evaluateProblem);
-                    break;
+            DrawableType type;
+            evaluateProblem |= f->drawImGuiOptions(proxy);
+            if(makeExclusive) {
+                makeExclusiveVisualizer(f);
+                makeDrawableCurrent(type);
             }
 
-            if(makeExclusive) makeExclusiveVisualizer(f);
-
-            drawLoss(f->metaData->loss, nodeCount);
+            drawLoss(f->loss, nodeCount);
             ImGui::PopID();
         }
 
@@ -657,9 +578,17 @@ void Viewer::drawOptimizationContext() {
             }
         }
 
-        static Double epsilon = 0.3;
+        static bool checkNumeric = false;
+        ImGui::Checkbox("Debug Numerical Gradient", &checkNumeric);
+        if(checkNumeric){
+            static constexpr double minH = 1e-14, maxH = 0.1;
+            ImGui::DragScalar("h", ImGuiDataType_Double, &problem.h, 1e-8, &minH, &maxH, "%.5e", 2);
+        }
+        evaluateProblem |= ImGui::Button("Evaluate");
+
+        static Double epsilon = 0.075;
         if(dirichletScaling.refCount() > 1 || doubleWellScaling.refCount() > 1 || connectednessScaling.refCount() > 1){
-            constexpr Mg::Double minEps = 0.f, maxEps = 1.;
+            constexpr Mg::Double minEps = 0.f, maxEps = 0.3;
             ImGui::DragScalar("epsilon", ImGuiDataType_Double, &epsilon, .01f, &minEps, &maxEps, "%f", 2);
             *dirichletScaling = epsilon/2.;
             *doubleWellScaling = 1./epsilon;
@@ -670,19 +599,39 @@ void Viewer::drawOptimizationContext() {
         constexpr static std::uint32_t step = 1;
         ImGui::InputScalar("iterations", ImGuiDataType_S32, &options.max_num_iterations, &step, nullptr, "%u");
 
-        static std::map<solver::LineSearchDirectionType, std::string> searchDirectionMapping= {
-                {solver::LineSearchDirectionType::STEEPEST_DESCENT, "Steepest Descent"},
-                {solver::LineSearchDirectionType::NONLINEAR_CONJUGATE_GRADIENT, "Nonlinear Conjugate Gradient"},
-                {solver::LineSearchDirectionType::LBFGS, "LBFGS"},
-                {solver::LineSearchDirectionType::BFGS, "BFGS"}
+        auto solverHasSearchDirection = [](solver::Solver::Value s, solver::LineSearchDirection::Value direction){
+            if(s == solver::Solver::IPOPT){
+                switch (direction) {
+                    case solver::LineSearchDirection::LBFGS :
+                    case solver::LineSearchDirection::SR1 : return true;
+                    default: return false;
+                }
+            } else if(s == solver::Solver::CERES) {
+                return !(direction == solver::LineSearchDirection::SR1);
+            }
+            return false;
         };
 
-        if (ImGui::BeginCombo("##descent direction", searchDirectionMapping[options.line_search_direction_type].c_str())) {
-            for (auto& [type, name] : searchDirectionMapping) {
-                bool isSelected = (options.line_search_direction_type == type);
-                if (ImGui::Selectable(name.c_str(), isSelected)){
-                    options.line_search_direction_type = type;
+        if (ImGui::BeginCombo("##solver", solver::Solver::to_string(options.solver))) {
+            for (auto solver : solver::Solver::range) {
+                bool isSelected = (options.solver == solver);
+                if (ImGui::Selectable(solver::Solver::to_string(solver), isSelected)){
+                    options.solver = solver;
+                    if(!solverHasSearchDirection(options.solver, options.line_search_direction))
+                        options.line_search_direction = solver::LineSearchDirection::LBFGS;
                 }
+                if (isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
+        if (ImGui::BeginCombo("##descent direction", solver::LineSearchDirection::to_string(options.line_search_direction))) {
+            for (auto dir : solver::LineSearchDirection::range) {
+                if(!solverHasSearchDirection(options.solver, dir)) continue;
+                bool isSelected = (options.line_search_direction == dir);
+                if (ImGui::Selectable(solver::LineSearchDirection::to_string(dir), isSelected))
+                    options.line_search_direction = dir;
                 if (isSelected)
                     ImGui::SetItemDefaultFocus();
             }
@@ -693,9 +642,24 @@ void Viewer::drawOptimizationContext() {
 
 
         if(evaluateProblem && !optimizing){
-            double r;
-            Containers::Array<Mg::Double> grad(Containers::NoInit, phasefield.size());
-            problem.evaluate(phasefield.data(), &r, grad.data());
+            auto n = phasefield.size();
+            auto m = problem.constraints.size();
+            Containers::Array<Mg::Double> gradF(Containers::NoInit, n);
+            Containers::Array<Mg::Double> gradC(Containers::NoInit, n*m);
+            problem.evaluate(phasefield.data(), nullptr, gradF.data(), nullptr, gradC.data());
+            if(checkNumeric){
+                Containers::Array<Mg::Double> gradFNumeric(Containers::NoInit, n);
+                Containers::Array<Mg::Double> gradCNumeric(Containers::NoInit, m * n);
+                problem.numericalGradient(phasefield.data(), gradFNumeric.data(), gradCNumeric.data());
+                double normFSq = 0.;
+                double normCSq = 0.;
+                for (int i = 0; i < gradC.size(); ++i)
+                    normFSq += Math::pow(gradFNumeric[i] - gradF[i], 2.);
+                for (int i = 0; i < n * m; ++i)
+                    normCSq += Math::pow(gradCNumeric[i] - gradC[i], 2.);
+                Debug{} << "||gradF - gradF_numeric||^2 : " << normFSq;
+                Debug{} << "||gradC - gradC_numeric||^2 : " << normCSq;
+            }
         }
 
         if (ImGui::Button("Optimize") && !problem.functionals.empty())
@@ -728,60 +692,32 @@ void Viewer::stopOptimization() {
 }
 
 /* @todo would be nice to rework this at some point to handle hard deps in constructors.. */
-Containers::Pointer<Functional> Viewer::makeFunctional(FunctionalType type) {
-    auto ts = Containers::arrayCast<Vector3ui>(indices);
+Containers::Pointer<FunctionalD> Viewer::makeFunctional(FunctionalType type) {
     switch (type) {
         case FunctionalType::Area1 : {
-            auto p = Containers::pointer<AreaRegularizer1>(vertices, ts);
-            auto meta = Containers::pointer<GradientMetaData>(meshData, update, mutex);
-            meta->loss = std::move(p->metaData->loss);
-            p->metaData = std::move(meta) ;
-            p->type = FunctionalType::Area1; //@todo somehow this does not pick up the type from ctor
+            auto p = Containers::pointer<AreaRegularizer1>(vertices, indices);
             return p;
         }
         case FunctionalType::Area2 : {
-            auto p = Containers::pointer<AreaRegularizer2>(vertices, ts);
-            auto meta = Containers::pointer<GradientMetaData>(meshData, update, mutex);
-            meta->loss = std::move(p->metaData->loss);
-            p->metaData = std::move(meta);
-            p->type = FunctionalType::Area2;
+            auto p = Containers::pointer<AreaRegularizer2>(vertices, indices);
             return p;
         }
         case FunctionalType::DirichletEnergy : {
-            auto p = Containers::pointer<DirichletEnergy>(vertices, ts);
-            auto meta = Containers::pointer<GradientMetaData>(meshData, update, mutex);
-            meta->loss = std::move(p->metaData->loss);
-            p->metaData = std::move(meta);
-            p->metaData->scaling = dirichletScaling;
-            p->type = FunctionalType::DirichletEnergy;
-            return p;
+            auto p = Containers::pointer<DirichletEnergy>(vertices, indices);
+            p->scaling = dirichletScaling;
         }
         case FunctionalType::DoubleWellPotential : {
-            auto p = Containers::pointer<DoubleWellPotential>(vertices, ts);
-            auto meta = Containers::pointer<GradientMetaData>(meshData, update, mutex);
-            meta->loss = std::move(p->metaData->loss);
-            p->metaData = std::move(meta);
-            p->metaData->scaling = doubleWellScaling;
-            p->type = FunctionalType::DoubleWellPotential;
+            auto p = Containers::pointer<DoubleWellPotential>(vertices, indices);
+            p->scaling = doubleWellScaling;
             return p;
         }
         case FunctionalType::Connectedness :
-            auto meta = Containers::pointer<ConnectednessMetaData<Double>>(meshData, faceColors, update, mutex);
-            meta->paths = new Paths(&scene, drawableGroup);
-            auto p = Containers::pointer<ConnectednessConstraint<Double>>(vertices, ts, std::move(meta));
-            p->type = FunctionalType::Connectedness;
-            p->metaData->scaling = connectednessScaling;
+            auto p = Containers::pointer<ConnectednessConstraint<Double>>(vertices, indices);
+            p->paths = new Paths(&scene, drawableGroup);
+            p->scaling = connectednessScaling;
             return p;
     }
     return nullptr;
-}
-
-void Viewer::updateFunctionals(Containers::Array<Containers::Pointer<Functional>>& functionals){
-    for(auto& f : functionals){
-        auto meta = std::move(f->metaData);
-        f = makeFunctional(f->type);
-        f->metaData = std::move(meta);
-    }
 }
 
 void Viewer::paint(){
@@ -868,7 +804,6 @@ void Viewer::updateInternalDataStructures(){
 }
 
 
-
 void Viewer::drawShaderOptions(){
     if(!drawable) return;
     if(ImGui::TreeNode("Shader Options")) {
@@ -925,22 +860,35 @@ void Viewer::drawShaderOptions(){
             }
         }
 
-        if(ImGui::DragFloatRange2("range", &near, &far, 0.1f, 0.0f, 10.0f, "Min: %.1f", "Max: %.1f")){
+        if(ImGui::DragFloatRange2("range", &near, &far, 0.1f, 0.0f, 10.0f, "Min: %.2f", "Max: %.2f")){
             camera->setProjectionMatrix(Matrix4::perspectiveProjection(
                     fov,
                     Mg::Vector2{windowSize()}.aspectRatio(),
                     near, far));
         }
 
-        if(ImGui::Checkbox("Draw Debug", &drawDebug)){
-            if(drawDebug){
-                debugDrawable = new DebugTools::ObjectRenderer3D{manager, *object, "my", &drawableGroup};
+        ImGui::Checkbox("Draw Axis", &axisDrawable->show);
+        static WireframeOptions options = []{
+            WireframeOptions o;
+            o.thickness = 1e-2;
+            o.distanceBound = 1e-3;
+            o.radiusBound = 1e-4;
+            o.angleBound = 20.f;
+            return o;}();
+        constexpr static double minthickness = 1e-10, maxthickness = 1.;
+        if(ImGui::Checkbox("Draw Wireframe", &drawWireframe)){
+            if(drawWireframe){
+                //auto triangles = Containers::arrayCast<Vector3ui>(indices);
+                //wireframeMesh = MeshTools::compile(polygonizeWireframe(vertices, triangles, options), MeshTools::CompileFlag::GenerateSmoothNormals);
+                //wireframeDrawer = new MeshVisualizerDrawable(*object, wireframeMesh, *shaders[ShaderType::MeshVisualizer], &drawableGroup);
             } else {
-                auto& features = object->features();
-                features.erase(debugDrawable);
-                debugDrawable = nullptr;
+                object->features().erase(wireframeDrawer);
+                wireframeDrawer = nullptr;
             }
         }
+
+        ImGui::DragScalar("Wireframe Thickness", ImGuiDataType_Double, &options.thickness, 1e-8, &minthickness, &maxthickness, "%.2e", 2);
+        options.drawImGui();
 
         ImGui::TreePop();
     }
@@ -1130,11 +1078,11 @@ void Viewer::tickEvent()
             reuploadVertices(vertexBuffer, meshData);
             update &= ~VisualizationFlag::Phasefield;
         }
-        for (auto const& f : problem.functionals) {
-            f->metaData->updateVis();
-        }
+        for (auto& f : problem.functionals)
+            f->updateVisualization(proxy);
+        for (auto& f : problem.constraints)
+            f->updateVisualization(proxy);
     }
-
 }
 
 void Viewer::drawEvent() {

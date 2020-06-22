@@ -8,61 +8,41 @@
 #include "shared_ressource.hpp"
 #include "solver.hpp"
 #include "types.hpp"
+#include "meta_data.hpp"
+#include "visualization_proxy.hpp"
 
-#include <Corrade/Containers/Containers.h>
-#include <mutex>
+#include <Corrade/Containers/Pointer.h>
+
 
 namespace Cr = Corrade;
 namespace Mg = Magnum;
 
-enum class FunctionalType : Mg::UnsignedInt {
-    Undefined = 0,
-    DirichletEnergy = 1,
-    DoubleWellPotential = 2,
-    Area1 = 3,
-    Connectedness = 4,
-    Area2 = 5,
-};
-
+template<class Scalar>
 struct Functional{
 
-    struct MetaData {
-
-        Cr::Containers::Pointer<LossFunction> loss = Cr::Containers::pointer<TrivialLoss>();
-        SharedRessource<Mg::Double> scaling = nullptr;
-
-        VisualizationFlags flags = {};
-
-        VisualizationFlag* update;
-        std::mutex* mutex;
-
-        virtual ~MetaData() = default;
-        virtual solver::Status operator()(solver::IterationSummary const&) { return solver::Status::CONTINUE; };
-
-        virtual void updateVis() { } /*this is called from gui thread so we can update some opengl stuff if we want to */
-        virtual void visualizeGradient(Cr::Containers::ArrayView<const Mg::Double> const& gradient) {};
-
-        using Ptr = Cr::Containers::Pointer<MetaData>;
-
-        template<class L>
-        static Ptr AllocateFromLoss(L&& l) {
-            auto meta = Cr::Containers::pointer<MetaData>();
-            meta->loss= Cr::Containers::pointer<std::remove_reference_t<L>>((L&&)l);
-            return meta;
-        }
-    };
-
-    Functional(Cr::Containers::Pointer<MetaData> meta, FunctionalType t) : metaData(std::move(meta)), type(t)
-    {
-    }
-
-    mutable Cr::Containers::Pointer<MetaData> metaData = Cr::Containers::pointer<MetaData>();
-    FunctionalType type;
-
-    virtual bool evaluate(double const* parameter, double* cost, double* jacobian) const = 0;
-    virtual int numParameters() const = 0;
+    virtual bool evaluate(Scalar const* parameter, Scalar* cost, Scalar** jacobian) const = 0;
+    virtual void updateInternalDataStructures() = 0;
+    virtual uint32_t numParameters() const = 0;
+    virtual uint32_t numResiduals() const { return 1; };
     virtual ~Functional() = default;
+
+    Cr::Containers::Pointer<LossFunction> loss = Cr::Containers::pointer<TrivialLoss>();
+    SharedRessource<Mg::Double> scaling = nullptr;
+    std::string name;
+
+    VisualizationFlags flags = {};
+    VisualizationFlag* update = nullptr;
+
+    virtual solver::Status::Value operator()(solver::IterationSummary const&) { return solver::Status::CONTINUE; };
+
+    /*this is called from gui thread so we can update some opengl stuff if we want to */
+    virtual void tickCallback() { }
+    virtual void updateVisualization(VisualizationProxy& proxy) { }
+    virtual void turnVisualizationOff() {}
+
+    virtual void visualizeGradient(Cr::Containers::ArrayView<const Mg::Double> const& gradient) {}
+    virtual bool drawImGuiOptions(VisualizationProxy& proxy);
 };
 
-
-
+using FunctionalF = Functional<double>;
+using FunctionalD = Functional<double>;

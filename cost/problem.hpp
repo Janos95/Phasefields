@@ -23,14 +23,27 @@ struct Problem {
     std::mutex* mutex = nullptr;
     Mg::Trade::MeshData* meshData;
 
-    bool evaluate(const double *parameters,
-                  double *cost,
-                  double *jacobians) const;
-
     [[nodiscard]] int numParameters() const;
+    [[nodiscard]] int numConstraints() const;
 
-    Cr::Containers::Array<Cr::Containers::Pointer<Functional>> functionals;
-    Cr::Containers::Array<Cr::Containers::Pointer<Functional>> constraints;
+
+    Mg::Double h = 1e-5;
+    void numericalGradient(double* parameters, double *jacF, double* jacC);
+
+    Cr::Containers::Array<Cr::Containers::Pointer<FunctionalD>> functionals;
+    Cr::Containers::Array<Cr::Containers::Pointer<FunctionalD>> constraints;
+
+    bool evaluate(
+            const double *parameters,
+            double *costFunctional,
+            double *jacobiansFunctionals,
+            double *costConstraint,
+            double *jacobiansConstraints) const;
+
+    bool evaluateObjective(const double *parameters, double *cost, double *jacobians) const;
+
+    bool evaluateConstraints(const double *parameters, double *cost, double *jacobians) const;
+
 };
 
 }

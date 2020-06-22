@@ -4,13 +4,13 @@
 
 #include "fem.hpp"
 
-#include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/GrowableArray.h>
+#include <Magnum/Math/Vector3.h>
 
 using namespace Corrade;
 using namespace Magnum;
 
-auto computeArea(Vector3d const& a, Vector3d const& b, Vector3d const& c){
+Double computeArea(Vector3d const& a, Vector3d const& b, Vector3d const& c){
     auto area = Math::cross(b - a, c - a).length() * .5;
     return area;
 }

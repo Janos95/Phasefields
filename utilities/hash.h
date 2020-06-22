@@ -70,3 +70,4 @@ inline size_t hash_int(uint64_t obj) noexcept {
     return static_cast<size_t>(h);
 #endif
 }
+

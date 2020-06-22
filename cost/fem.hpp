@@ -4,16 +4,16 @@
 
 #pragma once
 
-
 #include <Eigen/SparseCore>
 
-#include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Containers/Containers.h>
 #include <Magnum/Magnum.h>
-#include <Magnum/Math/Vector3.h>
+#include <Magnum/Math/Math.h>
 
 namespace Cr = Corrade;
 namespace Mg = Magnum;
 
+Mg::Double computeArea(Mg::Vector3d const& a, Mg::Vector3d const& b, Mg::Vector3d const& c);
 
 Cr::Containers::Array<Mg::Double> computeAreas(
         const Cr::Containers::ArrayView<const Mg::Vector3ui>& indices,

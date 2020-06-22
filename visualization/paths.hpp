@@ -30,6 +30,15 @@ struct InstanceData {
     Mg::Color3 color;
 };
 
+/**
+ * @todo Instead of instancing a better options would be to simply upload
+ * @todo all edges as a line set and write a custom shader which for each
+ * @todo edge generates a sreen aligned quad in a geometry shader and some normals
+ * @todo so that we can than add some plasticity. For junctions either use blending
+ * @todo or compute an sdf and use a second render pass to decide which normals
+ * @todo to use for shading.
+ */
+
 struct Paths : Object3D, Drawable {
     explicit Paths(Object3D* parent, Mg::SceneGraph::DrawableGroup3D& drawables);
     void draw(const Mg::Matrix4& transformation, Mg::SceneGraph::Camera3D& camera) override;
