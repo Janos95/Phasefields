@@ -42,6 +42,82 @@
 namespace Mn = Magnum;
 namespace Cr = Corrade;
 
+struct ConnectednessConstraint
+{
+    ConnectednessConstraint(
+            Containers::Array<const Mg::Vector3d> const&,
+            Containers::Array<const Mg::UnsignedInt> const&);
+
+    auto triangles() { return arrayCast<Mg::Vector3ui>(indices); }
+
+    template<class Scalar>
+    bool evaluate(Scalar const* phasefield, Scalar* cost, SparseMatrix* gradient) const;
+
+    void updateInternalDataStructures();
+    uint32_t numParameters() const;
+    uint32_t numResiduals() const;
+
+    struct Neighbor {
+        int vertex;
+        int weightIdx;
+    };
+
+    struct Edge {
+        Edge(Mg::UnsignedInt v1_, Mg::UnsignedInt v2_) : v1(std::min(v1_, v2_)), v2(std::max(v1_, v2_)) {}
+        Mg::UnsignedInt v1, v2;
+
+#ifdef __cpp_impl_three_way_comparison
+        auto operator<=>(const Edge&) const = default;
+#else
+        bool operator<(const Edge& other) const{
+            return std::tie(v1, v2) < std::tie(other.v1, other.v2);
+        }
+
+        bool operator==(const Edge& other) const{
+            return std::tie(v1, v2) == std::tie(other.v1, other.v2);
+        }
+#endif
+    };
+
+    Containers::Array<const Mg::UnsignedInt> const& indices;
+    Containers::Array<const Mg::Vector3d> const& vertices;
+    Containers::Array<Edge> dualEdges;
+
+    Containers::Array<Mg::Double> lineElements;
+    Containers::Array<Mg::Double> areas;
+    Containers::Array<Mg::Double> diams;
+
+    using graph_type = Containers::Array<SmallArray<3, int>>;
+
+    mutable Containers::Array<SmallArray<3, Neighbor>> adjacencyList;
+    mutable Containers::Array<Dijkstra<graph_type>> dijkstras;
+    mutable Containers::Array<StoppingCriteria> stops;
+    mutable Containers::Array<int> roots;
+    mutable std::size_t numComponents;
+    mutable Containers::Array<int> components;
+
+
+    /* this is called holding our 'global' mutex from the gui thread */
+    void updateVisualization(VisualizationProxy&);
+    void drawImGuiOptions(bool&, DrawableType&, bool&);
+
+    /* collects data for the updateVisualization callback
+     * Always called after a call to evaluate.
+     */
+    void collectVisualizationData(Containers::ArrayView<const double*> const& grad);
+
+    Mg::Double a = 0.05, b = 1.;
+    Mg::Double pathThickness = 0.01;
+
+    Cr::Containers::Array<InstanceData> instanceData; //tf from cylinder to path section
+    Paths* paths = nullptr;
+    bool updateInstanceData = false;
+    bool generateLineStrips = false;
+    bool updateGrad = false;
+    bool updateComponents = false;
+    bool updateWs = false;
+};
+
 /* this is called holding our 'global' mutex from the gui thread */
 template<class Scalar>
 void ConnectednessConstraint<Scalar>::updateVisualization(VisualizationProxy& proxy) {
@@ -137,6 +213,7 @@ void ConnectednessConstraint<Scalar>::drawImGuiOptions(bool& makeExclusive, Draw
         }
         else flags &= ~VisualizationFlag::ConnectedComponents;
     }
+
     bool visGradient = static_cast<bool>(flags & VisualizationFlag::Gradient);
     if(ImGui::Checkbox("Gradient", &visGradient)){
         if(visGradient) {
@@ -164,7 +241,7 @@ ConnectednessConstraint<Scalar>::ConnectednessConstraint(
 template<class Scalar>
 void ConnectednessConstraint<Scalar>::updateInternalDataStructures(){
 
-    arrayResize(adjacencyList, DirectInit, triangles().size(), ValueInit);
+    arrayResize(adjacencyList, Containers::DirectInit, triangles().size(), Containers::ValueInit);
 
     //compute edges in dual graph
     auto hash = [](Edge const& e) noexcept { return hash_int(reinterpret_cast<uint64_t const&>(e)); };
@@ -209,9 +286,9 @@ void ConnectednessConstraint<Scalar>::updateInternalDataStructures(){
 }
 
 template<class Scalar>
-bool ConnectednessConstraint<Scalar>::evaluate(double const *U,
-                            double *cost,
-                            double **jacobian) const {
+bool ConnectednessConstraint<Scalar>::evaluate(Scalar const *U,
+                            Scalar *cost,
+                            SparseMatrix* jacobian) const {
 
     ScopedTimer timer("Connectedness");
 
@@ -256,7 +333,7 @@ bool ConnectednessConstraint<Scalar>::evaluate(double const *U,
     }
 
     arrayResize(roots, 0);
-    arrayResize(components, NoInit, numFaces);
+    arrayResize(components, Containers::NoInit, numFaces);
     for (std::size_t i = 0; i < components.size(); ++i) {
         if (inInterface[i]) {
             components[i] = set.find(i);

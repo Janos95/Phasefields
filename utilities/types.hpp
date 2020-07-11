@@ -11,20 +11,12 @@
 
 namespace Cr = Corrade;
 namespace Mg = Magnum;
+namespace Containers = Corrade::Containers;
 
 using Object3D = Mg::SceneGraph::Object<Mg::SceneGraph::MatrixTransformation3D>;
 using Scene3D = Mg::SceneGraph::Scene<Mg::SceneGraph::MatrixTransformation3D>;
 using Drawable = Mg::SceneGraph::Drawable3D;
 using DrawableGroup = Mg::SceneGraph::DrawableGroup3D;
-
-template<class T>
-using View1D = Cr::Containers::StridedArrayView1D<T>;
-template<class T>
-using View2D = Cr::Containers::StridedArrayView2D<T>;
-template<class T>
-using View3D = Cr::Containers::StridedArrayView3D<T>;
-
-using namespace Cr::Containers;
 
 enum class ColorMapType : Magnum::UnsignedInt {
     Turbo = 0,

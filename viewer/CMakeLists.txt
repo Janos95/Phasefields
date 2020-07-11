@@ -16,9 +16,9 @@ add_library(viewer SHARED
         optimization_context.cpp
         imguifilesystem.cpp
         imguifilesystem.h
+        ../visualization_proxy/visualization_proxy.cpp
+        ../visualization_proxy/visualization_proxy.hpp
         ${viewer_RESOURCES})
-
-
 
 target_include_directories(viewer PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(viewer
@@ -26,8 +26,10 @@ target_link_libraries(viewer
             phasefields::utilities
             phasefields::scoped_timer
             phasefields::cost
+            phasefields::optimization
             phasefields::exact_geodesics
             phasefields::visualization
+            phasefields::visualization_proxy
             #phasefields::polygonizer
             Magnum::GL
             Magnum::SceneGraph

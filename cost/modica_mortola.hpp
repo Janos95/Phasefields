@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "functional.hpp"
+#include "functional.h"
 #include "c1_functions.hpp"
 #include "stopping_criteria.hpp"
 #include "fem.hpp"
@@ -14,6 +14,7 @@
 #include "y_combinator.hpp"
 #include "phasefield_tree.hpp"
 #include "types.hpp"
+#include "normalizeInto.hpp"
 
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/GrowableArray.h>
@@ -25,94 +26,88 @@
 
 #include <Eigen/SparseCore>
 
-#include <normalizeInto.hpp>
-
 #include <mutex>
 #include <numeric>
 #include <algorithm>
 
-namespace Cr = Corrade;
-namespace Mg = Magnum;
-
-using DoubleView3D = Cr::Containers::StridedArrayView3D<double>;
-using DoubleView2D = Cr::Containers::StridedArrayView2D<double>;
-using DoubleView1D = Cr::Containers::StridedArrayView1D<double>;
-using DoubleView = Cr::Containers::ArrayView<double>;
-
-template<class Scalar>
-struct DirichletEnergy final : Functional<Scalar>
+struct DirichletEnergy
 {
     DirichletEnergy(
-            Array<const Mg::Vector3d> const& vertices,
-            Array<const Mg::UnsignedInt> const& indices);
+            Containers::Array<const Mg::Vector3d> const& vertices,
+            Containers::Array<const Mg::UnsignedInt> const& indices);
 
-    uint32_t numParameters() const override;
+    uint32_t numParameters() const ;
 
+    template<class Scalar>
     bool evaluate(double const* parameters,
                   double* residual,
-                  double** jacobians) const override;
+                  double** jacobians) const ;
 
     auto triangles() { return arrayCast<Mg::Vector3ui>(indices); }
 
-    Array<const Mg::UnsignedInt> const& indices;
-    Array<const Mg::Vector3d> const& vertices;
-    Array<Mg::Double> areas;
+    Containers::Array<const Mg::UnsignedInt> const& indices;
+    Containers::Array<const Mg::Vector3d> const& vertices;
+    Containers::Array<Mg::Double> areas;
 
-    Eigen::SparseMatrix<Scalar> stiffnessMatrix;
-    Eigen::Matrix<Scalar, Eigen::Dynamic, 1> diagonal;
+    Eigen::SparseMatrix<double> stiffnessMatrix;
+    SparseMatrix stiffnessMatrix2;
+    Eigen::Matrix<double, Eigen::Dynamic, 1> diagonal;
 };
 
-template<class Scalar, template <class> class F, class L>
-struct IntegralFunctional : Functional<Scalar>
+template<template <class> class F>
+struct IntegralFunctional
 {
     IntegralFunctional(
-            Array<const Mg::Vector3d> const& vs,
-            Array<const Mg::UnsignedInt> const& is,
-            F<Scalar> f_ = {}):
-                Functional<Scalar>(GradientMetaData::fromLossAndName(L{}, "Integral Functional")),
+            Containers::Array<const Mg::Vector3d> const& vs,
+            Containers::Array<const Mg::UnsignedInt> const& is):
+                Functional(GradientMetaData::fromLossAndName(L{}, "Integral Functional")),
                 indices(is),
                 vertices(vs),
-                f((F<Scalar>&&)f_),
                 integralOperator(computeIntegralOperator(triangles(), vertices))
     {
     }
 
-    uint32_t numParameters() const override {
+    uint32_t numParameters() const  {
         return vertices.size();
     }
 
-    void updateIntegralOperator() override {
+    void updateIntegralOperator()  {
         integralOperator = computeIntegralOperator(triangles(), vertices);
     }
 
-    virtual bool evaluate(double const* params,
-                  double* cost,
-                  double* jacobians) const override{
+    template<class Scalar>
+    bool evaluate(Scalar const* params,
+                  Scalar* cost,
+                  SparseMatrix* jacobians,
+                  SparseMatrix* hessian) const {
+
+        F<Scalar> f;
         *cost = 0.;
         for (int i = 0; i < vertices.size(); ++i){
             *cost += f.eval(params[i]) * integralOperator[i];
-            if(jacobians) jacobians[i] = f.grad(params[i]) * integralOperator[i];
+            if(jacobians)
+                jacobians->values[i] = f.grad(params[i]) * integralOperator[i];
+            if(hessian)
+                hessian->values[i] = f.hess(params[i]) * integralOperator[i];
         }
-
         return true;
     }
 
     auto triangles() { return arrayCast<Mg::Vector3ui>(indices); }
 
-    F<Scalar> f;
-    Array<const Mg::UnsignedInt> const& indices;
-    Array<const Mg::Vector3d> const& vertices;
-    Array<Mg::Double> integralOperator;
+    Containers::Array<const Mg::UnsignedInt> const& indices;
+    Containers::Array<const Mg::Vector3d> const& vertices;
+    Containers::Array<Mg::Double> integralOperator;
 };
 
 
-template<class Scalar, template <class> class F, class L>
-struct AreaRegularizer final : IntegralFunctional<Scalar, F, L> {
+template<template <class> class F, class L>
+struct AreaRegularizer final : IntegralFunctional<F> {
 
     AreaRegularizer(
-            Array<Magnum::Vector3d> vs,
-            Array<const Mg::UnsignedInt> const& is) :
-        IntegralFunctional<Scalar, F, L>(vs, is)
+            Containers::Array<Magnum::Vector3d> vs,
+            Containers::Array<const Mg::UnsignedInt> const& is) :
+        IntegralFunctional<F>(vs, is)
     {
         auto areas = computeAreas(triangles(), this->vertices);
         area = std::accumulate(areas.begin(), areas.end(), 0.);
@@ -120,15 +115,16 @@ struct AreaRegularizer final : IntegralFunctional<Scalar, F, L> {
 
     AreaMetaData& getMeta(){ return *dynamic_cast<AreaMetaData*>(this->meta); }
 
-    void updateInternalDataStructures() override {
-        IntegralFunctional<Scalar, F, L>::updateInternalDataStructures();
+    void updateInternalDataStructures()  {
+        IntegralFunctional<F>::updateInternalDataStructures();
         auto areas = computeAreas(triangles(), this->vertices);
         area = std::accumulate(areas.begin(), areas.end(), 0.);
     }
 
-    bool evaluate(double const* params,
-                  double* cost,
-                  double* jacobians) const override{
+    template<class Scalar>
+    bool evaluate(Scalar const* params,
+                  Scalar* cost,
+                  double* jacobians) const {
         IntegralFunctional<Scalar, F, L>::evaluate(params, &currentArea, jacobians);
         *cost = currentArea - getMeta().areaRatio * area; /*@todo racy */
         return true;
@@ -142,7 +138,7 @@ struct AreaRegularizer final : IntegralFunctional<Scalar, F, L> {
 
 
 template<class Scalar, template<class> class SmoothStepFunc, class L>
-struct AreaConstraints final : Functional<Scalar> {
+struct AreaConstraints final : Functional {
 
     AreaMetaData& getMeta(){ return *dynamic_cast<AreaMetaData*>(this->meta); }
 
@@ -152,13 +148,13 @@ struct AreaConstraints final : Functional<Scalar> {
     {
     }
 
-    Mg::UnsignedInt numParameters() const override { return tree.phasefieldData.size(); }
-    Mg::UnsignedInt numResiduals() const override { return tree.numLeafs * 2; }
+    Mg::UnsignedInt numParameters() const  { return tree.phasefieldData.size(); }
+    Mg::UnsignedInt numResiduals() const  { return tree.numLeafs * 2; }
 
 
     bool evaluate(Scalar const* params,
                   Scalar* cost,
-                  Scalar* jacobians) const override{
+                  Scalar* jacobians) const {
 
         auto numParams = numParameters();
         auto numRes = numResiduals();
@@ -171,12 +167,12 @@ struct AreaConstraints final : Functional<Scalar> {
         //DoubleView3D jac{jacobians, {numRes, numPhasefields, phasefieldSize}}; /* column major */
 
         auto visitor = YCombinator{
-            [&](auto&& visitor, PhasefieldNode& node, Array<Scalar>& p) -> void {
+            [&](auto&& visitor, PhasefieldNode& node, Containers::Array<Scalar>& p) -> void {
                 auto depth = node.depth;
                 auto idx = node.idx;
                 bool hasChildren = node.leftChild != PhasefieldNode::None;
 
-                Array<Scalar> p1(hasChildren ? phasefieldSize : 0);
+                Containers::Array<Scalar> p1(hasChildren ? phasefieldSize : 0);
                 if(hasChildren)
                     Cr::Utility::copy(p, p1);
 
@@ -201,7 +197,7 @@ struct AreaConstraints final : Functional<Scalar> {
             }
         };
 
-        Array<Scalar> p(phasefieldSize);
+        Containers::Array<Scalar> p(phasefieldSize);
         std::fill(p.begin(), p.end(), 1.);
         std::fill_n(cost, numRes, 0.);
         visitor(tree.root(), p);
@@ -212,9 +208,9 @@ struct AreaConstraints final : Functional<Scalar> {
     SmoothStepFunc<Scalar> smoothStepFunc;
 
     PhasefieldTree& tree;
-    Array<const Mg::Vector3ui> const& triangles;
-    Array<const Mg::Vector3d> const& vertices;
-    Array<Mg::Double> integralOperator;
+    Containers::Array<const Mg::Vector3ui> const& triangles;
+    Containers::Array<const Mg::Vector3d> const& vertices;
+    Containers::Array<Mg::Double> integralOperator;
 };
 
 using AreaRegularizer1 = AreaRegularizer<Mg::Double, Indicator, QuadraticLoss>;

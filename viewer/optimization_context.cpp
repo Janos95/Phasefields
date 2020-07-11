@@ -5,7 +5,7 @@
 #include "optimization_context.hpp"
 #include "modica_mortola.hpp"
 #include "upload.hpp"
-#include "loss_functions.hpp"
+#include "../optimization/loss_functions.hpp"
 
 #include <Corrade/Containers/Pointer.h>
 

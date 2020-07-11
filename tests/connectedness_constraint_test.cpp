@@ -20,7 +20,6 @@ using namespace Magnum;
 #include <iostream>
 namespace {
 
-
     struct ConnectednessConstraintTest: TestSuite::Tester {
         Eigen::VectorXd m_U;
         Eigen::MatrixXi m_F;

@@ -18,7 +18,6 @@ namespace Mg = Magnum;
 using namespace Mg::Math::Literals;
 
 
-
 struct MeshDrawable : Drawable {
     MeshDrawable(Object3D& obj, Mg::GL::Mesh& m, DrawableGroup* group, Mg::GL::Texture2D* t = nullptr);
     Mg::GL::Mesh& mesh;

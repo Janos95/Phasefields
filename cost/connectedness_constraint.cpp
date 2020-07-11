@@ -2,11 +2,10 @@
 // Created by janos on 21.05.20.
 //
 
+#include "functional.hpp"
 #include "connectedness_constraint.hpp"
 
-template<>
-class ConnectednessMetaData<double>;
+#include <adolc/adouble.h>
 
 template<>
-class ConnectednessConstraint<double>;
-
+Functional::Functional<ConnectednessConstraint>;

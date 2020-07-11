@@ -5,7 +5,6 @@
 #pragma once
 
 #include "graph_common.hpp"
-#include "detach.hpp"
 #include "unique_function.h"
 
 #include <Corrade/Containers/Reference.h>
@@ -19,12 +18,14 @@ template<class R>
 class Dijkstra
 {
 public:
+
     Dijkstra() = default;
 
-    explicit Dijkstra(R const& adjacencyList):
+    explicit Dijkstra(R const& adjacencyList, Containers::ArrayView<const T> weights):
         m_adjacencyList(&adjacencyList),
         m_dist(adjacencyList.size(), std::numeric_limits<double>::infinity()),
-        m_prev(adjacencyList.size(), -1)
+        m_prev(adjacencyList.size(), -1),
+        m_weights(weights)
     {
     }
 
@@ -48,7 +49,7 @@ public:
             return true;
 
         for(const auto& [v, w]: (*m_adjacencyList)[u]){
-            auto alt = detail::detach(w) + detail::detach(d);
+            auto alt = detail::detach(m_weights[w]) + detail::detach(d);
             if(alt < m_dist[v]){
                 m_dist[v] = alt;
                 m_prev[v] = u;
@@ -95,7 +96,8 @@ private:
 
     std::priority_queue<HeapElement,  std::vector<HeapElement>, InverseDistanceCompare> m_heap;
     R const* m_adjacencyList;
-    std::vector<double> m_dist;
-    std::vector<int> m_prev;
+    Containers::Array<double> m_dist;
+    Containers::Array<int> m_prev;
+    Containers::ArrayView<const T> m_weights;
 };
 

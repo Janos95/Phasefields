@@ -10,6 +10,7 @@
 #include <ceres/gradient_problem.h>
 #include <ceres/first_order_function.h>
 
+
 #include <IpTNLP.hpp>
 #include <IpIpoptCalculatedQuantities.hpp>
 #include <IpIpoptData.hpp>
@@ -262,9 +263,6 @@ namespace {
         }
     };
 
-
-
-
     struct FirstOrderWrapper : ceres::FirstOrderFunction {
         explicit FirstOrderWrapper(solver::Problem const& pb) : problem(pb) {
             CORRADE_ASSERT(pb.constraints.empty(), "Solver : ceres does not support constraints",);
@@ -306,7 +304,6 @@ namespace {
         }
     }
 }
-
 
 
 void solve(solver::Options& options, solver::Problem& problem, double* params, solver::Summary* summary){

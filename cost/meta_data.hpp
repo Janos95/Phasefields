@@ -5,9 +5,9 @@
 #pragma once
 
 
-#include "loss_functions.hpp"
+#include "../optimization/loss_functions.hpp"
 #include "shared_ressource.hpp"
-#include "solver.hpp"
+#include "../optimization/solver.hpp"
 #include "types.hpp"
 
 #include <Corrade/Containers/Pointer.h>

@@ -1,8 +1,6 @@
 [requires]
-boost/1.72.0
-openblas/0.3.9
+ipopt/3.13.2
 
 [generators]
-cmake_find_package_multi
+cmake_find_package
 
-[options]

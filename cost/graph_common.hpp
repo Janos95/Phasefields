@@ -6,8 +6,6 @@
 
 #include <Corrade/Utility/Assert.h>
 
-#include <iterator> //this hits compiles pretty hard :(
-
 namespace graph {
 
     struct Edge {
@@ -30,7 +28,6 @@ namespace graph {
     template<class A>
     class ReversedPathIterator {
     public:
-        using iterator_category = std::forward_iterator_tag;
         using value_type        = Edge;
         using difference_type   = int;
         using reference         = value_type;

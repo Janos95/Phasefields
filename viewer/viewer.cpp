@@ -58,8 +58,8 @@ using namespace Magnum;
 
 using namespace Math::Literals;
 
-std::unordered_map<ShaderType, Cr::Containers::Pointer<Mg::GL::AbstractShaderProgram>> makeShaders() {
-    std::unordered_map<ShaderType, Cr::Containers::Pointer<Mg::GL::AbstractShaderProgram>> map;
+std::unordered_map<ShaderType, Containers::Pointer<GL::AbstractShaderProgram>> makeShaders() {
+    std::unordered_map<ShaderType, Containers::Pointer<GL::AbstractShaderProgram>> map;
 
     auto Wireframe = Shaders::MeshVisualizer3D::Flag::Wireframe;
     auto PrimitiveColored = Shaders::MeshVisualizer3D::Flag::PrimitiveId;
@@ -76,8 +76,8 @@ std::unordered_map<ShaderType, Cr::Containers::Pointer<Mg::GL::AbstractShaderPro
 }
 
 
-std::unordered_map<ColorMapType, Mg::GL::Texture2D> makeColorMapTextures(){
-    std::unordered_map<ColorMapType, Mg::GL::Texture2D> map;
+std::unordered_map<ColorMapType, GL::Texture2D> makeColorMapTextures(){
+    std::unordered_map<ColorMapType, GL::Texture2D> map;
     using L = std::initializer_list<std::pair<ColorMapType, Containers::StaticArrayView<256, const Vector3ub>>>;
     for(auto&& [type, colorMap] : L{
             {ColorMapType::Turbo, Magnum::DebugTools::ColorMap::turbo()},
@@ -106,7 +106,7 @@ solver::Status::Value OptimizationCallback::operator ()(solver::IterationSummary
 
 
 Viewer::Viewer(int argc, char** argv):
-    Platform::Application{{argc,argv}, Mg::NoCreate},
+    Platform::Application{{argc,argv}, NoCreate},
     dirichletScaling(1.), doubleWellScaling(1.), connectednessScaling(1.),
     optimizationCallback{optimizing}
 {
@@ -175,7 +175,7 @@ Viewer::Viewer(int argc, char** argv):
                        windowSize(), framebufferSize());
         camera->setProjectionMatrix(Matrix4::perspectiveProjection(
                 fov,
-                Mg::Vector2{windowSize()}.aspectRatio(),
+                Vector2{windowSize()}.aspectRatio(),
                 near, far));
     }
 
@@ -197,7 +197,7 @@ Viewer::Viewer(int argc, char** argv):
 }
 
 bool loadMesh(char const* path, Trade::MeshData& mesh) {
-    Cr::PluginManager::Manager <Trade::AbstractImporter> manager;
+    PluginManager::Manager <Trade::AbstractImporter> manager;
     auto importer = manager.loadAndInstantiate("AssimpImporter");
     auto name = importer->metadata()->name();
     Debug{} << "Trying to load mesh using " << name.c_str();
@@ -222,7 +222,7 @@ bool loadMesh(char const* path, Trade::MeshData& mesh) {
 }
 
 bool Viewer::saveMesh(std::string const& path) {
-    auto [stem, ext] = Cr::Utility::Directory::splitExtension(path);
+    auto [stem, ext] = Utility::Directory::splitExtension(path);
     if(ext != ".ply") return false;
 
     Containers::Array<Double> gradient(Containers::NoInit, phasefield.size());
@@ -488,7 +488,32 @@ void Viewer::drawGradientMetaData(
     }
 }
 
+bool Viewer::drawFunctionals(Containers::Array<Functional>& functionals){
 
+    int nodeCount = 0;
+    bool evaluateProblem = false;
+    for(auto& f : functionals){
+        ImGui::PushID(++nodeCount);
+        ImGui::Separator();
+
+        if(ImGui::Button("Remove")){
+            std::swap(f, functionals.back());
+            break;
+        }
+        ImGui::SameLine();
+
+        bool makeExclusive = false;
+
+        DrawableType type;
+        auto visFlag = f.drawImGuiOptions();
+        if(visFlag & ImGuiResult::MakeExclusive) {
+
+        }
+
+        f.loss.drawImGui(nodeCount);
+        ImGui::PopID();
+    }
+}
 
 
 void Viewer::drawOptimizationContext() {
@@ -508,13 +533,13 @@ void Viewer::drawOptimizationContext() {
             ImGui::EndCombo();
         }
 
-        if(ImGui::Button("Add Functional As Cost") && cur != map.end())
-            Containers::arrayAppend(problem.functionals, makeFunctional(cur->type));
+        if(ImGui::Button("Add Functional As Objective") && cur != map.end())
+            Containers::arrayAppend(problem.objectives, makeFunctional(cur->type));
 
         int nodeCount = 0;
         int toRemove = -1;
         bool evaluateProblem = false;
-        auto& fs = problem.functionals;
+        auto& fs = problem.objectives;
         for(int i = 0; i < fs.size(); ++i){
             auto f = fs[i].get();
             ImGui::PushID(++nodeCount);
@@ -524,7 +549,6 @@ void Viewer::drawOptimizationContext() {
             ImGui::SameLine();
 
             bool makeExclusive = false;
-            constexpr double min = 0.f, max = 1.;
 
             DrawableType type;
             evaluateProblem |= f->drawImGuiOptions(proxy);
@@ -533,7 +557,7 @@ void Viewer::drawOptimizationContext() {
                 makeDrawableCurrent(type);
             }
 
-            drawLoss(f->loss, nodeCount);
+            f.loss.drawImGui(nodeCount);
             ImGui::PopID();
         }
 
@@ -578,17 +602,14 @@ void Viewer::drawOptimizationContext() {
             }
         }
 
-        static bool checkNumeric = false;
-        ImGui::Checkbox("Debug Numerical Gradient", &checkNumeric);
-        if(checkNumeric){
-            static constexpr double minH = 1e-14, maxH = 0.1;
-            ImGui::DragScalar("h", ImGuiDataType_Double, &problem.h, 1e-8, &minH, &maxH, "%.5e", 2);
-        }
+        static bool checkDerivatives = false;
+        ImGui::Checkbox("Check Derivatives using AD", &checkDerivatives);
+
         evaluateProblem |= ImGui::Button("Evaluate");
 
         static Double epsilon = 0.075;
         if(dirichletScaling.refCount() > 1 || doubleWellScaling.refCount() > 1 || connectednessScaling.refCount() > 1){
-            constexpr Mg::Double minEps = 0.f, maxEps = 0.3;
+            constexpr Double minEps = 0.f, maxEps = 0.3;
             ImGui::DragScalar("epsilon", ImGuiDataType_Double, &epsilon, .01f, &minEps, &maxEps, "%f", 2);
             *dirichletScaling = epsilon/2.;
             *doubleWellScaling = 1./epsilon;
@@ -644,12 +665,12 @@ void Viewer::drawOptimizationContext() {
         if(evaluateProblem && !optimizing){
             auto n = phasefield.size();
             auto m = problem.constraints.size();
-            Containers::Array<Mg::Double> gradF(Containers::NoInit, n);
-            Containers::Array<Mg::Double> gradC(Containers::NoInit, n*m);
+            Containers::Array<Double> gradF(Containers::NoInit, n);
+            Containers::Array<Double> gradC(Containers::NoInit, n*m);
             problem.evaluate(phasefield.data(), nullptr, gradF.data(), nullptr, gradC.data());
             if(checkNumeric){
-                Containers::Array<Mg::Double> gradFNumeric(Containers::NoInit, n);
-                Containers::Array<Mg::Double> gradCNumeric(Containers::NoInit, m * n);
+                Containers::Array<Double> gradFNumeric(Containers::NoInit, n);
+                Containers::Array<Double> gradCNumeric(Containers::NoInit, m * n);
                 problem.numericalGradient(phasefield.data(), gradFNumeric.data(), gradCNumeric.data());
                 double normFSq = 0.;
                 double normCSq = 0.;
@@ -692,32 +713,31 @@ void Viewer::stopOptimization() {
 }
 
 /* @todo would be nice to rework this at some point to handle hard deps in constructors.. */
-Containers::Pointer<FunctionalD> Viewer::makeFunctional(FunctionalType type) {
+Functional Viewer::makeFunctional(FunctionalType type) {
     switch (type) {
-        case FunctionalType::Area1 : {
-            auto p = Containers::pointer<AreaRegularizer1>(vertices, indices);
-            return p;
-        }
-        case FunctionalType::Area2 : {
-            auto p = Containers::pointer<AreaRegularizer2>(vertices, indices);
-            return p;
-        }
+        case FunctionalType::Area1 :
+            return {AreaRegularizer1{vertices, indices}}
+        case FunctionalType::Area2 :
+            return {AreaRegularizer2{vertices, indices}}
         case FunctionalType::DirichletEnergy : {
-            auto p = Containers::pointer<DirichletEnergy>(vertices, indices);
-            p->scaling = dirichletScaling;
+            Functional f = DirichletEnergy{vertices, indices};
+            f.scaling = dirichletScaling;
+            return f;
         }
         case FunctionalType::DoubleWellPotential : {
-            auto p = Containers::pointer<DoubleWellPotential>(vertices, indices);
-            p->scaling = doubleWellScaling;
-            return p;
+            Functional f = DoubleWellPotential{vertices, indices};
+            f.scaling = doubleWellScaling;
+            return f;
         }
-        case FunctionalType::Connectedness :
-            auto p = Containers::pointer<ConnectednessConstraint<Double>>(vertices, indices);
-            p->paths = new Paths(&scene, drawableGroup);
-            p->scaling = connectednessScaling;
-            return p;
+        case FunctionalType::Connectedness : {
+            ConnectednessConstraint constraint{vertices, indices};
+            constraint.paths = new Paths(&scene, drawableGroup);
+            Functional f = std::move(cc);
+            f.scaling = connectednessScaling;
+            return f;
+        }
+        default return {}
     }
-    return nullptr;
 }
 
 void Viewer::paint(){
@@ -792,11 +812,11 @@ void Viewer::updateInternalDataStructures(){
     upload(mesh, vertexBuffer, indexBuffer, meshData);
     const Magnum::Vector2i size(indices.size() / 3, 1);
 
-    faceTexture.reset(new GL::Texture2D{});
-    faceTexture->setStorage(1, Magnum::GL::TextureFormat::RGB8, size)
-                .setMinificationFilter(Magnum::SamplerFilter::Nearest)
-                .setMagnificationFilter(Magnum::SamplerFilter::Nearest)
-                .setWrapping(Magnum::SamplerWrapping::ClampToEdge);
+    faceTexture = GL::Texture2D{};
+    faceTexture.setStorage(1, Magnum::GL::TextureFormat::RGB8, size)
+               .setMinificationFilter(Magnum::SamplerFilter::Nearest)
+               .setMagnificationFilter(Magnum::SamplerFilter::Nearest)
+               .setWrapping(Magnum::SamplerWrapping::ClampToEdge);
 
     Containers::arrayResize(faceColors, indices.size() / 3);
     Containers::arrayResize(phasefield, Containers::ValueInit, vertices.size());
@@ -863,7 +883,7 @@ void Viewer::drawShaderOptions(){
         if(ImGui::DragFloatRange2("range", &near, &far, 0.1f, 0.0f, 10.0f, "Min: %.2f", "Max: %.2f")){
             camera->setProjectionMatrix(Matrix4::perspectiveProjection(
                     fov,
-                    Mg::Vector2{windowSize()}.aspectRatio(),
+                    Vector2{windowSize()}.aspectRatio(),
                     near, far));
         }
 
@@ -1058,26 +1078,9 @@ void Viewer::tickEvent()
         redraw();
         return;
     }
-
     //exclusive events
     {
-        std::lock_guard l(mutex);
-        if (update & VisualizationFlag::ConnectedComponents) {
-            faceTexture->setSubImage(0, {}, ImageView2D{Magnum::PixelFormat::RGB8Srgb, {(Int)faceColors.size(), 1}, faceColors});
-            update &= ~VisualizationFlag::ConnectedComponents;
-        }
-        if (update & VisualizationFlag::GeodesicWeights) {
-            faceTexture->setSubImage(0, {}, ImageView2D{Magnum::PixelFormat::RGB8Srgb, {(Int)faceColors.size(), 1}, faceColors});
-            update &= ~VisualizationFlag::GeodesicWeights;
-        }
-        if (update & VisualizationFlag::Gradient) {
-            reuploadVertices(vertexBuffer, meshData);
-            update &= ~VisualizationFlag::Gradient;
-        }
-        if (update & VisualizationFlag::Phasefield) {
-            reuploadVertices(vertexBuffer, meshData);
-            update &= ~VisualizationFlag::Phasefield;
-        }
+        proxy.update();
         for (auto& f : problem.functionals)
             f->updateVisualization(proxy);
         for (auto& f : problem.constraints)

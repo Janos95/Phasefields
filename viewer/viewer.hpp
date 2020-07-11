@@ -8,9 +8,8 @@
 #include "arc_ball_camera.hpp"
 #include "primitives.hpp"
 #include "subdivision.hpp"
-#include "optimization_context.hpp"
 #include "solver.hpp"
-#include "functional.hpp"
+#include "functional.h"
 #include "connectedness_constraint.h"
 #include "modica_mortola.hpp"
 #include "problem.hpp"
@@ -20,9 +19,6 @@
 #include <Magnum/Platform/Sdl2Application.h>
 #include <Magnum/ImGuiIntegration/Context.h>
 
-#include <tbb/task_group.h>
-#include <mutex>
-#include <atomic>
 
 using namespace Mg::Math::Literals;
 
@@ -58,14 +54,13 @@ struct Viewer: public Mg::Platform::Application {
     bool saveMesh(std::string const&);
     void drawBrushOptions();
     void drawOptimizationContext();
-    void makeExclusiveVisualizer(FunctionalD*);
-    void drawGradientMetaData(GradientMetaData&, bool&, bool&);
-    void drawConnectednessConstraintOptions(ConnectednessMetaData<Mg::Double>&, bool&, bool&);
+    void makeExclusiveVisualizer(Functional*);
     void drawShaderOptions();
     void startOptimization();
     void stopOptimization();
-    Cr::Containers::Pointer<FunctionalD> makeFunctional(FunctionalType);
-    void updateFunctionals(Cr::Containers::Array<Cr::Containers::Pointer<FunctionalD>>&);
+    Functional makeFunctional(FunctionalType);
+    void updateFunctionals(Containers::Array<Functional>&);
+    bool drawFunctinals();
     void paint();
     void geodesicSearch();
     void updateInternalDataStructures();
@@ -109,7 +104,7 @@ struct Viewer: public Mg::Platform::Application {
 
     solver::Problem problem;
     solver::Options options;
-    Cr::Containers::Array<Mg::Double> phasefield;
+    Containers::Array<Mg::Double> phasefield;
 
     PhasefieldTree tree;
 
@@ -119,11 +114,11 @@ struct Viewer: public Mg::Platform::Application {
 
     OptimizationCallback optimizationCallback;
     VisualizationFlags update = {};
-    MetaData* exclusiveVisualizer = nullptr;
+    int activeTag = -1;
 
     //connectedness vis data
     Cr::Containers::Array<Mg::Color3ub> faceColors;
-    Cr::Containers::Pointer<Mg::GL::Texture2D> faceTexture;
+    Mg::GL::Texture2D faceTexture{Mg::NoCreat
     Mg::GL::Texture2D* texture = nullptr;
 
     SharedRessource<Mg::Double> doubleWellScaling;

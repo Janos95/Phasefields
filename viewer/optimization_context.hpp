@@ -5,9 +5,9 @@
 #pragma once
 
 #include "viewer.hpp"
-#include "problem.hpp"
+#include "../optimization/problem.hpp"
 #include "modica_mortola.hpp"
-#include "solver.hpp"
+#include "../optimization/solver.hpp"
 
 #include <Magnum/Trade/MeshData.h>
 #include <Magnum/Shaders/Flat.h>

@@ -9,12 +9,10 @@ add_library(visualization STATIC
         primitive_options.cpp
         custom_widgets.hpp
         custom_widgets.cpp
-        visualization_proxy.hpp
-        visualization_proxy.cpp
         )
 target_include_directories(visualization PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(visualization
-        PUBLIC
+            PUBLIC
         Magnum::GL
         Magnum::SceneGraph
         Magnum::Magnum

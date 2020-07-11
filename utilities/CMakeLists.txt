@@ -1,5 +1,4 @@
-add_library(utilities INTERFACE)
-target_sources(utilities INTERFACE
+add_library(utilities
         unique_function.h
         detail/pointer_union.h
         detail/pointer_int_pair.h
@@ -15,7 +14,8 @@ target_sources(utilities INTERFACE
         types.hpp
         )
 
-target_include_directories(utilities INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(utilities PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(utilities PUBLIC Corrade::Containers)
 add_library(phasefields::utilities ALIAS utilities)
 
 #add_executable(bench hash_map_bench.cpp)

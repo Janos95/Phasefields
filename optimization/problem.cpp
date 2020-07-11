@@ -19,6 +19,40 @@ using namespace Magnum;
 namespace solver {
 
 
+void Problem::evaluateFunctional(
+        FunctionalD const& f,
+        Containers::ArrayView<const Double> const& parameters,
+        Containers::ArrayView<Double> const& residuals,
+        Containers::ArrayView<Double* const> const& jacobian) const {
+
+    auto n = f.numParameters();
+    auto m = f.numResiduals();
+
+    f.evaluate(parameters, residuals.data(), jacobian.data());
+
+    for (std::size_t i = 0; i < m; ++i) {
+        Double rho[3], scaling[3] = {residuals[i], 1., 0.};
+        if(f.scaling){
+            auto s = *(f.scaling);
+            for (auto& r : scaling) r *= s;
+        }
+
+        f.loss->Evaluate(scaling[0], rho);
+        if (jacobian) {
+            auto derivative = rho[1] * scaling[1];
+            for(auto& x : grad) x *= derivative;
+            std::lock_guard l(mJac);
+            for (int i = 0; i < n; ++i)
+                jacobian[i] += grad[i];
+        }
+        if(cost){
+            std::lock_guard l(mCost);
+            *cost += rho[0];
+        }
+    }
+}
+
+
 bool Problem::evaluate(double const *parameters,
                        double *costF,
                        double *jacF,
@@ -77,8 +111,7 @@ bool Problem::evaluate(double const *parameters,
         g.run([&]{ eval(*f, parameters, costF, mCostF, jacF, mJacF); });
 
     for (std::size_t i = 0; i < constraints.size(); ++i) {
-        auto jac = jacC ? jacC + i * numParameters() : jacC; // dense jacobian
-        g.run([&]{ eval(*constraints[i], parameters, costC, mCostC, jac, mJacC); });
+        g.run([&]{ eval(*constraints[i], parameters, costC, mCostC, jacC, mJacC); });
     }
 
     g.wait();
