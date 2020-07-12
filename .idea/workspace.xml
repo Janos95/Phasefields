@@ -23,52 +23,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7a218559-17cb-4777-b814-432adba0c7a1" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/optimization/CMakeLists.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/optimization/functional.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/optimization/functional.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/optimization/functional.hpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/optimization/optimization.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/optimization/sparse_matrix.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/visualization_proxy/CMakeLists.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/visualization_proxy/visualization_proxy.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/visualization_proxy/visualization_proxy.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/optimization/sparse_matrix.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/conanfile.txt" beforeDir="false" afterPath="$PROJECT_DIR$/conanfile.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/cost/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/adolc_adapter.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/adolc_adapter.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/connectedness_constraint.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/connectedness_constraint.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/connectedness_constraint.h" beforeDir="false" afterPath="$PROJECT_DIR$/cost/connectedness_constraint.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/connectedness_constraint.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/connectedness_constraint.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/detach.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/dijkstra.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/dijkstra.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/functional.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/graph_common.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/graph_common.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/loss_functions.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/loss_functions.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/loss_functions.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/loss_functions.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/meta_data.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/meta_data.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/c1_functions.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/c1_functions.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/derivatives_test.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/fem.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/fem.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/modica_mortola.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/modica_mortola.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cost/modica_mortola.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/modica_mortola.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/problem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/problem.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/problem.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/problem.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/small_array.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/small_array.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/solver.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/solver.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/solver.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/solver.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/connectedness_constraint_test.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/connectedness_constraint_test.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utilities/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utilities/types.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/types.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utilities/variant.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/optimization_context.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/optimization_context.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/optimization_context.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/optimization_context.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/viewer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/viewer.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/viewer/viewer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/viewer.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/visualization/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/visualization/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/visualization/drawables.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/visualization/drawables.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/visualization/visualization_proxy.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/visualization/visualization_proxy.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/optimization/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/optimization/functional.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/functional.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/optimization/functional.h" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/functional.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/optimization/sparse_matrix.h" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/sparse_matrix.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -264,7 +229,8 @@
       <workItem from="1593634294632" duration="409000" />
       <workItem from="1593634713789" duration="5235000" />
       <workItem from="1593680036382" duration="1661000" />
-      <workItem from="1594464258529" duration="8880000" />
+      <workItem from="1594464258529" duration="10391000" />
+      <workItem from="1594553050523" duration="11377000" />
     </task>
     <servers />
   </component>
@@ -351,10 +317,10 @@
     </state>
     <state x="459" y="57" width="1180" height="751" key="SettingsEditor/0.0.2560.1080@0.0.2560.1080" timestamp="1593641736739" />
     <state x="767" y="30" width="1338" height="898" key="SettingsEditor/70.27.2490.1053@70.27.2490.1053" timestamp="1591544258228" />
-    <state x="897" y="-166" width="756" height="625" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1594469756503">
+    <state x="897" y="-214" width="756" height="625" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1594579361119">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="897" y="-166" width="756" height="625" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.2560.1080@0.0.2560.1080" timestamp="1594469756503" />
+    <state x="897" y="-214" width="756" height="625" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.2560.1080@0.0.2560.1080" timestamp="1594579361119" />
     <state x="944" y="253" width="672" height="681" key="run.anything.popup" timestamp="1589899023560">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>

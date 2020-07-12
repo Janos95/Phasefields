@@ -16,12 +16,12 @@ namespace Mg = Magnum;
 Mg::Double computeArea(Mg::Vector3d const& a, Mg::Vector3d const& b, Mg::Vector3d const& c);
 
 Cr::Containers::Array<Mg::Double> computeAreas(
-        const Cr::Containers::ArrayView<const Mg::Vector3ui>& indices,
-        const Cr::Containers::ArrayView<const Mg::Vector3d>& data);
+        const Cr::Containers::ArrayView<const Mg::Vector3ui>& triangles,
+        const Cr::Containers::ArrayView<const Mg::Vector3d>& vertices);
 
 Cr::Containers::Array<Mg::Double> computeIntegralOperator(
-        const Cr::Containers::ArrayView<const Mg::Vector3ui>& indices,
-        const Cr::Containers::ArrayView<const Mg::Vector3d>& data);
+        const Cr::Containers::ArrayView<const Mg::Vector3ui>& triangles,
+        const Cr::Containers::ArrayView<const Mg::Vector3d>& vertices);
 
 Eigen::SparseMatrix<Mg::Double> computeMassMatrix(
         const Cr::Containers::ArrayView<const Mg::Vector3ui>& triangles,

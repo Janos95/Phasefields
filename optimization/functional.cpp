@@ -111,3 +111,62 @@ bool Functional::drawImGuiOptions(){
     }
     return false;
 }
+
+void Functional::updateInternalDataStructures(){
+    update(erased);
+    isFirstEvaluation = true;
+}
+
+[[nodiscard]] std::size_t Functional::numParameters() const{
+    return params(erased);
+}
+
+[[nodiscard]] std::size_t Functional::numResiduals() const {
+    if(residuals)
+        return residuals(erased);
+    return 1;
+};
+
+void swap(Functional& f1, Functional& f2){
+    using std::swap;
+    swap(f1.erased, f2.erased);
+    swap(f1.destruct, f2.destruct);
+    swap(f1.move, f2.move);
+    swap(f1.params, f2.params);
+    swap(f1.residuals, f2.residuals);
+    swap(f1.vis, f2.vis);
+    swap(f1.off, f2.off);
+    swap(f1.update, f2.update);
+    swap(f1.options, f2.options);
+    swap(f1.evalWithHessian, f2.evalWithHessian);
+    swap(f1.evalWithJacobian, f2.evalWithJacobian);
+    swap(f1.ad, f2.ad);
+    swap(f1.loss, f2.loss);
+    swap(f1.scaling, f2.scaling);
+    swap(f1.tag, f2.tag);
+    swap(f1.isFirstEvaluation, f2.isFirstEvaluation);
+    swap(f1.alwaysRetape, f2.alwaysRetape);
+}
+
+Functional::Functional(Functional&& other) noexcept{
+    using std::swap;
+    swap(*this, other);
+}
+
+Functional& Functional::operator=(Functional&& other) noexcept{
+    using std::swap;
+    swap(*this, other);
+    return *this;
+}
+
+/* this is called from the gui thread so we can update some opengl stuff if we want to */
+void Functional::updateVisualization(VisualizationProxy& proxy) {
+    if(vis)
+        vis(erased, proxy);
+}
+void Functional::turnVisualizationOff() {
+    if(off)
+        off(erased);
+}
+
+

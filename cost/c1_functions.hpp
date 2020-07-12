@@ -62,13 +62,14 @@ private:
     const double m_a,m_b,m_c3;
 };
 
-template<typename T>
 struct DoubleWell
 {
+    template<typename T>
     auto eval(const T x) const {
         return 9./16. * std::pow(x * x - 1., 2);
     }
 
+    template<typename T>
     auto grad(const T x) const {
         return 9. / 4.  * (x*x - 1) * x;
     }
@@ -77,8 +78,9 @@ struct DoubleWell
 
 
 
-template<class T>
 struct SmootherStep{
+
+    template<class T>
     T eval(T x) const{
         if(x <= -1) return T{0};
         if(x <= 1.) {
@@ -87,6 +89,8 @@ struct SmootherStep{
         }
         return T{1};
     }
+
+    template<class T>
     T grad(T x) const{
         if(x <= -1) return T{0};
         if(x <= 1.) {
