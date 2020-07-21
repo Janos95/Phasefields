@@ -5,8 +5,6 @@
 #include "stopping_criteria.hpp"
 
 using namespace Corrade;
-using namespace Magnum;
-
 
 StoppingCriteria::StoppingCriteria(int source, int numComponents, Cr::Containers::Array<int>& components):
         m_startComponent(components[source]),
@@ -32,7 +30,9 @@ bool StoppingCriteria::operator ()(int target)
 }
 
 bool StoppingCriteria::foundAll() const {
-    return std::all_of(m_found.begin()+1, m_found.end(), [](const auto& x){ return x; });
+    for(auto it = m_found.begin() + 1; it != m_found.end(); ++it)
+        if(!(*it)) return false;
+    return true;
 }
 
 int StoppingCriteria::target(int i) const{

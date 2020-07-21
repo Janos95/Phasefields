@@ -40,9 +40,8 @@ enum class FunctionalType : Magnum::UnsignedInt {
     Undefined = 0,
     DirichletEnergy = 1,
     DoubleWellPotential = 2,
-    Area1 = 3,
+    Area = 3,
     Connectedness = 4,
-    Area2 = 5,
 };
 
 enum class DrawableType : Magnum::Int {
@@ -52,14 +51,5 @@ enum class DrawableType : Magnum::Int {
     FaceColored = 3,
 };
 
-enum class VisualizationFlag : Magnum::UnsignedInt {
-    Phasefield = 1u << 0u,
-    GeodesicWeights = 1u << 1u,
-    ConnectedComponents = 1u << 2u,
-    Gradient = 1u << 3u,
-};
-
-using VisualizationFlags = Cr::Containers::EnumSet<VisualizationFlag>;
-CORRADE_ENUMSET_OPERATORS(VisualizationFlags)
 
 

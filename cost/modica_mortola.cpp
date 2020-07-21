@@ -42,13 +42,13 @@ uint32_t DirichletEnergy::numParameters() const {
 adouble test;
 
 template<class Scalar>
-void DirichletEnergy::operator()(Scalar const* parameters, Scalar* residual, SparseMatrix* jacobians) const
+void DirichletEnergy::operator()(Scalar const* parameters, Scalar* residual, Scalar* gradient) const
 {
     auto n = numParameters();
     Eigen::Map<const Eigen::Matrix<Scalar, Eigen::Dynamic, 1>> phasefield(parameters, n);
     auto halfGrad = stiffnessMatrix.cast<Scalar>() * phasefield;
-    if(jacobians){
-        Eigen::Map<Eigen::VectorXd> jac(jacobians->values.data(), numParameters());
+    if(gradient){
+        Eigen::Map<Eigen::VectorXd> jac(gradient, numParameters());
         halfGrad.eval();
         for(std::size_t i = 0; i < n; ++i){
             if constexpr(std::is_same_v<Scalar, adouble>)
@@ -83,86 +83,12 @@ void AreaRegularizer::operator()(Scalar const* params, Scalar* cost, SparseMatri
 }
 
 
-AreaConstraints::AreaConstraints(Containers::Array<const Mg::Vector3d> const& vs, Containers::Array<const Mg::UnsignedInt> const& is, PhasefieldTree& t) :
-    vertices(vs),
-    indices(is),
-    tree(t)
-{
-    updateInternalDataStructures();
-}
-
-Mg::UnsignedInt AreaConstraints::numParameters() const {
-    return tree.phasefieldData.size();
-}
-
-Mg::UnsignedInt AreaConstraints::numResiduals() const {
-    return tree.numLeafs * 2;
-}
-
-void AreaConstraints::updateInternalDataStructures(){
-    weights = computeIntegralOperator(triangles(), vertices);
-}
-
-template<class Scalar>
-void AreaConstraints::operator()(Scalar const* params, Scalar* cost) const {
-
-    SmootherStep smoothStep;
-
-    auto numParams = numParameters();
-    auto numRes = numResiduals();
-    auto size = tree.phasefieldSize;
-    auto numPhasefields = tree.nodes.size();
-    auto phasefieldSize = tree.phasefieldSize;
-    auto& nodes = tree.nodes;
-
-    Containers::StridedArrayView2D<const Scalar> phasefields{{params, numParams}, {numPhasefields, phasefieldSize}};
-
-    auto visitor = YCombinator{
-            [&](auto&& visitor, PhasefieldNode& node, Containers::Array<Scalar>& p) -> void {
-                auto depth = node.depth;
-                auto idx = node.idx;
-                bool hasChildren = node.leftChild != PhasefieldNode::None;
-
-                Containers::Array<Scalar> p1(hasChildren ? phasefieldSize : 0);
-                if(hasChildren)
-                    Cr::Utility::copy(p, p1);
-
-
-                for (uint32_t i = 0; i < size; ++i) {
-                    Scalar pos = smoothStep.eval(phasefields[node.leftChild][i]);
-                    Scalar neg = smoothStep.eval(-phasefields[node.leftChild][i]);
-
-                    if(hasChildren){
-                        p[i] *= pos;
-                        p1[i] *= neg;
-                    } else {
-                        /* at leaf nodes we also multiply by the nodal area */
-                        cost[2*idx] += pos * p[i] * weights[i];
-                        cost[2*idx + 1] += neg * p[i] * weights[i];
-                    }
-                }
-
-                if(hasChildren){
-                    visitor(nodes[node.leftChild], p);
-                    visitor(nodes[node.rightChild], p1);
-                }
-            }
-    };
-
-    Containers::Array<Scalar> p(phasefieldSize);
-    std::fill(p.begin(), p.end(), 1.);
-    std::fill_n(cost, numRes, 0.);
-    visitor(tree.root(), p);
-}
 
 template void DirichletEnergy::operator()(adouble const*, adouble*, SparseMatrix*) const;
 template void DirichletEnergy::operator()(double const*, double*, SparseMatrix*) const;
 
 template void AreaRegularizer::operator()(adouble const*, adouble*, SparseMatrix*, SparseMatrix*) const;
 template void AreaRegularizer::operator()(double const*, double*, SparseMatrix*, SparseMatrix*) const;
-
-template void AreaConstraints::operator()(adouble const*, adouble*) const;
-template void AreaConstraints::operator()(double const*, double*) const;
 
 template void DoubleWellPotential::operator()(adouble const*, adouble*, SparseMatrix*, SparseMatrix*) const;
 template void DoubleWellPotential::operator()(double const*, double*, SparseMatrix*, SparseMatrix*) const;

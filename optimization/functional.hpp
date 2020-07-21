@@ -4,8 +4,8 @@
 
 #pragma once
 
+#include "tag.h"
 #include "functional.h"
-
 
 template <typename... Ts, typename TF>
 static constexpr auto is_valid(TF){
@@ -13,40 +13,43 @@ static constexpr auto is_valid(TF){
 }
 
 template<class F>
-Functional::Functional(F&& f, Options options){
-    using T = std::remove_reference_t<F>;
+Functional::Functional(F f, Properties properties) {
 
-    erased = std::malloc(sizeof(T));
-    ::new(erased) F((F&&)f);
+    erased = ::operator new(sizeof(F), std::align_val_t(alignof(F)));
+    ::new(erased) F(std::move(f));
 
     constexpr bool hasNumResiduals = is_valid(f)([](auto p) constexpr -> decltype(f.numResiduals()) {});
     constexpr bool hasVis = is_valid(f)([](auto p) constexpr -> decltype(f.drawImGuiOptions()) {});
 
-    constexpr bool hasJacobian = is_valid<double*, SparseMatrix*>(std::declval<T>())([](auto p, auto r, auto g) constexpr -> decltype(f(p,r,g)) {});
-    constexpr bool hasHessian = is_valid<double*, double*, SparseMatrix*, SparseMatrix*>(std::declval<T>())([](auto p, auto r, auto g, auto h) constexpr -> decltype(f(p,r,g,h)) {});
+    constexpr bool hasGradient = is_valid<double*, SparseMatrix*>(std::declval<F>())([](auto p, auto r, auto g) constexpr -> decltype(f(p,r,g)) {});
+    constexpr bool hasHessian = is_valid<double*, double*, SparseMatrix*, SparseMatrix*>(std::declval<F>())([](auto p, auto r, auto g, auto h) constexpr -> decltype(f(p,r,g,h)) {});
 
     if constexpr(hasHessian) { /* assume we have a jacobian operator */
-        ad = +[](void *e, adouble *p, adouble *r) { (*static_cast<T*>(e))(p, r, nullptr, nullptr); };
-        evalWithHessian = +[](void *e, double *p, double *r, SparseMatrix* j, SparseMatrix* h) { (*static_cast<T *>(e))(p, r, j, h); };
+        ad = +[](void *e, adouble const* p, adouble const* w, adouble *r) { (*static_cast<F*>(e))(p, r, nullptr, nullptr); };
+        evalWithHessian = +[](void *e, double *p, double *r, SparseMatrix* j, SparseMatrix* h) { (*static_cast<F*>(e))(p, r, j, h); };
     } else if constexpr(hasJacobian) {
-        ad = +[](void *e, adouble *p, adouble *r) { (*static_cast<T*>(e))(p, r, nullptr); };
-        evalWithJacobian = +[](void *e, double *p, double *r, SparseMatrix* j) { (*static_cast<T *>(e))(p, r, j); };
+        ad = +[](void *e, adouble *p, adouble *r) { (*static_cast<F*>(e))(p, r, nullptr); };
+        evalWithJacobian = +[](void *e, double *p, double *r, SparseMatrix* j) { (*static_cast<F*>(e))(p, r, j); };
     } else {
-        ad = +[](void *e, adouble *p, adouble *r) { (*static_cast<T*>(e))(p, r); };
+        ad = +[](void *e, adouble *p, adouble *r) { (*static_cast<F*>(e))(p, r); };
     }
 
-    initTag(tag);
-
     if constexpr(hasNumResiduals){
-        residuals = +[](void* e) { return static_cast<T*>(e)->numResiduals(); };
+        residuals = +[](void* e) { return static_cast<F*>(e)->numResiduals(); };
     }
 
     if constexpr(hasVis){
-        residuals = +[](void* e) { return static_cast<T*>(e)->numResiduals(); };
-        vis = +[](void* e, VisualizationProxy& proxy) { return static_cast<T*>(e)->updateVisualization(proxy); };
-        off = +[](void* e) { return static_cast<T*>(e)->turnVisualizationOff(); };
-        options = +[](void* e) { return static_cast<T*>(e)->drawImGuiOptions(); };
+        residuals = +[](void* e) { return static_cast<F*>(e)->numResiduals(); };
+        vis = +[](void* e, VisualizationProxy& proxy) { return static_cast<F*>(e)->updateVisualization(proxy); };
+        off = +[](void* e) { return static_cast<F*>(e)->turnVisualizationOff(); };
+        options = +[](void* e) { return static_cast<F*>(e)->drawImGuiOptions(); };
     }
 
-    destruct = +[](void* e) { return static_cast<T*>(e)->~T(); };
+    destroy = +[](void* e){
+        static_cast<F*>(e)->~F();
+        ::operator delete(e, sizeof(F), std::align_val_t(alignof(F)));
+    };
 }
+
+
+

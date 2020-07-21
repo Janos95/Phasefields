@@ -10,43 +10,33 @@
 #include <Corrade/Containers/StridedArrayView.h>
 
 struct Triplet {
-    std::size_t row, column;
+    Mg::UnsignedInt row, column;
     double value;
 };
 
 struct SparseMatrix {
 
+    SparseMatrix() = default;
     explicit SparseMatrix(Containers::Array<Triplet> triplets);
 
-    std::size_t numRows, numCols;
+    int numRows, numCols, nnz;
 
     Containers::Array<double> values;
-    Containers::Array<std::size_t> rows;
-    Containers::Array<std::size_t> cols;
-
-    std::size_t size() { return values.size(); }
-
-    bool isDense = false;
-
-
-    struct Row{
-        double* b, *e;
-        double* begin() { return b; }
-        double* end() { return e; }
-
-    };
+    Containers::Array<Mg::UnsignedInt> rows;
+    Containers::Array<Mg::UnsignedInt> cols;
 
     struct RowRange{
         int current, rowEnd;
     };
 
-    Row row(std::size_t r);
-    RowRange rowRange();
+    Containers::ArrayView<double> row(std::size_t r);
+
+    RowRange rowRange() const;
+
+    void clear();
 
     Containers::Array<double> reduceRowwise();
-
 };
-
 
 struct Matrix {
     Containers::Array<double> values;
@@ -66,13 +56,4 @@ struct MatrixView {
     Containers::StridedArrayView2D<double> view;
 };
 
-Vector operator*(SparseMatrix const& m, Vector v){
-    Vector result(m.numRows);
-    for(auto row : m.rowRange()){
-        auto rowIdx = row.idx();
-        for(auto colIdx : row){
-            result[rowIdx] = m.values[colIdx] * v[m.cols[colIdx]];
-        }
-    }
-    return result;
-}
+

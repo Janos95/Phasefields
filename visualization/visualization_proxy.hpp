@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../utilities/types.hpp"
+#include "types.hpp"
 
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Array.h>

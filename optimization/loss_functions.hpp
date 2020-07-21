@@ -20,9 +20,9 @@ struct LossFunction {
 
     friend void swap(LossFunction& f1, LossFunction& f2);
 
-    void operator()(double const& in, double out[3]);
+    void operator()(double const& in, double out[3]) const;
 
-    void operator()(adouble const& x, adouble& y);
+    void operator()(adouble const& x, adouble& y) const;
 
     void (*ad)(void*, adouble const&, adouble&) = nullptr;
     void (*loss)(void*, double, double[3]) = nullptr;
@@ -32,30 +32,30 @@ struct LossFunction {
 
 struct TrivialLoss {
 
-    void operator()(double const& in, double out[3]);
+    void operator()(double const& in, double out[3]) const;
 
     template<class T>
-    void operator()(T const& x, T& y){
+    void operator()(T const& x, T& y) const{
         y = x;
     }
 };
 
 struct QuadraticLoss {
 
-    void operator()(double const& in, double out[3]);
+    void operator()(double const& in, double out[3]) const;
 
     template<class T>
-    void operator()(T const& x, T& y){
+    void operator()(T const& x, T& y) const{
         y = x * x;
     }
 };
 
 struct CauchyLoss  {
 
-    void operator()(double const& in, double out[3]);
+    void operator()(double const& in, double out[3]) const;
 
     template<class T>
-    void operator()(T const& x, T& y){
+    void operator()(T const& x, T& y) const{
         y = log(1 + x);
     }
 
@@ -64,10 +64,10 @@ struct CauchyLoss  {
 struct ScaledLoss  {
     explicit ScaledLoss(LossFunction f_, double s_);
 
-    void operator()(double const& in, double out[3]);
+    void operator()(double const& in, double out[3]) const;
 
     template<class T>
-    void operator()(T const& x, T& y){
+    void operator()(T const& x, T& y) const{
         y = f(x) * s;
     }
 
@@ -78,10 +78,10 @@ struct ScaledLoss  {
 struct ComposedLoss  {
     explicit ComposedLoss(LossFunction g_, LossFunction f_);
 
-    void operator()(double const& in, double out[3]);
+    void operator()(double const& in, double out[3]) const;
 
     template<class T>
-    T operator()(T const& x, T& y){
+    T operator()(T const& x, T& y) const {
         y = g(f(x));
     }
 

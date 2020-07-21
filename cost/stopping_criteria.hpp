@@ -6,23 +6,19 @@
 
 
 #include <Corrade/Utility/Assert.h>
-#include <Corrade/Utility/StlMath.h>
 #include <Corrade/Containers/Array.h>
-
-#include <Magnum/Math/Vector3.h>
-#include <Magnum/Magnum.h>
-
-#include <algorithm>
 
 namespace Cr = Corrade;
 namespace Mg = Magnum;
 
-
-
 template<class R, class T>
 void updateWeight(const int target, const T& w, R& neighbors){
-    auto it = std::find_if(neighbors.begin(), neighbors.end(), [target](const auto& n){ return n.vertex == target; });
-    assert(it != neighbors.end());
+    auto it = neighbors.begin();
+    for(; it != neighbors.end(); ++it){
+        if(it->vertex == target)
+            break;
+    }
+    CORRADE_INTERNAL_ASSERT(it != neighbors.end());
     it->weight = w;
 }
 

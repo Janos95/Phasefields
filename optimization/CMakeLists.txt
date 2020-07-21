@@ -19,7 +19,7 @@ add_library(optimization STATIC
         problem.hpp
         solver.cpp
         solver.hpp
-        sparse_matrix.h optimization.h functional.hpp sparse_matrix.cpp)
+        sparse_matrix.h optimization.h functional.hpp sparse_matrix.cpp tag.h tag.cpp)
 
 target_include_directories(optimization PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)

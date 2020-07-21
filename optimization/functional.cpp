@@ -4,6 +4,8 @@
 
 
 #include "functional.h"
+#include "sparse_matrix.h"
+#include "tag.h"
 
 #include <Magnum/Math/Functions.h>
 
@@ -12,104 +14,134 @@
 #include <adolc/adolc_sparse.h>
 
 #include <imgui.h>
-#include <set>
 
 using namespace Magnum;
 
-static std::set<int> usedTags;
-
-void Functional::initTag(int& tag) {
-    tag = -1;
-    auto it = usedTags.begin();
-    while(it != usedTags.end()){
-        if(*it > tag + 1){
-            usedTags.insert(++tag);
-            return;
-        }
-        tag = *it;
-    }
-    usedTags.insert(++tag);
-}
-
-
 Functional::~Functional(){
     if(erased){
-        destruct(erased);
-        usedTags.erase(tag);
+        destroy(erased);
+        deleteTag(tag);
     }
 }
 
-void Functional::operator()(
-        double* parameter,
-        double* residuals,
-        SparseMatrix* g,
-        SparseMatrix* h) const {
-
-    if(evalWithHessian == nullptr ||  && alwaysRetape || isFirstEvaluation){
-        isFirstEvaluation = false;
-        tapeEvaluation(parameter);
-    }
-
-    std::size_t m = numParameters();
-    std::size_t n = numResiduals();
-
-    gradient(tag, n, x, grad_f);
-    sparse_jac(tag, m, n, 1, x, &nnz_jac, &rind_g, &cind_g, &jacval, options_g);
-
-
-    /* apply scaling and loss function */
-    for (std::size_t i = 0; i < m; ++i) {
-        Mg::Double rho[3], phi[3] = {residuals[i], 1., 0.};
-        if(scaling){
-            auto s = *scaling;
-            for (auto& r : phi) r *= s;
-        }
-
-        loss->Evaluate(phi[0], rho);
-
-        if(residuals){
-            residuals[i] = rho[1];
-        }
-
-        if (jac) {
-            double lossGrad = rho[1] * phi[1];
-            for(auto& x : jac->row(i))
-                x *= lossGrad;
-        }
-
-        if(hess){
-            double lossHess = rho[2] * phi[1] * phi[1] + rho[1] * phi[2];
-            for (std::size_t j = 0; j < hess->size(); ++j) {
-                hess->values[j] = lossHess *
-            }
-        }
-    }
+void Functional::operator()(const double* parameters, const double* weights, double* out, double* gradP, double* gradW) const {
+    eval(erased, parameters, weights, out, gradP, gradW);
 }
 
-void Functional::tapeEvaluation(double const* x) const {
-    double dummy;
-    trace_on(tag);
-    Containers::Array<adouble> xs(numParameters());
-    Containers::Array<adouble> ys(numResiduals());
-    for (uint32_t i = 0; i < xs.size(); ++i)
-        xs[i] <<= x[i];
-    ad(erased, xs.data(), ys.data());
-    for (uint32_t i = 0; i < ys.size(); ++i){
-        if(scaling)
-            ys[i] *= *scaling;
-
-        ys[i] = loss->evaluate(ys[i])
-        ys[i] >>= dummy;
-    }
-    trace_off();
+void Functional::operator()(const adouble* params, const adouble* weights, adouble* out) const {
+    ad(erased, params, weights, out);
 }
 
-bool Functional::drawImGuiOptions(){
+//void Functional::operator()(
+//        double const* parameter,
+//        double* residuals,
+//        double* gradient,
+//        SparseMatrix* hessian) const {
+//
+//    //CORRADE_ASSERT(!hessian, "Functional : hessian not yet supported", );
+//    //CORRADE_ASSERT(numResiduals() == 1, "Functional : can only use this overload if you have exactly one output residual",);
+//
+//    //bool needsTapingForHessian = alwaysRetape && hessian && nullptr == evalWithHessian;
+//    //bool needsTapingForJacobian = alwaysRetape && jacobian && nullptr == evalWithJacobian;
+//    //bool needsTapingForCheck = alwaysRetape && checkDerivatives;
+//    //bool needsTaping = needsTapingForHessian || needsTapingForJacobian;
+//    //int repeat = 1;
+//
+//    //if(needsTaping || needsTapingForCheck || isFirstEvaluation){
+//    //    isFirstEvaluation = false;
+//    //    tapeEvaluation(parameter);
+//    //    repeat = 0;
+//    //}
+//
+//    //std::size_t m = numParameters();
+//    //std::size_t n = numResiduals();
+//
+//    //int jacobianOptions[4] = {0,0,0,0};
+//    //int hessianOptions[2] = {0,0};
+//
+//    //double *hessianValues, *jacobianValues;
+//    //unsigned int *hessianRowIndices, *hessianColumnIndices;
+//    //unsigned int *jacobianRowIndices, *jacobianColumnIndices;
+//    //int nnz;
+//
+//    //if(evalWithHessian) {
+//    //    evalWithHessian(erased, parameter, residuals, jacobian, hessian);
+//    //} else if(evalWithJacobian){
+//    //    evalWithJacobian(erased, parameter, residuals, jacobian);
+//    //    if(hessian) {
+//    //        nnz = hessian->nnz;
+//    //        set_param_vec(tag, m, const_cast<double*>(lambdas));
+//    //        sparse_hess(tag, n, repeat, parameter, &nnz, &hessianRowIndices, &hessianColumnIndices, &hessianValues, hessianOptions);
+//    //        if(!repeat){
+//    //            hessian->nnz = nnz;
+//    //            hessian->cols = Containers::Array(hessianColumnIndices, nnz);
+//    //            hessian->rows = Containers::Array(hessianRowIndices, nnz);
+//    //            hessian->values = Containers::Array(hessianValues, nnz);
+//    //        }
+//    //    }
+//    //}
+//
+//    //if(evalWithJacobian){
+//    //    evalWithJacobian(erased, parameter, residuals, jacobian);
+//    //    if(hessian){
+//    //        sparse_hess(tag, m, n, repeat, parameter, &nnz_jac, &rind_g, &cind_g, &jacval, options_g);
+//    //    }
+//    //    if(checkDerivatives && jacobian){
+//    //        sparse_grad(tag, m, n, repeat, parameter, &nnz_jac, &rind_g, &cind_g, &jacval, options_g);
+//    //        CORRADE_ASSERT();
+//    //    }
+//    //} else {
+//    //    if(jacobian){
+//    //        sparse_grad(tag, m, n, 1, x, &nnz_jac, &rind_g, &cind_g, &jacval, options_g);
+//    //    }
+//
+//    //}
+//
+//    ///* apply scaling and loss function */
+//    //for (std::size_t i = 0; i < m; ++i) {
+//    //    Mg::Double rho[3], phi[3] = {residuals[i], 1., 0.};
+//    //    if(scaling){
+//    //        auto s = *scaling;
+//    //        for (auto& r : phi) r *= s;
+//    //    }
+//
+//    //    loss(phi[0], rho);
+//
+//    //    residuals[i] = rho[0];
+//
+//    //    if (gradient) {
+//    //        double lossGrad = rho[1] * phi[1];
+//    //        for(auto& x : jacobian->row(i))
+//    //            x *= lossGrad;
+//    //    }
+//    //}
+//}
+//
+//void Functional::tapeEvaluation(double const* x) const {
+//    double dummy;
+//    std::size_t m = numParameters();
+//    std::size_t n = numResiduals();
+//    trace_on(tag);
+//    Containers::Array<adouble> xs(m);
+//    Containers::Array<adouble> ys(m);
+//    for (UnsignedInt i = 0; i < n; ++i)
+//        xs[i] <<= x[i];
+//    ad(erased, xs.data(), ys.data());
+//    adouble y = 0.;
+//    for(uint32_t i = 0; i < ys.size(); ++i){
+//        ys[i] *= *scaling;
+//        loss(ys[i], ys[i]);
+//    }
+//    y >>= dummy;
+//    trace_off();
+//}
+
+OptionsResultSet Functional::drawImGuiOptions(){
     if(options){
         ImGui::Checkbox("Check Derivatives", &checkDerivatives);
         return options(erased);
     }
-    return false;
+    return {};
 }
 
 void Functional::updateInternalDataStructures(){
@@ -121,31 +153,26 @@ void Functional::updateInternalDataStructures(){
     return params(erased);
 }
 
-[[nodiscard]] std::size_t Functional::numResiduals() const {
-    if(residuals)
-        return residuals(erased);
-    return 1;
-};
-
 void swap(Functional& f1, Functional& f2){
+    std::swap(f1.erased, f2.erased);
+    std::swap(f1.destroy, f2.destroy);
+    std::swap(f1.move, f2.move);
+    std::swap(f1.params, f2.params);
+    std::swap(f1.residuals, f2.residuals);
+    std::swap(f1.vis, f2.vis);
+    std::swap(f1.off, f2.off);
+    std::swap(f1.update, f2.update);
+    std::swap(f1.options, f2.options);
+    std::swap(f1.eval, f2.eval);
+    std::swap(f1.ad, f2.ad);
+    std::swap(f1.tag, f2.tag);
+    std::swap(f1.isFirstEvaluation, f2.isFirstEvaluation);
+    std::swap(f1.alwaysRetape, f2.alwaysRetape);
+
+    /* do two phase lookup */
     using std::swap;
-    swap(f1.erased, f2.erased);
-    swap(f1.destruct, f2.destruct);
-    swap(f1.move, f2.move);
-    swap(f1.params, f2.params);
-    swap(f1.residuals, f2.residuals);
-    swap(f1.vis, f2.vis);
-    swap(f1.off, f2.off);
-    swap(f1.update, f2.update);
-    swap(f1.options, f2.options);
-    swap(f1.evalWithHessian, f2.evalWithHessian);
-    swap(f1.evalWithJacobian, f2.evalWithJacobian);
-    swap(f1.ad, f2.ad);
     swap(f1.loss, f2.loss);
     swap(f1.scaling, f2.scaling);
-    swap(f1.tag, f2.tag);
-    swap(f1.isFirstEvaluation, f2.isFirstEvaluation);
-    swap(f1.alwaysRetape, f2.alwaysRetape);
 }
 
 Functional::Functional(Functional&& other) noexcept{

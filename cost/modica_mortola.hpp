@@ -22,9 +22,11 @@ struct DirichletEnergy
     uint32_t numParameters() const;
 
     template<class Scalar>
-    void operator()(Scalar const*, Scalar*, SparseMatrix*) const;
+    void operator()(Scalar const* params,
+                    Scalar const* weights,
+                    Scalar* cost) const;
 
-    auto triangles() { return arrayCast<Mg::Vector3ui>(indices); }
+        auto triangles() { return arrayCast<Mg::Vector3ui>(indices); }
 
     Containers::Array<const Mg::UnsignedInt> const& indices;
     Containers::Array<const Mg::Vector3d> const& vertices;
@@ -46,7 +48,7 @@ struct IntegralFunctional
     {
     }
 
-    uint32_t numParameters() const  {
+    uint32_t numParameters() const {
         return vertices.size();
     }
 
@@ -56,17 +58,29 @@ struct IntegralFunctional
 
     template<class Scalar>
     void operator()(Scalar const* params,
-                  Scalar* cost,
-                  SparseMatrix* jacobians,
-                  SparseMatrix* hessian) const {
-
+                    Scalar const* weights,
+                    Scalar* cost) const {
         *cost = 0.;
         for (int i = 0; i < vertices.size(); ++i){
-            *cost += f.eval(params[i]) * integralOperator[i];
-            if(jacobians)
-                jacobians->values[i] = f.grad(params[i]) * integralOperator[i];
-            if(hessian)
-                hessian->values[i] = f.hess(params[i]) * integralOperator[i];
+            *cost += f.eval(params[i]) * weights[i] * integralOperator[i];
+        }
+    }
+
+    template<class Scalar>
+    void operator()(Containers::ArrayView<const Scalar> parameters,
+            Containers::ArrayView<const Scalar> weights,
+            double& cost,
+            Containers::ArrayView<Scalar> gradP,
+            Containers::ArrayView<Scalar> gradW)
+    {
+        for (int i = 0; i < vertices.size(); ++i){
+            cost += f.eval(parameters[i]) * weights[i] * integralOperator[i];
+            if(gradP){
+                gradP[i] += f.grad(parameters[i]) * weights[i] * integralOperator[i];
+            }
+            if(gradW){
+                gradW[i] += f.eval(parameters[i]) * integralOperator[i];
+            }
         }
     }
 
@@ -85,48 +99,26 @@ struct AreaRegularizer{
     void updateInternalDataStructures();
 
     template<class Scalar>
-    void operator()(Scalar const* params, Scalar* cost, SparseMatrix* jacobians, SparseMatrix* hessian) const;
+    void operator()(Containers::ArrayView<const Scalar> const& parameters,
+            Containers::ArrayView<const Scalar> const& weights,
+            Scalar& out,
+            Containers::ArrayView<Scalar> const& gradP,
+            Containers::ArrayView<Scalar> const& gradW);
 
     IntegralFunctional<SmootherStep> integral;
+
     mutable Mg::Double currentArea;
     Mg::Double area, areaRatio = 0.5;
-};
-
-struct AreaConstraints {
-
-    AreaConstraints(Containers::Array<const Mg::Vector3d> const& vs,
-                    Containers::Array<const Mg::UnsignedInt> const& ts,
-                    PhasefieldTree& t);
-
-    Mg::UnsignedInt numParameters() const;
-    Mg::UnsignedInt numResiduals() const;
-    auto triangles() { return arrayCast<const Mg::Vector3ui>(indices); }
-
-    void updateInternalDataStructures();
-
-    template<class Scalar>
-    void operator()(Scalar const* params, Scalar* cost) const;
-
-    PhasefieldTree& tree;
-    Containers::Array<double> weights;
-    Containers::Array<const Mg::Vector3d> const& vertices;
-    Containers::Array<const Mg::UnsignedInt> const& indices;
 };
 
 using DoubleWellPotential = IntegralFunctional<DoubleWell>;
 
 class adouble;
 
-extern template void DirichletEnergy::operator()(adouble const*, adouble*, SparseMatrix*) const;
-extern template void DirichletEnergy::operator()(double const*, double*, SparseMatrix*) const;
+extern template void DirichletEnergy::operator()(adouble const*, adouble const*, adouble*) const;
 
-extern template void AreaRegularizer::operator()(adouble const*, adouble*, SparseMatrix*, SparseMatrix*) const;
-extern template void AreaRegularizer::operator()(double const*, double*, SparseMatrix*, SparseMatrix*) const;
+extern template void AreaRegularizer::operator()(adouble const*,adouble const*, adouble*) const;
 
-extern template void AreaConstraints::operator()(adouble const*, adouble*) const;
-extern template void AreaConstraints::operator()(double const*, double*) const;
-
-extern template void DoubleWellPotential::operator()(adouble const*, adouble*, SparseMatrix*, SparseMatrix*) const;
-extern template void DoubleWellPotential::operator()(double const*, double*, SparseMatrix*, SparseMatrix*) const;
+extern template void DoubleWellPotential::operator()(adouble const*, adouble const*, adouble*) const;
 
 

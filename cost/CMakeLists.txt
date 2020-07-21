@@ -21,8 +21,6 @@ add_library(cost STATIC
         fem.cpp
         fem.hpp
         graph_common.hpp
-        meta_data.hpp
-        meta_data.cpp
         modica_mortola.cpp
         modica_mortola.hpp
         stopping_criteria.cpp
@@ -31,7 +29,7 @@ add_library(cost STATIC
         union_find.hpp
         strang_rules.hpp
         phasefield_tree.hpp
-        )
+        tree_functional.cpp tree_functional.h)
 
 target_include_directories(cost PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)

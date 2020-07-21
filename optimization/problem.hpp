@@ -8,26 +8,36 @@
 #include "visualization_proxy.hpp"
 #include "functional.h"
 #include "optimization.h"
+#include "sparse_matrix.h"
 
 #include <Corrade/Containers/Array.h>
-
 
 namespace solver {
 
 struct Problem {
 
-    [[nodiscard]] int numParameters() const;
-    [[nodiscard]] int numConstraints() const;
+    explicit Problem();
+    ~Problem();
 
-    Containers::Array<Functional> objectives;
-    Containers::Array<Functional> constraints;
+    [[nodiscard]] std::size_t numParameters() const;
+    [[nodiscard]] std::size_t numConstraints() const;
 
-    VisualizationProxy proxy;
+    Containers::Array<Functional> objectives, constraints;
+    SparseMatrix hessian, jacobian; /* hessian of the lagrangian, jacobian of the constraints */
+    VisualizationProxy* proxy = nullptr; /* pipe to visualize stuff */
+    int tagL, tagJ, tagG;
 
-    bool evaluateObjective(const double *parameters, double *cost, SparseMatrix* gradient, SparseMatrix* hessian) const;
+    void updateInternalDataStructures(const Containers::Array<double>&);
 
-    bool evaluateConstraints(const double *parameters, double *cost, SparseMatrix* gradient, SparseMatrix* hessian, double* scaling) const;
-
+    void evaluate(
+            double const* parameters,
+            double* residual,
+            double* constr,
+            double* g,
+            SparseMatrix* j,
+            SparseMatrix* h,
+            double objectiveScale,
+            double const* lambdas) const;
 };
 
 }

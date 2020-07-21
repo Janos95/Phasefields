@@ -50,26 +50,26 @@ void swap(LossFunction& f1, LossFunction& f2){
     swap(f1.erased, f2.erased);
 }
 
-void LossFunction::operator()(double const& in, double out[3]){
+void LossFunction::operator()(double const& in, double out[3]) const {
     loss(erased, in, out);
 }
-void LossFunction::operator()(adouble const& x, adouble& y){
+void LossFunction::operator()(adouble const& x, adouble& y) const {
     ad(erased, x, y);
 }
 
-void TrivialLoss::operator()(double const& in, double out[3]){
+void TrivialLoss::operator()(double const& in, double out[3]) const {
     out[0] = in;
     out[1] = 1.;
     out[2] = 0.;
 }
 
-void QuadraticLoss::operator()(double const& in, double out[3]){
+void QuadraticLoss::operator()(double const& in, double out[3]) const {
     out[0] = in * in;
     out[1] = 2 * in;
     out[2] = 2.;
 }
 
-void CauchyLoss::operator()(double const& in, double out[3]){
+void CauchyLoss::operator()(double const& in, double out[3]) const {
     double sum = in + 1.;
     double inv = 1./sum;
     out[0] = log(sum);
@@ -83,7 +83,7 @@ ScaledLoss::ScaledLoss(LossFunction f_, double s_):
 {
 }
 
-void ScaledLoss::operator()(double const& in, double out[3]){
+void ScaledLoss::operator()(double const& in, double out[3]) const {
     double fout[3];
     f(in, fout);
     out[0] = s * fout[0];
@@ -97,7 +97,7 @@ ComposedLoss::ComposedLoss(LossFunction f_, LossFunction g_):
 {
 }
 
-void ComposedLoss::operator()(double const& in, double out[3]){
+void ComposedLoss::operator()(double const& in, double out[3]) const {
     double fout[3];
     double gout[3];
     f(in, fout);
