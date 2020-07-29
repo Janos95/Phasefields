@@ -11,15 +11,20 @@ pkg_check_modules(Adolc REQUIRED IMPORTED_TARGET adolc)
 set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 
 add_library(optimization STATIC
-        functional.h
-        functional.cpp
-        loss_functions.cpp
-        loss_functions.hpp
-        problem.cpp
-        problem.hpp
-        solver.cpp
-        solver.hpp
-        sparse_matrix.h optimization.h functional.hpp sparse_matrix.cpp tag.h tag.cpp)
+        Functional.h
+        Functional.cpp
+        LossFunction.cpp
+        LossFunctions.h
+        Solver.cpp
+        Solver.h
+        SparseMatrix.h
+        Optimization.h
+        Functional.hpp
+        SparseMatrix.cpp
+        tag.h
+        tag.cpp
+        RecursiveProblem.h
+        RecursiveProblem.cpp PhasefieldTree.cpp)
 
 target_include_directories(optimization PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)

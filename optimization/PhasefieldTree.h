@@ -5,9 +5,12 @@
 #pragma once
 
 #include "types.hpp"
+#include "y_combinator.hpp"
 
-#include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/StridedArrayView.h>
+#include <Corrade/Utility/Algorithms.h>
+#include <Magnum/Math/Functions.h>
 
 namespace Cr = Corrade;
 
@@ -48,12 +51,30 @@ struct PhasefieldTree {
     }
 
     Containers::StridedArrayView2D<Mg::Double> temps() {
-        return {tempsData, {tempsData.size(), phasefieldSize}};
+        return {tempsData, {nodes.size(), phasefieldSize}};
     }
+
+    Mg::UnsignedInt phasefieldCount() const{
+        return nodes.size();
+    }
+
+    void resize(Mg::UnsignedInt n){
+        Containers::Array<double> data(n * phasefieldSize);
+        Containers::StridedArrayView2D<double> view{data, {nodes.size(), n}};
+        auto oldView = phasefields();
+        for(std::size_t i = 0; i < nodes.size(); ++i)
+            Cr::Utility::copy(oldView[i].slice(0, Mg::Math::min(n, phasefieldSize)), view[i]);
+        phasefieldSize = n;
+
+        Containers::arrayResize(tempsData, data.size());
+        phasefieldData = std::move(data);
+    }
+
+    void subdivide(Containers::Array<Mg::UnsignedInt>& indices, Containers::Array<Mg::Vector3d>& vertices);
 
     template<class F>
     void traverse(F&& f){
-        auto visitor = YCombinator {
+        auto visitor = YCombinator{
             [&](auto&& visitor, PhasefieldNode& node) -> void {
                 f(node);
                 if(!node.isLeaf()) { /* a leaf still has two children for computing derivatives */

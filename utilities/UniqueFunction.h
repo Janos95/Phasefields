@@ -36,7 +36,7 @@
 #include <utility>
 #include <new>
 
-inline void *allocate_buffer(size_t Size, size_t Alignment) {
+inline void* allocate_buffer(size_t Size, size_t Alignment) {
     return ::operator new(Size
 #ifdef __cpp_aligned_new
             ,
@@ -46,7 +46,7 @@ inline void *allocate_buffer(size_t Size, size_t Alignment) {
 }
 
 
-inline void deallocate_buffer(void *Ptr, size_t Size, size_t Alignment) {
+inline void deallocate_buffer(void* Ptr, size_t Size, size_t Alignment) {
     ::operator delete(Ptr
 #ifdef __cpp_sized_deallocation
             ,
@@ -60,17 +60,19 @@ inline void deallocate_buffer(void *Ptr, size_t Size, size_t Alignment) {
 }
 
 
-template <typename FunctionT> class unique_function;
+template<typename FunctionT>
+class UniqueFunction;
 
-template <typename ReturnT, typename... ParamTs>
-class unique_function<ReturnT(ParamTs...)> {
-    static constexpr size_t InlineStorageSize = sizeof(void *) * 3;
+template<typename ReturnT, typename... ParamTs>
+class UniqueFunction<ReturnT(ParamTs...)> {
+    static constexpr size_t InlineStorageSize = sizeof(void*)*3;
 
     // MSVC has a bug and ICEs if we give it a particular dependent value
     // expression as part of the `std::conditional` below. To work around this,
     // we build that into a template struct's constexpr bool.
-    template <typename T> struct IsSizeLessThanThresholdT {
-        static constexpr bool value = sizeof(T) <= (2 * sizeof(void *));
+    template<typename T>
+    struct IsSizeLessThanThresholdT {
+        static constexpr bool value = sizeof(T) <= (2*sizeof(void*));
     };
 
     // Provide a type function to map parameters that won't observe extra copies
@@ -82,20 +84,20 @@ class unique_function<ReturnT(ParamTs...)> {
     // The heuristic used is related to common ABI register passing conventions.
     // It doesn't have to be exact though, and in one way it is more strict
     // because we want to still be able to observe either moves *or* copies.
-    template <typename T>
+    template<typename T>
     using AdjustedParamT = typename std::conditional<
             !std::is_reference<T>::value &&
             std::is_trivially_copy_constructible<T>::value &&
             std::is_trivially_move_constructible<T>::value &&
             IsSizeLessThanThresholdT<T>::value,
-            T, T &>::type;
+            T, T&>::type;
 
     // The type of the erased function pointer we use as a callback to dispatch to
     // the stored callable when it is trivial to move and destroy.
-    using CallPtrT = ReturnT (*)(void *CallableAddr,
+    using CallPtrT = ReturnT (*)(void* CallableAddr,
                                  AdjustedParamT<ParamTs>... Params);
-    using MovePtrT = void (*)(void *LHSCallableAddr, void *RHSCallableAddr);
-    using DestroyPtrT = void (*)(void *CallableAddr);
+    using MovePtrT = void (*)(void* LHSCallableAddr, void* RHSCallableAddr);
+    using DestroyPtrT = void (*)(void* CallableAddr);
 
     /// A struct to hold a single trivial callback with sufficient alignment for
     /// our bitpacking.
@@ -115,7 +117,7 @@ class unique_function<ReturnT(ParamTs...)> {
     // pointer in a struct or a pointer to a static struct of the call, move, and
     // destroy pointers.
     using CallbackPointerUnionT =
-    PointerUnion<TrivialCallback *, NonTrivialCallbacks *>;
+    PointerUnion<TrivialCallback*, NonTrivialCallbacks*>;
 
     // The main storage buffer. This will either have a pointer to out-of-line
     // storage or an inline buffer storing the callable.
@@ -123,7 +125,7 @@ class unique_function<ReturnT(ParamTs...)> {
         // For out-of-line storage we keep a pointer to the underlying storage and
         // the size. This is enough to deallocate the memory.
         struct OutOfLineStorageT {
-            void *StoragePtr;
+            void* StoragePtr;
             size_t Size;
             size_t Alignment;
         } OutOfLineStorage;
@@ -133,7 +135,7 @@ class unique_function<ReturnT(ParamTs...)> {
 
         // For in-line storage, we just provide an aligned character buffer. We
         // provide three pointers worth of storage here.
-        typename std::aligned_storage<InlineStorageSize, alignof(void *)>::type
+        typename std::aligned_storage<InlineStorageSize, alignof(void*)>::type
                 InlineStorage;
     } StorageUnion;
 
@@ -145,86 +147,89 @@ class unique_function<ReturnT(ParamTs...)> {
     bool isInlineStorage() const { return CallbackAndInlineFlag.getInt(); }
 
     bool isTrivialCallback() const {
-        return CallbackAndInlineFlag.getPointer().template is<TrivialCallback *>();
+        return CallbackAndInlineFlag.getPointer().template is<TrivialCallback*>();
     }
 
     CallPtrT getTrivialCallback() const {
-        return CallbackAndInlineFlag.getPointer().template get<TrivialCallback *>()->CallPtr;
+        return CallbackAndInlineFlag.getPointer().template get<TrivialCallback*>()->CallPtr;
     }
 
-    NonTrivialCallbacks *getNonTrivialCallbacks() const {
+    NonTrivialCallbacks* getNonTrivialCallbacks() const {
         return CallbackAndInlineFlag.getPointer()
-                .template get<NonTrivialCallbacks *>();
+                                    .template get<NonTrivialCallbacks*>();
     }
 
-    void *getInlineStorage() { return &StorageUnion.InlineStorage; }
+    void* getInlineStorage() { return &StorageUnion.InlineStorage; }
 
-    void *getOutOfLineStorage() {
+    void* getOutOfLineStorage() {
         return StorageUnion.OutOfLineStorage.StoragePtr;
     }
+
     size_t getOutOfLineStorageSize() const {
         return StorageUnion.OutOfLineStorage.Size;
     }
+
     size_t getOutOfLineStorageAlignment() const {
         return StorageUnion.OutOfLineStorage.Alignment;
     }
 
-    void setOutOfLineStorage(void *Ptr, size_t Size, size_t Alignment) {
+    void setOutOfLineStorage(void* Ptr, size_t Size, size_t Alignment) {
         StorageUnion.OutOfLineStorage = {Ptr, Size, Alignment};
     }
 
-    template <typename CallableT>
-    static ReturnT CallImpl(void *CallableAddr, AdjustedParamT<ParamTs>... Params) {
-        return (*reinterpret_cast<CallableT *>(CallableAddr))(
+    template<typename CallableT>
+    static ReturnT CallImpl(void* CallableAddr, AdjustedParamT<ParamTs>... Params) {
+        return (*reinterpret_cast<CallableT*>(CallableAddr))(
                 std::forward<ParamTs>(Params)...);
     }
 
-    template <typename CallableT>
-    static void MoveImpl(void *LHSCallableAddr, void *RHSCallableAddr) noexcept {
-        new (LHSCallableAddr)
-                CallableT(std::move(*reinterpret_cast<CallableT *>(RHSCallableAddr)));
+    template<typename CallableT>
+    static void MoveImpl(void* LHSCallableAddr, void* RHSCallableAddr) noexcept {
+        new(LHSCallableAddr)
+                CallableT(std::move(*reinterpret_cast<CallableT*>(RHSCallableAddr)));
     }
 
-    template <typename CallableT>
-    static void DestroyImpl(void *CallableAddr) noexcept {
-        reinterpret_cast<CallableT *>(CallableAddr)->~CallableT();
+    template<typename CallableT>
+    static void DestroyImpl(void* CallableAddr) noexcept {
+        reinterpret_cast<CallableT*>(CallableAddr)->~CallableT();
     }
 
 public:
-    unique_function() = default;
-    unique_function(std::nullptr_t /*null_callable*/) {}
+    UniqueFunction() = default;
 
-    ~unique_function() {
-        if (!CallbackAndInlineFlag.getPointer())
+    UniqueFunction(std::nullptr_t /*null_callable*/) {}
+
+    ~UniqueFunction() {
+        if(!CallbackAndInlineFlag.getPointer())
             return;
 
         // Cache this value so we don't re-check it after type-erased operations.
         bool IsInlineStorage = isInlineStorage();
 
-        if (!isTrivialCallback())
+        if(!isTrivialCallback())
             getNonTrivialCallbacks()->DestroyPtr(
                     IsInlineStorage ? getInlineStorage() : getOutOfLineStorage());
 
-        if (!IsInlineStorage)
+        if(!IsInlineStorage)
             deallocate_buffer(getOutOfLineStorage(), getOutOfLineStorageSize(),
                               getOutOfLineStorageAlignment());
     }
 
-    unique_function(unique_function &&RHS) noexcept {
+    UniqueFunction(UniqueFunction&& RHS) noexcept {
         // Copy the callback and inline flag.
         CallbackAndInlineFlag = RHS.CallbackAndInlineFlag;
 
         // If the RHS is empty, just copying the above is sufficient.
-        if (!RHS)
+        if(!RHS)
             return;
 
-        if (!isInlineStorage()) {
+        if(!isInlineStorage()){
             // The out-of-line case is easiest to move.
             StorageUnion.OutOfLineStorage = RHS.StorageUnion.OutOfLineStorage;
-        } else if (isTrivialCallback()) {
+        } else if(isTrivialCallback()){
             // Move is trivial, just memcpy the bytes across.
             memcpy(getInlineStorage(), RHS.getInlineStorage(), InlineStorageSize);
-        } else {
+        } else{
             // Non-trivial move, so dispatch to a type-erased implementation.
             getNonTrivialCallbacks()->MovePtr(getInlineStorage(),
                                               RHS.getInlineStorage());
@@ -239,23 +244,24 @@ public:
 #endif
     }
 
-    unique_function &operator=(unique_function &&RHS) noexcept {
-        if (this == &RHS)
+    UniqueFunction& operator=(UniqueFunction&& RHS) noexcept {
+        if(this == &RHS)
             return *this;
 
         // Because we don't try to provide any exception safety guarantees we can
         // implement move assignment very simply by first destroying the current
         // object and then move-constructing over top of it.
-        this->~unique_function();
-        new (this) unique_function(std::move(RHS));
+        this->~UniqueFunction();
+        new(this) UniqueFunction(std::move(RHS));
         return *this;
     }
 
-    template <typename CallableT> unique_function(CallableT Callable) {
+    template<typename CallableT>
+    UniqueFunction(CallableT Callable) {
         bool IsInlineStorage = true;
-        void *CallableAddr = getInlineStorage();
-        if (sizeof(CallableT) > InlineStorageSize ||
-            alignof(CallableT) > alignof(decltype(StorageUnion.InlineStorage))) {
+        void* CallableAddr = getInlineStorage();
+        if(sizeof(CallableT) > InlineStorageSize ||
+           alignof(CallableT) > alignof(decltype(StorageUnion.InlineStorage))){
             IsInlineStorage = false;
             // Allocate out-of-line storage. FIXME: Use an explicit alignment
             // parameter in C++17 mode.
@@ -266,7 +272,7 @@ public:
         }
 
         // Now move into the storage.
-        new (CallableAddr) CallableT(std::move(Callable));
+        new(CallableAddr) CallableT(std::move(Callable));
 
         // See if we can create a trivial callback. We need the callable to be
         // trivially moved and trivially destroyed so that we don't have to store
@@ -276,10 +282,10 @@ public:
         // the non-trivial static objects when unnecessary. While the linker should
         // remove them, it is still wasteful.
         if constexpr(std::is_trivially_move_constructible<CallableT>::value &&
-            std::is_trivially_destructible<CallableT>::value) {
+                     std::is_trivially_destructible<CallableT>::value){
             // We need to create a nicely aligned object. We use a static variable
             // for this because it is a trivial struct.
-            static TrivialCallback Callback = { &CallImpl<CallableT> };
+            static TrivialCallback Callback = {&CallImpl<CallableT>};
 
             CallbackAndInlineFlag = {&Callback, IsInlineStorage};
             return;
@@ -295,7 +301,7 @@ public:
     }
 
     ReturnT operator()(ParamTs... Params) {
-        void *CallableAddr =
+        void* CallableAddr =
                 isInlineStorage() ? getInlineStorage() : getOutOfLineStorage();
 
         return (isTrivialCallback()
@@ -304,7 +310,7 @@ public:
     }
 
     explicit operator bool() const {
-        return (bool)CallbackAndInlineFlag.getPointer();
+        return (bool) CallbackAndInlineFlag.getPointer();
     }
 };
 

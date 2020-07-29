@@ -18,7 +18,7 @@
 template<unsigned dimensions, class Scalar>
 struct ScalarExpression : Expression<dimensions, Scalar> {
 
-    std::size_t cost(){
+    std::size_t cost() {
         return
     }
 
@@ -34,13 +34,9 @@ struct ReductionExpression : Expression<dimensions, Scalar> {
         Tensor<dimensions, Scalar> T;
         Tensor<dimensions + 1, Scalar> S = expr->evaluate();
 
-        for (int i = 0; i < dim; ++i) {
+        for(int i = 0; i < dim; ++i){
             Size lower{}, upper = S.size();
             lower[i]
-
-
-
-
 
 
             T(lower, upper) =
@@ -48,7 +44,7 @@ struct ReductionExpression : Expression<dimensions, Scalar> {
         return T;
     }
 
-    std::size_t cost(){
+    std::size_t cost() {
 
 
     }

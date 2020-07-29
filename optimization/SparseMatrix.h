@@ -17,6 +17,7 @@ struct Triplet {
 struct SparseMatrix {
 
     SparseMatrix() = default;
+
     explicit SparseMatrix(Containers::Array<Triplet> triplets);
 
     int numRows, numCols, nnz;
@@ -25,7 +26,7 @@ struct SparseMatrix {
     Containers::Array<Mg::UnsignedInt> rows;
     Containers::Array<Mg::UnsignedInt> cols;
 
-    struct RowRange{
+    struct RowRange {
         int current, rowEnd;
     };
 
@@ -45,6 +46,7 @@ struct Matrix {
 
 struct Vector {
     explicit Vector(std::size_t size);
+
     Containers::Array<double> values;
 };
 

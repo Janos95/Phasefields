@@ -42,33 +42,33 @@
 
 # In Emscripten SDL is linked automatically, thus no need to find the library.
 # Also the includes are in SDL subdirectory, not SDL2.
-if(CORRADE_TARGET_EMSCRIPTEN)
+if (CORRADE_TARGET_EMSCRIPTEN)
     set(_SDL2_PATH_SUFFIXES SDL)
-else()
+else ()
     set(_SDL2_PATH_SUFFIXES SDL2)
-    if(WIN32)
+    if (WIN32)
         # Precompiled libraries for MSVC are in x86/x64 subdirectories
-        if(MSVC)
-            if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        if (MSVC)
+            if (CMAKE_SIZEOF_VOID_P EQUAL 8)
                 set(_SDL2_LIBRARY_PATH_SUFFIX lib/x64)
-            elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+            elseif (CMAKE_SIZEOF_VOID_P EQUAL 4)
                 set(_SDL2_LIBRARY_PATH_SUFFIX lib/x86)
-            endif()
+            endif ()
 
             # Both includes and libraries for MinGW are in some directory deep
             # inside. There's also a CMake config file but it has HARDCODED path
             # to /opt/local/i686-w64-mingw32, which doesn't make ANY SENSE,
             # especially on Windows.
-        elseif(MINGW)
-            if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        elseif (MINGW)
+            if (CMAKE_SIZEOF_VOID_P EQUAL 8)
                 set(_SDL2_LIBRARY_PATH_SUFFIX x86_64-w64-mingw32/lib)
                 list(APPEND _SDL2_PATH_SUFFIXES x86_64-w64-mingw32/include/SDL2)
-            elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+            elseif (CMAKE_SIZEOF_VOID_P EQUAL 4)
                 set(_SDL2_LIBRARY_PATH_SUFFIX i686-w64-mingw32/lib)
                 list(APPEND _SDL2_PATH_SUFFIXES i686-w64-mingw32/include/SDL2)
-            endif()
-        endif()
-    endif()
+            endif ()
+        endif ()
+    endif ()
 
     find_library(SDL2_LIBRARY_RELEASE
             # Compiling SDL2 from scratch on macOS creates dead libSDL2.so symlink
@@ -84,7 +84,7 @@ else()
     # library was found -- using SDL_LIBRARY, which will get populated by
     # select_library_configurations() below.
     set(SDL2_LIBRARY_NEEDED SDL2_LIBRARY)
-endif()
+endif ()
 
 include(SelectLibraryConfigurations)
 select_library_configurations(SDL2)
@@ -102,7 +102,7 @@ find_path(SDL2_INCLUDE_DIR
         PATH_SUFFIXES ${_SDL2_PATH_SUFFIXES})
 
 # iOS dependencies
-if(CORRADE_TARGET_IOS)
+if (CORRADE_TARGET_IOS)
     set(_SDL2_FRAMEWORKS
             AudioToolbox
             AVFoundation
@@ -112,14 +112,14 @@ if(CORRADE_TARGET_IOS)
             GameController
             QuartzCore
             UIKit)
-    set(_SDL2_FRAMEWORK_LIBRARIES )
-    foreach(framework ${_SDL2_FRAMEWORKS})
+    set(_SDL2_FRAMEWORK_LIBRARIES)
+    foreach (framework ${_SDL2_FRAMEWORKS})
         find_library(_SDL2_${framework}_LIBRARY ${framework})
         mark_as_advanced(_SDL2_${framework}_LIBRARY)
         list(APPEND _SDL2_FRAMEWORK_LIBRARIES ${_SDL2_${framework}_LIBRARY})
         list(APPEND _SDL2_FRAMEWORK_LIBRARY_NAMES _SDL2_${framework}_LIBRARY)
-    endforeach()
-endif()
+    endforeach ()
+endif ()
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args("SDL2" DEFAULT_MSG
@@ -127,48 +127,48 @@ find_package_handle_standard_args("SDL2" DEFAULT_MSG
         ${_SDL2_FRAMEWORK_LIBRARY_NAMES}
         SDL2_INCLUDE_DIR)
 
-if(NOT TARGET SDL2::SDL2)
-    if(SDL2_LIBRARY_NEEDED)
+if (NOT TARGET SDL2::SDL2)
+    if (SDL2_LIBRARY_NEEDED)
         add_library(SDL2::SDL2 UNKNOWN IMPORTED)
 
         # Work around BUGGY framework support on macOS
         # https://cmake.org/Bug/view.php?id=14105
-        if(CORRADE_TARGET_APPLE AND SDL2_LIBRARY_RELEASE MATCHES "\\.framework$")
+        if (CORRADE_TARGET_APPLE AND SDL2_LIBRARY_RELEASE MATCHES "\\.framework$")
             set_property(TARGET SDL2::SDL2 APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
             set_property(TARGET SDL2::SDL2 PROPERTY IMPORTED_LOCATION_RELEASE ${SDL2_LIBRARY_RELEASE}/SDL2)
-        else()
-            if(SDL2_LIBRARY_RELEASE)
+        else ()
+            if (SDL2_LIBRARY_RELEASE)
                 set_property(TARGET SDL2::SDL2 APPEND PROPERTY IMPORTED_CONFIGURATIONS RELEASE)
                 set_property(TARGET SDL2::SDL2 PROPERTY IMPORTED_LOCATION_RELEASE ${SDL2_LIBRARY_RELEASE})
-            endif()
+            endif ()
 
-            if(SDL2_LIBRARY_DEBUG)
+            if (SDL2_LIBRARY_DEBUG)
                 set_property(TARGET SDL2::SDL2 APPEND PROPERTY IMPORTED_CONFIGURATIONS DEBUG)
                 set_property(TARGET SDL2::SDL2 PROPERTY IMPORTED_LOCATION_DEBUG ${SDL2_LIBRARY_DEBUG})
-            endif()
-        endif()
+            endif ()
+        endif ()
 
         # Link additional `dl` and `pthread` libraries required by a static
         # build of SDL on Unixy platforms (except Apple, where it is most
         # probably some frameworks instead)
-        if(CORRADE_TARGET_UNIX AND NOT CORRADE_TARGET_APPLE AND SDL2_LIBRARY MATCHES "${CMAKE_STATIC_LIBRARY_SUFFIX}$")
+        if (CORRADE_TARGET_UNIX AND NOT CORRADE_TARGET_APPLE AND SDL2_LIBRARY MATCHES "${CMAKE_STATIC_LIBRARY_SUFFIX}$")
             find_package(Threads)
             set_property(TARGET SDL2::SDL2 APPEND PROPERTY
                     INTERFACE_LINK_LIBRARIES ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
-        endif()
+        endif ()
 
         # Link frameworks on iOS
-        if(CORRADE_TARGET_IOS)
+        if (CORRADE_TARGET_IOS)
             set_property(TARGET SDL2::SDL2 APPEND PROPERTY
                     INTERFACE_LINK_LIBRARIES ${_SDL2_FRAMEWORK_LIBRARIES})
-        endif()
-    else()
+        endif ()
+    else ()
         add_library(SDL2::SDL2 INTERFACE IMPORTED)
-    endif()
+    endif ()
 
     set_property(TARGET SDL2::SDL2 PROPERTY
             INTERFACE_INCLUDE_DIRECTORIES ${SDL2_INCLUDE_DIR})
-endif()
+endif ()
 
 mark_as_advanced(SDL2_INCLUDE_DIR)
 

@@ -24,25 +24,27 @@ using namespace Magnum;
 
 namespace {
 
-    struct ComboElement {
-        std::string name;
-        PrimitiveType type;
-        Corrade::Containers::Pointer<AbstractPrimitiveOptions> options;
-    };
+struct ComboElement {
+    std::string name;
+    PrimitiveType type;
+    Corrade::Containers::Pointer<AbstractPrimitiveOptions> options;
+};
 
-    auto makeComboMap(){
-        Containers::Array<ComboElement> map;
-        Containers::arrayAppend(map, ComboElement{"U Shaped Square", PrimitiveType::U, Containers::pointer<UOptions>()});
-        Containers::arrayAppend(map, ComboElement{"Capsule", PrimitiveType::Capsule, Containers::pointer<CapsuleOptions>()});
-        Containers::arrayAppend(map, ComboElement{"Implicit Function", PrimitiveType::ImplicitFunction, Containers::pointer<PolygonizationOptions>()});
-        return map;
-    }
+auto makeComboMap() {
+    Containers::Array<ComboElement> map;
+    Containers::arrayAppend(map, ComboElement{"U Shaped Square", PrimitiveType::U, Containers::pointer<UOptions>()});
+    Containers::arrayAppend(map,
+                            ComboElement{"Capsule", PrimitiveType::Capsule, Containers::pointer<CapsuleOptions>()});
+    Containers::arrayAppend(map, ComboElement{"Implicit Function", PrimitiveType::ImplicitFunction,
+                                              Containers::pointer<PolygonizationOptions>()});
+    return map;
+}
 
 }
 
 
-Trade::MeshData uShapedSquare(float width, float height, float innerWidth, float innerHeight){
-    float a = .5f * (width - innerWidth);
+Trade::MeshData uShapedSquare(float width, float height, float innerWidth, float innerHeight) {
+    float a = .5f*(width - innerWidth);
     float b = a + innerWidth;
 
     Containers::Array<Vector3> vertices{
@@ -70,33 +72,33 @@ Trade::MeshData uShapedSquare(float width, float height, float innerWidth, float
             {
                     Containers::InPlaceInit,
                     {
-                            0u,1u,2u,
-                            0u,2u,3u,
-                            3u,5u,4u,
-                            3u,2u,5u,
-                            2u,6u,5u,
-                            2u,7u,6u,
-                            7u,8u,6u,
-                            7u,9u,8u,
-                            10u,9u,7u,
-                            10u,11u,9u
+                            0u, 1u, 2u,
+                            0u, 2u, 3u,
+                            3u, 5u, 4u,
+                            3u, 2u, 5u,
+                            2u, 6u, 5u,
+                            2u, 7u, 6u,
+                            7u, 8u, 6u,
+                            7u, 9u, 8u,
+                            10u, 9u, 7u,
+                            10u, 11u, 9u
                     }
             };
 
     auto size = indices.size();
     Trade::MeshIndexData indexData{indices};
-    Containers::Array<char> data{reinterpret_cast<char*>(indices.release()), sizeof(UnsignedInt) * size};
+    Containers::Array<char> data{reinterpret_cast<char*>(indices.release()), sizeof(UnsignedInt)*size};
 
     Trade::MeshAttributeData vertexData{Trade::MeshAttribute::Position, VertexFormat::Vector3, vertices};
     Trade::MeshAttributeData normalData{Trade::MeshAttribute::Normal, VertexFormat::Vector3, normals};
 
     return MeshTools::interleave(
             Trade::MeshData(MeshPrimitive::Triangles, std::move(data), indexData, vertices.size()),
-            {vertexData,normalData}
+            {vertexData, normalData}
     );
 }
 
-bool displayCapsuleOptions(CapsuleOptions& options){
+bool displayCapsuleOptions(CapsuleOptions& options) {
     constexpr static std::uint32_t step = 1;
     constexpr static float floatMax = 10.f;
     constexpr static float floatMin = .1f;
@@ -105,16 +107,21 @@ bool displayCapsuleOptions(CapsuleOptions& options){
     constexpr static std::uint32_t segmentsMin = 3u;
     constexpr static std::uint32_t uintMax = 100u;
     bool hasChanged = false;
-    hasChanged |= ImGui::SliderScalar("Numer of (face) rings for each heimsphere", ImGuiDataType_U32, &options.hemisphereRings, &ringsMin, &uintMax, "%u");
-    hasChanged |= ImGui::SliderScalar("Number of (face) rings for cylinder", ImGuiDataType_U32, &options.cylinderRings, &ringsMin, &uintMax, "%u");
-    hasChanged |= ImGui::SliderScalar("Number of (face) segments", ImGuiDataType_U32, &options.segments, &segmentsMin, &uintMax, "%u");
-    hasChanged |= ImGui::SliderScalar("Radius of cylindinger", ImGuiDataType_Float, &options.radius, &floatMin, &floatMax, "%f");
-    hasChanged |= ImGui::SliderScalar("Length of whole capsule", ImGuiDataType_Float, &options.length, &floatMin, &floatMax, "%f");
+    hasChanged |= ImGui::SliderScalar("Numer of (face) rings for each heimsphere", ImGuiDataType_U32,
+                                      &options.hemisphereRings, &ringsMin, &uintMax, "%u");
+    hasChanged |= ImGui::SliderScalar("Number of (face) rings for cylinder", ImGuiDataType_U32, &options.cylinderRings,
+                                      &ringsMin, &uintMax, "%u");
+    hasChanged |= ImGui::SliderScalar("Number of (face) segments", ImGuiDataType_U32, &options.segments, &segmentsMin,
+                                      &uintMax, "%u");
+    hasChanged |= ImGui::SliderScalar("Radius of cylindinger", ImGuiDataType_Float, &options.radius, &floatMin,
+                                      &floatMax, "%f");
+    hasChanged |= ImGui::SliderScalar("Length of whole capsule", ImGuiDataType_Float, &options.length, &floatMin,
+                                      &floatMax, "%f");
 
     return hasChanged;
 }
 
-bool displayUOptions(UOptions& options){
+bool displayUOptions(UOptions& options) {
     constexpr static std::uint32_t step = 1;
     constexpr static float floatMax = 10.f;
     constexpr static float floatMin = .1f;
@@ -124,35 +131,41 @@ bool displayUOptions(UOptions& options){
     constexpr static std::uint32_t uintMax = 100u;
     bool hasChanged = false;
 
-    hasChanged |= ImGui::DragFloatRange2("Widths", &options.innerWidth, &options.width, .01f, .01f, 10.f, "Min: %.2f", "Max: %.2f");
-    hasChanged |= ImGui::DragFloatRange2("Heights", &options.innerHeight, &options.height, .01f, .01f, 10.0f, "Min: %.2f", "Max: %.2f");
+    hasChanged |= ImGui::DragFloatRange2("Widths", &options.innerWidth, &options.width, .01f, .01f, 10.f, "Min: %.2f",
+                                         "Max: %.2f");
+    hasChanged |= ImGui::DragFloatRange2("Heights", &options.innerHeight, &options.height, .01f, .01f, 10.0f,
+                                         "Min: %.2f", "Max: %.2f");
     return hasChanged;
 }
 
-void displayImplicitFunctionOptions(PolygonizationOptions& options, std::string& expression){
+void displayImplicitFunctionOptions(PolygonizationOptions& options, std::string& expression) {
     ImGui::InputTextMultiline("Implicit Function", &expression);
     constexpr static float minAngle = 10.f, maxAngle = 60.f;
     constexpr static float minBoundingRadius = 1., maxBoundingRadius = 10.f;
     constexpr static float minDistanceBound = 0.001f, maxDistanceBound = .5f;
     constexpr static float minRadiusBound = 0.001f, maxRadiusBound = .5f;
     ImGui::SliderScalar("Angle Bound", ImGuiDataType_Float, &options.angleBound, &minAngle, &maxAngle, "%f");
-    ImGui::SliderScalar("Bounding Sphere Radius", ImGuiDataType_Float, &options.boundingSphereRadius, &minBoundingRadius, &maxBoundingRadius, "%f");
-    ImGui::SliderScalar("Distance Bound", ImGuiDataType_Float, &options.distanceBound, &minDistanceBound, &maxDistanceBound, "%f");
-    ImGui::SliderScalar("Radius Bound", ImGuiDataType_Float, &options.radiusBound, &minRadiusBound, &maxRadiusBound, "%f");
+    ImGui::SliderScalar("Bounding Sphere Radius", ImGuiDataType_Float, &options.boundingSphereRadius,
+                        &minBoundingRadius, &maxBoundingRadius, "%f");
+    ImGui::SliderScalar("Distance Bound", ImGuiDataType_Float, &options.distanceBound, &minDistanceBound,
+                        &maxDistanceBound, "%f");
+    ImGui::SliderScalar("Radius Bound", ImGuiDataType_Float, &options.radiusBound, &minRadiusBound, &maxRadiusBound,
+                        "%f");
 }
 
-bool handlePrimitive(Trade::MeshData& original, std::string& expression){
+bool handlePrimitive(Trade::MeshData& original, std::string& expression) {
     bool newMesh = false;
 
     static auto map = makeComboMap();
     static auto current = map.end();
 
-    if (ImGui::BeginCombo("##combo", current != map.end() ? current->name.data() : nullptr)) {
-        for (auto it = map.begin(); it < map.end(); ++it){
-            bool isSelected = (current == it); // You can store your selection however you want, outside or inside your objects
-            if (ImGui::Selectable(it->name.c_str(), isSelected))
+    if(ImGui::BeginCombo("##combo", current != map.end() ? current->name.data() : nullptr)){
+        for(auto it = map.begin(); it < map.end(); ++it){
+            bool isSelected = (current ==
+                               it); // You can store your selection however you want, outside or inside your objects
+            if(ImGui::Selectable(it->name.c_str(), isSelected))
                 current = it;
-            if (isSelected)
+            if(isSelected)
                 ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
         }
         ImGui::EndCombo();
@@ -165,13 +178,13 @@ bool handlePrimitive(Trade::MeshData& original, std::string& expression){
 
     bool hasChanged = false;
     if(current != map.end()){
-        switch (current->type) {
+        switch(current->type) {
             case PrimitiveType::Capsule : {
-                auto& optC = dynamic_cast<CapsuleOptions &>(*current->options);
+                auto& optC = dynamic_cast<CapsuleOptions&>(*current->options);
                 hasChanged = displayCapsuleOptions(optC);
-                if ((hasChanged && track) || buttonPressed) {
+                if((hasChanged && track) || buttonPressed){
                     auto capsule = Primitives::capsule3DSolid(optC.hemisphereRings, optC.cylinderRings,
-                                                              optC.segments, .5f * optC.length / optC.radius);
+                                                              optC.segments, .5f*optC.length/optC.radius);
                     MeshTools::transformPointsInPlace(
                             Matrix4::scaling({optC.radius, optC.radius, optC.radius}),
                             capsule.mutableAttribute<Vector3>(Trade::MeshAttribute::Position));
@@ -181,9 +194,9 @@ bool handlePrimitive(Trade::MeshData& original, std::string& expression){
                 break;
             }
             case PrimitiveType::U : {
-                auto& optU = dynamic_cast<UOptions &>(*current->options);
+                auto& optU = dynamic_cast<UOptions&>(*current->options);
                 hasChanged = displayUOptions(optU);
-                if ((hasChanged && track) || buttonPressed) {
+                if((hasChanged && track) || buttonPressed){
                     original = uShapedSquare(optU.width, optU.height, optU.innerWidth, optU.innerHeight);
                     newMesh = true;
                 }

@@ -2,7 +2,7 @@
 // Created by janos on 7/12/20.
 //
 
-#include "sparse_matrix.h"
+#include "SparseMatrix.h"
 
 #include <Corrade/Containers/GrowableArray.h>
 
@@ -15,9 +15,9 @@ Containers::ArrayView<double> SparseMatrix::row(std::size_t r) {
 }
 
 
-Containers::Array<double> SparseMatrix::reduceRowwise(){
+Containers::Array<double> SparseMatrix::reduceRowwise() {
     Containers::Array<double> rowsum(Containers::ValueInit, numCols);
-    for (int i = 0; i < nnz; ++i) {
+    for(int i = 0; i < nnz; ++i){
         rowsum[cols[i]] += values[i];
     }
     return rowsum;

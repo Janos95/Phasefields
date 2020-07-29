@@ -40,14 +40,13 @@ using namespace CGAL::parameters;
 Mg::Trade::MeshData polygonizeWireframe(
         Cr::Containers::ArrayView<const Mg::Vector3d> const& vertices,
         Cr::Containers::ArrayView<const Mg::Vector3ui> const& triangles,
-        WireframeOptions const& options)
-{
+        WireframeOptions const& options) {
     std::vector<std::pair<UnsignedInt, UnsignedInt>> edges;
-    edges.reserve(3 * triangles.size());
+    edges.reserve(3*triangles.size());
 
-    for (int i = 0; i < triangles.size(); ++i) {
-        for (int j = 0; j < 3; ++j){
-            edges.emplace_back(std::minmax(triangles[i][j], triangles[i][(j+1)%3]));
+    for(int i = 0; i < triangles.size(); ++i){
+        for(int j = 0; j < 3; ++j){
+            edges.emplace_back(std::minmax(triangles[i][j], triangles[i][(j + 1)%3]));
         }
     }
 
@@ -68,10 +67,10 @@ Mg::Trade::MeshData polygonizeWireframe(
     //tree.accelerate_distance_queries();
     //// counts #intersections with a plane query
 
-    const Scalar thicknessSq = options.thickness * options.thickness;
-    auto implicitFunction = [&](Point p){
+    const Scalar thicknessSq = options.thickness*options.thickness;
+    auto implicitFunction = [&](Point p) {
         double min = std::numeric_limits<double>::infinity();
-        for (auto const& [a,b] : edges) {
+        for(auto const&[a, b] : edges){
             Vector3d q{p.x(), p.y(), p.z()};
             min = Mg::Math::min(
                     Mg::Math::Distance::lineSegmentPointSquared(vertices[a], vertices[b], q),
@@ -81,15 +80,15 @@ Mg::Trade::MeshData polygonizeWireframe(
     };
 
     Triangulation tr;            // 3D-Delaunay triangulation
-    C2t3 c2t3 (tr);   // 2D-complex in 3D-Delaunay triangulation
+    C2t3 c2t3(tr);   // 2D-complex in 3D-Delaunay triangulation
     // defining the surface
     ImplicitSurface surface(implicitFunction,             // pointer to function
-                      Sphere(CGAL::ORIGIN, options.boundingSphereRadius)); // bounding sphere
+                            Sphere(CGAL::ORIGIN, options.boundingSphereRadius)); // bounding sphere
     // Note that "2." above is the *squared* radius of the bounding sphere!
     // defining meshing criteria
-    CGAL::Surface_mesh_default_criteria_3<Triangulation> criteria(options.angleBound,  // angular bound
-                                                       options.radiusBound,  // radius bound
-                                                       options.distanceBound); // distance bound
+    CGAL::Surface_mesh_default_criteria_3 <Triangulation> criteria(options.angleBound,  // angular bound
+                                                                   options.radiusBound,  // radius bound
+                                                                   options.distanceBound); // distance bound
     // meshing surface
     CGAL::make_surface_mesh(c2t3, surface, criteria, CGAL::Non_manifold_tag());
 

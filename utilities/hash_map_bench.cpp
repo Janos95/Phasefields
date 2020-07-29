@@ -12,11 +12,12 @@
 #include <Magnum/Math/Tags.h>
 
 using namespace Magnum;
+
 struct Edge {
     unsigned int a, b;
 
 
-    bool operator==(const Edge& other) const{
+    bool operator==(const Edge& other) const {
         return a == other.a && b == other.b;
     }
 };
@@ -46,30 +47,30 @@ struct Mesh {
     Containers::Array<HalfEdge> halfedges;
 
     Mesh(Trade::MeshData md) :
-        meshData(std::move(md)), halfedges(Containers::NoInit, meshData.indexCount()),
-        faces(Containers::NoInit, meshData.indexCount() / 3)
-    {
-        CORRADE_ASSERT(meshData.primitive() == MeshPrimitive::Triangles, "Can only construct mesh from triangle primitive", );
+            meshData(std::move(md)), halfedges(Containers::NoInit, meshData.indexCount()),
+            faces(Containers::NoInit, meshData.indexCount()/3) {
+        CORRADE_ASSERT(meshData.primitive() == MeshPrimitive::Triangles,
+                       "Can only construct mesh from triangle primitive",);
 
         auto hash = [](Edge const& e) noexcept { return hash_int(reinterpret_cast<uint64_t const&>(e)); };
         std::unordered_map<Edge, int, decltype(hash)> edges(meshData.indexCount(), hash);
         //HashMap<Edge, int, decltype(hash)> edges(meshData.indexCount(), hash);
         auto triangles = Containers::arrayCast<const Vector3ui>(meshData.indexData());
-        for (int i = 0; i < triangles.size(); ++i) {
-            for (int j = 0; j < 3; ++j) {
-                auto& he = halfedges[3 * i + j];
+        for(int i = 0; i < triangles.size(); ++i){
+            for(int j = 0; j < 3; ++j){
+                auto& he = halfedges[3*i + j];
                 he.face = i;
-                auto k = (j + 1) % 3;
-                he.next = 3 * i + k;
+                auto k = (j + 1)%3;
+                he.next = 3*i + k;
                 he.vertex = triangles[i][k];
                 he.opposite = HalfEdge::Invalid;
-                auto [it, inserted] = edges.try_emplace(Edge{triangles[i][j], triangles[i][k]}, i);
-                if (!inserted) {
+                auto[it, inserted] = edges.try_emplace(Edge{triangles[i][j], triangles[i][k]}, i);
+                if(!inserted){
                     auto at = it->second; /* adjacent triangle */
-                    for (int l = 0; l < 3; ++l) {
-                        if(halfedges[3 * at + l].next == triangles[i][j]){
-                            he.opposite = 3 * at + l;
-                            halfedges[3 * at + l].opposite = 3 * i + j;
+                    for(int l = 0; l < 3; ++l){
+                        if(halfedges[3*at + l].next == triangles[i][j]){
+                            he.opposite = 3*at + l;
+                            halfedges[3*at + l].opposite = 3*i + j;
                             break;
                         }
                     }
@@ -79,14 +80,15 @@ struct Mesh {
     }
 
     friend vertex_descriptor add_vertex(Mesh& mesh);
+
     friend half_edge_descriptor add_edge(Mesh& mesh, vertex_descriptor a, vertex_descriptor b);
 
-    void triangulate(){
-        for (auto [hed, degree] : faces) {
+    void triangulate() {
+        for(auto[hed, degree] : faces){
             if(degree == 3) continue;
             Vector3d mid{Math::ZeroInit};
             auto vd = add_vertex(*this);
-            for (UnsignedInt i = 0; i < degree; ++i) {
+            for(UnsignedInt i = 0; i < degree; ++i){
                 auto const& he = halfedges[hed];
                 add_edge(*this, he.vertex, vd);
                 //mid += vertices[he.vertex];
@@ -97,22 +99,22 @@ struct Mesh {
     }
 };
 
-Mesh::vertex_descriptor add_vertex(Mesh& mesh){
+Mesh::vertex_descriptor add_vertex(Mesh& mesh) {
     //mesh.meshData.
     //Containers::arrayAppend(mesh.vertices, Containers::InPlaceInit, Math::ZeroInit);
     return mesh.meshData.vertexCount() - 1;
 }
 
-Mesh::half_edge_descriptor add_edge(Mesh& mesh, Mesh::vertex_descriptor a, Mesh::vertex_descriptor b){
+Mesh::half_edge_descriptor add_edge(Mesh& mesh, Mesh::vertex_descriptor a, Mesh::vertex_descriptor b) {
     //Containers::arrayAppend(mesh.halfedges, Containers::InPlaceInit, next, face, opposite, b);
     return mesh.halfedges.size() - 1;
 }
 
-int main(){
+int main() {
 
     auto hash = [](int a) noexcept { return hash_int(a); };
     HashMap<int, int, decltype(hash)> map;
-    for (int i = 0; i < 1000000; ++i) {
+    for(int i = 0; i < 1000000; ++i){
         map.tryEmplace(Corrade::Containers::InPlaceInit, rand(), rand());
     }
 }

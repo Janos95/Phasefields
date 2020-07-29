@@ -11,25 +11,11 @@ pkg_check_modules(Adolc REQUIRED IMPORTED_TARGET adolc)
 set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 
 add_library(cost STATIC
-        bfs.hpp
-        c1_functions.hpp
-        connectedness_constraint.hpp
-        connectedness_constraint.h
-        connectedness_constraint.cpp
-        cost.h
-        dijkstra.hpp
         fem.cpp
         fem.hpp
-        graph_common.hpp
         modica_mortola.cpp
         modica_mortola.hpp
-        stopping_criteria.cpp
-        stopping_criteria.hpp
-        union_find.cpp
-        union_find.hpp
-        strang_rules.hpp
-        phasefield_tree.hpp
-        tree_functional.cpp tree_functional.h)
+        strang_rules.hpp)
 
 target_include_directories(cost PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)

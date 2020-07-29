@@ -22,6 +22,6 @@ int getTag() {
     return tag;
 }
 
-void deleteTag(int tag){
+void deleteTag(int tag) {
     usedTags.erase(tag);
 }

@@ -17,15 +17,15 @@ namespace detail {
 #    if defined(__GNUC__) || defined(__clang__)
 #        pragma GCC diagnostic push
 #        pragma GCC diagnostic ignored "-Wpedantic"
-    using uint128_t = unsigned __int128;
+using uint128_t = unsigned __int128;
 #        pragma GCC diagnostic pop
 #    endif
 
-    inline uint64_t umul128(uint64_t a, uint64_t b, uint64_t *high) noexcept {
-        auto result = static_cast<uint128_t>(a) * static_cast<uint128_t>(b);
-        *high = static_cast<uint64_t>(result >> 64U);
-        return static_cast<uint64_t>(result);
-    }
+inline uint64_t umul128(uint64_t a, uint64_t b, uint64_t* high) noexcept {
+    auto result = static_cast<uint128_t>(a)*static_cast<uint128_t>(b);
+    *high = static_cast<uint64_t>(result >> 64U);
+    return static_cast<uint64_t>(result);
+}
 
 #elif (defined(_MSC_VER) && ROBIN_HOOD(BITNESS) == 64)
 #    define ROBIN_HOOD_PRIVATE_DEFINITION_HAS_UMUL128() 1
@@ -34,14 +34,14 @@ namespace detail {
 #    ifndef _M_ARM64
 #        pragma intrinsic(_umul128)
 #    endif
-    inline uint64_t umul128(uint64_t a, uint64_t b, uint64_t* high) noexcept {
+inline uint64_t umul128(uint64_t a, uint64_t b, uint64_t* high) noexcept {
 #    ifdef _M_ARM64
-        *high = __umulh(a, b);
-        return ((uint64_t)(a)) * (b);
+    *high = __umulh(a, b);
+    return ((uint64_t)(a)) * (b);
 #    else
-        return _umul128(a, b, high);
+    return _umul128(a, b, high);
 #    endif
-    }
+}
 #else
 #    define ROBIN_HOOD_PRIVATE_DEFINITION_HAS_UMUL128() 0
 #endif

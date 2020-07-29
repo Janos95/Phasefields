@@ -3,33 +3,65 @@
 //
 
 
-#include "functional.h"
-#include "sparse_matrix.h"
+#include "Functional.h"
+#include "SparseMatrix.h"
 #include "tag.h"
 
+#include <Corrade/Containers/GrowableArray.h>
 #include <Magnum/Math/Functions.h>
 
 #include <adolc/adouble.h>
 #include <adolc/taping.h>
 #include <adolc/adolc_sparse.h>
 
-#include <imgui.h>
+//#include <imgui.h>
 
 using namespace Magnum;
 
-Functional::~Functional(){
+Functional::~Functional() {
     if(erased){
         destroy(erased);
-        deleteTag(tag);
+        //deleteTag(tag);
     }
 }
 
-void Functional::operator()(const double* parameters, const double* weights, double* out, double* gradP, double* gradW) const {
-    eval(erased, parameters, weights, out, gradP, gradW);
-}
+//void Functional::operator()(const double* parameters, const double* weights, double* out, double* gradP,
+//                            double* gradW) const {
+//    eval(erased, parameters, weights, out, gradP, gradW);
+//}
+//
+//void Functional::operator()(const adouble* params, const adouble* weights, adouble* out) const {
+//    ad(erased, params, weights, out);
+//}
 
-void Functional::operator()(const adouble* params, const adouble* weights, adouble* out) const {
-    ad(erased, params, weights, out);
+void Functional::operator()(Containers::ArrayView<const double> parameters,
+                Containers::ArrayView<const double> weights,
+                double& out,
+                Containers::ArrayView<double> gradP,
+                Containers::ArrayView<double> gradW) const {
+
+    auto n = numParameters();
+    double cost = 0;
+    evalWithGrad(erased, parameters, weights, cost, gradP, gradW);
+
+    /* apply scaling and loss function */
+    Mg::Double rho[3], phi[3] = {cost, 1., 0.};
+    if(scaling){
+        auto s = *scaling;
+        for (auto& r : phi) r *= s;
+    }
+
+    loss(phi[0], rho);
+
+    out += rho[0];
+
+    if (gradP || gradW) {
+        double lossGrad = rho[1] * phi[1];
+        for(std::size_t i = 0; i < n; ++i) {
+            if(gradP) gradP[i] *= lossGrad;
+            if(gradW) gradW[i] *= lossGrad;
+        }
+    }
 }
 
 //void Functional::operator()(
@@ -136,51 +168,53 @@ void Functional::operator()(const adouble* params, const adouble* weights, adoub
 //    trace_off();
 //}
 
-OptionsResultSet Functional::drawImGuiOptions(){
+OptionsResultSet Functional::drawImGuiOptions() {
     if(options){
-        ImGui::Checkbox("Check Derivatives", &checkDerivatives);
+        //ImGui::Checkbox("Check Derivatives", &checkDerivatives);
         return options(erased);
     }
     return {};
+
 }
 
-void Functional::updateInternalDataStructures(){
+void Functional::updateInternalDataStructures() {
     update(erased);
-    isFirstEvaluation = true;
+    Containers::arrayResize(tempGradP, Containers::DefaultInit, numParameters());
+    Containers::arrayResize(tempGradW, Containers::DefaultInit, numParameters());
+    //isFirstEvaluation = true;
 }
 
-[[nodiscard]] std::size_t Functional::numParameters() const{
+[[nodiscard]] std::size_t Functional::numParameters() const {
     return params(erased);
 }
 
-void swap(Functional& f1, Functional& f2){
+void swap(Functional& f1, Functional& f2) {
     std::swap(f1.erased, f2.erased);
     std::swap(f1.destroy, f2.destroy);
-    std::swap(f1.move, f2.move);
     std::swap(f1.params, f2.params);
-    std::swap(f1.residuals, f2.residuals);
+    //std::swap(f1.residuals, f2.residuals);
     std::swap(f1.vis, f2.vis);
     std::swap(f1.off, f2.off);
     std::swap(f1.update, f2.update);
     std::swap(f1.options, f2.options);
-    std::swap(f1.eval, f2.eval);
-    std::swap(f1.ad, f2.ad);
-    std::swap(f1.tag, f2.tag);
-    std::swap(f1.isFirstEvaluation, f2.isFirstEvaluation);
+    std::swap(f1.evalWithGrad, f2.evalWithGrad);
+    //std::swap(f1.ad, f2.ad);
+    //std::swap(f1.tag, f2.tag);
+    //std::swap(f1.isFirstEvaluation, f2.isFirstEvaluation);
     std::swap(f1.alwaysRetape, f2.alwaysRetape);
 
-    /* do two phase lookup */
+    /* two phase lookup */
     using std::swap;
     swap(f1.loss, f2.loss);
     swap(f1.scaling, f2.scaling);
 }
 
-Functional::Functional(Functional&& other) noexcept{
+Functional::Functional(Functional&& other) noexcept {
     using std::swap;
     swap(*this, other);
 }
 
-Functional& Functional::operator=(Functional&& other) noexcept{
+Functional& Functional::operator=(Functional&& other) noexcept {
     using std::swap;
     swap(*this, other);
     return *this;
@@ -191,6 +225,7 @@ void Functional::updateVisualization(VisualizationProxy& proxy) {
     if(vis)
         vis(erased, proxy);
 }
+
 void Functional::turnVisualizationOff() {
     if(off)
         off(erased);

@@ -6,20 +6,22 @@
 
 
 #include "visualization_proxy.hpp"
-#include "functional.h"
-#include "optimization.h"
-#include "sparse_matrix.h"
+#include "Functional.h"
+#include "Optimization.h"
+#include "SparseMatrix.h"
 
 #include <Corrade/Containers/Array.h>
 
-namespace solver {
+namespace Solver {
 
 struct Problem {
 
     explicit Problem();
+
     ~Problem();
 
     [[nodiscard]] std::size_t numParameters() const;
+
     [[nodiscard]] std::size_t numConstraints() const;
 
     Containers::Array<Functional> objectives, constraints;

@@ -9,6 +9,7 @@
 #include <Magnum/Magnum.h>
 
 namespace Mg = Magnum;
+
 /* Implementation of Ken Shoemake's arcball camera with smooth navigation
    feature: https://www.talisman.org/~erlkonig/misc/shoemake92-arcball.pdf */
 class ArcBall {
@@ -34,6 +35,7 @@ public:
     /* Get/set the amount of lagging such that the camera will (slowly)
        smoothly navigate. Lagging must be in [0, 1) */
     Mg::Float lagging() const { return _lagging; }
+
     void setLagging(Mg::Float lagging);
 
     /* Initialize the first (screen) mouse position for camera

@@ -14,15 +14,17 @@
 
 namespace detail {
 template<class T>
-constexpr decltype(auto) move(T &&t) noexcept {
-    return static_cast<typename std::remove_reference<T>::type &&>(t);
+constexpr decltype(auto) move(T&& t) noexcept {
+    return static_cast<typename std::remove_reference<T>::type&&>(t);
 }
 
 template<class T>
-struct IsDestructiveMovable : std::false_type {};
+struct IsDestructiveMovable : std::false_type {
+};
 
 template<class T> requires std::is_trivial_v<T>
-struct IsDestructiveMovable<T> : std::true_type {};
+struct IsDestructiveMovable<T> : std::true_type {
+};
 
 template<class T>
 constexpr bool IsDestructiveMovableV = IsDestructiveMovable<T>::value;
@@ -30,17 +32,19 @@ constexpr bool IsDestructiveMovableV = IsDestructiveMovable<T>::value;
 }
 
 template<class T>
-struct IsDestructiveMovable : std::false_type {};
+struct IsDestructiveMovable : std::false_type {
+};
 
 std::size_t nextPow2(std::uint64_t x) {
-    return x == 1ul ? 1ul : 1ul << (64ul - __builtin_clzl(x-1));
+    return x == 1ul ? 1ul : 1ul << (64ul - __builtin_clzl(x - 1));
 }
 
 /* std::pair is not trivially copyable, even if its dependant types are */
 template<class K, class V>
 struct Element {
     template<class... Args>
-    Element(K&& k, Args&&... args) : key((K&&)k), value((Args&&)args...) {}
+    Element(K&& k, Args&& ... args) : key((K&&) k), value((Args&&) args...) {}
+
     K key;
     V value;
 };
@@ -66,20 +70,20 @@ struct BucketInfo {
         return data & distanceMask < other.data & distanceMask;
     }
 
-    bool isEmpty(){ return data & emptyMask; }
+    bool isEmpty() { return data & emptyMask; }
 
     std::uint64_t data;
 };
 
 template<class K, class T>
-struct Bucket{
+struct Bucket {
 
     //static_assert(std::is_trivial_v<Bucket>);
 
     using Type = Element<K, T>;
     static constexpr bool StoresTruncatedHash = Width >= 8;
 
-    void swapWithValueInBucket(std::int16_t& dist, std::int16_t& hash, Type& value){
+    void swapWithValueInBucket(std::int16_t& dist, std::int16_t& hash, Type& value) {
         using std::swap;
         swap(element(), value);
         swap(distFromIdealBucket, dist);
@@ -89,28 +93,29 @@ struct Bucket{
     }
 
     template<class... Args>
-    void setEmptyBucket(std::int16_t dist, std::int16_t hash, K&& key, Args&&... args){
+    void setEmptyBucket(std::int16_t dist, std::int16_t hash, K&& key, Args&& ... args) {
         distFromIdealBucket = dist;
         if constexpr(StoresTruncatedHash) this->hash = hash;
-        ::new(static_cast<void*>(data)) Type{(K&&)key, (Args&&)args...};
+        ::new(static_cast<void*>(data)) Type{(K&&) key, (Args&&) args...};
     }
 
     void setEmptyBucket(std::int16_t dist, Bucket& other) noexcept(std::is_nothrow_move_constructible_v<Type>) {
         if constexpr(StoresTruncatedHash) this->hash = other.hash;
         distFromIdealBucket = dist;
-        ::new(static_cast<void*>(data)) Type{(Type&&)other};
+        ::new(static_cast<void*>(data)) Type{(Type&&) other};
     }
 
     bool empty() { return distFromIdealBucket == EMPTY; }
 
-    void clear(){
+    void clear() {
         destroy();
         distFromIdealBucket = EMPTY;
     }
 
-    void destroy(){ reinterpret_cast<Type*>(data)->~Type(); }
+    void destroy() { reinterpret_cast<Type*>(data)->~Type(); }
 
     Type& element() { return reinterpret_cast<Type&>(*data); }
+
     Type const& element() const { return reinterpret_cast<Type const&>(*data); }
 
     static constexpr std::int16_t EMPTY = -1;
@@ -123,7 +128,7 @@ struct Bucket{
 template<class Key, class T, class Hash, int Width = 4>
 struct HashMap {
     template<int Width>
-    using B = Bucket<Key,T,Width>;
+    using B = Bucket<Key, T, Width>;
 
     using BucketType = typename SelectBucket<B, 64>::type;
     using TruncatedHashType = typename BucketType::TruncatedHashType;
@@ -138,8 +143,8 @@ struct HashMap {
         BucketType* bucket;
 
         Iterator& operator++() {
-            while(true) {
-                if(bucket->lastBucket) {
+            while(true){
+                if(bucket->lastBucket){
                     ++bucket;
                     return *this;
                 }
@@ -149,21 +154,25 @@ struct HashMap {
             }
         }
 
-        Iterator operator++(int) & {
+        Iterator operator++(int)& {
             Iterator tmp(*this);
             ++*this;
             return tmp;
         }
 
-        ElementType& operator*() const{
+        ElementType& operator*() const {
             return bucket->element;
         }
 
         template<bool IsConst1, bool IsConst2>
-        friend bool operator!=(Iterator<IsConst1> const& lhs, Iterator<IsConst2> const& rhs) { return lhs.bucket != rhs.bucket; }
+        friend bool operator!=(Iterator<IsConst1> const& lhs, Iterator<IsConst2> const& rhs) {
+            return lhs.bucket != rhs.bucket;
+        }
 
         template<bool IsConst1, bool IsConst2>
-        friend bool operator==(Iterator<IsConst1> const& lhs, Iterator<IsConst2> const& rhs) { return lhs.bucket == rhs.bucket; }
+        friend bool operator==(Iterator<IsConst1> const& lhs, Iterator<IsConst2> const& rhs) {
+            return lhs.bucket == rhs.bucket;
+        }
 
     };
 
@@ -173,9 +182,8 @@ struct HashMap {
     HashMap() : numBuckets(0), buckets(0), mask(0) {}
 
     explicit HashMap(std::size_t n, Hash const& hash = {}) :
-        numBuckets(nextPow2(n)), mask(numBuckets - 1), buckets(std::malloc(numBuckets * sizeof(BucketType)))
-    {
-        for (int i = 0; i < numBuckets; ++i) {
+            numBuckets(nextPow2(n)), mask(numBuckets - 1), buckets(std::malloc(numBuckets*sizeof(BucketType))) {
+        for(int i = 0; i < numBuckets; ++i){
             buckets[i].distFromIdealBucket = BucketType::Empty;
             buckets[i].lastBucket = false;
         }
@@ -183,15 +191,18 @@ struct HashMap {
 
     iterator begin() noexcept {
         std::size_t i = 0;
-        while (i++ < numBuckets && buckets[i].empty());
+        while(i++ < numBuckets && buckets[i].empty());
         return {buckets + i};
     }
+
     const_iterator begin() const noexcept { return {const_cast<HashMap*>(this)->begin()}; }
 
-    iterator end(){ return {buckets + numBuckets}; }
+    iterator end() { return {buckets + numBuckets}; }
+
     const_iterator end() const { return {buckets + numBuckets}; }
 
     [[nodiscard]] bool empty() const noexcept { return numElements == 0; }
+
     [[nodiscard]] std::size_t size() const noexcept { return numElements; }
 
     void eraseFromBucket(iterator pos) {
@@ -201,7 +212,7 @@ struct HashMap {
         std::size_t previousIdx = pos.bucket - buckets;
         std::size_t idx = nextBucket(previousIdx);
 
-        while(buckets[idx].distFromIdealBucket > 0) {
+        while(buckets[idx].distFromIdealBucket > 0){
             const std::int16_t newDistance = buckets[idx].distFromIdealBucket - 1;
             buckets[previousIdx].setEmptyBucket(newDistance, buckets[idx].element());
             buckets[idx].clear();
@@ -211,20 +222,20 @@ struct HashMap {
         }
     }
 
-    std::size_t nextBucket(std::size_t idx){ return (idx + 1) & mask; }
+    std::size_t nextBucket(std::size_t idx) { return (idx + 1) & mask; }
 
     template<class... Args>
-    Pair<iterator, bool> tryEmplace(Corrade::Containers::InPlaceInitT, Key&& key, Args&&... args) {
+    Pair<iterator, bool> tryEmplace(Corrade::Containers::InPlaceInitT, Key&& key, Args&& ... args) {
         const std::size_t hash = Hash{}(key);
 
         std::size_t idx = hash & mask;
         std::int32_t distFromIdealBucket = 0;
 
-        while(distFromIdealBucket <= buckets[idx].distFromIdealBucket) {
+        while(distFromIdealBucket <= buckets[idx].distFromIdealBucket){
             if constexpr(UseStoredHashOnLookUp && StoresTruncatedHash){
-                if(buckets[idx].hash == (TruncatedHashType)hash && key == buckets[idx].key())
+                if(buckets[idx].hash == (TruncatedHashType) hash && key == buckets[idx].key())
                     return {iterator(buckets + idx), false};
-            } else if (key == buckets[idx].element().key){
+            } else if(key == buckets[idx].element().key){
                 return {iterator(buckets + idx), false};
             }
 
@@ -232,26 +243,26 @@ struct HashMap {
             ++distFromIdealBucket;
         }
 
-        if(rehashOnExtremeLoad()) {
+        if(rehashOnExtremeLoad()){
             idx = hash & mask;
             distFromIdealBucket = 0;
 
-            while(distFromIdealBucket <= buckets[idx].distFromIdealBucket) {
+            while(distFromIdealBucket <= buckets[idx].distFromIdealBucket){
                 idx = nextBucket(idx);
                 ++distFromIdealBucket;
             }
         }
 
         if(buckets[idx].empty()){
-            buckets[idx].setEmptyBucket(distFromIdealBucket, hash, (Key&&)key, (Args&&)args...);
-        } else {
+            buckets[idx].setEmptyBucket(distFromIdealBucket, hash, (Key&&) key, (Args&&) args...);
+        } else{
             Type value{key, args...};
             buckets[idx].swapWithValueInBucket(distFromIdealBucket, hash, value);
             idx = nextBucket(idx);
             distFromIdealBucket++;
 
-            while(!buckets[idx].empty()) {
-                if(distFromIdealBucket > buckets[idx].dist_from_ideal_bucket()) {
+            while(!buckets[idx].empty()){
+                if(distFromIdealBucket > buckets[idx].dist_from_ideal_bucket()){
                     if(distFromIdealBucket >= maxDistFromIdealBucket)
                         growOnNextInsert = true;
 
@@ -269,8 +280,9 @@ struct HashMap {
         return Pair{iterator{buckets + idx}, true};
     }
 
-    T& operator[](Key&& key) { return tryEmplace((Key&&)key).first->value; }
-    T const& operator[](Key&& key) const { return tryEmplace((Key&&)key).first->value; }
+    T& operator[](Key&& key) { return tryEmplace((Key&&) key).first->value; }
+
+    T const& operator[](Key&& key) const { return tryEmplace((Key&&) key).first->value; }
 
     iterator find(Key const& key) {
 
@@ -289,7 +301,7 @@ struct HashMap {
         HashMap hashMap(count, Hash{});
 
         const bool useStoredHash = useStoredHashOnRehash(numBuckets);
-        for (int i = 0; i < numBuckets; ++i) {
+        for(int i = 0; i < numBuckets; ++i){
             if(buckets[i].empty()) continue;
 
             std::size_t hash;
@@ -305,13 +317,13 @@ struct HashMap {
         hashMap.destroyOnRehash = true;
     }
 
-    void insertValueOnRehash(std::size_t idx, BucketType& bucket){
-        while(true) {
-            if(bucket.distFromIdealBucket > buckets[idx].distFromIdealBucket) {
-                if(buckets[idx].empty()) {
+    void insertValueOnRehash(std::size_t idx, BucketType& bucket) {
+        while(true){
+            if(bucket.distFromIdealBucket > buckets[idx].distFromIdealBucket){
+                if(buckets[idx].empty()){
                     buckets[idx].set(detail::move(bucket));
                     return;
-                } else {
+                } else{
                     buckets[idx].swap(bucket);
                 }
             }
@@ -322,16 +334,16 @@ struct HashMap {
     }
 
     bool rehashOnExtremeLoad() {
-        if(growOnNextInsert || numElements >= loadThreshold) {
-            rehash(2 * numBuckets);
+        if(growOnNextInsert || numElements >= loadThreshold){
+            rehash(2*numBuckets);
             growOnNextInsert = false;
             return true;
         }
 
-        if(tryShringOnNextInsert) {
+        if(tryShringOnNextInsert){
             tryShringOnNextInsert = false;
-            if(minLoadFactor != 0.0f && loadFactor() < minLoadFactor) {
-                rehash(static_cast<std::size_t>(numElements / maxLoadFactor) + 1);
+            if(minLoadFactor != 0.0f && loadFactor() < minLoadFactor){
+                rehash(static_cast<std::size_t>(numElements/maxLoadFactor) + 1);
                 return true;
             }
         }
@@ -344,7 +356,7 @@ struct HashMap {
         return float(numElements)/float(numBuckets);
     }
 
-    void swap(HashMap& other){
+    void swap(HashMap& other) {
         using std::swap;
         swap(buckets, other.buckets);
         swap(mask, other.mask);
@@ -357,10 +369,10 @@ struct HashMap {
         swap(tryShringOnNextInsert, other.tryShringOnNextInsert);
     }
 
-    ~HashMap(){
+    ~HashMap() {
         if(!destroyOnRehash){
-            for (int i = 0; i < numBuckets; ++i) {
-                if(buckets[i].distFromIdealBucket >=0)
+            for(int i = 0; i < numBuckets; ++i){
+                if(buckets[i].distFromIdealBucket >= 0)
                     buckets[i].destroy();
             }
         }

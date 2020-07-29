@@ -15,27 +15,24 @@
 #include <limits>
 
 template<class R>
-class BreadthFirstSearch
-{
+class BreadthFirstSearch {
 public:
 
-    explicit BreadthFirstSearch(const R& adjacencyList, int source):
+    explicit BreadthFirstSearch(const R& adjacencyList, int source) :
             m_adjacencyList(adjacencyList),
             m_prev(Cr::Containers::DirectInit, adjacencyList.size(), -1),
-            m_visited(Cr::Containers::DirectInit, adjacencyList.size(), false)
-    {
+            m_visited(Cr::Containers::DirectInit, adjacencyList.size(), false) {
         m_q.push_back(source);
     }
 
-    bool step(int& v)
-    {
+    bool step(int& v) {
         if(m_q.empty())
             return false;
 
         v = m_q.front();
         m_q.pop_front();
 
-        for(const auto& [w, _]: m_adjacencyList[v]){
+        for(const auto&[w, _]: m_adjacencyList[v]){
             if(!m_visited[w]){
                 m_prev[w] = v;
                 m_visited[w] = true;
@@ -45,19 +42,17 @@ public:
         return true;
     }
 
-    auto run()
-    {
+    auto run() {
         int node;
-        while(step(node))
-            ;
+        while(step(node));
     }
 
     [[nodiscard]] bool isConnected() const {
-        return std::all_of(m_visited.begin(),m_visited.end(), [](const auto& x){ return x; });
+        return std::all_of(m_visited.begin(), m_visited.end(), [](const auto& x) { return x; });
     }
 
     graph::ReversedShortestPath<BreadthFirstSearch> getShortestPathReversed(const int start, const int target) const {
-        auto &self = *this;
+        auto& self = *this;
         CORRADE_INTERNAL_ASSERT(target >= 0 && start >= 0);
         return {{target, self},
                 {start,  self}};

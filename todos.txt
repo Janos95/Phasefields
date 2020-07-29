@@ -1,14 +1,14 @@
 
 high priority
-    * hierarchicall segmentation
+    * multiple phaseses
+        * how to visualize this
     * shape optimization
+        * finish writing up the approach in latex
 
 medium prioritiy
-    ** port to emscripten and make a web demo?
-    * write template wrapper around gsl and use instead of eigen
+    ** port to emscripten and make a web demo? This would required
     * use imgui docking branch
     * images of color map
-    * add serialization
     * implicit surface : fix normals + sample randomly to find multiple connected comp
 
 nice to have algorithms

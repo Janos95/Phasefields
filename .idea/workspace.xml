@@ -9,11 +9,12 @@
       <config projectName="phasefields" targetName="scoped_timer" />
       <config projectName="phasefields" targetName="segmentation" />
       <config projectName="phasefields" targetName="optimization" />
-      <config projectName="phasefields" targetName="visualization" />
+      <config projectName="phasefields" targetName="viewer_RESOURCES-dependencies" />
       <config projectName="phasefields" targetName="viewer" />
       <config projectName="phasefields" targetName="utilities" />
-      <config projectName="phasefields" targetName="viewer_RESOURCES-dependencies" />
+      <config projectName="phasefields" targetName="imguifs" />
       <config projectName="phasefields" targetName="cost" />
+      <config projectName="phasefields" targetName="visualization" />
     </generated>
   </component>
   <component name="CMakeSettings">
@@ -23,37 +24,121 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7a218559-17cb-4777-b814-432adba0c7a1" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/cost/tree_functional.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/cost/tree_functional.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/optimization/tag.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/optimization/tag.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Shaders/CMakeLists.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/imguifs/CMakeLists.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/imguifs/imguifilesystem.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/imguifs/imguifilesystem.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/optimization/Functional.hpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/optimization/PhasefieldTree.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/optimization/Solver.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/optimization/Solver.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cost/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/cost/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/meta_data.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/meta_data.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/bfs.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/bfs.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/c1_functions.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/c1_functions.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/connectedness_constraint.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/connectedness_constraint.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/connectedness_constraint.h" beforeDir="false" afterPath="$PROJECT_DIR$/cost/connectedness_constraint.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/connectedness_constraint.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/connectedness_constraint.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/dijkstra.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/dijkstra.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/fem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/fem.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/fem.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/fem.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/graph_common.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/graph_common.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cost/modica_mortola.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/modica_mortola.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cost/modica_mortola.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/modica_mortola.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cost/phasefield_tree.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/phasefield_tree.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/phasefield_tree.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/PhasefieldTree.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cost/stopping_criteria.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/stopping_criteria.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cost/stopping_criteria.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/stopping_criteria.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/strang_rules.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/strang_rules.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/tree_functional.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/RecursiveProblem.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/tree_functional.h" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/RecursiveProblem.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/union_find.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/union_find.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cost/union_find.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/cost/union_find.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/exact_geodesics/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/exact_geodesics/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/exact_geodesics/geodesic_memory.h" beforeDir="false" afterPath="$PROJECT_DIR$/exact_geodesics/geodesic_memory.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/math/abstract_expression.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/math/abstract_expression.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/math/decomposition.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/math/decomposition.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/math/detail.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/math/detail.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/math/matrix.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/math/matrix.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/math/matrix_expressions.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/math/matrix_expressions.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/math/openblas_module/OpenBLASConfig.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/math/openblas_module/OpenBLASConfig.cmake" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/math/openblas_module/OpenBLASConfigVersion.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/math/openblas_module/OpenBLASConfigVersion.cmake" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/math/openblas_module/OpenBLASTarget-release.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/math/openblas_module/OpenBLASTarget-release.cmake" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/math/openblas_module/OpenBLASTargets.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/math/openblas_module/OpenBLASTargets.cmake" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/math/openblas_module/graph_info.json" beforeDir="false" afterPath="$PROJECT_DIR$/math/openblas_module/graph_info.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/math/sparse_matrix.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/math/sparse_matrix.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/math/tensor.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/math/tensor.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/math/tensor_expressions.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/math/tensor_expressions.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modules/FindAssimp.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/modules/FindAssimp.cmake" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modules/FindImGui.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/modules/FindImGui.cmake" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/modules/FindSDL2.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/modules/FindSDL2.cmake" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/optimization/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/optimization/functional.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/functional.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/optimization/functional.h" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/functional.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/optimization/functional.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/functional.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/optimization/loss_functions.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/loss_functions.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/optimization/loss_functions.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/loss_functions.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/optimization/problem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/problem.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/optimization/problem.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/problem.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/optimization/solver.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/solver.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/optimization/sparse_matrix.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/sparse_matrix.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/optimization/sparse_matrix.h" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/sparse_matrix.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utilities/types.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/types.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/optimization/functional.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/Functional.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/optimization/functional.h" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/Functional.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/optimization/functional.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/optimization/loss_functions.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/LossFunction.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/optimization/loss_functions.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/LossFunctions.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/optimization/optimization.h" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/Optimization.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/optimization/problem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/Problem.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/optimization/problem.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/Problem.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/optimization/solver.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/optimization/solver.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/optimization/sparse_matrix.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/SparseMatrix.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/optimization/sparse_matrix.h" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/SparseMatrix.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/optimization/tag.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/tag.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/optimization/tag.h" beforeDir="false" afterPath="$PROJECT_DIR$/optimization/tag.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polygonizer/exprtk.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/polygonizer/exprtk.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polygonizer/isotropic_remeshing.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/polygonizer/isotropic_remeshing.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polygonizer/polygonize_expression.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/polygonizer/polygonize_expression.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/polygonizer/polygonize_wireframe.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/polygonizer/polygonize_wireframe.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/connectedness_constraint_test.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/connectedness_constraint_test.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/dijkstra_test.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/dijkstra_test.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/fw_test.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/fw_test.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/modica_mortola_gradient_test.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/modica_mortola_gradient_test.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/quadrature_test.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/tests/quadrature_test.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/todos.txt" beforeDir="false" afterPath="$PROJECT_DIR$/todos.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/detail/pointer_int_pair.h" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/detail/pointer_int_pair.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/detail/pointer_like_type_traits.h" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/detail/pointer_like_type_traits.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/detail/pointer_union.h" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/detail/pointer_union.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/function_ref.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/FunctionRef.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/hash.h" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/hash.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/hash_map.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/hash_map.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/hash_map_bench.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/hash_map_bench.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/normalizeInto.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/normalizeInto.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/permutations.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/permutations.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/permute.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/permute.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/robin_growth_policy.h" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/robin_growth_policy.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/robin_hash.h" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/robin_hash.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/robin_map.h" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/robin_map.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/robin_set.h" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/robin_set.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/shared_ressource.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/shared_ressource.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/small_array.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/small_array.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/smart_enum.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/SmartEnum.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/test.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/test.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/unique_function.h" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/UniqueFunction.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utilities/y_combinator.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/utilities/y_combinator.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/viewer/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/visualization/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/visualization/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/visualization_proxy/CMakeLists.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/visualization_proxy/visualization_proxy.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/visualization/visualization_proxy.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/visualization_proxy/visualization_proxy.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/visualization/visualization_proxy.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/arc_ball.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/arc_ball.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/arc_ball.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/arc_ball.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/arc_ball_camera.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/arc_ball_camera.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/dirent_portable.h" beforeDir="false" afterPath="$PROJECT_DIR$/imguifs/dirent_portable.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/imguifilesystem.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/imguifilesystem.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/mesh_io.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/mesh_io.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/mesh_io.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/mesh_io.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/optimization_context.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/optimization_context.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/primitives.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/primitives.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/primitives.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/primitives.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/subdivision.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/subdivision.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/viewer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/viewer.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/viewer/viewer.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/viewer/viewer.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/visualization/visualization_proxy.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/visualization/visualization_proxy.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/visualization/visualization_proxy.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/visualization/visualization_proxy.hpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -76,7 +161,7 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="OCResolveContextSettings">
-    <option name="configuration" value="0-Debug-cost" />
+    <option name="configuration" value="0-Debug-optimization" />
   </component>
   <component name="ProjectId" id="1bcYkVCyNHAfUZDmiIqytUZhlbi" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -87,9 +172,10 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="cf.first.check.clang-format" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../libraries/branches/magnum-integration" />
     <property name="node.js.detected.package.eslint" value="true" />
     <property name="node.js.detected.package.tslint" value="true" />
     <property name="node.js.path.for.package.eslint" value="project" />
@@ -99,7 +185,7 @@
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
     <property name="nodejs_package_manager_path" value="npm" />
-    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
+    <property name="settings.editor.selected.configurable" value="preferences.sourceCode.C/C++" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
@@ -108,20 +194,20 @@
       <recent name="$PROJECT_DIR$/math" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/visualization" />
-      <recent name="$PROJECT_DIR$/visualization_proxy" />
-      <recent name="$PROJECT_DIR$/viewer" />
+      <recent name="$PROJECT_DIR$/imguifs" />
       <recent name="$PROJECT_DIR$/utilities" />
       <recent name="$PROJECT_DIR$/optimization" />
+      <recent name="$PROJECT_DIR$/visualization" />
+      <recent name="$PROJECT_DIR$/visualization_proxy" />
     </key>
   </component>
   <component name="RunManager" selected="CMake Application.segmentation">
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true">
+    <configuration name="cost" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="cost" CONFIG_NAME="Debug-default">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="cost" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="cost" CONFIG_NAME="Debug-default">
+    <configuration name="imguifs" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="phasefields" TARGET_NAME="imguifs" CONFIG_NAME="Debug-default">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -168,6 +254,7 @@
     </configuration>
     <list>
       <item itemvalue="CMake Application.cost" />
+      <item itemvalue="CMake Application.imguifs" />
       <item itemvalue="CMake Application.optimization" />
       <item itemvalue="CMake Application.scoped_timer" />
       <item itemvalue="CMake Application.segmentation" />
@@ -264,7 +351,13 @@
       <workItem from="1594910733286" duration="3851000" />
       <workItem from="1595239759628" duration="424000" />
       <workItem from="1595240988073" duration="26924000" />
-      <workItem from="1595322254308" duration="8367000" />
+      <workItem from="1595322254308" duration="11563000" />
+      <workItem from="1595679710944" duration="13344000" />
+      <workItem from="1595753329811" duration="19936000" />
+      <workItem from="1595839053170" duration="2000" />
+      <workItem from="1595839908326" duration="22829000" />
+      <workItem from="1595894554408" duration="527000" />
+      <workItem from="1595923237342" duration="669000" />
     </task>
     <servers />
   </component>
@@ -302,10 +395,10 @@
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="398" y="249" key="#xdebugger.evaluate/0.0.2560.1080@0.0.2560.1080" timestamp="1589806278345" />
-    <state x="1084" y="62" width="424" height="472" key="FileChooserDialogImpl" timestamp="1595282858754">
+    <state x="1084" y="-50" width="528" height="635" key="FileChooserDialogImpl" timestamp="1595926100798">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="1084" y="62" width="424" height="472" key="FileChooserDialogImpl/0.0.2560.1080@0.0.2560.1080" timestamp="1595282858754" />
+    <state x="1084" y="-50" width="528" height="635" key="FileChooserDialogImpl/0.0.2560.1080@0.0.2560.1080" timestamp="1595926100798" />
     <state width="2508" height="44" key="GridCell.Tab.0.bottom" timestamp="1590434962462">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
@@ -346,22 +439,22 @@
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="640" height="476" key="ImportCMakeProjectWizard.topPanel/0.0.2560.1080@0.0.2560.1080" timestamp="1593084563862" />
-    <state x="459" y="9" width="1180" height="751" key="SettingsEditor" timestamp="1594682084903">
+    <state x="733" y="19" width="1180" height="751" key="SettingsEditor" timestamp="1595778443241">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="459" y="9" width="1180" height="751" key="SettingsEditor/0.0.2560.1080@0.0.2560.1080" timestamp="1594682084903" />
+    <state x="733" y="19" width="1180" height="751" key="SettingsEditor/0.0.2560.1080@0.0.2560.1080" timestamp="1595778443241" />
     <state x="767" y="30" width="1338" height="898" key="SettingsEditor/70.27.2490.1053@70.27.2490.1053" timestamp="1591544258228" />
-    <state x="897" y="-294" width="756" height="625" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1594901998029">
+    <state x="897" y="-438" width="756" height="625" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1595863823095">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="897" y="-294" width="756" height="625" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.2560.1080@0.0.2560.1080" timestamp="1594901998029" />
+    <state x="897" y="-438" width="756" height="625" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.2560.1080@0.0.2560.1080" timestamp="1595863823095" />
     <state x="944" y="253" width="672" height="681" key="run.anything.popup" timestamp="1589899023560">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="944" y="253" width="672" height="681" key="run.anything.popup/0.0.2560.1080@0.0.2560.1080" timestamp="1589899023560" />
-    <state x="303" y="251" width="672" height="678" key="search.everywhere.popup" timestamp="1594637707664">
+    <state x="303" y="251" width="672" height="678" key="search.everywhere.popup" timestamp="1595840631303">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="303" y="251" width="672" height="678" key="search.everywhere.popup/0.0.2560.1080@0.0.2560.1080" timestamp="1594637707664" />
+    <state x="303" y="251" width="672" height="678" key="search.everywhere.popup/0.0.2560.1080@0.0.2560.1080" timestamp="1595840631303" />
   </component>
 </project>

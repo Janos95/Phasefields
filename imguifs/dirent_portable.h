@@ -54,7 +54,9 @@
  */
 
 #if (!defined(_WIN32) && !defined(_WIN64))
+
 #	include <dirent.h>
+
 #else // #if (!defined(_WIN32) && !defined(_WIN64))
 
 #ifndef DIRENT_H

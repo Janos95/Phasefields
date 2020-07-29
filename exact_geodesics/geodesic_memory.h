@@ -181,7 +181,7 @@ public:
 	unsigned capacity()
 	{
 		return (unsigned)floor((double)m_num_bytes/(double)sizeof(T));
-	};
+	}
 
 private:
 

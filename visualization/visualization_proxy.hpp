@@ -5,6 +5,7 @@
 #pragma once
 
 #include "types.hpp"
+#include "PhasefieldTree.h"
 
 #include <Corrade/Containers/ArrayView.h>
 #include <Corrade/Containers/Array.h>
@@ -15,17 +16,19 @@ struct VisualizationProxy {
 
     VisualizationProxy(Viewer&);
 
-    void setFaceColors(Containers::ArrayView<double>& data);
-    void setFaceColors(Containers::ArrayView<Mg::Color3ub>& data);
+    //void setFaceColors(Containers::ArrayView<double>& data);
+    //void setFaceColors(Containers::ArrayView<Mg::Color3ub>& data);
     void setVertexColors(Containers::ArrayView<double>& data);
-    void resize();
+    void setVertexColors(PhasefieldTree& tree);
 
     void update();
 
     bool updateFaceTexture = false;
-    bool updateVertexUvs = false;
-    Containers::Array<Mg::Color3ub> faceColors;
+    bool updateVertexBuffer = false;
+    //Containers::Array<Mg::Color3ub> faceColors;
     Viewer& viewer;
+
+    Containers::Array<Mg::Color4> colors;
 };
 
 

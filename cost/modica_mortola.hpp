@@ -4,17 +4,12 @@
 
 #pragma once
 
+#include <Corrade/Containers/Array.h>
+#include <Corrade/Containers/StridedArrayView.h>
 #include "c1_functions.hpp"
-#include "fem.hpp"
-#include "y_combinator.hpp"
-#include "phasefield_tree.hpp"
 #include "types.hpp"
-#include "sparse_matrix.h"
 
-#include <Eigen/SparseCore>
-
-struct DirichletEnergy
-{
+struct DirichletEnergy {
     DirichletEnergy(
             Containers::Array<const Mg::Vector3d> const& vertices,
             Containers::Array<const Mg::UnsignedInt> const& indices);
@@ -22,77 +17,24 @@ struct DirichletEnergy
     uint32_t numParameters() const;
 
     template<class Scalar>
-    void operator()(Scalar const* params,
-                    Scalar const* weights,
-                    Scalar* cost) const;
+    void operator()(Containers::ArrayView<const Scalar> const& parameters,
+                    Containers::ArrayView<const Scalar> const& weights,
+                    Scalar& out,
+                    Containers::ArrayView<Scalar> const& gradP,
+                    Containers::ArrayView<Scalar> const& gradW);
 
-        auto triangles() { return arrayCast<Mg::Vector3ui>(indices); }
+    void updateInternalDataStructures();
 
     Containers::Array<const Mg::UnsignedInt> const& indices;
     Containers::Array<const Mg::Vector3d> const& vertices;
+
     Containers::Array<Mg::Double> areas;
 
-    Eigen::SparseMatrix<double> stiffnessMatrix;
-    Eigen::Matrix<double, Eigen::Dynamic, 1> diagonal;
+    Containers::Array<Mg::Vector3d> edgeNormalsData;
+    Containers::StridedArrayView2D<Mg::Vector3d> edgeNormals;
 };
 
-template<class F>
-struct IntegralFunctional
-{
-    IntegralFunctional(
-            Containers::Array<const Mg::Vector3d> const& vs,
-            Containers::Array<const Mg::UnsignedInt> const& is):
-            indices(is),
-            vertices(vs),
-            integralOperator(computeIntegralOperator(triangles(), vertices))
-    {
-    }
-
-    uint32_t numParameters() const {
-        return vertices.size();
-    }
-
-    void updateInternalDataStructures()  {
-        integralOperator = computeIntegralOperator(triangles(), vertices);
-    }
-
-    template<class Scalar>
-    void operator()(Scalar const* params,
-                    Scalar const* weights,
-                    Scalar* cost) const {
-        *cost = 0.;
-        for (int i = 0; i < vertices.size(); ++i){
-            *cost += f.eval(params[i]) * weights[i] * integralOperator[i];
-        }
-    }
-
-    template<class Scalar>
-    void operator()(Containers::ArrayView<const Scalar> parameters,
-            Containers::ArrayView<const Scalar> weights,
-            double& cost,
-            Containers::ArrayView<Scalar> gradP,
-            Containers::ArrayView<Scalar> gradW)
-    {
-        for (int i = 0; i < vertices.size(); ++i){
-            cost += f.eval(parameters[i]) * weights[i] * integralOperator[i];
-            if(gradP){
-                gradP[i] += f.grad(parameters[i]) * weights[i] * integralOperator[i];
-            }
-            if(gradW){
-                gradW[i] += f.eval(parameters[i]) * integralOperator[i];
-            }
-        }
-    }
-
-    auto triangles() { return arrayCast<Mg::Vector3ui>(indices); }
-
-    F f;
-    Containers::Array<const Mg::UnsignedInt> const& indices;
-    Containers::Array<const Mg::Vector3d> const& vertices;
-    Containers::Array<Mg::Double> integralOperator;
-};
-
-struct AreaRegularizer{
+struct AreaRegularizer {
 
     AreaRegularizer(Containers::Array<const Magnum::Vector3d> const&, Containers::Array<const Mg::UnsignedInt> const&);
 
@@ -100,25 +42,55 @@ struct AreaRegularizer{
 
     template<class Scalar>
     void operator()(Containers::ArrayView<const Scalar> const& parameters,
-            Containers::ArrayView<const Scalar> const& weights,
-            Scalar& out,
-            Containers::ArrayView<Scalar> const& gradP,
-            Containers::ArrayView<Scalar> const& gradW);
-
-    IntegralFunctional<SmootherStep> integral;
+                    Containers::ArrayView<const Scalar> const& weights,
+                    Scalar& out,
+                    Containers::ArrayView<Scalar> const& gradP,
+                    Containers::ArrayView<Scalar> const& gradW);
 
     mutable Mg::Double currentArea;
     Mg::Double area, areaRatio = 0.5;
+
+    Containers::Array<const Mg::UnsignedInt> const& indices;
+    Containers::Array<const Mg::Vector3d> const& vertices;
+    Containers::Array<Mg::Double> integralOperator;
 };
 
-using DoubleWellPotential = IntegralFunctional<DoubleWell>;
+struct DoubleWellPotential {
 
-class adouble;
+    DoubleWellPotential(Containers::Array<const Magnum::Vector3d> const&,
+                        Containers::Array<const Mg::UnsignedInt> const&);
 
-extern template void DirichletEnergy::operator()(adouble const*, adouble const*, adouble*) const;
+    void updateInternalDataStructures();
 
-extern template void AreaRegularizer::operator()(adouble const*,adouble const*, adouble*) const;
+    template<class Scalar>
+    void operator()(Containers::ArrayView<const Scalar> const& parameters,
+                    Containers::ArrayView<const Scalar> const& weights,
+                    Scalar& out,
+                    Containers::ArrayView<Scalar> const& gradP,
+                    Containers::ArrayView<Scalar> const& gradW);
 
-extern template void DoubleWellPotential::operator()(adouble const*, adouble const*, adouble*) const;
+    Containers::Array<const Mg::UnsignedInt> const& indices;
+    Containers::Array<const Mg::Vector3d> const& vertices;
+    Containers::Array<Mg::Double> integralOperator;
+};
+
+
+extern template void DirichletEnergy::operator()(Containers::ArrayView<const double> const& parameters,
+                                                 Containers::ArrayView<const double> const& weights,
+                                                 double& out,
+                                                 Containers::ArrayView<double> const& gradP,
+                                                 Containers::ArrayView<double> const& gradW);
+
+extern template void AreaRegularizer::operator()(Containers::ArrayView<const double> const& parameters,
+                                                 Containers::ArrayView<const double> const& weights,
+                                                 double& out,
+                                                 Containers::ArrayView<double> const& gradP,
+                                                 Containers::ArrayView<double> const& gradW);
+
+extern template void DoubleWellPotential::operator()(Containers::ArrayView<const double> const& parameters,
+                                                     Containers::ArrayView<const double> const& weights,
+                                                     double& out,
+                                                     Containers::ArrayView<double> const& gradP,
+                                                     Containers::ArrayView<double> const& gradW);
 
 

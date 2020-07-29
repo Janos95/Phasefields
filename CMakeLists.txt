@@ -15,13 +15,13 @@ find_package(ImGui REQUIRED COMPONENTS SourcesMiscCpp)
 find_package(TBB CONFIG REQUIRED)
 find_package(ipopt REQUIRED)
 
+#set_compile_options("-Wno-old-style-cast")
+list(INSERT CMAKE_CXX_FLAGS 0 "-Wno-old-style-cast")
 #set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(DISABLE_WARNING_FLAGS "-Wno-old-style-cast")
-
-list(APPEND CMAKE_CXX_FLAGS "-Wno-old-style-cast")
 
 add_subdirectory(utilities)
+add_subdirectory(imguifs)
 add_subdirectory(scoped_timer)
 add_subdirectory(visualization)
 #add_subdirectory(polygonizer)

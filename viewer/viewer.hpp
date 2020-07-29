@@ -7,18 +7,22 @@
 #include "drawables.hpp"
 #include "arc_ball_camera.hpp"
 #include "primitives.hpp"
-#include "subdivision.hpp"
-#include "solver.hpp"
-#include "functional.h"
-#include "connectedness_constraint.h"
+#include "Solver.h"
+#include "Functional.h"
 #include "modica_mortola.hpp"
-#include "problem.hpp"
+#include "RecursiveProblem.h"
 #include "types.hpp"
 #include "visualization_proxy.hpp"
+#include "PhasefieldTree.h"
 
 #include <Magnum/Platform/Sdl2Application.h>
 #include <Magnum/ImGuiIntegration/Context.h>
+#include <Magnum/SceneGraph/Scene.h>
+#include <Magnum/SceneGraph/MatrixTransformation3D.h>
 
+#include <tbb/task_group.h>
+#include <atomic>
+#include <mutex>
 
 using namespace Mg::Math::Literals;
 
@@ -27,43 +31,67 @@ namespace Cr = Corrade;
 
 struct Viewer;
 
-struct OptimizationCallback{
+struct OptimizationCallback {
     std::atomic_bool& optimize;
-    solver::Status::Value operator()(solver::IterationSummary const&);
+
+    Solver::Status::Value operator()(Solver::IterationSummary const&);
 };
 
 
-struct Viewer: public Mg::Platform::Application {
+struct Viewer : public Mg::Platform::Application {
 
     explicit Viewer(int argc, char** argv);
 
     void drawEvent() override;
+
     void tickEvent() override;
+
     void viewportEvent(ViewportEvent& event) override;
+
     void keyPressEvent(KeyEvent& event) override;
+
     void mousePressEvent(MouseEvent& event) override;
+
     void mouseReleaseEvent(MouseEvent& event) override;
+
     void mouseMoveEvent(MouseMoveEvent& event) override;
+
     void mouseScrollEvent(MouseScrollEvent& event) override;
+
     void keyReleaseEvent(KeyEvent& event) override;
+
     void textInputEvent(TextInputEvent& event) override;
 
     void drawSubdivisionOptions();
+
     void makeDrawableCurrent(DrawableType);
+
     void drawMeshIO();
+
     bool saveMesh(std::string const&);
+
     void drawBrushOptions();
+
     void drawOptimizationContext();
+
     void makeExclusiveVisualizer(Functional*);
+
     void drawShaderOptions();
+
     void startOptimization();
+
     void stopOptimization();
+
     Functional makeFunctional(FunctionalType);
-    void updateFunctionals(Containers::Array<Functional>&);
+
     bool drawFunctinals();
+
     void paint();
+
     void geodesicSearch();
+
     void updateInternalDataStructures();
+
     Mg::Vector3 unproject(Mg::Vector2i const&);
 
     Mg::ImGuiIntegration::Context imgui{Mg::NoCreate};
@@ -76,16 +104,6 @@ struct Viewer: public Mg::Platform::Application {
 
     Mg::Trade::MeshData original{Magnum::MeshPrimitive::Points, 0};
     Mg::Trade::MeshData meshData{Magnum::MeshPrimitive::Points, 0};
-
-    Mg::Trade::MeshData wireframe{Magnum::MeshPrimitive::Points, 0};
-    Mg::GL::Mesh wireframeMesh{Mg::NoCreate};
-    Drawable * wireframeDrawer = nullptr;
-
-    DrawableType drawableType = DrawableType::PhongDiffuse;
-    std::unordered_map<ShaderType, Cr::Containers::Pointer<Mg::GL::AbstractShaderProgram>> shaders;
-
-    ColorMapType colorMapType = ColorMapType::Turbo;
-    std::unordered_map<ColorMapType, Magnum::GL::Texture2D> colorMapTextures;
 
     Magnum::SceneGraph::DrawableGroup3D drawableGroup;
     Scene3D scene;
@@ -102,9 +120,8 @@ struct Viewer: public Mg::Platform::Application {
     Mg::Color4 clearColor = 0x72909aff_rgbaf;
     std::string expression;
 
-    solver::Problem problem;
-    solver::Options options;
-    Containers::Array<Mg::Double> phasefield;
+    Solver::RecursiveProblem problem;
+    Solver::Options options;
 
     PhasefieldTree tree;
 
@@ -113,12 +130,10 @@ struct Viewer: public Mg::Platform::Application {
     std::atomic_bool optimizing = false;
 
     OptimizationCallback optimizationCallback;
-    VisualizationFlags update = {};
     int activeTag = -1;
 
     //connectedness vis data
-    Cr::Containers::Array<Mg::Color3ub> faceColors;
-    Mg::GL::Texture2D faceTexture{Mg::NoCreat
+    Mg::GL::Texture2D faceTexture{Mg::NoCreate};
     Mg::GL::Texture2D* texture = nullptr;
 
     SharedRessource<Mg::Double> doubleWellScaling;
@@ -137,9 +152,17 @@ struct Viewer: public Mg::Platform::Application {
 
     MeshDrawable* axisDrawable = nullptr;
     Object3D* axisObject = nullptr;
-    Mg::GL::Mesh axisMesh{Mg::NoCreate};
+    Mg::GL::Mesh axisMesh{ Mg::NoCreate };
     bool drawAxis = false;
     bool drawWireframe = false;
 
     VisualizationProxy proxy;
+
+    DrawableType drawableType = DrawableType::PhongDiffuse;
+    std::unordered_map<ShaderType, Cr::Containers::Pointer<Mg::GL::AbstractShaderProgram>> shaders;
+
+    ColorMapType colorMapType = ColorMapType::Turbo;
+    std::unordered_map<ColorMapType, Magnum::GL::Texture2D> colorMapTextures;
+
+
 };

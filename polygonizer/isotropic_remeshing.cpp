@@ -15,23 +15,22 @@
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 using Point = K::Point_3;
-typedef CGAL::Surface_mesh<Point> Mesh;
+typedef CGAL::Surface_mesh <Point> Mesh;
 typedef boost::graph_traits<Mesh>::halfedge_descriptor halfedge_descriptor;
-typedef boost::graph_traits<Mesh>::edge_descriptor     edge_descriptor;
+typedef boost::graph_traits<Mesh>::edge_descriptor edge_descriptor;
 namespace PMP = CGAL::Polygon_mesh_processing;
 
 using namespace Magnum;
 using namespace Corrade;
 
-struct halfedge2edge
-{
+struct halfedge2edge {
     halfedge2edge(const Mesh& m, std::vector<edge_descriptor>& edges)
-            : m_mesh(m), m_edges(edges)
-    {}
-    void operator()(const halfedge_descriptor& h) const
-    {
+            : m_mesh(m), m_edges(edges) {}
+
+    void operator()(const halfedge_descriptor& h) const {
         m_edges.push_back(edge(h, m_mesh));
     }
+
     const Mesh& m_mesh;
     std::vector<edge_descriptor>& m_edges;
 };
@@ -40,8 +39,7 @@ using Index = Mesh::Vertex_index;
 
 void isotropicRemeshing(
         Containers::Array<Vector3d>& vertices,
-        Containers::Array<UnsignedInt>& indices)
-{
+        Containers::Array<UnsignedInt>& indices) {
     auto triangles = Containers::arrayCast<Vector3ui>(indices);
     double target_edge_length = 0.01;
     unsigned int nb_iter = 3;
@@ -68,18 +66,18 @@ void isotropicRemeshing(
     );
 
     Containers::arrayResize(vertices, Containers::NoInit, mesh.num_vertices());
-    Containers::arrayResize(indices, Containers::NoInit, mesh.num_faces() * 3);
+    Containers::arrayResize(indices, Containers::NoInit, mesh.num_faces()*3);
     triangles = Containers::arrayCast<Vector3ui>(indices);
 
     std::transform(mesh.vertices_begin(), mesh.vertices_end(), vertices.begin(), [&](auto& vd) {
-        auto const &p = mesh.point(vd);
+        auto const& p = mesh.point(vd);
         return Vector3d(p.x(), p.y(), p.z());
     });
 
     std::transform(mesh.faces_begin(), mesh.faces_end(), triangles.begin(), [&](auto const& fd) {
         auto incidents = CGAL::vertices_around_face(mesh.halfedge(fd), mesh);
         Vector3ui t;
-        std::transform(incidents.begin(), incidents.end(), t.data(), [](auto const& vd){ return vd.idx(); });
+        std::transform(incidents.begin(), incidents.end(), t.data(), [](auto const& vd) { return vd.idx(); });
         return t;
     });
 }

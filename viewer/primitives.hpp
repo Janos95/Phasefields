@@ -15,7 +15,7 @@
 namespace Mg = Magnum;
 namespace Cr = Corrade;
 
-enum class PrimitiveType: Magnum::UnsignedShort {
+enum class PrimitiveType : Magnum::UnsignedShort {
     Capsule,
     U,
     ImplicitFunction

@@ -2,7 +2,7 @@
 // Created by janos on 2/23/20.
 //
 #include "modica_mortola.hpp"
-#include "sparse_matrix.h"
+#include "SparseMatrix.h"
 #include "fem.hpp"
 
 #include <Corrade/Utility/Assert.h>
@@ -13,24 +13,25 @@
 #include <Magnum/Math/Vector3.h>
 #include <Magnum/Math/FunctionsBatch.h>
 
-#include <adolc/adouble.h>
-#include <eigen3/unsupported/Eigen/AdolcForward>
 #include <numeric>
-#include <algorithm>
 
 using namespace Magnum;
 using namespace Corrade;
 
+namespace {
+
+auto triangles(Containers::ArrayView<const UnsignedInt> const& indices) {
+    return Containers::arrayCast<const Mg::Vector3ui>(indices);
+}
+
+}
 
 DirichletEnergy::DirichletEnergy(
         Containers::Array<const Vector3d> const& vs,
-        Containers::Array<const UnsignedInt> const& is):
-    indices(is),
-    vertices(vs),
-    areas(computeAreas(triangles(), vs)),
-    stiffnessMatrix(computeStiffnessMatrix(triangles(), vs)),
-    diagonal(stiffnessMatrix.diagonal())
-{
+        Containers::Array<const UnsignedInt> const& is) :
+        indices(is),
+        vertices(vs) {
+    updateInternalDataStructures();
     CORRADE_ASSERT(!Math::isNan(areas), "Dirichlet Energy : areas contains NaN",);
 }
 
@@ -39,56 +40,130 @@ uint32_t DirichletEnergy::numParameters() const {
     return vertices.size();
 }
 
-adouble test;
+void DirichletEnergy::updateInternalDataStructures() {
+
+    areas = computeAreas(triangles(indices), vertices);
+    edgeNormalsData = gradient(triangles(indices), vertices);
+    edgeNormals = Containers::StridedArrayView2D<Mg::Vector3d>{edgeNormalsData, {triangles(indices).size(), 3}};
+}
 
 template<class Scalar>
-void DirichletEnergy::operator()(Scalar const* parameters, Scalar* residual, Scalar* gradient) const
-{
-    auto n = numParameters();
-    Eigen::Map<const Eigen::Matrix<Scalar, Eigen::Dynamic, 1>> phasefield(parameters, n);
-    auto halfGrad = stiffnessMatrix.cast<Scalar>() * phasefield;
-    if(gradient){
-        Eigen::Map<Eigen::VectorXd> jac(gradient, numParameters());
-        halfGrad.eval();
-        for(std::size_t i = 0; i < n; ++i){
-            if constexpr(std::is_same_v<Scalar, adouble>)
-                jac[i] = 2 * halfGrad[i].getValue();
-            else
-                jac[i] = 2 * halfGrad[i];
+void DirichletEnergy::operator()(Containers::ArrayView<const Scalar> const& parameters,
+                                 Containers::ArrayView<const Scalar> const& weights,
+                                 Scalar& out,
+                                 Containers::ArrayView<Scalar> const& gradP,
+                                 Containers::ArrayView<Scalar> const& gradW) {
+
+    const auto ts = triangles(indices);
+
+    for(std::size_t i = 0; i < ts.size(); ++i){
+        auto const& t = ts[i];
+
+        Vector3d grad{0};
+        Scalar weight{0};
+        for(int j = 0; j < 3; ++j){
+            grad += parameters[t[j]]*edgeNormals[i][j];
+            weight += weights[t[j]];
+        }
+        weight /= Scalar{3};
+
+        Scalar gradNormSquared = grad.dot();
+        out += areas[i]*gradNormSquared*weight;
+
+        if(gradP){
+            for(int j = 0; j < 3; ++j){
+                gradP[t[j]] += areas[i]*2*Math::dot(grad, edgeNormals[i][j])*weight;
+            }
+        }
+        if(gradW){
+            for(int j = 0; j < 3; ++j){
+                gradW[t[j]] += areas[i]*gradNormSquared/Scalar{3};
+            }
         }
     }
-    *residual = phasefield.transpose() * halfGrad;
 }
 
 AreaRegularizer::AreaRegularizer(
         Containers::Array<const Magnum::Vector3d> const& vs,
-        Containers::Array<const Mg::UnsignedInt> const& is) :
-    integral(vs, is)
-{
-    auto areas = computeAreas(integral.triangles(), integral.vertices);
-    area = std::accumulate(areas.begin(), areas.end(), 0.);
+        Containers::Array<const Mg::UnsignedInt> const& is) : indices(is), vertices(vs) {
+    updateInternalDataStructures();
 }
 
-void AreaRegularizer::updateInternalDataStructures()  {
-    integral.updateInternalDataStructures();
-    auto areas = computeAreas(integral.triangles(), integral.vertices);
+void AreaRegularizer::updateInternalDataStructures() {
+    integralOperator = computeIntegralOperator(triangles(indices), vertices);
+    auto areas = computeAreas(triangles(indices), vertices);
     area = std::accumulate(areas.begin(), areas.end(), 0.);
 }
 
 template<class Scalar>
-void AreaRegularizer::operator()(Scalar const* params, Scalar* cost, SparseMatrix* jacobians, SparseMatrix* hessian) const {
-    Scalar c = currentArea;
-    integral(params, &c, jacobians, hessian);
-    *cost = c - areaRatio * area; /*@todo racy */
+void AreaRegularizer::operator()(Containers::ArrayView<const Scalar> const& parameters,
+                                 Containers::ArrayView<const Scalar> const& weights,
+                                 Scalar& out,
+                                 Containers::ArrayView<Scalar> const& gradP,
+                                 Containers::ArrayView<Scalar> const& gradW) {
+
+    Scalar integral = 0;
+    SmootherStep f;
+    for(std::size_t i = 0; i < vertices.size(); ++i){
+        integral += f.eval(parameters[i])*weights[i]*integralOperator[i];
+        if(gradP){
+            gradP[i] += f.grad(parameters[i])*weights[i]*integralOperator[i];
+        }
+        if(gradW){
+            gradW[i] += f.eval(parameters[i])*integralOperator[i];
+        }
+    }
+    out += integral - areaRatio*area;
 }
 
+DoubleWellPotential::DoubleWellPotential(
+        Containers::Array<const Magnum::Vector3d> const& vs,
+        Containers::Array<const Mg::UnsignedInt> const& is) :
+        indices(is), vertices(vs) {
+}
+
+void DoubleWellPotential::updateInternalDataStructures() {
+    integralOperator = computeIntegralOperator(triangles(indices), vertices);
+}
+
+template<class Scalar>
+void DoubleWellPotential::operator()(Containers::ArrayView<const Scalar> const& parameters,
+                                     Containers::ArrayView<const Scalar> const& weights,
+                                     Scalar& cost,
+                                     Containers::ArrayView<Scalar> const& gradP,
+                                     Containers::ArrayView<Scalar> const& gradW) {
+
+    DoubleWell f;
+    for(std::size_t i = 0; i < vertices.size(); ++i){
+        cost += f.eval(parameters[i])*weights[i]*integralOperator[i];
+        if(gradP){
+            gradP[i] += f.grad(parameters[i])*weights[i]*integralOperator[i];
+        }
+        if(gradW){
+            gradW[i] += f.eval(parameters[i])*integralOperator[i];
+        }
+    }
+}
+
+template void DirichletEnergy::operator()(
+        Containers::ArrayView<const double> const& parameters,
+        Containers::ArrayView<const double> const& weights,
+        double& out,
+        Containers::ArrayView<double> const& gradP,
+        Containers::ArrayView<double> const& gradW);
+
+template void AreaRegularizer::operator()(
+        Containers::ArrayView<const double> const& parameters,
+        Containers::ArrayView<const double> const& weights,
+        double& out,
+        Containers::ArrayView<double> const& gradP,
+        Containers::ArrayView<double> const& gradW);
 
 
-template void DirichletEnergy::operator()(adouble const*, adouble*, SparseMatrix*) const;
-template void DirichletEnergy::operator()(double const*, double*, SparseMatrix*) const;
+template void DoubleWellPotential::operator()(
+        Containers::ArrayView<const double> const& parameters,
+        Containers::ArrayView<const double> const& weights,
+        double& out,
+        Containers::ArrayView<double> const& gradP,
+        Containers::ArrayView<double> const& gradW);
 
-template void AreaRegularizer::operator()(adouble const*, adouble*, SparseMatrix*, SparseMatrix*) const;
-template void AreaRegularizer::operator()(double const*, double*, SparseMatrix*, SparseMatrix*) const;
-
-template void DoubleWellPotential::operator()(adouble const*, adouble*, SparseMatrix*, SparseMatrix*) const;
-template void DoubleWellPotential::operator()(double const*, double*, SparseMatrix*, SparseMatrix*) const;

@@ -2,7 +2,7 @@
 // Created by janos on 28.03.20.
 //
 
-#include "problem.hpp"
+#include "Problem.h"
 #include "normalizeInto.hpp"
 #include "tag.h"
 
@@ -17,10 +17,10 @@
 using namespace Corrade;
 using namespace Magnum;
 
-namespace solver {
+namespace Solver {
 
 namespace {
-void add(SparseMatrix const& a, SparseMatrix& b){
+void add(SparseMatrix const& a, SparseMatrix& b) {
     std::size_t idx = 0;
     for(std::size_t i = 0; i < a.nnz; ++i){
         UnsignedInt row = a.rows[i];
@@ -31,7 +31,7 @@ void add(SparseMatrix const& a, SparseMatrix& b){
     }
 }
 
-void append(SparseMatrix& a, SparseMatrix const& b, UnsignedInt rowOffset){
+void append(SparseMatrix& a, SparseMatrix const& b, UnsignedInt rowOffset) {
 
     Containers::arrayResize(a.values, a.nnz + b.nnz);
     Containers::arrayResize(a.rows, a.nnz + b.nnz);
@@ -49,7 +49,8 @@ void append(SparseMatrix& a, SparseMatrix const& b, UnsignedInt rowOffset){
 
 
 Problem::Problem() : tagL(getTag()), tagJ(getTag()), tagG(getTag()) {}
-Problem::~Problem(){
+
+Problem::~Problem() {
     deleteTag(tagL);
     deleteTag(tagJ);
     deleteTag(tagG);
@@ -63,9 +64,9 @@ void Problem::evaluate(double const* parameters,
                        SparseMatrix* h,
                        double objectiveScale,
                        double const* lambdas
-                       ) const {
+) const {
 
-    CORRADE_ASSERT(!objectives.empty(), "Problem : need at least on objective function in problem", );
+    CORRADE_ASSERT(!objectives.empty(), "Problem : need at least on objective function in problem",);
 
     auto n = numParameters();
     auto m = numParameters();
@@ -91,7 +92,7 @@ void Problem::evaluate(double const* parameters,
         UnsignedInt* cInd = const_cast<UnsignedInt*>(hessian.cols.data());
         int nnz = hessian.nnz;
         double* val = const_cast<double*>(hessian.values.data());
-        int options[4] = {0,0,0,0}; /* all default */
+        int options[4] = {0, 0, 0, 0}; /* all default */
         sparse_jac(tagJ, m, n, 1, const_cast<double*>(parameters), &nnz, &rInd, &cInd, &val, options);
     }
 
@@ -107,20 +108,20 @@ void Problem::evaluate(double const* parameters,
         UnsignedInt* cInd = const_cast<UnsignedInt*>(hessian.cols.data());
         int nnz = hessian.nnz;
         double* val = const_cast<double*>(hessian.values.data());
-        int options[2] = {0,0}; /* all default */
+        int options[2] = {0, 0}; /* all default */
         sparse_hess(tagL, n, 1, const_cast<double*>(parameters), &nnz, &rInd, &cInd, &val, options);
     }
 
 }
 
 std::size_t Problem::numParameters() const {
-    if (objectives.empty() && constraints.empty())
+    if(objectives.empty() && constraints.empty())
         return 0;
     auto numParams = objectives.front().numParameters();
 #ifdef CORRADE_ASSERT
-    for (auto const& f : objectives)
+    for(auto const& f : objectives)
         CORRADE_INTERNAL_ASSERT(f.numParameters() == numParams);
-    for (auto const& c : constraints)
+    for(auto const& c : constraints)
         CORRADE_INTERNAL_ASSERT(c.numParameters() == numParams);
 #endif
     return numParams;
@@ -146,7 +147,7 @@ void Problem::updateInternalDataStructures(Containers::Array<double> const& x) {
     Containers::Array<adouble> xa(n);
     double dummy;
 
-    UnsignedInt *rInd, *cInd;
+    UnsignedInt* rInd, * cInd;
     double* val;
 
     {
@@ -185,7 +186,7 @@ void Problem::updateInternalDataStructures(Containers::Array<double> const& x) {
 
         trace_off();
 
-        int options[4] = {0,0,0,0}; /* all default */
+        int options[4] = {0, 0, 0, 0}; /* all default */
         sparse_jac(tagJ, m, n, 0, x.data(), &jacobian.nnz, &rInd, &cInd, &val, options);
         jacobian.values = Containers::Array(val, jacobian.nnz);
         jacobian.rows = Containers::Array(rInd, jacobian.nnz);
@@ -212,7 +213,7 @@ void Problem::updateInternalDataStructures(Containers::Array<double> const& x) {
             auto fm = constraints[i].numResiduals();
             objectives[i](xa, cs.begin() + offset);
             for(std::size_t j = 0; j < fm; ++j){
-                objValue += cs[offset + j] * mkparam(1.);
+                objValue += cs[offset + j]*mkparam(1.);
             }
             offset += fm;
         }
@@ -220,7 +221,7 @@ void Problem::updateInternalDataStructures(Containers::Array<double> const& x) {
 
         trace_off();
 
-        int options[2] = {0,0}; /* all default */
+        int options[2] = {0, 0}; /* all default */
         sparse_hess(tagL, n, 0, x.data(), &hessian.nnz, &rInd, &cInd, &val, options);
         hessian.values = Containers::Array(val, hessian.nnz);
         hessian.rows = Containers::Array(rInd, hessian.nnz);

@@ -5,7 +5,7 @@
 #pragma once
 
 #include "graph_common.hpp"
-#include "unique_function.h"
+#include "UniqueFunction.h"
 
 #include <Corrade/Containers/Reference.h>
 #include <Corrade/Utility/Assert.h>
@@ -15,21 +15,19 @@
 #include <limits>
 
 template<class R>
-class Dijkstra
-{
+class Dijkstra {
 public:
 
     Dijkstra() = default;
 
-    explicit Dijkstra(R const& adjacencyList, Containers::ArrayView<const T> weights):
-        m_adjacencyList(&adjacencyList),
-        m_dist(adjacencyList.size(), std::numeric_limits<double>::infinity()),
-        m_prev(adjacencyList.size(), -1),
-        m_weights(weights)
-    {
+    explicit Dijkstra(R const& adjacencyList, Containers::ArrayView<const T> weights) :
+            m_adjacencyList(&adjacencyList),
+            m_dist(adjacencyList.size(), std::numeric_limits<double>::infinity()),
+            m_prev(adjacencyList.size(), -1),
+            m_weights(weights) {
     }
 
-    void setSource(int source){ m_heap.emplace(HeapElement{source, 0}); }
+    void setSource(int source) { m_heap.emplace(HeapElement{source, 0}); }
 
     void reset() {
         std::fill(m_dist.begin(), m_dist.end(), std::numeric_limits<double>::infinity());
@@ -37,7 +35,7 @@ public:
         m_heap = decltype(m_heap)();
     }
 
-    bool step(int& u, double& d){
+    bool step(int& u, double& d) {
         if(m_heap.empty()) return false;
 
         auto const& top = m_heap.top();
@@ -48,7 +46,7 @@ public:
         if(d > m_dist[u])
             return true;
 
-        for(const auto& [v, w]: (*m_adjacencyList)[u]){
+        for(const auto&[v, w]: (*m_adjacencyList)[u]){
             auto alt = detail::detach(m_weights[w]) + detail::detach(d);
             if(alt < m_dist[v]){
                 m_dist[v] = alt;
@@ -60,8 +58,7 @@ public:
     }
 
     template<class... F>
-    auto run(F&&... cbs)
-    {
+    auto run(F&& ... cbs) {
         int u;
         double d;
         while(step(u, d)){
@@ -71,7 +68,7 @@ public:
     }
 
     graph::ReversedShortestPath<Dijkstra> getShortestPathReversed(const int start, const int target) const {
-        auto &self = *this;
+        auto& self = *this;
         CORRADE_INTERNAL_ASSERT(target >= 0 && start >= 0);
         return {{target, self},
                 {start,  self}};
@@ -80,21 +77,21 @@ public:
 private:
     friend graph::ReversedPathIterator<Dijkstra>;
 
-    struct HeapElement
-    {
-        HeapElement(int n, double d): node(n), distance(d){}
+    struct HeapElement {
+        HeapElement(int n, double d) : node(n), distance(d) {}
+
         int node;
         double distance;
     };
 
-    struct InverseDistanceCompare{
+    struct InverseDistanceCompare {
         template<class T>
-        bool operator()(T const& el1, T const& el2){
+        bool operator()(T const& el1, T const& el2) {
             return el1.distance > el2.distance;
         }
     };
 
-    std::priority_queue<HeapElement,  std::vector<HeapElement>, InverseDistanceCompare> m_heap;
+    std::priority_queue<HeapElement, std::vector<HeapElement>, InverseDistanceCompare> m_heap;
     R const* m_adjacencyList;
     Containers::Array<double> m_dist;
     Containers::Array<int> m_prev;

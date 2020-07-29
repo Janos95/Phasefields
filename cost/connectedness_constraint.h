@@ -6,7 +6,7 @@
 
 #include "small_array.hpp"
 #include "paths.hpp"
-#include "functional.h"
+#include "Functional.h"
 #include "dijkstra.hpp"
 #include "stopping_criteria.hpp"
 

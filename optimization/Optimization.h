@@ -10,12 +10,13 @@ struct Functional;
 struct LossFunction;
 struct SparseMatrix;
 
-namespace solver {
-    struct Problem;
+namespace Solver {
+struct Problem;
+struct RecursiveProblem;
 
-    struct IterationSummary;
+struct IterationSummary;
 
 
-    struct Options;
-    struct Summary;
-};
+struct Options;
+struct Summary;
+}

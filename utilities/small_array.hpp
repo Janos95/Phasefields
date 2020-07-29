@@ -9,8 +9,7 @@
 namespace Cr = Corrade;
 
 template<int N, class T>
-class SmallArray
-{
+class SmallArray {
 public:
     using value_type = T;
     using reference = T&;
@@ -21,32 +20,35 @@ public:
     using size_type = int;
 
 
-    explicit SmallArray(Cr::Containers::DefaultInitT): m_data{Cr::Containers::DefaultInit} {}
+    explicit SmallArray(Cr::Containers::DefaultInitT) : m_data{Cr::Containers::DefaultInit} {}
 
-    explicit SmallArray(Cr::Containers::ValueInitT): m_data{Cr::Containers::ValueInit} {}
+    explicit SmallArray(Cr::Containers::ValueInitT) : m_data{Cr::Containers::ValueInit} {}
 
-    explicit SmallArray(Cr::Containers::NoInitT): m_data(Cr::Containers::NoInit){}
+    explicit SmallArray(Cr::Containers::NoInitT) : m_data(Cr::Containers::NoInit) {}
 
     iterator begin() { return m_data.data(); }
+
     const_iterator begin() const { return m_data.data(); }
+
     iterator end() { return m_data.data() + m_size; }
+
     const_iterator end() const { return m_data.data() + m_size; }
 
-    reference operator[](int i){
+    reference operator[](int i) {
         return m_data[i];
     }
 
-    const_reference operator[](int i) const{
+    const_reference operator[](int i) const {
         return m_data[i];
     }
 
     template<class... Args>
-    void emplace_back(Args&&... args){
-        m_data[m_size++] = T((Args&&)args...);
+    void emplace_back(Args&& ... args) {
+        m_data[m_size++] = T((Args&&) args...);
     }
 
-    void push_back(T&& x){
-        m_data[m_size++] = (T&&)x;
+    void push_back(T&& x) {
+        m_data[m_size++] = (T&&) x;
     }
 
     [[nodiscard]] size_type size() const { return m_size; }

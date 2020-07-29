@@ -9,7 +9,6 @@
 #include "stopping_criteria.hpp"
 #include "union_find.hpp"
 #include "bfs.hpp"
-#include "detach.hpp"
 #include "small_array.hpp"
 #include "hash.h"
 #include "c1_functions.hpp"
@@ -42,8 +41,7 @@
 namespace Mn = Magnum;
 namespace Cr = Corrade;
 
-struct ConnectednessConstraint
-{
+struct ConnectednessConstraint {
     ConnectednessConstraint(
             Containers::Array<const Mg::Vector3d> const&,
             Containers::Array<const Mg::UnsignedInt> const&);
@@ -54,7 +52,9 @@ struct ConnectednessConstraint
     bool evaluate(Scalar const* phasefield, Scalar* cost, SparseMatrix* gradient) const;
 
     void updateInternalDataStructures();
+
     uint32_t numParameters() const;
+
     uint32_t numResiduals() const;
 
     struct Neighbor {
@@ -64,10 +64,13 @@ struct ConnectednessConstraint
 
     struct Edge {
         Edge(Mg::UnsignedInt v1_, Mg::UnsignedInt v2_) : v1(std::min(v1_, v2_)), v2(std::max(v1_, v2_)) {}
+
         Mg::UnsignedInt v1, v2;
 
 #ifdef __cpp_impl_three_way_comparison
+
         auto operator<=>(const Edge&) const = default;
+
 #else
         bool operator<(const Edge& other) const{
             return std::tie(v1, v2) < std::tie(other.v1, other.v2);
@@ -99,6 +102,7 @@ struct ConnectednessConstraint
 
     /* this is called holding our 'global' mutex from the gui thread */
     void updateVisualization(VisualizationProxy&);
+
     void drawImGuiOptions(bool&, DrawableType&, bool&);
 
     /* collects data for the updateVisualization callback
@@ -121,35 +125,35 @@ struct ConnectednessConstraint
 /* this is called holding our 'global' mutex from the gui thread */
 template<class Scalar>
 void ConnectednessConstraint<Scalar>::updateVisualization(VisualizationProxy& proxy) {
-    if(updateInstanceData) {
+    if(updateInstanceData){
         paths->instanceData = std::move(instanceData);
         updateInstanceData = false;
     }
 
-    if(updateComponents) {
+    if(updateComponents){
         Mg::Deg hue = 42.0_degf;
         Cr::Containers::Array<Mg::Color3ub> randomColors(Cr::Containers::NoInit, numComponents);
-        for (int i = 0; i < numComponents; ++i)
+        for(int i = 0; i < numComponents; ++i)
             randomColors[i] = Mg::Color3ub::fromHsv({hue += 137.5_degf, 0.75f, 0.9f});
 
-        for (int i = 0; i < components.size(); ++i) {
-            if (components[i] >= 0 && !randomColors.empty())
+        for(int i = 0; i < components.size(); ++i){
+            if(components[i] >= 0 && !randomColors.empty())
                 (*faceColors)[i] = randomColors[components[i]];
             else
-                (*faceColors)[i] = Mg::Color3ub(255,253,208);
+                (*faceColors)[i] = Mg::Color3ub(255, 253, 208);
         }
 
         *update = VisualizationFlag::ConnectedComponents;
     }
-    if(updateWs) {
+    if(updateWs){
         auto colorMap = Mg::DebugTools::ColorMap::turbo();
-        auto [min,max] = Mg::Math::minmax(ws);
+        auto[min, max] = Mg::Math::minmax(ws);
         Mg::Double length = max - min;
         if(length < std::numeric_limits<Mg::Double>::epsilon())
-            std::fill(faceColors->begin(), faceColors->end(), Mg::Color3ub(255,253,208));
+            std::fill(faceColors->begin(), faceColors->end(), Mg::Color3ub(255, 253, 208));
         else{
-            for (int i = 0; i < ws.size(); ++i) {
-                int idx = static_cast<int>((ws[i] - min) / length * (colorMap.size() - 1.));
+            for(int i = 0; i < ws.size(); ++i){
+                int idx = static_cast<int>((ws[i] - min)/length*(colorMap.size() - 1.));
                 CORRADE_ASSERT(0 <= idx && idx <= 255, "Bad index for colormap", false);
                 (*faceColors)[i] = colorMap[idx];
             }
@@ -178,51 +182,48 @@ void ConnectednessConstraint<Scalar>::updateVisualization(VisualizationProxy& pr
 template<class Scalar>
 void ConnectednessConstraint<Scalar>::drawImGuiOptions(bool& makeExclusive, DrawableType& type, bool& evaluateProblem) {
     ImGui::Text(this->name.c_str());
-    dragDoubleRange2("Positive Interval", &a, &b, 0.01f, -1.f, 1.f, "Min: %.2f", "Max: %.2f",1.f);
+    dragDoubleRange2("Positive Interval", &a, &b, 0.01f, -1.f, 1.f, "Min: %.2f", "Max: %.2f", 1.f);
 
     ImGui::BeginGroup();
-    if(ImGui::Checkbox("Visualize Shortest Paths", &paths->drawPaths) ){
+    if(ImGui::Checkbox("Visualize Shortest Paths", &paths->drawPaths)){
         if(paths->drawPaths){
             evaluateProblem = true;
             generateLineStrips = true;
-        } else {
+        } else{
             generateLineStrips = false;
         }
     }
 
     bool visGeodesicWeights = static_cast<bool>(flags & VisualizationFlag::GeodesicWeights);
     if(ImGui::Checkbox("Geodesic Weights", &visGeodesicWeights)){
-        if(visGeodesicWeights) {
+        if(visGeodesicWeights){
             type = DrawableType::FaceColored;
             makeExclusive = true;
             flags = VisualizationFlag::GeodesicWeights;
             evaluateProblem = true;
-        }
-        else flags &= ~VisualizationFlag::GeodesicWeights;
+        } else flags &= ~VisualizationFlag::GeodesicWeights;
     }
     ImGui::EndGroup();
     ImGui::SameLine();
     ImGui::BeginGroup();
     bool visComponents = static_cast<bool>(flags & VisualizationFlag::ConnectedComponents);
     if(ImGui::Checkbox("Connected Components", &visComponents)){
-        if(visComponents) {
+        if(visComponents){
             type = DrawableType::FaceColored;
             makeExclusive = true;
             flags = VisualizationFlag::ConnectedComponents;
             evaluateProblem = true;
-        }
-        else flags &= ~VisualizationFlag::ConnectedComponents;
+        } else flags &= ~VisualizationFlag::ConnectedComponents;
     }
 
     bool visGradient = static_cast<bool>(flags & VisualizationFlag::Gradient);
     if(ImGui::Checkbox("Gradient", &visGradient)){
-        if(visGradient) {
+        if(visGradient){
             type = DrawableType::PhongDiffuse;
             makeExclusive = true;
             flags = VisualizationFlag::Gradient;
             evaluateProblem = true;
-        }
-        else flags &= ~VisualizationFlag::Gradient;
+        } else flags &= ~VisualizationFlag::Gradient;
     }
     ImGui::EndGroup();
 }
@@ -232,27 +233,26 @@ template<class Scalar>
 ConnectednessConstraint<Scalar>::ConnectednessConstraint(
         Cr::Containers::Array<const Mg::Vector3d> const& vs,
         Cr::Containers::Array<const Mg::UnsignedInt> const& is):
-    vertices(vs),
-    indices(is)
-{
+        vertices(vs),
+        indices(is) {
     updateInternalDataStructures();
 }
 
 template<class Scalar>
-void ConnectednessConstraint<Scalar>::updateInternalDataStructures(){
+void ConnectednessConstraint<Scalar>::updateInternalDataStructures() {
 
     arrayResize(adjacencyList, Containers::DirectInit, triangles().size(), Containers::ValueInit);
 
     //compute edges in dual graph
     auto hash = [](Edge const& e) noexcept { return hash_int(reinterpret_cast<uint64_t const&>(e)); };
-    std::unordered_map<Edge, int, decltype(hash)> edges(3 * triangles().size(), hash);
+    std::unordered_map<Edge, int, decltype(hash)> edges(3*triangles().size(), hash);
 
     arrayResize(dualEdges, 0);
-    arrayReserve(dualEdges, 3 * triangles().size());
-    for (int i = 0; i < triangles().size(); ++i) {
-        for (int j = 0; j < 3; ++j) {
-            auto[it, inserted] = edges.try_emplace(Edge{triangles()[i][j], triangles()[i][(j + 1) % 3]}, i);
-            if (!inserted) {
+    arrayReserve(dualEdges, 3*triangles().size());
+    for(int i = 0; i < triangles().size(); ++i){
+        for(int j = 0; j < 3; ++j){
+            auto[it, inserted] = edges.try_emplace(Edge{triangles()[i][j], triangles()[i][(j + 1)%3]}, i);
+            if(!inserted){
                 //both faces share edge F(i,j) - F(i,j+1mod3)
                 arrayAppend(dualEdges, Cr::Containers::InPlaceInit, it->second, i);
             }
@@ -260,22 +260,22 @@ void ConnectednessConstraint<Scalar>::updateInternalDataStructures(){
     }
 
     arrayResize(lineElements, Cr::Containers::ValueInit, dualEdges.size());
-    for (auto[v1, v2] : dualEdges) {
+    for(auto[v1, v2] : dualEdges){
         adjacencyList[v1].emplace_back(v2, .0);
         adjacencyList[v2].emplace_back(v1, .0);
     }
 
     arrayResize(diams, triangles().size());
     arrayResize(areas, triangles().size());
-    for (int i = 0; i < triangles().size(); ++i) {
+    for(int i = 0; i < triangles().size(); ++i){
         auto t = triangles()[i];
 
         auto x = vertices[t[0]] - vertices[t[1]];
         auto y = vertices[t[0]] - vertices[t[2]];
         auto z = vertices[t[1]] - vertices[t[2]];
 
-        diams[i] = std::sqrt(std::max({(x-y).dot(), (y-z).dot(), (x-z).dot()}));
-        areas[i] = Mg::Math::cross(x, y).length() * .5f;
+        diams[i] = std::sqrt(std::max({(x - y).dot(), (y - z).dot(), (x - z).dot()}));
+        areas[i] = Mg::Math::cross(x, y).length()*.5f;
     }
 
 #ifndef NODEBUG
@@ -286,9 +286,9 @@ void ConnectednessConstraint<Scalar>::updateInternalDataStructures(){
 }
 
 template<class Scalar>
-bool ConnectednessConstraint<Scalar>::evaluate(Scalar const *U,
-                            Scalar *cost,
-                            SparseMatrix* jacobian) const {
+bool ConnectednessConstraint<Scalar>::evaluate(Scalar const* U,
+                                               Scalar* cost,
+                                               SparseMatrix* jacobian) const {
 
     ScopedTimer timer("Connectedness");
 
@@ -314,28 +314,28 @@ bool ConnectednessConstraint<Scalar>::evaluate(Scalar const *U,
     Cr::Containers::Array<Mg::Double> ws(Cr::Containers::NoInit, numFaces);
     Cr::Containers::Array<bool> inInterface(Cr::Containers::NoInit, numFaces);
     Cr::Containers::Array<Scalar> uT(Cr::Containers::NoInit, numFaces);
-    for (std::size_t i = 0; i < numFaces; i++) {
+    for(std::size_t i = 0; i < numFaces; i++){
         auto const& t = triangles()[i];
-        uT[i] = 1. / 3. * (U[t[0]] + U[t[1]] + U[t[2]]);
+        uT[i] = 1./3.*(U[t[0]] + U[t[1]] + U[t[2]]);
         inInterface[i] = a <= detail::detach(uT[i]) && detail::detach(uT[i]) <= b;
         ws[i] = inInterface[i] ? bump(uT[i]) : -1.;
     }
 
     UnionFind set(numFaces);
-    for (auto [dualV1, dualV2] : dualEdges) {
+    for(auto[dualV1, dualV2] : dualEdges){
         auto fuT1 = f.eval(uT[dualV1]);
         auto fuT2 = f.eval(uT[dualV2]);
-        auto w = .5 * (diams[dualV1] + diams[dualV2]) * .5 * (fuT1 + fuT2);
+        auto w = .5*(diams[dualV1] + diams[dualV2])*.5*(fuT1 + fuT2);
         updateWeight(dualV1, w, adjacencyList[dualV2]);
         updateWeight(dualV2, w, adjacencyList[dualV1]);
-        if (std::abs(detail::detach(w)) < std::numeric_limits<double>::epsilon())
+        if(std::abs(detail::detach(w)) < std::numeric_limits<double>::epsilon())
             set.unite(dualV1, dualV2);
     }
 
     arrayResize(roots, 0);
     arrayResize(components, Containers::NoInit, numFaces);
-    for (std::size_t i = 0; i < components.size(); ++i) {
-        if (inInterface[i]) {
+    for(std::size_t i = 0; i < components.size(); ++i){
+        if(inInterface[i]){
             components[i] = set.find(i);
             Cr::Containers::arrayAppend(roots, components[i]);
         } else
@@ -348,22 +348,22 @@ bool ConnectednessConstraint<Scalar>::evaluate(Scalar const *U,
 
     Mg::Debug{} << "Phase [" << a << "," << b << "] has " << numComponents << "connected components";
 
-    if (numComponents <= 1){
+    if(numComponents <= 1){
         *cost = 0.;
         if(jacobian)
             std::fill_n(*jacobian, numVertices, 0.);
-    } else {
+    } else{
 
         Cr::Containers::Array<Scalar> W(Cr::Containers::DirectInit, numComponents, 0.);
 
-        for (int i = 0; i < numFaces; ++i) {
-            auto &c = components[i];
-            if (c != -1) {
+        for(int i = 0; i < numFaces; ++i){
+            auto& c = components[i];
+            if(c != -1){
                 auto it = std::lower_bound(roots.begin(), roots.end(), c);
                 CORRADE_INTERNAL_ASSERT(it != roots.end() && *it == c);
                 auto k = it - roots.begin();
                 CORRADE_INTERNAL_ASSERT(std::abs(-1 - detail::detach(ws[i])) > 1e-6);
-                W[k] += ws[i] * areas[i];
+                W[k] += ws[i]*areas[i];
                 c = k;
             }
         }
@@ -375,72 +375,72 @@ bool ConnectednessConstraint<Scalar>::evaluate(Scalar const *U,
         arrayResize(stops, numComponents - 1);
         {
             ScopedTimer t("dijkstra");
-            for (std::size_t i = 0; i < numComponents - 1; ++i) {
+            for(std::size_t i = 0; i < numComponents - 1; ++i){
                 StoppingCriteria stop(roots[i], numComponents, components);
                 Dijkstra dijk(adjacencyList);
                 dijk.setSource(roots[i]);
                 dijk.run(stop);
-                CORRADE_ASSERT(stop.foundAll(), "Connectedness : dijkstra did not find all components",false);
+                CORRADE_ASSERT(stop.foundAll(), "Connectedness : dijkstra did not find all components", false);
                 dijkstras[i] = std::move(dijk);
                 stops[i] = std::move(stop);
             }
         }
 
         Scalar d = 0;
-        Cr::Containers::Array<Scalar> distancesData(Cr::Containers::ValueInit, numComponents * numComponents);
+        Cr::Containers::Array<Scalar> distancesData(Cr::Containers::ValueInit, numComponents*numComponents);
         Cr::Containers::StridedArrayView2D<Scalar> distances(distancesData, {numComponents, numComponents});
 
-        if (jacobian)
+        if(jacobian)
             std::fill_n(*jacobian, numVertices, Scalar{0});
 
         {
             ScopedTimer tDiff("connectedness diff");
 
-            for (std::size_t i = 0; i < numComponents; ++i) {
-                for (std::size_t j = i + 1; j < numComponents; ++j) {
+            for(std::size_t i = 0; i < numComponents; ++i){
+                for(std::size_t j = i + 1; j < numComponents; ++j){
                     Scalar dij = 0;
-                    auto Wij = W[i] * W[j];
+                    auto Wij = W[i]*W[j];
 
-                    for (auto&&[a, b]: dijkstras[i].getShortestPathReversed(roots[i], stops[i].target(j))) {
-                        auto &av = adjacencyList[a];
-                        auto it = std::find_if(av.begin(), av.end(), [b = b](const auto &n) { return b == n.vertex; });
+                    for(auto&&[a, b]: dijkstras[i].getShortestPathReversed(roots[i], stops[i].target(j))){
+                        auto& av = adjacencyList[a];
+                        auto it = std::find_if(av.begin(), av.end(), [b = b](const auto& n) { return b == n.vertex; });
                         CORRADE_INTERNAL_ASSERT(it != av.end());
                         dij += it->weight;
 
-                        if (jacobian) {
-                            auto lineElement = .5 * (diams[a] + diams[b]);
+                        if(jacobian){
+                            auto lineElement = .5*(diams[a] + diams[b]);
                             const double fgrada = f.grad(detail::detach(uT[a]));
                             const double fgradb = f.grad(detail::detach(uT[b]));
-                            auto weightedFGrad = detail::detach(Wij) * lineElement * .5 * (1. / 3.);
-                            for (int k = 0; k < 3; ++k) {
-                                jacobian[triangles()[a][k]] += weightedFGrad * fgrada;
-                                jacobian[triangles()[b][k]] += weightedFGrad * fgradb;
+                            auto weightedFGrad = detail::detach(Wij)*lineElement*.5*(1./3.);
+                            for(int k = 0; k < 3; ++k){
+                                jacobian[triangles()[a][k]] += weightedFGrad*fgrada;
+                                jacobian[triangles()[b][k]] += weightedFGrad*fgradb;
                             }
                         }
                     }
 
-                    d += dij * Wij;
-                    if (jacobian) {
+                    d += dij*Wij;
+                    if(jacobian){
                         distances[i][j] = dij;
                         distances[j][i] = dij;
                     }
                 }
             }
 
-            if (jacobian) {
-                for (int k = 0; k < numFaces; ++k) {
-                    if (components[k] < 0) //not in interface
+            if(jacobian){
+                for(int k = 0; k < numFaces; ++k){
+                    if(components[k] < 0) //not in interface
                         continue;
                     auto wgrad = bumpGrad(uT[k]);
-                    if (std::abs(wgrad) < std::numeric_limits<double>::epsilon())
+                    if(std::abs(wgrad) < std::numeric_limits<double>::epsilon())
                         continue;
                     std::size_t i = components[k];
-                    for (std::size_t j = 0; j < numComponents; ++j) {
-                        if (i == j)
+                    for(std::size_t j = 0; j < numComponents; ++j){
+                        if(i == j)
                             continue;
-                        double weightedGrad = distances[i][j] * W[j] * wgrad * areas[k] / 3.;
+                        double weightedGrad = distances[i][j]*W[j]*wgrad*areas[k]/3.;
                         //each incident vertex has the same influence
-                        for (int l = 0; l < 3; ++l)
+                        for(int l = 0; l < 3; ++l)
                             jacobian[triangles()[k][l]] += weightedGrad;
                     }
                 }
@@ -451,8 +451,8 @@ bool ConnectednessConstraint<Scalar>::evaluate(Scalar const *U,
         d *= scaleFactor;
         *cost = d;
 
-        if (jacobian) {
-            for (int i = 0; i < numVertices; ++i)
+        if(jacobian){
+            for(int i = 0; i < numVertices; ++i)
                 jacobian[0][i] *= scaleFactor;
         }
     }
@@ -462,33 +462,33 @@ bool ConnectednessConstraint<Scalar>::evaluate(Scalar const *U,
 
 
 template<class Scalar>
-void ConnectednessConstraint<Scalar>::collectVisualizationData(ArrayView<const double> const& grad){
+void ConnectednessConstraint<Scalar>::collectVisualizationData(ArrayView<const double> const& grad) {
     if(generateLineStrips){
         Mg::Deg hue = 42.0_degf;
-        for (std::size_t i = 0; i < numComponents; ++i) {
-            for (std::size_t j = i + 1; j < numComponents; ++j) {
+        for(std::size_t i = 0; i < numComponents; ++i){
+            for(std::size_t j = i + 1; j < numComponents; ++j){
 
                 auto color = Mg::Color3::fromHsv({hue += 137.5_degf, 0.75f, 0.9f});
 
-                for (auto&&[a, b]: dijkstras[i].getShortestPathReversed(roots[i], stops[i].target(j))) {
-                    auto getMidPoint = [this](auto &t) {
-                        return 1. / 3. * (vertices[t[0]] + vertices[t[1]] + vertices[t[2]]);
+                for(auto&&[a, b]: dijkstras[i].getShortestPathReversed(roots[i], stops[i].target(j))){
+                    auto getMidPoint = [this](auto& t) {
+                        return 1./3.*(vertices[t[0]] + vertices[t[1]] + vertices[t[2]]);
                     };
                     Mg::Vector3 v1{getMidPoint(triangles()[a])}, v2{getMidPoint(triangles()[b])};
                     Mg::Float l = (v2 - v1).length();
                     CORRADE_ASSERT("Connectedness Constraint : edge length is zero",
-                                   (l > std::numeric_limits<Mg::Float>::epsilon()), );
-                    Mg::Vector3 dir{(v2 - v1) / l};
+                                   (l > std::numeric_limits<Mg::Float>::epsilon()),);
+                    Mg::Vector3 dir{(v2 - v1)/l};
                     Mg::Vector3 orthogonal{dir[2], dir[2], -dir[0] - dir[1]};
-                    if (orthogonal.dot() < std::numeric_limits<Mg::Float>::epsilon())
+                    if(orthogonal.dot() < std::numeric_limits<Mg::Float>::epsilon())
                         orthogonal = Mg::Vector3{-dir[1] - dir[2], dir[0], dir[0]};
                     orthogonal = orthogonal.normalized();
                     Mg::Matrix3 rot{orthogonal, dir, Mg::Math::cross(orthogonal, dir)};
-                    CORRADE_ASSERT(rot.isOrthogonal(), "Connectedness : tf for path vis not orthogonal", );
+                    CORRADE_ASSERT(rot.isOrthogonal(), "Connectedness : tf for path vis not orthogonal",);
                     /* overestimate length slightly for better visual appeal */
-                    Mg::Matrix4 scaling = Mg::Matrix4::scaling({pathThickness, 1.1 * l, pathThickness});
-                    Mg::Vector3 mid{.5f * (v1 + v2)};
-                    auto tf = Mg::Matrix4::from(rot, mid) * scaling;
+                    Mg::Matrix4 scaling = Mg::Matrix4::scaling({pathThickness, 1.1*l, pathThickness});
+                    Mg::Vector3 mid{.5f*(v1 + v2)};
+                    auto tf = Mg::Matrix4::from(rot, mid)*scaling;
                     Cr::Containers::arrayAppend(instanceData, Cr::Containers::InPlaceInit, tf, rot, color);
                 }
             }

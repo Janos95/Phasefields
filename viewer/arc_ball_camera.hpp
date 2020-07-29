@@ -13,15 +13,15 @@
 #include <Magnum/SceneGraph/Scene.h>
 
 /* Arcball camera implementation integrated into the SceneGraph */
-class ArcBallCamera: public ArcBall {
+class ArcBallCamera : public ArcBall {
 public:
-    template<class Transformation> ArcBallCamera(
+    template<class Transformation>
+    ArcBallCamera(
             Mg::SceneGraph::Scene<Transformation>& scene,
             const Mg::Vector3& cameraPosition, const Mg::Vector3& viewCenter,
             const Mg::Vector3& upDir, Mg::Deg fov, const Mg::Vector2i& windowSize,
             const Mg::Vector2i& viewportSize):
-            ArcBall{cameraPosition, viewCenter, upDir, fov, windowSize}
-    {
+            ArcBall{cameraPosition, viewCenter, upDir, fov, windowSize} {
         /* Create a camera object of a concrete type */
         auto* cameraObject = new Mg::SceneGraph::Object<Transformation>{&scene};
         (*(_camera = new Mg::SceneGraph::Camera3D{*cameraObject}))
@@ -68,7 +68,7 @@ public:
         return _camera->projectionMatrix();
     }
 
-    void setProjectionMatrix(Mg::Matrix4 const& m){
+    void setProjectionMatrix(Mg::Matrix4 const& m) {
         _camera->setProjectionMatrix(m);
     }
 

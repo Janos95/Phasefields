@@ -6,9 +6,8 @@
 
 using namespace Corrade;
 
-UnionFind::UnionFind(int n): Containers::Array<Node>(Containers::NoInit, n)
-{
-    for (int i = 0; i < n; ++i) {
+UnionFind::UnionFind(int n) : Containers::Array<Node>(Containers::NoInit, n) {
+    for(int i = 0; i < n; ++i){
         (*this)[i] = Node{1, i};
     }
 }
@@ -37,7 +36,7 @@ int UnionFind::find(int x) {
     return root;
 }
 
-void UnionFind::unite(int x, int y){
+void UnionFind::unite(int x, int y) {
     auto xRoot = find(x);
     auto yRoot = find(y);
 

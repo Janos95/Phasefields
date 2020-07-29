@@ -7,6 +7,7 @@
 #include <Eigen/SparseCore>
 
 #include <Corrade/Containers/Containers.h>
+#include <Corrade/Containers/Array.h>
 #include <Magnum/Magnum.h>
 #include <Magnum/Math/Math.h>
 
@@ -27,10 +28,9 @@ Eigen::SparseMatrix<Mg::Double> computeMassMatrix(
         const Cr::Containers::ArrayView<const Mg::Vector3ui>& triangles,
         const Cr::Containers::ArrayView<const Mg::Vector3d>& vertices);
 
-Eigen::SparseMatrix<Mg::Double> gradient(
+Cr::Containers::Array<Mg::Vector3d> gradient(
         const Cr::Containers::ArrayView<const Mg::Vector3ui>& triangles,
-        const Cr::Containers::ArrayView<const Mg::Vector3d>& vertices,
-        bool uniform = false);
+        const Cr::Containers::ArrayView<const Mg::Vector3d>& vertices);
 
 Eigen::SparseMatrix<Mg::Double> computeStiffnessMatrix(
         const Cr::Containers::ArrayView<const Mg::Vector3ui>& triangles,

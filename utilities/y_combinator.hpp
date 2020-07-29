@@ -4,12 +4,14 @@
 
 #pragma once
 
-template <class F>
+#include <utility>
+
+template<class F>
 struct YCombinator {
     F&& f;
 
-    template <class... Args>
-    decltype(auto) operator()(Args&&... args) const {
+    template<class... Args>
+    decltype(auto) operator()(Args&& ... args) const {
         return f(*this, std::forward<Args>(args)...);
     }
 };

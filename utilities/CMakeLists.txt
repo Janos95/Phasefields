@@ -1,16 +1,17 @@
 add_library(utilities
-        unique_function.h
+        UniqueFunction.h
         detail/pointer_union.h
         detail/pointer_int_pair.h
         detail/pointer_like_type_traits.h
         shared_ressource.hpp
-        function_ref.hpp
+        FunctionRef.hpp
         normalizeInto.cpp
         normalizeInto.hpp
-        smart_enum.hpp
+        SmartEnum.h
         permutations.hpp
         stl_algorithm.hpp
         y_combinator.hpp
+        c1_functions.hpp
         types.hpp
         )
 

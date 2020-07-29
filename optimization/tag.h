@@ -6,6 +6,7 @@
 #define PHASEFIELDS_TAG_H
 
 int getTag();
+
 void deleteTag(int tag);
 
 #endif //PHASEFIELDS_TAG_H

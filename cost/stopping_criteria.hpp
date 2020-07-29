@@ -4,15 +4,13 @@
 
 #pragma once
 
-
 #include <Corrade/Utility/Assert.h>
 #include <Corrade/Containers/Array.h>
 
 namespace Cr = Corrade;
-namespace Mg = Magnum;
 
 template<class R, class T>
-void updateWeight(const int target, const T& w, R& neighbors){
+void updateWeight(const int target, const T& w, R& neighbors) {
     auto it = neighbors.begin();
     for(; it != neighbors.end(); ++it){
         if(it->vertex == target)
@@ -22,9 +20,9 @@ void updateWeight(const int target, const T& w, R& neighbors){
     it->weight = w;
 }
 
-struct StoppingCriteria
-{
+struct StoppingCriteria {
     StoppingCriteria() = default;
+
     StoppingCriteria(int source, int numComponents, Cr::Containers::Array<int>& components);
 
     bool operator()(int target);
@@ -35,7 +33,7 @@ struct StoppingCriteria
 
     int m_startComponent;
     int m_numComponentsToFind;
-    Cr::Containers::Array<int> * m_components;
+    Cr::Containers::Array<int>* m_components;
 
     int m_numComponentsFound = 0;
     Cr::Containers::Array<bool> m_found;
