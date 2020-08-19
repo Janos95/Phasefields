@@ -1,21 +1,19 @@
 
-corrade_add_resource(TMO_Rcs resources.conf)
+corrade_add_resource(Phasefields_Rcs resources.conf)
 
-add_library(shaders SHARED
+add_library(Shaders SHARED
         Phong.h
         Phong.cpp
-        TextureCoordinates.h
-        TextureCoordinates.cpp
-        ${TMO_Rcs} TextureCoordinates.cpp TextureCoordinates.h ScreenTriangle.cpp ScreenTriangle.h Remap.cpp Remap.h Combine.cpp Combine.h Sobel.cpp Sobel.h Reduction.cpp Reduction.h ChainRule.cpp ChainRule.h)
+        ${Phasefields_Rcs})
 
 
-target_include_directories(shaders PUBLIC ${CMAKE_CURRENT_LIST_DIR})
-target_link_libraries(shaders
+target_include_directories(Shaders PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+target_link_libraries(Shaders
         PUBLIC
         Magnum::Magnum
         Magnum::Shaders
-        scoped_timer::scoped_timer
+        ScopedTimer::ScopedTimer
         )
 
-set_property(TARGET shaders PROPERTY POSITION_INDEPENDENT_CODE ON)
-add_library(tmo::shaders ALIAS shaders)
+set_property(TARGET Shaders PROPERTY POSITION_INDEPENDENT_CODE ON)
+add_library(Phasefield::Shaders ALIAS Shaders)

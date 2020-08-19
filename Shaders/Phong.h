@@ -6,9 +6,9 @@
 #include <Magnum/Shaders/Generic.h>
 #include <Magnum/Shaders/visibility.h>
 
-namespace Mg = Magnum;
+namespace Phasefield::Shaders {
 
-namespace shaders {
+namespace Mg = Magnum;
 
 class Phong : public Mg::GL::AbstractShaderProgram {
 public:
@@ -81,38 +81,19 @@ public:
     /** @brief Light count */
     Mg::UnsignedInt lightCount() const { return _lightCount; }
 
-    Phong& setAmbientColor(const Magnum::Color4& color);
+    Phong& bindColorMap(Mg::GL::Texture2D& texture);
 
-    Phong& bindAmbientTexture(Mg::GL::Texture2D& texture);
+    Phong& bindFaceColors(Mg::GL::Texture2D& texture);
 
-    Phong& setDiffuseColor(const Magnum::Color4& color);
-
-    Phong& bindDiffuseTexture(Mg::GL::Texture2D& texture);
-
-    Phong& bindNormalTexture(Mg::GL::Texture2D& texture);
-
-    Phong& setSpecularColor(const Magnum::Color4& color);
-
-    Phong& bindSpecularTexture(Mg::GL::Texture2D& texture);
-
-    Phong& bindTextures(Mg::GL::Texture2D* ambient, Mg::GL::Texture2D* diffuse, Mg::GL::Texture2D* specular,
-                        Mg::GL::Texture2D* normal
-#ifdef MAGNUM_BUILD_DEPRECATED
-                        = nullptr
-#endif
-    );
+    Phong& setColorMapTransformation(Mg::Float, Mg::Float);
 
     Phong& setShininess(Mg::Float shininess);
-
-    Phong& setAlphaMask(Mg::Float mask);
 
     Phong& setTransformationMatrix(const Mg::Matrix4& matrix);
 
     Phong& setNormalMatrix(const Mg::Matrix3x3& matrix);
 
     Phong& setProjectionMatrix(const Mg::Matrix4& matrix);
-
-    Phong& setTextureMatrix(const Mg::Matrix3& matrix);
 
     Phong& setLightPositions(Mg::Containers::ArrayView<const Mg::Vector3> lights);
 

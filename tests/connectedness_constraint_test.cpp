@@ -2,7 +2,7 @@
 // Created by janos on 05.03.20.
 //
 
-#include <connectedness_constraint.hpp>
+#include <ConnectednessConstraint.hpp>
 #include <phasefield_initialization.hpp>
 
 #include <Magnum/Primitives/Capsule.h>

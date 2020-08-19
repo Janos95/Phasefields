@@ -23,7 +23,7 @@
 using namespace Magnum;
 using namespace Corrade;
 
-namespace shaders {
+namespace Phasefield::Shaders {
 
 namespace {
 enum : Int {
@@ -96,7 +96,6 @@ Phong::Phong(const Flags flags, const UnsignedInt lightCount) : _flags{flags}, _
         .addSource(flags & Flag::SpecularTexture ? "#define SPECULAR_TEXTURE\n" : "")
         .addSource(flags & Flag::NormalTexture ? "#define NORMAL_TEXTURE\n" : "")
         .addSource(flags & Flag::VertexColor ? "#define VERTEX_COLOR\n" : "")
-        .addSource(flags & Flag::AlphaMask ? "#define ALPHA_MASK\n" : "")
         .addSource(Utility::formatString(
                 "#define LIGHT_COUNT {}\n"
                 "#define LIGHT_COLORS_LOCATION {}\n", lightCount, _lightPositionsUniform + lightCount));
@@ -152,7 +151,6 @@ Phong::Phong(const Flags flags, const UnsignedInt lightCount) : _flags{flags}, _
             _lightPositionsUniform = uniformLocation("lightPositions");
             _lightColorsUniform = uniformLocation("lightColors");
         }
-        if(flags & Flag::AlphaMask) _alphaMaskUniform = uniformLocation("alphaMask");
     }
 
 #ifndef MAGNUM_TARGET_GLES
@@ -188,70 +186,10 @@ Phong::Phong(const Flags flags, const UnsignedInt lightCount) : _flags{flags}, _
 #endif
 }
 
-Phong& Phong::setAmbientColor(const Magnum::Color4& color) {
-    setUniform(_ambientColorUniform, color);
-    return *this;
-}
 
-Phong& Phong::bindAmbientTexture(GL::Texture2D& texture) {
-    CORRADE_ASSERT(_flags & Flag::AmbientTexture,
-                   "Shaders::Phong::bindAmbientTexture(): the shader was not created with ambient texture enabled",
-                   *this);
-    texture.bind(AmbientTextureUnit);
-    return *this;
-}
-
-Phong& Phong::setDiffuseColor(const Magnum::Color4& color) {
-    if(_lightCount) setUniform(_diffuseColorUniform, color);
-    return *this;
-}
-
-Phong& Phong::bindDiffuseTexture(GL::Texture2D& texture) {
-    CORRADE_ASSERT(_flags & Flag::DiffuseTexture,
-                   "Shaders::Phong::bindDiffuseTexture(): the shader was not created with diffuse texture enabled",
-                   *this);
-    if(_lightCount) texture.bind(DiffuseTextureUnit);
-    return *this;
-}
-
-Phong& Phong::setSpecularColor(const Magnum::Color4& color) {
-    if(_lightCount) setUniform(_specularColorUniform, color);
-    return *this;
-}
-
-Phong& Phong::bindSpecularTexture(GL::Texture2D& texture) {
-    CORRADE_ASSERT(_flags & Flag::SpecularTexture,
-                   "Shaders::Phong::bindSpecularTexture(): the shader was not created with specular texture enabled",
-                   *this);
-    if(_lightCount) texture.bind(SpecularTextureUnit);
-    return *this;
-}
-
-Phong& Phong::bindNormalTexture(GL::Texture2D& texture) {
-    CORRADE_ASSERT(_flags & Flag::NormalTexture,
-                   "Shaders::Phong::bindNormalTexture(): the shader was not created with normal texture enabled",
-                   *this);
-    if(_lightCount) texture.bind(NormalTextureUnit);
-    return *this;
-}
-
-Phong&
-Phong::bindTextures(GL::Texture2D* ambient, GL::Texture2D* diffuse, GL::Texture2D* specular, GL::Texture2D* normal) {
-    CORRADE_ASSERT(_flags & (Flag::AmbientTexture | Flag::DiffuseTexture | Flag::SpecularTexture | Flag::NormalTexture),
-                   "Shaders::Phong::bindTextures(): the shader was not created with any textures enabled", *this);
-    GL::AbstractTexture::bind(AmbientTextureUnit, {ambient, diffuse, specular, normal});
-    return *this;
-}
 
 Phong& Phong::setShininess(Float shininess) {
     if(_lightCount) setUniform(_shininessUniform, shininess);
-    return *this;
-}
-
-Phong& Phong::setAlphaMask(Float mask) {
-    CORRADE_ASSERT(_flags & Flag::AlphaMask,
-                   "Shaders::Phong::setAlphaMask(): the shader was not created with alpha mask enabled", *this);
-    setUniform(_alphaMaskUniform, mask);
     return *this;
 }
 
@@ -267,14 +205,6 @@ Phong& Phong::setNormalMatrix(const Matrix3x3& matrix) {
 
 Phong& Phong::setProjectionMatrix(const Matrix4& matrix) {
     setUniform(_projectionMatrixUniform, matrix);
-    return *this;
-}
-
-Phong& Phong::setTextureMatrix(const Matrix3& matrix) {
-    CORRADE_ASSERT(_flags & Flag::TextureTransformation,
-                   "Shaders::Phong::setTextureMatrix(): the shader was not created with texture transformation enabled",
-                   *this);
-    setUniform(_textureMatrixUniform, matrix);
     return *this;
 }
 

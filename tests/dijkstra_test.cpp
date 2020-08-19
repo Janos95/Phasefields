@@ -2,7 +2,7 @@
 // Created by janos on 03.03.20.
 //
 
-#include "dijkstra.hpp"
+#include "Dijkstra.hpp"
 #include "bfs.hpp"
 
 #include <Corrade/TestSuite/Tester.h>

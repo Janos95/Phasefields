@@ -2,6 +2,6 @@ cmake-*/
 build/
 assets/
 shaders/
-cost/external/
+Cost/external/
 conan_modules/*
 math/openblas_modules/*

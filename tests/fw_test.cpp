@@ -2,7 +2,7 @@
 // Created by janos on 03.03.20.
 //
 
-#include "stopping_criteria.hpp"
+#include "StoppingCriteria.h"
 
 #include <Corrade/TestSuite/Tester.h>
 #include <random>

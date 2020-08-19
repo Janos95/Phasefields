@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(phasefields)
+project(Phasefield)
 
 set(CMAKE_CXX_STANDARD 20)
 
@@ -20,26 +20,21 @@ list(INSERT CMAKE_CXX_FLAGS 0 "-Wno-old-style-cast")
 #set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_subdirectory(utilities)
-add_subdirectory(imguifs)
-add_subdirectory(scoped_timer)
-add_subdirectory(visualization)
+add_subdirectory(Utilities)
+add_subdirectory(ImGuiFS)
+add_subdirectory(ScopedTimer)
+add_subdirectory(Visualization)
 #add_subdirectory(polygonizer)
 #add_subdirectory(math)
-#add_subdirectory(shaders)
-add_subdirectory(optimization)
-add_subdirectory(cost)
-add_subdirectory(exact_geodesics)
-add_subdirectory(viewer)
+add_subdirectory(Shaders)
+add_subdirectory(Optimization)
+add_subdirectory(Cost)
+add_subdirectory(Viewer)
 
 #set(CMAKE_CXX_STANDARD_LIBRARIES tbb)
 #set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES /usr/local/include/c++/10.0.1)
 
-add_executable(segmentation
-       main.cpp
-        )
+add_executable(Phasefield main.cpp)
 
-target_link_libraries(segmentation PRIVATE
-        phasefields::viewer
-        )
+target_link_libraries(Phasefield PRIVATE Phasefield::Viewer)
 #add_subdirectory(tests)
