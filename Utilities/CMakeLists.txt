@@ -8,13 +8,12 @@ add_library(Utilities
         normalizeInto.cpp
         normalizeInto.hpp
         SmartEnum.h
-        permutations.hpp
         StlAlgorithm.h
         YCombinator.h
         c1_functions.hpp
         Enums.h
         Heap.h
-        HashMap.h
+        CircularBuffer.h
         )
 
 target_include_directories(Utilities PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -23,5 +22,3 @@ add_library(Phasefield::Utilities ALIAS Utilities)
 
 #add_executable(bench hash_map_bench.cpp)
 #target_link_libraries(bench PUBLIC utilities Magnum::Magnum Eigen3::Eigen)
-
-add_executable(map_test test.cpp)

@@ -7,9 +7,11 @@
 #include "SmartEnum.h"
 
 #include <Corrade/Containers/Containers.h>
+#include <Magnum/Types.h>
 
 namespace Cr = Corrade;
 namespace Mg = Magnum;
+
 namespace Containers = Corrade::Containers;
 
 SMART_ENUM(ColorMapType, Mg::UnsignedInt,

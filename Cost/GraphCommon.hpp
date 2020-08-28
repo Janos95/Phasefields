@@ -6,12 +6,12 @@
 
 #include <Corrade/Utility/Assert.h>
 
-namespace Graph {
+namespace Phasefield::Graph {
 
 struct HeapElement {
-    HeapElement(int n, double d) : node(n), distance(d) {}
+    HeapElement(std::size_t n, double d) : node(n), distance(d) {}
 
-    int node;
+    std::size_t node;
     double distance;
 
     auto operator<=>(const HeapElement& other) const {
@@ -98,4 +98,9 @@ public:
 private:
     ReversedPathIterator<A> m_begin, m_end;
 };
+
+
+
+
+
 }

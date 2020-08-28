@@ -21,7 +21,9 @@ add_library(Cost STATIC
         Mesh.h
         Mesh.cpp
         FastMarchingMethod.cpp
-        FastMarchingMethod.h)
+        FastMarchingMethod.h
+        YamabeSolver.cpp
+        YamabeSolver.h)
 
 target_include_directories(Cost PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
@@ -32,10 +34,10 @@ target_link_libraries(Cost PRIVATE
         )
 
 target_link_libraries(Cost PUBLIC
-        Eigen3::Eigen
         Phasefield::Utilities
         Phasefield::Visualization
         Phasefield::VisualizationProxy
+        Eigen3::Eigen
         )
 
 set_property(TARGET Cost PROPERTY POSITION_INDEPENDENT_CODE ON)

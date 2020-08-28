@@ -14,7 +14,7 @@
 using namespace Corrade;
 
 using my_clock = std::chrono::steady_clock;
-using my_duration = std::chrono::duration<long double, std::nano>;
+using my_duration = std::chrono::duration<double, std::nano>;
 using time_point_t = std::chrono::time_point<my_clock>;
 
 template<class Ratio>
@@ -35,12 +35,12 @@ char const* toSI()
 }
 
 using Ratio = std::ratio<1>;
-using user_dur = std::chrono::duration<long double, Ratio>;
+using user_dur = std::chrono::duration<double, Ratio>;
 
 struct TimingInfo
 {
     my_duration mean{0};
-    long double M2 = 0;
+    double M2 = 0;
     std::size_t count = 0;
 };
 
@@ -81,8 +81,9 @@ void ScopedTimer::printStatistics()
     for(const auto& [name, timingInfo]: log_)
     {
         const auto& [mean, M2, count] = timingInfo;
-        user_dur standardDeviation = my_duration{std::sqrt(M2/(count - 1))};
+        user_dur standardDeviation = my_duration{std::sqrt(M2/static_cast<double>(count - 1))};
         user_dur meanUser = mean;
+        user_dur total =
         auto unit = toSI<Ratio>();
         printf("%s: Mean %f %s, Standard Deviation %f %s\n", name.c_str(), meanUser.count(), unit, standardDeviation.count(), unit);
     }

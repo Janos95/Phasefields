@@ -8,8 +8,11 @@
 
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/StridedArrayView.h>
+#include <Magnum/Types.h>
 
 namespace Phasefield {
+
+namespace Mg = Magnum;
 
 struct Triplet {
     Mg::UnsignedInt row, column;

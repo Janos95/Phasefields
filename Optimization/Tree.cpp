@@ -22,9 +22,9 @@ using namespace Corrade;
 namespace {
 
 struct Edge {
-    Edge(Mg::UnsignedInt v1_, Mg::UnsignedInt v2_) : v1(std::min(v1_, v2_)), v2(std::max(v1_, v2_)) {}
+    Edge(UnsignedInt v1_, UnsignedInt v2_) : v1(std::min(v1_, v2_)), v2(std::max(v1_, v2_)) {}
 
-    Mg::UnsignedInt v1, v2;
+    UnsignedInt v1, v2;
 
     auto operator<=>(const Edge&) const = default;
 };
@@ -37,7 +37,7 @@ struct EdgeHash {
 
 }
 
-void Tree::subdivide(Containers::Array<Mg::UnsignedInt>& indices, Containers::Array<Mg::Vector3d>& vertices) {
+void Tree::subdivide(Containers::Array<UnsignedInt>& indices, Containers::Array<Vector3d>& vertices) {
 
     std::unordered_map<Edge, int, EdgeHash> edgeMap(indices.size());
 
@@ -101,12 +101,12 @@ void Tree::subdivide(Containers::Array<Mg::UnsignedInt>& indices, Containers::Ar
 }
 
 
-void Tree::resize(Mg::UnsignedInt n) {
+void Tree::resize(UnsignedInt n) {
     Containers::Array<double> data(n*phasefieldSize);
     Containers::StridedArrayView2D<double> view{data, {nodes.size(), n}};
     auto oldView = phasefields();
     for(std::size_t i = 0; i < nodes.size(); ++i)
-        Cr::Utility::copy(oldView[i].slice(0, Mg::Math::min(n, phasefieldSize)), view[i]);
+        Cr::Utility::copy(oldView[i].slice(0, Math::min(n, phasefieldSize)), view[i]);
     phasefieldSize = n;
 
     Containers::arrayResize(tempsData, data.size());
@@ -118,11 +118,11 @@ bool Tree::isLeftChild(Node const& node) {
     return node.idx == nodes[leftChildOfParent].idx;
 }
 
-Containers::StridedArrayView2D<Mg::Double> Tree::phasefields() {
+Containers::StridedArrayView2D<Double> Tree::phasefields() {
     return {phasefieldData, {nodes.size(), phasefieldSize}};
 }
 
-Containers::StridedArrayView2D<Mg::Double> Tree::temps() {
+Containers::StridedArrayView2D<Double> Tree::temps() {
     return {tempsData, {nodes.size(), phasefieldSize}};
 }
 

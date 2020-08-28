@@ -6,11 +6,24 @@
 
 #include <Corrade/Containers/GrowableArray.h>
 
-namespace Corrade::Containers {
+namespace Phasefield::Containers {
 
-template<typename T>
+namespace Implementation {
+
+struct Comparator {
+    template<class T>
+    bool operator()(T const& x, T const& y) {
+        return x < y;
+    }
+};
+
+}
+
+template<class T, class Comp = Implementation::Comparator>
 class Heap {
 public:
+
+    explicit Heap(Comp comp = {}) {}
 
     T const& findMin() const {
         CORRADE_ASSERT(!empty(), "Heap : find_min failed because Heap is empty", {});
@@ -41,7 +54,8 @@ public:
 protected:
 
     void remove(int index) {
-        CORRADE_ASSERT(isValidIndex(), "Index error in heap",);
+        CORRADE_ASSERT(index < _data.size(), "Index error in heap",);
+        using std::swap;
         swap(_data[index], _data[_data.size() - 1]);
         arrayResize(_data, _data.size() - 1);
         siftUp(index);
@@ -49,57 +63,47 @@ protected:
     }
 
     void descreaseKey(int index) {
-        CORRADE_ASSERT(isValidIndex(), "Index error in heap",);
+        CORRADE_ASSERT(index < _data.size(), "Index error in heap",);
         siftUp(index);
     }
 
-    virtual void swap(T& a, T& b)
-    {
-        std::swap(a, b);
+    T& operator[](int index) {
+        return _data[index];
     }
 
-    T& getObject(int index) {
-        CORRADE_ASSERT(isValidIndex(), "Index error in heap", {});
+    T const& operator[](int index) const {
         return _data[index];
     }
 
 private:
 
-    bool isValidIndex(int index) {
-        return index >= static_cast<int>(_data.size()) or index < 0;
-    }
-
-    static int parent(int index)          // do not call with index==0!
-    {
+    static std::size_t parent(int index) {
         return (index - 1)/2;
     }
 
-    static int left(int index)            // left child may not exist!
-    {
+    static std::size_t left(std::size_t index) {
         return (2*index) + 1;
     }
 
-    static int right(int index)           // right child may not exist!
-    {
+    static std::size_t right(std::size_t index) {
         return (2*index) + 2;
     }
 
     void siftUp(int index) {
         while((index > 0) and (_data[index] < _data[parent(index)])) {
+            using std::swap; /* two phase lookup */
             swap(_data[index], _data[parent(index)]);
             index = parent(index);
         }
     }
 
     void siftDown(int index) {
-        int smallest = index;
+        std::size_t smallest = index;
         while(true) {
-            if((left(index) < static_cast<int>(_data.size())) and
-               (_data[left(index)] < _data[smallest])) {
+            if(left(index) <_data.size() && _comp(_data[left(index)], _data[smallest]) {
                 smallest = left(index);
             }
-            if((right(index) < static_cast<int>(_data.size())) and
-               (_data[right(index)] < _data[smallest])) {
+            if(right(index) < _data.size() && _data[right(index)] < _data[smallest]) {
                 smallest = right(index);
             }
             if(index == smallest) return;
@@ -109,6 +113,7 @@ private:
     }
 
     Corrade::Containers::Array<T> _data;       // holds the objects in heap order
+    Comp _comp;
 };
 
 }

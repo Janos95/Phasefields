@@ -43,11 +43,11 @@ public:
     }
 
     template<class... Args>
-    void emplace_back(Args&& ... args) {
+    void emplaceBack(Args&& ... args) {
         m_data[m_size++] = T((Args&&) args...);
     }
 
-    void push_back(T&& x) {
+    void pushBack(T&& x) {
         m_data[m_size++] = (T&&) x;
     }
 

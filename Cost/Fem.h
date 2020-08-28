@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "SparseMatrix.h"
+
 #include <Corrade/Containers/Containers.h>
 #include <Corrade/Containers/Array.h>
 #include <Magnum/Magnum.h>
@@ -32,8 +34,7 @@ Cr::Containers::Array<Mg::Vector3d> gradient(
         const Cr::Containers::ArrayView<const Mg::Vector3ui>& triangles,
         const Cr::Containers::ArrayView<const Mg::Vector3d>& vertices);
 
-Eigen::SparseMatrix <Mg::Double> computeStiffnessMatrix(
+Cr::Containers::Array<Triplet> computeStiffnessMatrix(
         const Cr::Containers::ArrayView<const Mg::Vector3ui>& triangles,
         const Cr::Containers::ArrayView<const Mg::Vector3d>& vertices);
-
 }

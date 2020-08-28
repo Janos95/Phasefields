@@ -5,11 +5,11 @@
 #pragma once
 
 #include "ConnectednessConstraints.h"
-#include "Dijkstra.hpp"
+#include "Dijkstra.h"
 #include "StoppingCriteria.h"
 #include "UnionFind.h"
-#include "bfs.hpp"
-#include "small_array.hpp"
+#include "Bfs.h"
+#include "SmallArray.h"
 #include "hash.h"
 #include "c1_functions.hpp"
 #include "Enums.h"

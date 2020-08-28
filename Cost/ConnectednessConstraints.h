@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include "small_array.hpp"
+#include "SmallArray.h"
 #include "Paths.h"
 #include "Functional.h"
-#include "Dijkstra.hpp"
+#include "Dijkstra.h"
 #include "StoppingCriteria.h"
 
 #include <Corrade/Containers/Array.h>
