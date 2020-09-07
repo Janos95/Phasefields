@@ -11,18 +11,18 @@ pkg_check_modules(Adolc REQUIRED IMPORTED_TARGET adolc)
 set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 
 add_library(Optimization STATIC
-        Functional.h
-        Functional.cpp
-        LossFunction.cpp
-        LossFunctions.h
-        Solver.cpp
-        Solver.h
-        Optimization.h
-        Functional.hpp
-        Tag.h
-        Tag.cpp
-        RecursiveProblem.h
-        RecursiveProblem.cpp
+        #Functional.h
+        #Functional.cpp
+        #LossFunction.cpp
+        #LossFunctions.h
+        #Solver.cpp
+        #Solver.h
+        #Optimization.h
+        #Functional.hpp
+        #Tag.h
+        #Tag.cpp
+        #RecursiveProblem.h
+        #RecursiveProblem.cpp
         Tree.h
         Tree.cpp)
 
@@ -39,7 +39,7 @@ target_link_libraries(Optimization PRIVATE
 
 target_link_libraries(Optimization PUBLIC
         PkgConfig::Adolc
-        Phasefield::VisualizationProxy
+        Phasefield::Mesh
         Corrade::Containers
         )
 

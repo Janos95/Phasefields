@@ -4,9 +4,14 @@
 
 #pragma once
 
+#include "Range.h"
+
 //forward declarations
 
-template<class Scalar>
-struct ConnectednessMetaData;
+namespace Phasefield {
 
 struct UnionFind;
+
+
+
+}

@@ -106,13 +106,6 @@ layout(location = NORMAL_MATRIX_ATTRIBUTE_LOCATION)
 in highp mat3 instancedNormalMatrix;
 #endif
 
-#ifdef INSTANCED_TEXTURE_OFFSET
-#ifdef EXPLICIT_ATTRIB_LOCATION
-layout(location = TEXTURE_OFFSET_ATTRIBUTE_LOCATION)
-#endif
-in mediump vec2 instancedTextureOffset;
-#endif
-
 #if LIGHT_COUNT
 out mediump vec3 transformedNormal;
 #ifdef NORMAL_TEXTURE

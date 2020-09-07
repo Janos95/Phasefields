@@ -83,8 +83,8 @@ void ScopedTimer::printStatistics()
         const auto& [mean, M2, count] = timingInfo;
         user_dur standardDeviation = my_duration{std::sqrt(M2/static_cast<double>(count - 1))};
         user_dur meanUser = mean;
-        user_dur total =
-        auto unit = toSI<Ratio>();
+        //auto unit = toSI<Ratio>();
+        const char* unit = "seconds";
         printf("%s: Mean %f %s, Standard Deviation %f %s\n", name.c_str(), meanUser.count(), unit, standardDeviation.count(), unit);
     }
 }

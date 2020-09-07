@@ -1,24 +1,20 @@
 
 high priority
-    * multiple phaseses
-        * how to visualize this
     * shape optimization
         * finish writing up the approach in latex
 
 medium prioritiy
-    ** port to emscripten and make a web demo? This would required
+    ** port to emscripten and make a web demo?
     * use imgui docking branch
-    * images of color map
-    * implicit surface : fix normals + sample randomly to find multiple connected comp
+    * plasticy mesh vis
 
-nice to have algorithms
+nice to have
     * fast (compile + runtime) hash map
-    * fast marching method
-    * kd tree
     * bounding volume hierarchy
     * implicit surface meshing (https://hal.archives-ouvertes.fr/hal-00533568/document)
     * parameterization, e.g. scaf (https://hal.archives-ouvertes.fr/hal-00533568/document)
     * cutting to disk : https://jeffe.cs.illinois.edu/pubs/pdf/optcycles.pdf
     * approximation to optimal cut graph
+    * images of color map
 
 

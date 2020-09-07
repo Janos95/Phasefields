@@ -5,23 +5,26 @@
 #pragma once
 
 #include "ArcBall.h"
-#include "primitives.hpp"
-#include "Solver.h"
-#include "Functional.h"
-#include "ModicaMortola.h"
-#include "RecursiveProblem.h"
-#include "Enums.h"
-#include "VisualizationProxy.h"
+//#include "primitives.hpp"
+//#include "Solver.h"
+//#include "Functional.h"
+//#include "ModicaMortola.h"
+//#include "RecursiveProblem.h"
+//#include "Enums.h"
+//#include "VisualizationProxy.h"
 #include "Tree.h"
-#include "Phong.h"
-#include "UniqueFunction.h"
-#include "FastMarchingMethod.h"
+//#include "UniqueFunction.h"
+#include "../Mesh/FastMarchingMethod.h"
 #include "KDTree.h"
+#include "../Mesh/Mesh.h"
+#include "Types.h"
 
 #include <Magnum/Platform/Sdl2Application.h>
 #include <Magnum/ImGuiIntegration/Context.h>
-#include <MagnumPlugins/PrimitiveImporter/PrimitiveImporter.h>
+//#include <MagnumPlugins/PrimitiveImporter/PrimitiveImporter.h>
 #include <Magnum/Math/Color.h>
+#include <Magnum/Trade/MeshData.h>
+#include <Magnum/Shaders/Phong.h>
 
 namespace Phasefield {
 
@@ -36,7 +39,7 @@ struct OptimizationCallback {
 
     bool optimize = true;
 
-    Solver::Status::Value operator()(Solver::IterationSummary const&);
+    //Solver::Status::Value operator()(Solver::IterationSummary const&);
 };
 
 
@@ -70,7 +73,7 @@ struct Viewer : public Mg::Platform::Application {
 
     bool saveMesh(std::string const&);
 
-    bool runOptimization(UniqueFunction<bool()>&& cb);
+    //bool runOptimization(UniqueFunction<bool()>&& cb);
 
     void drawBrushOptions();
 
@@ -82,7 +85,7 @@ struct Viewer : public Mg::Platform::Application {
 
     void stopOptimization();
 
-    Functional makeFunctional(FunctionalType::Value);
+    //Functional makeFunctional(FunctionalType::Value);
 
     void paint();
 
@@ -93,67 +96,66 @@ struct Viewer : public Mg::Platform::Application {
     Mg::ImGuiIntegration::Context imgui{Mg::NoCreate};
     bool trackingMouse = false;
 
-    Mg::UnsignedInt numSubdivisions = 0;
+    //UnsignedInt numSubdivisions = 0;
 
-    Cr::Containers::Array<Magnum::Vector3d> vertices;
-    Cr::Containers::Array<Magnum::UnsignedInt> indices;
+    Mg::GL::Mesh glMesh{Mg::NoCreate};
+    Mg::GL::Buffer vertexBuffer{Mg::NoCreate};
+    Mg::GL::Buffer indexBuffer{Mg::NoCreate};
 
+    Mesh mesh;
     Mg::Trade::MeshData original{Magnum::MeshPrimitive::Points, 0};
-    Mg::Trade::MeshData meshData{Magnum::MeshPrimitive::Points, 0};
+    //Mg::Trade::MeshData meshData{Magnum::MeshPrimitive::Points, 0};
 
-    Corrade::Containers::Optional<ArcBall> arcBall;
-    Mg::Matrix4 projection;
-    Mg::Float near = 0.01f, far = 100.f;
-    Mg::Deg fov = 45._degf;
+    Optional<ArcBall> arcBall;
+    Matrix4 projection;
+    Float near = 0.01f, far = 100.f;
+    Deg fov = 45._degf;
 
-    Mg::GL::Mesh mesh{Mg::NoCreate};
-    Mg::GL::Buffer indexBuffer{Mg::NoCreate}, vertexBuffer{Mg::NoCreate};
+    //Mg::GL::Mesh mesh{Mg::NoCreate};
+    //Mg::GL::Buffer indexBuffer{Mg::NoCreate}, vertexBuffer{Mg::NoCreate};
 
-    Shaders::Phong phong;
+    Mg::Shaders::Phong phong{Mg::NoCreate};
 
-    Mg::Color4 clearColor = 0x72909aff_rgbaf;
+    Color4 clearColor = 0x72909aff_rgbaf;
 
-    Solver::RecursiveProblem problem;
-    Solver::Options options;
+    //Solver::RecursiveProblem problem;
+    //Solver::Options options;
     Tree tree;
-    OptimizationCallback optimizationCallback;
-    bool isOptimizing = false;
+    //OptimizationCallback optimizationCallback;
+    //bool isOptimizing = false;
 
     //connectedness vis data
-    Mg::GL::Texture2D faceTexture{Mg::NoCreate};
-    Mg::GL::Texture2D* texture = nullptr;
+    //Mg::GL::Texture2D faceTexture{Mg::NoCreate};
+    //Mg::GL::Texture2D* texture = nullptr;
 
-    SharedRessource<Mg::Double> doubleWellScaling;
-    SharedRessource<Mg::Double> dirichletScaling;
-    SharedRessource<Mg::Double> connectednessScaling;
+    //SharedRessource<Mg::Double> doubleWellScaling;
+    //SharedRessource<Mg::Double> dirichletScaling;
+    //SharedRessource<Mg::Double> connectednessScaling;
 
-    Mg::Double phase = 0;
-    Mg::Double targetDist = 0.;
-    Mg::Double recursiveFilterFactor = 0.05;
-    Mg::Double distStep = 0.01;
-    Mg::Double maxDist = 20.f;
+    Double phase = 0;
+    Double targetDist = 0.;
+    Double recursiveFilterFactor = 0.05;
+    Double distStep = 0.01;
+    Double maxDist = 20.f;
     bool brushing = false;
     bool stopPainting = true;
-    Cr::Containers::Array<std::pair<double, int>> distances;
-    Mg::Vector3d point;
+    Array<std::pair<double, Vertex>> distances;
+    Vector3 point;
 
-    Mg::GL::Mesh axisMesh{Mg::NoCreate};
-    bool drawAxis = false;
-    bool drawWireframe = false;
+    //Mg::GL::Mesh axisMesh{Mg::NoCreate};
+    //bool drawAxis = false;
+    //bool drawWireframe = false;
 
-    VisualizationProxy proxy;
+    //VisualizationProxy proxy;
 
     Node* currentNode = nullptr;
-    Mg::UnsignedInt colorMapIndex = 0;
-    Containers::Array<std::pair<const char*, Magnum::GL::Texture2D>> colorMapTextures;
+    UnsignedInt colorMapIndex = 0;
+    Array<std::pair<const char*, Magnum::GL::Texture2D>> colorMapTextures;
 
-    Cr::PluginManager::Manager<Mg::Trade::AbstractImporter> manager;
-    Mg::Trade::PrimitiveImporter primitiveImporter;
+    //Cr::PluginManager::Manager<Mg::Trade::AbstractImporter> manager;
+    //Mg::Trade::PrimitiveImporter primitiveImporter;
 
-    const int segmentationTag;
-    const int phasefieldTag;
-
-    KDTree<Mg::Vector3d> kdtree;
+    KDTree<Mg::Vector3> kdtree;
     FastMarchingMethod fastMarchingMethod;
 };
 

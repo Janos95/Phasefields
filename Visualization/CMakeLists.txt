@@ -25,8 +25,8 @@ add_library(Phasefield::Visualization ALIAS Visualization)
 
 
 add_library(VisualizationProxy STATIC
-        VisualizationProxy.cpp
-        VisualizationProxy.h
+        #VisualizationProxy.cpp
+        #VisualizationProxy.h
         )
 
 target_include_directories(VisualizationProxy PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

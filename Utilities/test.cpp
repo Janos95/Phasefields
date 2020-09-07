@@ -28,7 +28,7 @@ struct Edge {
 };
 
 struct HalfEdge {
-    static constexpr UnsignedInt Invalid = ~0u;
+
 
     UnsignedInt next;
     UnsignedInt face;
@@ -82,7 +82,7 @@ struct Mesh {
                 auto k = (j + 1)%3;
                 he.next = 3*i + k;
                 he.vertex = triangles[i][k];
-                he.opposite = HalfEdge::Invalid;
+
                 auto [it, inserted] = edges.tryEmplace(Edge{triangles[i][j], triangles[i][k]}, i);
                 if(!inserted){
                     auto at = it->; /* adjacent triangle */

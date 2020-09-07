@@ -26,25 +26,25 @@ struct InverseDistanceCompare {
     }
 };
 
-struct Edge {
-    Edge(int a_, int b_) : a(a_), b(b_) {}
-
-    int a, b;
-#ifdef __cpp_impl_three_way_comparison
-
-    auto operator<=>(const Edge&) const = default;
-
-#else
-
-    bool operator<(const Edge& other) const{
-        return std::tie(a, b) < std::tie(other.a, other.b);
-    }
-
-    bool operator==(const Edge& other) const{
-        return std::tie(a, b) == std::tie(other.a, other.b);
-    }
-#endif
-};
+//struct Edge {
+//    Edge(int a_, int b_) : a(a_), b(b_) {}
+//
+//    int a, b;
+//#ifdef __cpp_impl_three_way_comparison
+//
+//    auto operator<=>(const Edge&) const = default;
+//
+//#else
+//
+//    bool operator<(const Edge& other) const{
+//        return std::tie(a, b) < std::tie(other.a, other.b);
+//    }
+//
+//    bool operator==(const Edge& other) const{
+//        return std::tie(a, b) == std::tie(other.a, other.b);
+//    }
+//#endif
+//};
 
 template<class A>
 class ReversedPathIterator {

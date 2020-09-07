@@ -3,6 +3,7 @@
 //
 
 #include "Tree.h"
+#include "../Mesh/Mesh.h"
 
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Containers/GrowableArray.h>
@@ -37,71 +38,72 @@ struct EdgeHash {
 
 }
 
-void Tree::subdivide(Containers::Array<UnsignedInt>& indices, Containers::Array<Vector3d>& vertices) {
+//void Tree::subdivide(Containers::Array<UnsignedInt>& indices, Containers::Array<Vector3d>& vertices) {
+//
+//    std::unordered_map<Edge, int, EdgeHash> edgeMap(indices.size());
+//
+//    const auto pfs = phasefields();
+//    Containers::Array<Containers::Array<double>> interpolated(phasefieldCount());
+//
+//    const auto vertexOffset = vertices.size();
+//    int edgeCount = 0;
+//
+//    const std::size_t indexCount = indices.size();
+//
+//    for(std::size_t i = 0; i < indexCount; i += 3) {
+//        UnsignedInt newVertices[3];
+//        for(int j = 0; j < 3; ++j) {
+//            const auto v1 = indices[i + j], v2 = indices[i + (j + 1)%3];
+//            const auto[it, inserted] = edgeMap.try_emplace(Edge{v1, v2}, vertexOffset + edgeCount);
+//            newVertices[j] = it->second;
+//            if(inserted) {
+//                Containers::arrayAppend(vertices, 0.5*(vertices[v1] + vertices[v2]));
+//                for(std::size_t k = 0; k < phasefieldCount(); ++k) {
+//                    Containers::arrayAppend(interpolated[k], 0.5*(pfs[j][v1] + pfs[j][v2]));
+//                }
+//                ++edgeCount;
+//            }
+//        }
+//
+//        /*
+//            Add three new faces (0, 1, 3) and update original (2)
+//
+//                          orig 0
+//                          /   \
+//                         /  0  \
+//                        /       \
+//                    new 0 ----- new 2
+//                    /   \       /  \
+//                   /  1  \  2  / 3  \
+//                  /       \   /      \
+//             orig 1 ----- new 1 ---- orig 2
+//        */
+//        Containers::arrayAppend(indices, {
+//                indices[i], newVertices[0], newVertices[2],
+//                newVertices[0], indices[i + 1], newVertices[1],
+//                newVertices[2], newVertices[1], indices[i + 2]});
+//
+//        for(std::size_t j = 0; j != 3; ++j)
+//            indices[i + j] = newVertices[j];
+//    }
+//
+//    /* flatten everything */
+//    Containers::Array<double> data(phasefieldCount()*vertices.size());
+//    Containers::StridedArrayView2D<double> phasefieldsNew(phasefieldData, {phasefieldCount(), vertices.size()});
+//    for(std::size_t i = 0; i < phasefieldCount(); ++i) {
+//        Utility::copy(pfs[i], phasefieldsNew[i].prefix(phasefieldSize));
+//        Utility::copy(interpolated[i], phasefieldsNew[i].slice(phasefieldSize, vertices.size()));
+//    }
+//
+//    /* mutate tree structure */
+//    phasefieldData = std::move(data);
+//    Containers::arrayResize(tempsData, phasefieldData.size());
+//    phasefieldSize = vertices.size();
+//}
 
-    std::unordered_map<Edge, int, EdgeHash> edgeMap(indices.size());
 
-    const auto pfs = phasefields();
-    Containers::Array<Containers::Array<double>> interpolated(phasefieldCount());
-
-    const auto vertexOffset = vertices.size();
-    int edgeCount = 0;
-
-    const std::size_t indexCount = indices.size();
-
-    for(std::size_t i = 0; i < indexCount; i += 3) {
-        UnsignedInt newVertices[3];
-        for(int j = 0; j < 3; ++j) {
-            const auto v1 = indices[i + j], v2 = indices[i + (j + 1)%3];
-            const auto[it, inserted] = edgeMap.try_emplace(Edge{v1, v2}, vertexOffset + edgeCount);
-            newVertices[j] = it->second;
-            if(inserted) {
-                Containers::arrayAppend(vertices, 0.5*(vertices[v1] + vertices[v2]));
-                for(std::size_t k = 0; k < phasefieldCount(); ++k) {
-                    Containers::arrayAppend(interpolated[k], 0.5*(pfs[j][v1] + pfs[j][v2]));
-                }
-                ++edgeCount;
-            }
-        }
-
-        /*
-            Add three new faces (0, 1, 3) and update original (2)
-
-                          orig 0
-                          /   \
-                         /  0  \
-                        /       \
-                    new 0 ----- new 2
-                    /   \       /  \
-                   /  1  \  2  / 3  \
-                  /       \   /      \
-             orig 1 ----- new 1 ---- orig 2
-        */
-        Containers::arrayAppend(indices, {
-                indices[i], newVertices[0], newVertices[2],
-                newVertices[0], indices[i + 1], newVertices[1],
-                newVertices[2], newVertices[1], indices[i + 2]});
-
-        for(std::size_t j = 0; j != 3; ++j)
-            indices[i + j] = newVertices[j];
-    }
-
-    /* flatten everything */
-    Containers::Array<double> data(phasefieldCount()*vertices.size());
-    Containers::StridedArrayView2D<double> phasefieldsNew(phasefieldData, {phasefieldCount(), vertices.size()});
-    for(std::size_t i = 0; i < phasefieldCount(); ++i) {
-        Utility::copy(pfs[i], phasefieldsNew[i].prefix(phasefieldSize));
-        Utility::copy(interpolated[i], phasefieldsNew[i].slice(phasefieldSize, vertices.size()));
-    }
-
-    /* mutate tree structure */
-    phasefieldData = std::move(data);
-    Containers::arrayResize(tempsData, phasefieldData.size());
-    phasefieldSize = vertices.size();
-}
-
-
-void Tree::resize(UnsignedInt n) {
+void Tree::update() {
+    size_t n = mesh.vertexCount();
     Containers::Array<double> data(n*phasefieldSize);
     Containers::StridedArrayView2D<double> view{data, {nodes.size(), n}};
     auto oldView = phasefields();
@@ -133,18 +135,17 @@ void Tree::remove(Node& nodeToDelete) {
 
     CORRADE_ASSERT(&nodeToDelete != &root(), "Cannot remove root node",);
 
-
     Containers::Array<double> newData;
     Containers::Array<Node> newNodes;
 
-    int nodeIdx = 0;
+    size_t nodeIdx = 0;
     numLeafs = 0;
     depth = 0;
 
     auto visitor = YCombinator{
-            [&](auto&& visitor, Node& node, UnsignedInt d = 0) -> Int {
+            [&](auto&& visitor, Node& node, size_t d = 0) -> size_t {
                 if(&node == &nodeToDelete)
-                    return Node::None;
+                    return Invalid;
 
                 Int idx = nodeIdx++;
 
@@ -158,9 +159,9 @@ void Tree::remove(Node& nodeToDelete) {
                 depth = Math::max(d, depth);
 
                 if(!node.isLeaf()) {
-                    if(node.leftChild != Node::None)
+                    if(node.leftChild != Invalid)
                         newNode.leftChild = visitor(nodes[node.leftChild], d + 1);
-                    if(node.rightChild != Node::None)
+                    if(node.rightChild != Invalid)
                         newNode.rightChild = visitor(nodes[node.rightChild], d + 1);
                 } else {
                     ++numLeafs;

@@ -10,7 +10,6 @@
 #include "UnionFind.h"
 #include "Bfs.h"
 #include "SmallArray.h"
-#include "hash.h"
 #include "c1_functions.hpp"
 #include "Enums.h"
 #include "normalizeInto.hpp"

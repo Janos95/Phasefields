@@ -5,7 +5,7 @@
 #ifndef PHASEFIELD_YAMABESOLVER_H
 #define PHASEFIELD_YAMABESOLVER_H
 
-#include "Mesh.h"
+#include "../Mesh/Mesh.h"
 #include <Ei
 
 namespace Phasefield {

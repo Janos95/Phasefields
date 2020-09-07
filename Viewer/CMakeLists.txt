@@ -1,9 +1,9 @@
 
-find_package(MagnumPlugins REQUIRED PrimitiveImporter)
+#find_package(MagnumPlugins REQUIRED PrimitiveImporter)
 
 corrade_add_resource(Viewer_RESOURCES resources.conf)
 
-add_library(Viewer STATIC
+add_library(Viewer SHARED
         Viewer.cpp
         Viewer.h
         ArcBall.cpp
@@ -17,13 +17,11 @@ target_link_libraries(Viewer
         PUBLIC
             Phasefield::Utilities
             ScopedTimer::ScopedTimer
-            Phasefield::Cost
+            #Phasefield::Cost
             Phasefield::Optimization
             Phasefield::Visualization
-            Phasefield::VisualizationProxy
             Phasefield::ImGuiFS
-            Phasefield::Shaders
-        #Phasefield::polygonizer
+
             Magnum::GL
             Magnum::SceneGraph
             Magnum::Magnum
@@ -32,7 +30,6 @@ target_link_libraries(Viewer
             Magnum::Application
             Magnum::Shaders
             Magnum::DebugTools
-            MagnumPlugins::PrimitiveImporter
             MagnumIntegration::ImGui
             ImGui::SourcesMiscCpp
         )

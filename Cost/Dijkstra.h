@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include "GraphCommon.hpp"
+#include "GraphCommon.h"
 #include "Heap.h"
-#include "Mesh.h"
+#include "../Mesh/Mesh.h"
 
 namespace Phasefield {
 
@@ -47,7 +47,7 @@ public:
 private:
     friend Graph::ReversedPathIterator<Dijkstra>;
 
-    Containers::Heap<Graph::HeapElement> m_heap;
+    Heap<Graph::HeapElement> m_heap;
     Mesh const* m_mesh = nullptr;
     Cr::Containers::Array<double> m_dist;
     Cr::Containers::Array<int> m_prev;

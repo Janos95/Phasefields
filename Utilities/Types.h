@@ -5,12 +5,11 @@
 #pragma once
 
 #include <Magnum/Magnum.h>
+#include <Magnum/Shaders/Shaders.h>
+#include <Corrade/Containers/Tags.h>
 
-using Corrade::Containers::ArrayView;
-using Corrade::Containers::Array;
-using Corrade::Containers::StridedArrayView;
-using Corrade::Containers::StridedArrayView1D;
-using Corrade::Containers::StridedArrayView2D;
+using namespace Corrade::Containers;
+using namespace Magnum::Shaders;
 
 using Magnum::UnsignedInt;
 using Magnum::Float;
@@ -18,8 +17,23 @@ using Magnum::Double;
 using Magnum::Int;
 
 using Magnum::Vector3;
+using Magnum::Vector2;
+using Magnum::Vector2i;
+using Magnum::Vector3ub;
 using Magnum::Vector3d;
+using Magnum::Matrix3;
 using Magnum::Matrix4;
+using Magnum::Color3;
+using Magnum::Color4;
 
 using Magnum::Rad;
+using Magnum::Radd;
 using Magnum::Deg;
+
+using Magnum::Debug;
+
+namespace Math = Magnum::Math;
+
+namespace Phasefield {
+constexpr size_t Invalid = ~size_t{0};
+}
