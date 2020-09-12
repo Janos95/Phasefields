@@ -4,21 +4,26 @@
 
 
 #include "Functional.h"
-#include "../Cost/SparseMatrix.h"
+#include "SparseMatrix.h"
 #include "Tag.h"
 
 #include <Corrade/Containers/GrowableArray.h>
+#include <Corrade/Utility/Algorithms.h>
+#include <Corrade/Utility/FormatStl.h>
 #include <Magnum/Math/Functions.h>
 
 #include <adolc/adouble.h>
 #include <adolc/taping.h>
 #include <adolc/adolc_sparse.h>
 
+
+// for debug
+#include <cstdio>
+#include <atomic>
+
 //#include <imgui.h>
 
 namespace Phasefield {
-
-using namespace Magnum;
 
 Functional::~Functional() {
     deleteTag(tag);
@@ -37,21 +42,41 @@ Functional::~Functional() {
 //    ad(erased, params, weights, out);
 //}
 
-void Functional::operator()(Containers::ArrayView<const double> parameters,
-                            Containers::ArrayView<const double> weights,
-                            double& out,
-                            Containers::ArrayView<double> gradP,
-                            Containers::ArrayView<double> gradW) const {
 
-    auto n = numParameters();
+#define PBSTR "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
+#define PBWIDTH 60
+
+
+
+void printProgress(double percentage) {
+    int val = (int) (percentage * 100);
+    int lpad = (int) (percentage * PBWIDTH);
+    int rpad = PBWIDTH - lpad;
+    printf("\r%3d%% [%.*s%*s]", val, lpad, PBSTR, rpad, "");
+    fflush(stdout);
+}
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "openmp-use-default-none"
+void Functional::operator()(ArrayView<const double> parameters,
+                            ArrayView<const double> weights,
+                            double& out,
+                            ArrayView<double> gradP,
+                            ArrayView<double> gradW) const {
+
+    size_t n = numParameters();
+
+    Array<double> gradPWithoutLoss{gradP ? n : 0};
+    Array<double> gradWWithoutLoss{gradW ? n : 0};
+
     double cost = 0;
-    evalWithGrad(erased, parameters, weights, cost, gradP, gradW);
+    evalWithGrad(erased, parameters, weights, cost, gradPWithoutLoss, gradWWithoutLoss);
 
     /* apply scaling and loss function */
-    Mg::Double rho[3], phi[3] = {cost, 1., 0.};
+    double rho[3], phi[3] = {cost, 1., 0.};
     if(scaling) {
-        auto s = *scaling;
-        for(auto& r : phi) r *= s;
+        double s = *scaling;
+        for(double& r : phi) r *= s;
     }
 
     loss(phi[0], rho);
@@ -60,12 +85,45 @@ void Functional::operator()(Containers::ArrayView<const double> parameters,
 
     if(gradP || gradW) {
         double lossGrad = rho[1]*phi[1];
-        for(std::size_t i = 0; i < n; ++i) {
-            if(gradP) gradP[i] *= lossGrad;
-            if(gradW) gradW[i] *= lossGrad;
+        for(size_t i = 0; i < n; ++i) {
+            if(gradP) gradP[i] += lossGrad*gradPWithoutLoss[i];
+            if(gradW) gradW[i] += lossGrad*gradWWithoutLoss[i];
+        }
+    }
+
+    if(checkDerivatives && gradP) {
+        Debug{} << "Checking Derivatives";
+        Array<double> perturbedParams{NoInit, n};
+        Cr::Utility::copy(parameters, perturbedParams);
+
+        double h = 1e-6;
+        double tol = 1e-4;
+
+        std::atomic_size_t counter = 0;
+
+//#pragma omp parallel for
+        for(size_t i = 0; i < n; ++i) {
+            double f1 = 0, f2 = 0;
+            double old = perturbedParams[i];
+            perturbedParams[i] += h;
+            evalWithGrad(erased, parameters, weights, f2, nullptr, nullptr);
+            perturbedParams[i] = old - h;
+            evalWithGrad(erased, parameters, weights, f1, nullptr, nullptr);
+            perturbedParams[i] = old;
+
+            double gradNumeric = (f2 - f1)/(2*h);
+            double gradAnalytic = gradPWithoutLoss[i];
+
+            if(Math::abs(gradNumeric - gradPWithoutLoss[i]) > tol) {
+                Debug{} << Cr::Utility::formatString("Gradient Checker Error: (Analytic, Numeric) = ({},{}) at index {}\n", gradAnalytic, gradNumeric, i).c_str();
+            }
+
+            double progress = double(counter++)/double(n);
+            printProgress(progress);
         }
     }
 }
+#pragma clang diagnostic pop
 
 //void Functional::operator()(
 //        double const* parameter,
@@ -171,65 +229,54 @@ void Functional::operator()(Containers::ArrayView<const double> parameters,
 //    trace_off();
 //}
 
-bool Functional::drawImGuiOptions(VisualizationProxy& proxy) {
+OptionsResultSet Functional::drawImGuiOptions(VisualizationProxy& proxy) {
     if(options) {
         //ImGui::Checkbox("Check Derivatives", &checkDerivatives);
         return options(erased, proxy);
     }
-    return false;
+    return OptionsResult{};
 
 }
 
-void Functional::updateInternalDataStructures() {
-    update(erased);
-    //isFirstEvaluation = true;
-}
+//void Functional::updateInternalDataStructures() {
+//    update(erased);
+//    //isFirstEvaluation = true;
+//}
 
 [[nodiscard]] std::size_t Functional::numParameters() const {
     return params(erased);
 }
 
-void swap(Functional& f1, Functional& f2) {
-    std::swap(f1.erased, f2.erased);
-    std::swap(f1.destroy, f2.destroy);
-    std::swap(f1.params, f2.params);
-    //std::swap(f1.residuals, f2.residuals);
-    std::swap(f1.vis, f2.vis);
-    std::swap(f1.off, f2.off);
-    std::swap(f1.update, f2.update);
-    std::swap(f1.options, f2.options);
-    std::swap(f1.evalWithGrad, f2.evalWithGrad);
-    //std::swap(f1.ad, f2.ad);
-    //std::swap(f1.tag, f2.tag);
-    //std::swap(f1.isFirstEvaluation, f2.isFirstEvaluation);
-    std::swap(f1.alwaysRetape, f2.alwaysRetape);
+void Functional::swap(Functional& other) {
+    std::swap(erased, other.erased);
+    std::swap(destroy, other.destroy);
+    std::swap(params, other.params);
+    std::swap(options, other.options);
+    std::swap(evalWithGrad, other.evalWithGrad);
+    std::swap(functionalType, other.functionalType);
 
-    /* two phase lookup */
-    using std::swap;
-    swap(f1.loss, f2.loss);
-    swap(f1.scaling, f2.scaling);
+    loss.swap(other.loss);
+    scaling.swap(other.scaling);
 }
 
 Functional::Functional(Functional&& other) noexcept {
-    using std::swap;
-    swap(*this, other);
+    swap(other);
 }
 
 Functional& Functional::operator=(Functional&& other) noexcept {
-    using std::swap;
-    swap(*this, other);
+    swap(other);
     return *this;
 }
 
 /* this is called from the gui thread so we can update some opengl stuff if we want to */
-void Functional::updateVisualization(VisualizationProxy& proxy) {
-    if(vis)
-        vis(erased, proxy);
-}
+//void Functional::updateVisualization(VisualizationProxy& proxy) {
+//    if(vis)
+//        vis(erased, proxy);
+//}
 
-void Functional::turnVisualizationOff() {
-    if(off)
-        off(erased);
-}
+//void Functional::turnVisualizationOff() {
+//    if(off)
+//        off(erased);
+//}
 
 }

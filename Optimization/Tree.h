@@ -9,6 +9,7 @@
 #include "Range.h"
 #include "Types.h"
 #include "Mesh.h"
+#include "Serialize.h"
 
 #include <Corrade/Containers/Array.h>
 #include <Magnum/Math/Functions.h>
@@ -25,54 +26,77 @@ struct Node {
     size_t idx;
     size_t depth;
 
-    bool isLeaf() const {
+    [[nodiscard]] bool isLeaf() const {
         return leftChild == Invalid && rightChild == Invalid;
     }
 };
 
 struct Tree {
 
-    Mesh& mesh;
+    enum class Child {
+        Left,
+        Right
+    };
 
-    Cr::Containers::Array<double> phasefieldData;
-    Cr::Containers::Array<double> tempsData;
+    explicit Tree(Mesh&);
 
-    Cr::Containers::Array<Node> nodes;
+    Mesh* mesh = nullptr;
+
+    Array<double> phasefieldData;
+    Array<double> tempsData;
+
+    Array<Node> nodes;
     size_t numLeafs = 0;
-    size_t phasefieldSize = 0;
     size_t depth = 0;
+    size_t m_vertexCount = 0;
 
     Node& root() { return nodes.front(); }
 
-    Containers::StridedArrayView2D<Mg::Double> phasefields();
+    ArrayView<double> level(size_t d);
 
-    Containers::StridedArrayView2D<Mg::Double> temps();
+    StridedArrayView2D<Double> phasefields();
 
-    Mg::UnsignedInt phasefieldCount() const {
-        return nodes.size();
-    }
+    StridedArrayView2D<Double> temporaryData();
 
     void update();
+
+    /**
+     * If the level does not exist, the number of nodes is returned.
+     * @param level depth in the tree
+     * @return idx of the first node on the requested level
+     */
+    size_t levelStartIndex(size_t level) {
+        size_t nodeIdx = nodes.size();
+        traverse([&](Node& node){
+            if(node.depth == level) {
+                if(nodeIdx == nodes.size())
+                    nodeIdx = &node - nodes.begin();
+                return false;
+            } else return true;
+        });
+        return nodeIdx;
+    }
+
+    size_t nodeCountOnLevel(size_t level) {
+        return levelStartIndex(level + 1) - levelStartIndex(level);
+    }
 
     //void subdivide(Containers::Array<Mg::UnsignedInt>& indices, Containers::Array<Vector3d>& vertices);
 
     void remove(Node& node);
 
-    void addLeftChild(Node& node);
+    void addChild(Node& node, Child child);
 
-    void addRightChild(Node& node);
+    [[nodiscard]] size_t nodeCount() const { return nodes.size(); }
 
-    std::size_t phasefieldCount(Node& node){
-        return nodes.size();
-    }
-
+    [[nodiscard]] size_t vertexCount() const { return m_vertexCount; }
 
     template<class F>
     void traverse(F&& f, Node* node = nullptr){
         auto visitor = YCombinator{
             [&](auto&& visitor, Node& node) -> void {
-                f(node);
-                if(!node.isLeaf()) { /* a leaf still has two children for computing derivatives */
+                if(!f(node)) return;
+                if(!node.isLeaf()) {
                     if(node.leftChild != Invalid)
                         visitor(nodes[node.leftChild]);
                     if(node.rightChild != Invalid)
@@ -83,7 +107,11 @@ struct Tree {
         visitor(node ? *node : root());
     }
 
-    bool isLeftChild(Node const& node);
+    [[nodiscard]] bool isLeftChild(Node const& node) const;
+
+    void serialize(Array<char>& data) const;
+
+    static Tree deserialize(Array<char> const& data, Mesh& m);
 };
 
 }

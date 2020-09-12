@@ -18,7 +18,7 @@ find_package(TBB CONFIG REQUIRED)
 find_package(ipopt REQUIRED)
 
 #set_compile_options("-Wno-old-style-cast")
-list(INSERT CMAKE_CXX_FLAGS 0 "-Wno-old-style-cast")
+#list(INSERT CMAKE_CXX_FLAGS 0 "-Wno-old-style-cast")
 #set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -31,7 +31,7 @@ add_subdirectory(Visualization)
 #add_subdirectory(Shaders)
 add_subdirectory(Optimization)
 add_subdirectory(Mesh)
-#add_subdirectory(Cost)
+add_subdirectory(Cost)
 add_subdirectory(Viewer)
 
 #set(CMAKE_CXX_STANDARD_LIBRARIES tbb)

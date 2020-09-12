@@ -17,9 +17,6 @@
 
 namespace Phasefield {
 
-using namespace Magnum;
-using namespace Corrade;
-
 namespace {
 
 struct Edge {
@@ -32,11 +29,13 @@ struct Edge {
 
 struct EdgeHash {
     std::size_t operator()(Edge const& e) const {
-        return *((std::size_t*) (Utility::MurmurHash2{}((char*) &e, sizeof(UnsignedLong)).byteArray()));
+        return *((std::size_t*) (Cr::Utility::MurmurHash2{}((char*) &e, sizeof(size_t)).byteArray()));
     }
 };
 
 }
+
+Tree::Tree(Mesh& m) : mesh(&m), nodes(1), numLeafs(1) {}
 
 //void Tree::subdivide(Containers::Array<UnsignedInt>& indices, Containers::Array<Vector3d>& vertices) {
 //
@@ -103,29 +102,31 @@ struct EdgeHash {
 
 
 void Tree::update() {
-    size_t n = mesh.vertexCount();
-    Containers::Array<double> data(n*phasefieldSize);
-    Containers::StridedArrayView2D<double> view{data, {nodes.size(), n}};
+    size_t n = mesh->vertexCount();
+    Array<double> data(DirectInit, n*nodeCount(), 0.5);
+    StridedArrayView2D<double> view{data, {nodes.size(), n}};
     auto oldView = phasefields();
-    for(std::size_t i = 0; i < nodes.size(); ++i)
-        Cr::Utility::copy(oldView[i].slice(0, Math::min(n, phasefieldSize)), view[i]);
-    phasefieldSize = n;
+    for(std::size_t i = 0; i < nodes.size(); ++i) {
+        size_t min = Math::min(n, m_vertexCount);
+        Cr::Utility::copy(oldView[i].prefix(min), view[i].prefix(min));
+    }
 
-    Containers::arrayResize(tempsData, data.size());
+    m_vertexCount = n;
+    arrayResize(tempsData, data.size());
     phasefieldData = std::move(data);
 }
 
-bool Tree::isLeftChild(Node const& node) {
+bool Tree::isLeftChild(Node const& node) const {
     auto leftChildOfParent = nodes[node.parent].leftChild;
     return node.idx == nodes[leftChildOfParent].idx;
 }
 
 Containers::StridedArrayView2D<Double> Tree::phasefields() {
-    return {phasefieldData, {nodes.size(), phasefieldSize}};
+    return {phasefieldData, {nodes.size(), m_vertexCount}};
 }
 
-Containers::StridedArrayView2D<Double> Tree::temps() {
-    return {tempsData, {nodes.size(), phasefieldSize}};
+Containers::StridedArrayView2D<Double> Tree::temporaryData() {
+    return {tempsData, {nodes.size(), m_vertexCount}};
 }
 
 #pragma clang diagnostic push
@@ -153,7 +154,8 @@ void Tree::remove(Node& nodeToDelete) {
                 Containers::arrayAppend(newData, view);
 
                 Node newNode = node;
-                newNode.parent = idx - 1; /* For the root node this is -1 which is the same as PhasefieldNode::None */
+                static_assert(size_t(-1) == Invalid);
+                newNode.parent = idx - 1; /* For the root node this is -1 which is the same as Invalid */
                 newNode.idx = idx;
 
                 depth = Math::max(d, depth);
@@ -181,5 +183,75 @@ void Tree::remove(Node& nodeToDelete) {
 }
 
 #pragma clang diagnostic pop
+
+void Tree::addChild(Node& node, Child childType) {
+    bool wasLeaf = node.isLeaf();
+
+    arrayResize(phasefieldData, NoInit, (nodeCount() + 1)*vertexCount());
+    arrayResize(tempsData, NoInit, (nodeCount() + 1)*vertexCount());
+
+    size_t idx = levelStartIndex(node.depth + 1);
+    double* data = phasefieldData.data();
+    size_t sizeToMove = (nodes.size() - idx)*m_vertexCount*sizeof(double);
+    if(sizeToMove) {
+        memmove(data + (idx + 1)*m_vertexCount, data + idx*m_vertexCount, sizeToMove);
+    }
+
+    for(double& x : phasefields()[idx]) x = 0.;
+
+    if(childType == Child::Right)
+        node.rightChild = idx;
+    else if(childType == Child::Left)
+        node.leftChild = idx;
+
+    Node child{.parent = node.idx, .idx = idx, .depth = node.depth + 1};
+    arrayAppend(nodes, child);
+
+    if(!wasLeaf)
+        ++numLeafs;
+    if(node.depth + 1 > depth)
+        depth = node.depth + 1;
+
+}
+
+ArrayView<double> Tree::level(size_t d) {
+    size_t begin = levelStartIndex(d);
+    size_t end = levelStartIndex(d + 1);
+    return phasefieldData.slice(begin*m_vertexCount, end*m_vertexCount);
+}
+
+void Tree::serialize(Array<char>& data) const {
+    size_t dataSize = phasefieldData.size();
+    arrayAppend(data, {(char*)&dataSize, sizeof(size_t)});
+    arrayAppend(data, arrayCast<char>(phasefieldData));
+    size_t nodesSize = nodes.size();
+    arrayAppend(data, {(char*)&nodesSize, sizeof(size_t)});
+    arrayAppend(data, arrayCast<char>(nodes));
+
+    arrayAppend(data, {(char*)&numLeafs, sizeof(size_t)});
+    arrayAppend(data, {(char*)&depth, sizeof(size_t)});
+    arrayAppend(data, {(char*)&m_vertexCount, sizeof(size_t)});
+}
+
+Tree Tree::deserialize(Array<char> const& data, Mesh& m) {
+    Tree t{m};
+    char const* pc = data;
+    size_t dataSize = deserializeTrivial<size_t>(pc);
+    arrayResize(t.phasefieldData, NoInit, dataSize);
+    arrayResize(t.tempsData, NoInit, dataSize);
+    memcpy(t.phasefieldData.data(), pc, sizeof(double)*dataSize);
+    pc += sizeof(double)*dataSize;
+
+    size_t nodesSize = deserializeTrivial<size_t>(pc);
+    arrayResize(t.nodes, NoInit, nodesSize);
+    memcpy(t.nodes.data(), pc, sizeof(Node)*nodesSize);
+    pc += sizeof(Node)*nodesSize;
+
+    t.numLeafs = deserializeTrivial<size_t>(pc);
+    t.depth = deserializeTrivial<size_t>(pc);
+    t.m_vertexCount = deserializeTrivial<size_t>(pc);
+
+    return t;
+}
 
 }

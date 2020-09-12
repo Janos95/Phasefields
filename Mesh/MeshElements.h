@@ -18,6 +18,7 @@ struct HalfEdge {
     Mesh* mesh;
 
     auto operator<=>(HalfEdge const& other) const { return idx <=> other.idx; }
+    bool operator==(HalfEdge const& other) const = default;
 
     [[nodiscard]] HalfEdge next() const;
 
@@ -39,6 +40,8 @@ struct HalfEdge {
 
     [[nodiscard]] Corner corner() const;
 
+    [[nodiscard]] Vector3d asVector() const;
+
     [[nodiscard]] bool isInterior() const;
 
     [[nodiscard]] bool onBoundaryLoop() const;
@@ -50,6 +53,7 @@ struct Vertex {
     Mesh* mesh;
 
     auto operator<=>(Vertex const& other) const { return idx <=> other.idx; }
+    bool operator==(Vertex const& other) const = default;
 
     [[nodiscard]] Float gaussianCurvature() const;
 
@@ -65,9 +69,9 @@ struct Vertex {
 
     [[nodiscard]] VertexAdjacentVertexRange adjacentVertices() const;
 
-    [[nodiscard]] IncomingHalfEdgeRange incomingHalfedges() const;
+    [[nodiscard]] IncomingHalfEdgeRange incomingHalfEdges() const;
 
-    [[nodiscard]] OutgoingHalfEdgeRange outgoingHalfedges() const;
+    [[nodiscard]] OutgoingHalfEdgeRange outgoingHalfEdges() const;
 
     //IncidentEdgeRange incidentEdges() const;
     //IncidentFaceRange incidentFaces() const;
@@ -80,6 +84,7 @@ struct Face {
     Mesh* mesh;
 
     auto operator<=>(Face const& other) const { return idx <=> other.idx; }
+    bool operator==(Face const& other) const = default;
 
     //FaceIncidentVertexRange vertices();
     //FaceIncidentFaceRange incidentFaces() const;
@@ -88,9 +93,19 @@ struct Face {
 
     [[nodiscard]] FaceEdgeRange edges() const;
 
-    [[nodiscard]] CornersOfFaceRange corners() const;
+    [[nodiscard]] FaceCornerRange corners() const;
+
+    [[nodiscard]] FaceAdjacentFaceRange adjacentFaces() const;
+
+    [[nodiscard]] FaceVertexRange vertices() const;
+
+    [[nodiscard]] FaceHalfEdgeRange halfEdges() const;
 
     [[nodiscard]] bool isValid() const;
+
+    [[nodiscard]] double area() const;
+
+    [[nodiscard]] Vector3d normal() const;
 };
 
 struct Edge {
@@ -99,13 +114,14 @@ struct Edge {
     Mesh* mesh;
 
     auto operator<=>(Edge const& other) const { return idx <=> other.idx; }
+    bool operator==(Edge const& other) const = default;
 
     //bool isManifold();
-    Vertex vertex1();
+    Vertex vertex1() const;
 
-    Vertex vertex2();
+    Vertex vertex2() const;
 
-    HalfEdge halfEdge();
+    HalfEdge halfEdge() const;
 };
 
 
@@ -115,6 +131,7 @@ struct Corner {
     Mesh* mesh;
 
     auto operator<=>(Corner const& other) const { return idx <=> other.idx; }
+    bool operator==(Corner const& other) const = default;
 
     [[nodiscard]] HalfEdge side1() const;
 
@@ -130,15 +147,25 @@ struct Corner {
 
 };
 
-struct FaceEdgeIterator {
+Debug& operator<<(Debug& debug, Vertex const& v);
+Debug& operator<<(Debug& debug, Face const& f);
+Debug& operator<<(Debug& debug, HalfEdge const& he);
+Debug& operator<<(Debug& debug, Edge const& e);
+Debug& operator<<(Debug& debug, Corner const& c);
+
+template<class E>
+struct FaceCirculationIterator {
     HalfEdge he;
     bool justStarted = true;
 
-    FaceEdgeIterator& operator++() { he = he.next(); justStarted= false; return *this;}
+    FaceCirculationIterator& operator++() { he = he.next(); justStarted= false; return *this;}
 
-    bool operator !=(FaceEdgeIterator const& other) const { return justStarted || he.idx != other.he.idx;  }
+    bool operator !=(FaceCirculationIterator const& other) const { return justStarted || he != other.he;  }
 
-    Edge operator*() const { return he.edge(); }
+    E operator*() const requires std::is_same_v<E, Edge> { return he.edge(); }
+    E operator*() const requires std::is_same_v<E, Face> { return he.twin().face(); }
+    E operator*() const requires std::is_same_v<E, HalfEdge> { return he; }
+    E operator*() const requires std::is_same_v<E, Vertex> { return he.tail(); }
 };
 
 struct IncomingHalfEdgeIterator {
@@ -147,7 +174,7 @@ struct IncomingHalfEdgeIterator {
 
     IncomingHalfEdgeIterator& operator++() { he = he.nextIncomingHalfEdge(); justStarted = false; return *this;}
 
-    bool operator !=(IncomingHalfEdgeIterator const& other) const { return justStarted || he.idx != other.he.idx;  }
+    bool operator !=(IncomingHalfEdgeIterator const& other) const { return justStarted || he != other.he;  }
 
     HalfEdge operator*() const { return he; }
 };
@@ -158,7 +185,7 @@ struct OutgoingHalfEdgeIterator {
 
     OutgoingHalfEdgeIterator& operator++() { he = he.nextOutgoingHalfEdge(); justStarted = false; return *this;}
 
-    bool operator !=(OutgoingHalfEdgeIterator const& other) const { return justStarted || he.idx != other.he.idx; }
+    bool operator !=(OutgoingHalfEdgeIterator const& other) const { return justStarted || he != other.he; }
 
     HalfEdge operator*() const { return he; }
 };
@@ -169,7 +196,7 @@ struct CornersOfFaceIterator {
 
     CornersOfFaceIterator& operator++() { he = he.next(); justStarted = false; return *this; }
 
-    bool operator !=(CornersOfFaceIterator const& other) const { return justStarted || he.idx != other.he.idx; }
+    bool operator !=(CornersOfFaceIterator const& other) const { return justStarted || he != other.he; }
 
     Corner operator*() const { return he.corner(); }
 };
@@ -179,9 +206,14 @@ struct VertexCornerIterator {
     HalfEdge he;
     bool justStarted = true;
 
-    VertexCornerIterator& operator++() { he = he.nextIncomingHalfEdge(); justStarted = false; return *this; }
+    VertexCornerIterator& operator++() {
+        justStarted = false;
+        he = he.nextIncomingHalfEdge();
+        if(he.onBoundaryLoop()) he = he.nextIncomingHalfEdge();
+        return *this;
+    }
 
-    bool operator !=(VertexCornerIterator const& other) const { return justStarted || he.idx != other.he.idx; }
+    bool operator !=(VertexCornerIterator const& other) const { return justStarted || he != other.he; }
 
     Corner operator*() const { return he.corner(); }
 };
@@ -192,7 +224,7 @@ struct VertexAdjacentVertexIterator {
 
     VertexAdjacentVertexIterator& operator++() { he = he.nextIncomingHalfEdge(); justStarted = false; return *this; }
 
-    bool operator !=(VertexAdjacentVertexIterator const& other) const { return justStarted || he.idx != other.he.idx; }
+    bool operator !=(VertexAdjacentVertexIterator const& other) const { return justStarted || he != other.he; }
 
     Vertex operator*() const { return he.tail(); }
 };
@@ -208,9 +240,9 @@ struct ElementIterator {
         return *this;
     }
 
-    bool isCorner() requires std::is_same_v<T, Corner> { return e.face().idx != Invalid; }
+    bool isCorner() requires std::is_same_v<T, Corner> { return e.face().isValid(); }
 
-    bool operator !=(ElementIterator const& other) const { return e.idx != other.e.idx; }
+    bool operator !=(ElementIterator const& other) const { return e != other.e; }
 
     T operator*() const { return e; }
 };

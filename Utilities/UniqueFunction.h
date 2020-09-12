@@ -35,6 +35,7 @@
 #include "detail/pointer_union.h"
 #include <utility>
 #include <new>
+#include <cstring>
 
 inline void* allocate_buffer(size_t Size, size_t Alignment) {
     return ::operator new(Size

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "Enums.h"
+#include "Types.h"
 
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/StridedArrayView.h>
@@ -15,7 +16,7 @@ namespace Phasefield {
 namespace Mg = Magnum;
 
 struct Triplet {
-    Mg::UnsignedInt row, column;
+    size_t row, column;
     double value;
 };
 
@@ -23,25 +24,23 @@ struct SparseMatrix {
 
     SparseMatrix() = default;
 
-    explicit SparseMatrix(Containers::Array<Triplet> triplets);
+    explicit SparseMatrix(Array<Triplet> triplets);
 
     int numRows, numCols, nnz;
 
-    Containers::Array<double> values;
-    Containers::Array<Mg::UnsignedInt> rows;
-    Containers::Array<Mg::UnsignedInt> cols;
+    Array<double> values;
+    Array<size_t> rows;
+    Array<size_t> cols;
 
     struct RowRange {
         int current, rowEnd;
     };
 
-    Containers::ArrayView<double> row(std::size_t r);
-
-    RowRange rowRange() const;
+    ArrayView<double> row(std::size_t r);
 
     void clear();
 
-    Containers::Array<double> reduceRowwise();
+    Array<double> reduceRowwise();
 };
 
 }

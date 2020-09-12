@@ -6,13 +6,14 @@
 
 #include "ArcBall.h"
 //#include "primitives.hpp"
-//#include "Solver.h"
-//#include "Functional.h"
-//#include "ModicaMortola.h"
-//#include "RecursiveProblem.h"
+#include "Solver.h"
+#include "Functional.h"
+#include "ModicaMortola.h"
+#include "RecursiveProblem.h"
 //#include "Enums.h"
-//#include "VisualizationProxy.h"
+#include "VisualizationProxy.h"
 #include "Tree.h"
+#include "Dijkstra.h"
 //#include "UniqueFunction.h"
 #include "../Mesh/FastMarchingMethod.h"
 #include "KDTree.h"
@@ -35,12 +36,12 @@ namespace Cr = Corrade;
 
 struct Viewer;
 
-struct OptimizationCallback {
-
-    bool optimize = true;
-
-    //Solver::Status::Value operator()(Solver::IterationSummary const&);
-};
+//struct OptimizationCallback {
+//
+//    bool optimize = true;
+//
+//    Solver::Status::Value operator()(Solver::IterationSummary const&);
+//};
 
 
 struct Viewer : public Mg::Platform::Application {
@@ -67,13 +68,13 @@ struct Viewer : public Mg::Platform::Application {
 
     void textInputEvent(TextInputEvent& event) override;
 
-    void drawSubdivisionOptions();
+    //void drawSubdivisionOptions();
 
     void drawMeshIO();
 
-    bool saveMesh(std::string const&);
+    //bool saveMesh(std::string const&);
 
-    //bool runOptimization(UniqueFunction<bool()>&& cb);
+    void runOptimization(UniqueFunction<bool()>&& cb);
 
     void drawBrushOptions();
 
@@ -81,64 +82,59 @@ struct Viewer : public Mg::Platform::Application {
 
     void drawVisualizationOptions();
 
-    void startOptimization();
+    Functional makeFunctional(FunctionalType::Value);
 
-    void stopOptimization();
+    bool drawFunctionals(Array<Functional>&, size_t& id);
 
-    //Functional makeFunctional(FunctionalType::Value);
-
-    void paint();
+    void startBrushing(Vector3 const&);
+    void brush();
 
     void updateInternalDataStructures();
 
-    Mg::Vector3 unproject(Mg::Vector2i const&);
+    Vector3 unproject(Vector2i const&);
 
     Mg::ImGuiIntegration::Context imgui{Mg::NoCreate};
     bool trackingMouse = false;
 
     //UnsignedInt numSubdivisions = 0;
 
-    Mg::GL::Mesh glMesh{Mg::NoCreate};
-    Mg::GL::Buffer vertexBuffer{Mg::NoCreate};
-    Mg::GL::Buffer indexBuffer{Mg::NoCreate};
-
     Mesh mesh;
     Mg::Trade::MeshData original{Magnum::MeshPrimitive::Points, 0};
-    //Mg::Trade::MeshData meshData{Magnum::MeshPrimitive::Points, 0};
 
     Optional<ArcBall> arcBall;
     Matrix4 projection;
     Float near = 0.01f, far = 100.f;
     Deg fov = 45._degf;
 
-    //Mg::GL::Mesh mesh{Mg::NoCreate};
-    //Mg::GL::Buffer indexBuffer{Mg::NoCreate}, vertexBuffer{Mg::NoCreate};
+    Mg::GL::Mesh glMesh{Mg::NoCreate};
+    Mg::GL::Buffer indexBuffer{Mg::NoCreate}, vertexBuffer{Mg::NoCreate};
 
-    Mg::Shaders::Phong phong{Mg::NoCreate};
+    Phong phongColorMap{Mg::NoCreate};
+    Phong phongVertexColors{Mg::NoCreate};
 
     Color4 clearColor = 0x72909aff_rgbaf;
 
-    //Solver::RecursiveProblem problem;
-    //Solver::Options options;
+    Solver::RecursiveProblem problem;
+    Solver::Options options;
     Tree tree;
-    //OptimizationCallback optimizationCallback;
-    //bool isOptimizing = false;
+    bool isOptimizing = false;
+    bool hierarchicalOptimization = false;
 
     //connectedness vis data
     //Mg::GL::Texture2D faceTexture{Mg::NoCreate};
     //Mg::GL::Texture2D* texture = nullptr;
 
-    //SharedRessource<Mg::Double> doubleWellScaling;
-    //SharedRessource<Mg::Double> dirichletScaling;
-    //SharedRessource<Mg::Double> connectednessScaling;
+    SharedRessource<double> doubleWellScaling;
+    SharedRessource<double> dirichletScaling;
+    SharedRessource<Mg::Double> connectednessScaling;
 
-    Double phase = 0;
+    Double phase = 1.;
     Double targetDist = 0.;
     Double recursiveFilterFactor = 0.05;
     Double distStep = 0.01;
     Double maxDist = 20.f;
+    bool brushingModeEnabled = false;
     bool brushing = false;
-    bool stopPainting = true;
     Array<std::pair<double, Vertex>> distances;
     Vector3 point;
 
@@ -146,9 +142,10 @@ struct Viewer : public Mg::Platform::Application {
     //bool drawAxis = false;
     //bool drawWireframe = false;
 
-    //VisualizationProxy proxy;
+    VisualizationProxy proxy;
 
-    Node* currentNode = nullptr;
+    size_t currentNode = 0;
+    bool drawSegmentation = true;
     UnsignedInt colorMapIndex = 0;
     Array<std::pair<const char*, Magnum::GL::Texture2D>> colorMapTextures;
 

@@ -2,171 +2,151 @@
 // Created by janos on 2/23/20.
 //
 #include "ModicaMortola.h"
-#include "SparseMatrix.h"
-#include "Fem.h"
-
-#include <Corrade/Utility/Assert.h>
-#include <Corrade/Utility/Algorithms.h>
-#include <Corrade/Containers/Array.h>
+#include "C1Functions.h"
+#include "Mesh.h"
+#include "Functional.hpp"
 
 #include <Magnum/Magnum.h>
 #include <Magnum/Math/Vector3.h>
-#include <Magnum/Math/FunctionsBatch.h>
 
-#include <numeric>
 
 namespace Phasefield {
 
-using namespace Magnum;
-using namespace Corrade;
-
-namespace {
-
-auto triangles(Containers::ArrayView<const UnsignedInt> const& indices) {
-    return Containers::arrayCast<const Mg::Vector3ui>(indices);
+DirichletEnergy::DirichletEnergy(Mesh& m) : mesh(m) {
+    mesh.requireFaceAreas();
+    mesh.requireGradientOperator();
 }
 
-}
-
-DirichletEnergy::DirichletEnergy(
-        Containers::Array<Vector3d> const& vs,
-        Containers::Array<UnsignedInt> const& is) :
-        indices(is),
-        vertices(vs) {
-    updateInternalDataStructures();
-    CORRADE_ASSERT(!Math::isNan(areas), "Dirichlet Energy : areas contains NaN",);
-}
-
-
-uint32_t DirichletEnergy::numParameters() const {
-    return vertices.size();
-}
-
-void DirichletEnergy::updateInternalDataStructures() {
-
-    areas = computeAreas(triangles(indices), vertices);
-    edgeNormalsData = gradient(triangles(indices), vertices);
-    edgeNormals = Containers::StridedArrayView2D<Mg::Vector3d>{edgeNormalsData, {triangles(indices).size(), 3}};
+size_t DirichletEnergy::numParameters() const {
+    return mesh.vertexCount();
 }
 
 template<class Scalar>
-void DirichletEnergy::operator()(Containers::ArrayView<const Scalar> const& parameters,
-                                 Containers::ArrayView<const Scalar> const& weights,
+void DirichletEnergy::operator()(ArrayView<const Scalar> const& parameters,
+                                 ArrayView<const Scalar> const& weights,
                                  Scalar& out,
-                                 Containers::ArrayView<Scalar> const& gradP,
-                                 Containers::ArrayView<Scalar> const& gradW) {
+                                 ArrayView<Scalar> const& gradP,
+                                 ArrayView<Scalar> const& gradW) {
 
-    const auto ts = triangles(indices);
-
-    for(std::size_t i = 0; i < ts.size(); ++i) {
-        auto const& t = ts[i];
-
+    for(Face face : mesh.faces()) {
         Vector3d grad{0};
         Scalar weight{0};
-        for(int j = 0; j < 3; ++j) {
-            grad += parameters[t[j]]*edgeNormals[i][j];
-            weight += weights[t[j]];
+
+        for(HalfEdge he : face.halfEdges()) {
+            Vertex v = he.next().tip();
+            grad += parameters[v.idx]*mesh.gradient[he];
+            weight += weights[v.idx];
         }
+
         weight /= Scalar{3};
 
         Scalar gradNormSquared = grad.dot();
-        out += areas[i]*gradNormSquared*weight;
+        CORRADE_INTERNAL_ASSERT(!Math::isNan(gradNormSquared));
+        out += mesh.faceArea[face]*gradNormSquared*weight;
 
         if(gradP) {
-            for(int j = 0; j < 3; ++j) {
-                gradP[t[j]] += areas[i]*2*Math::dot(grad, edgeNormals[i][j])*weight;
+            for(HalfEdge he : face.halfEdges()){
+                Vertex v = he.next().tip();
+                gradP[v.idx] += mesh.faceArea[face]*2*Math::dot(grad, mesh.gradient[he])*weight;
             }
         }
         if(gradW) {
-            for(int j = 0; j < 3; ++j) {
-                gradW[t[j]] += areas[i]*gradNormSquared/Scalar{3};
+            //for(int j = 0; j < 3; ++j) {
+            //    gradW[t[j]] += mesh.faceArea[face]*gradNormSquared/Scalar{3};
+            //}
+            for(HalfEdge he : face.halfEdges()) {
+                Vertex v = he.next().tip();
+                gradW[v.idx] += mesh.faceArea[face]*gradNormSquared/Scalar{3};
             }
         }
     }
 }
 
-AreaRegularizer::AreaRegularizer(
-        Containers::Array<Magnum::Vector3d> const& vs,
-        Containers::Array<Mg::UnsignedInt> const& is) : indices(is), vertices(vs) {
-    updateInternalDataStructures();
-}
+AreaRegularizer::AreaRegularizer(Mesh& m) : mesh(m) {}
 
-void AreaRegularizer::updateInternalDataStructures() {
-    integralOperator = computeIntegralOperator(triangles(indices), vertices);
-    auto areas = computeAreas(triangles(indices), vertices);
-    area = std::accumulate(areas.begin(), areas.end(), 0.);
-}
+size_t AreaRegularizer::numParameters() const { return mesh.vertexCount(); }
 
 template<class Scalar>
-void AreaRegularizer::operator()(Containers::ArrayView<const Scalar> const& parameters,
-                                 Containers::ArrayView<const Scalar> const& weights,
+void AreaRegularizer::operator()(ArrayView<const Scalar> const& parameters,
+                                 ArrayView<const Scalar> const& weights,
                                  Scalar& out,
-                                 Containers::ArrayView<Scalar> const& gradP,
-                                 Containers::ArrayView<Scalar> const& gradW) {
+                                 ArrayView<Scalar> const& gradP,
+                                 ArrayView<Scalar> const& gradW) {
 
     Scalar integral = 0;
     SmootherStep f;
-    for(std::size_t i = 0; i < vertices.size(); ++i) {
-        integral += f.eval(parameters[i])*weights[i]*integralOperator[i];
+    for(Vertex vertex : mesh.vertices()) {
+        size_t idx = vertex.idx;
+        integral += f.eval(parameters[idx])*weights[idx]*mesh.integral[vertex];
         if(gradP) {
-            gradP[i] += f.grad(parameters[i])*weights[i]*integralOperator[i];
+            gradP[idx] += f.grad(parameters[idx])*weights[idx]*mesh.integral[vertex];
         }
         if(gradW) {
-            gradW[i] += f.eval(parameters[i])*integralOperator[i];
+            gradW[idx] += f.eval(parameters[idx])*mesh.integral[vertex];
         }
     }
-    out += integral - areaRatio*area;
+    out += integral - areaRatio*(mesh.surfaceArea*0.5);
 }
 
-DoubleWellPotential::DoubleWellPotential(
-        Containers::Array<Magnum::Vector3d> const& vs,
-        Containers::Array<Mg::UnsignedInt> const& is) :
-        indices(is), vertices(vs) {
-}
+DoubleWellPotential::DoubleWellPotential(Mesh& m) : mesh(m) {
+    mesh.requireIntegralOperator(); }
 
-void DoubleWellPotential::updateInternalDataStructures() {
-    integralOperator = computeIntegralOperator(triangles(indices), vertices);
-}
+size_t DoubleWellPotential::numParameters() const { return mesh.vertexCount(); }
 
 template<class Scalar>
-void DoubleWellPotential::operator()(Containers::ArrayView<const Scalar> const& parameters,
-                                     Containers::ArrayView<const Scalar> const& weights,
+void DoubleWellPotential::operator()(ArrayView<const Scalar> const& parameters,
+                                     ArrayView<const Scalar> const& weights,
                                      Scalar& cost,
-                                     Containers::ArrayView<Scalar> const& gradP,
-                                     Containers::ArrayView<Scalar> const& gradW) {
+                                     ArrayView<Scalar> const& gradP,
+                                     ArrayView<Scalar> const& gradW) {
 
     DoubleWell f;
-    for(std::size_t i = 0; i < vertices.size(); ++i) {
-        cost += f.eval(parameters[i])*weights[i]*integralOperator[i];
+    CORRADE_INTERNAL_ASSERT(parameters.size() == weights.size());
+    CORRADE_INTERNAL_ASSERT(mesh.integral.size() == weights.size());
+    for(Vertex vertex : mesh.vertices()) {
+        size_t idx = vertex.idx;
+        CORRADE_INTERNAL_ASSERT(idx < parameters.size());
+        cost += f.eval(parameters[idx])*weights[idx]*mesh.integral[vertex];
+        //Debug{} << cost;
+        //Debug{} << idx;
         if(gradP) {
-            gradP[i] += f.grad(parameters[i])*weights[i]*integralOperator[i];
+            gradP[idx] += f.grad(parameters[idx])*weights[idx]*mesh.integral[vertex];
         }
         if(gradW) {
-            gradW[i] += f.eval(parameters[i])*integralOperator[i];
+            gradW[idx] += f.eval(parameters[idx])*mesh.integral[idx];
         }
     }
 }
 
+/* explicit instantiations */
+
 template void DirichletEnergy::operator()(
-        Containers::ArrayView<const double> const& parameters,
-        Containers::ArrayView<const double> const& weights,
+        ArrayView<const double> const& parameters,
+        ArrayView<const double> const& weights,
         double& out,
-        Containers::ArrayView<double> const& gradP,
-        Containers::ArrayView<double> const& gradW);
+        ArrayView<double> const& gradP,
+        ArrayView<double> const& gradW);
 
 template void AreaRegularizer::operator()(
-        Containers::ArrayView<const double> const& parameters,
-        Containers::ArrayView<const double> const& weights,
+        ArrayView<const double> const& parameters,
+        ArrayView<const double> const& weights,
         double& out,
-        Containers::ArrayView<double> const& gradP,
-        Containers::ArrayView<double> const& gradW);
+        ArrayView<double> const& gradP,
+        ArrayView<double> const& gradW);
 
 
 template void DoubleWellPotential::operator()(
-        Containers::ArrayView<const double> const& parameters,
-        Containers::ArrayView<const double> const& weights,
+        ArrayView<const double> const& parameters,
+        ArrayView<const double> const& weights,
         double& out,
-        Containers::ArrayView<double> const& gradP,
-        Containers::ArrayView<double> const& gradW);
+        ArrayView<double> const& gradP,
+        ArrayView<double> const& gradW);
+
+
+template Functional::Functional(DirichletEnergy);
+
+template Functional::Functional(AreaRegularizer);
+
+template Functional::Functional(DoubleWellPotential);
 
 }

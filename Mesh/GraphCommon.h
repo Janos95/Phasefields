@@ -8,21 +8,14 @@
 
 namespace Phasefield::Graph {
 
+template<class E>
 struct HeapElement {
-    HeapElement(std::size_t n, double d) : node(n), distance(d) {}
 
-    std::size_t node;
+    E node;
     double distance;
 
     auto operator<=>(const HeapElement& other) const {
         return distance <=> other.distance;
-    }
-};
-
-struct InverseDistanceCompare {
-    template<class T>
-    bool operator()(T const& el1, T const& el2) {
-        return el1.distance > el2.distance;
     }
 };
 
@@ -49,7 +42,7 @@ struct InverseDistanceCompare {
 template<class A>
 class ReversedPathIterator {
 public:
-    using value_type = Edge;
+    using value_type = std::pair<size_t, size_t>;
     using difference_type = int;
     using reference = value_type;
     using pointer = void;
@@ -66,18 +59,18 @@ public:
     }
 
     ReversedPathIterator& operator++() {
-        CORRADE_INTERNAL_ASSERT(m_e.a >= 0);
-        m_e = Edge(m_algo->m_prev[m_e.a], m_e.a);
+        CORRADE_INTERNAL_ASSERT(m_e.first >= 0);
+        m_e = std::pair{m_algo->m_prev[m_e.first], m_e.first};
         return *this;
     }
 
     bool operator!=(const ReversedPathIterator& other) const {
-        return other.m_e.a != m_e.a || other.m_e.b != m_e.b;
+        return m_e != other.m_e;
     }
 
 private:
-    Edge m_e;
-    Corrade::Containers::Reference<std::add_const_t<A>> m_algo;
+    std::pair<size_t, size_t> m_e;
+    Reference<std::add_const_t<A>> m_algo;
 };
 
 template<class A>

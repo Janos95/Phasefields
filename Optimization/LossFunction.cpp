@@ -5,6 +5,7 @@
 #include "SmartEnum.h"
 
 #include <Corrade/Utility/StlMath.h>
+#include <Corrade/Utility/Assert.h>
 
 #include <adolc/adouble.h>
 
@@ -13,11 +14,6 @@
 #include <new>
 
 namespace Phasefield {
-
-template<typename... Ts, typename TF>
-static constexpr auto is_valid(TF&&) {
-    return std::is_invocable<TF, Ts...>{};
-}
 
 template<class T>
 LossFunction::LossFunction(T f) {
@@ -34,6 +30,11 @@ LossFunction::LossFunction(T f) {
         ::operator delete(e, sizeof(T), std::align_val_t(alignof(T)));
     };
 
+    if constexpr ( requires {T::type(); })
+        lossType = T::type();
+    else
+        lossType = LossFunctionType::Unknown;
+
     /* optional */
     //constexpr bool hasSettings = is_valid(f)([](auto&& p) constexpr -> decltype(f.drawSettings()){});
     if constexpr(requires { f.drawSettings(); }) {
@@ -41,34 +42,34 @@ LossFunction::LossFunction(T f) {
     }
 }
 
-
-LossFunction::LossFunction(LossFunctionType::Value lv) {
-    switch(lv) {
-        case LossFunctionType::TrivialLoss :
-            *this = TrivialLoss{};
-        case LossFunctionType::ScaledLoss :
-            *this = ScaledLoss{TrivialLoss{}, 1.};
-        case LossFunctionType::CauchyLoss :
-            *this = CauchyLoss{};
-        case LossFunctionType::QuadraticLoss :
-            *this = QuadraticLoss{};
-        case LossFunctionType::ComposedLoss :
-            *this = ComposedLoss{TrivialLoss{}, TrivialLoss{}};
+LossFunction::LossFunction(LossFunctionType::Value t) {
+    switch(t) {
+        case LossFunctionType::Cauchy : *this = CauchyLoss{}; break;
+        case LossFunctionType::Trivial : *this = TrivialLoss{}; break;
+        case LossFunctionType::Quadratic : *this = QuadraticLoss{}; break;
+        default : CORRADE_ASSERT(false, "Unknown loss type",);
     }
 }
 
 void LossFunction::drawSettings() {
-    for(auto l : LossFunctionType::range) {
-        bool isSelected = l == lossType;
-        if(ImGui::Selectable(LossFunctionType::to_string(l), isSelected))
-            *this = LossFunction(l);
-        if(isSelected) {
-            ImGui::SetItemDefaultFocus();
+    if(ImGui::BeginCombo("##loss", LossFunctionType::to_string(lossType))) {
+        for(auto l : LossFunctionType::range) {
+            if(l == LossFunctionType::Unknown) continue;
+            bool isSelected = l == lossType;
+            if(ImGui::Selectable(LossFunctionType::to_string(l), isSelected))
+                *this = LossFunction(l);
+            if(isSelected) {
+                ImGui::SetItemDefaultFocus();
+            }
         }
+
+        ImGui::EndCombo();
     }
+
     if(draw) {
         draw(erased);
     }
+    ImGui::InputDouble("Weight", &weight);
 }
 
 LossFunction::~LossFunction() {
@@ -78,31 +79,32 @@ LossFunction::~LossFunction() {
 }
 
 LossFunction::LossFunction(LossFunction&& other) noexcept {
-    using std::swap;
-    swap(*this, other);
+    swap(other);
 }
 
-
 LossFunction& LossFunction::operator=(LossFunction&& other) noexcept {
-    using std::swap;
-    swap(*this, other);
+    swap(other);
     return *this;
 }
 
-void swap(LossFunction& f1, LossFunction& f2) {
-    using std::swap;
-    swap(f1.ad, f2.ad);
-    swap(f1.loss, f2.loss);
-    swap(f1.destroy, f2.destroy);
-    swap(f1.erased, f2.erased);
+void LossFunction::swap(LossFunction& other) {
+    std::swap(ad, other.ad);
+    std::swap(loss, other.loss);
+    std::swap(destroy, other.destroy);
+    std::swap(erased, other.erased);
+    std::swap(lossType, other.lossType);
+    std::swap(weight, other.weight);
+    std::swap(draw, other.draw);
 }
 
 void LossFunction::operator()(double const& in, double out[3]) const {
     loss(erased, in, out);
+    for(size_t i = 0; i < 3; ++i) out[i] *= weight;
 }
 
 void LossFunction::operator()(adouble const& x, adouble& y) const {
     ad(erased, x, y);
+    y *= weight;
 }
 
 void TrivialLoss::operator()(double const& in, double out[3]) const {
@@ -125,43 +127,12 @@ void CauchyLoss::operator()(double const& in, double out[3]) const {
     out[2] = -1.*inv*inv;
 }
 
-ScaledLoss::ScaledLoss(LossFunction f_, double s_) :
-        f(std::move(f_)),
-        s(s_) {
-}
-
-void ScaledLoss::operator()(double const& in, double out[3]) const {
-    double fout[3];
-    f(in, fout);
-    out[0] = s*fout[0];
-    out[1] = s*fout[1];
-    out[2] = s*fout[2];
-}
-
-ComposedLoss::ComposedLoss(LossFunction f_, LossFunction g_) :
-        g(std::move(g_)),
-        f(std::move(f_)) {
-}
-
-void ComposedLoss::operator()(double const& in, double out[3]) const {
-    double fout[3];
-    double gout[3];
-    f(in, fout);
-    g(fout[0], gout);
-    out[0] = gout[0];
-    out[1] = gout[1]*fout[1];
-    out[2] = gout[2]*fout[1]*fout[1] + gout[1]*fout[2];
-}
 
 /* explicit instantiations */
 template LossFunction::LossFunction(TrivialLoss);
 
-template LossFunction::LossFunction(ScaledLoss);
-
 template LossFunction::LossFunction(CauchyLoss);
 
 template LossFunction::LossFunction(QuadraticLoss);
-
-template LossFunction::LossFunction(ComposedLoss);
 
 }

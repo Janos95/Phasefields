@@ -5,8 +5,9 @@
 #pragma once
 
 #include "Enums.h"
+#include "Mesh.h"
 
-#include <Corrade/Containers/ArrayView.h>
+#include <Corrade/Containers/StridedArrayView.h>
 #include <Corrade/Containers/Array.h>
 
 namespace Phasefield {
@@ -17,11 +18,11 @@ struct VisualizationProxy {
 
     //void setFaceColors(Containers::ArrayView<double>& data);
     //void setFaceColors(Containers::ArrayView<Mg::Color3ub>& data);
-    void setVertexColors(Containers::ArrayView<double>& data);
+    void setVertexColors(Containers::StridedArrayView1D<double> const& data);
 
     void setVertexColors(class Tree& tree);
 
-    void update();
+    void upload();
 
     void setTag(Mg::Int tag);
 
@@ -29,10 +30,18 @@ struct VisualizationProxy {
 
     bool updateFaceTexture = false;
     bool updateVertexBuffer = false;
+
     //Containers::Array<Mg::Color3ub> faceColors;
     Viewer& viewer;
 
-    Containers::Array<Mg::Color4> colors;
+    enum class ShaderConfig {
+        VertexColors,
+        ColorMaps
+    };
+
+    ShaderConfig shaderConfig = ShaderConfig::ColorMaps;
+
+    Array<Mg::Color4> colors;
 
     Mg::Int activeTag = -1;
 };

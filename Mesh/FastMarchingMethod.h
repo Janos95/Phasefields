@@ -7,6 +7,7 @@
 #include "Mesh.h"
 #include "MeshElements.h"
 #include "Heap.h"
+#include "GraphCommon.h"
 
 #include <Magnum/Magnum.h>
 
@@ -30,14 +31,8 @@ public:
 
 private:
 
-    struct Entry {
-        Vertex vertex;
-        Double distance;
-        auto operator <=>(Entry const& other) const { return distance <=> other.distance; }
-    };
-
     Mesh& m_mesh;
-    Heap<Entry> m_frontier;
+    Heap<Graph::HeapElement<Vertex>> m_frontier;
 
     VertexData<double> m_distances;
     VertexData<char> m_finalized;

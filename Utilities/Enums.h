@@ -35,7 +35,8 @@ SMART_ENUM(FunctionalType, Mg::UnsignedInt,
            DirichletEnergy,
            DoubleWellPotential,
            AreaRegularizer,
-           ConnectednessConstraint)
+           ConnectednessConstraint,
+           Unknown)
 
 enum class DrawableType : Magnum::Int {
     MeshVisualizer = 0,

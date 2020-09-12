@@ -6,9 +6,13 @@
 
 #include "Surface.h"
 #include "Types.h"
+#include "SparseMatrix.h"
+#include "MeshFeature.h"
+#include "FEM.h"
+#include "MeshElements.h"
 
-#include <Corrade/Containers/Array.h>
-#include <Corrade/Containers/LinkedList.h>
+#include <Corrade/Containers/GrowableArray.h>
+#include <Corrade/Containers/Pointer.h>
 
 #include <Magnum/Trade/Trade.h>
 #include <Magnum/GL/GL.h>
@@ -43,15 +47,23 @@ struct HalfEdgeIncidency {
 }
 
 /**
- * wrapper around an Array<T> which can be indexed with an associated Navigator N
+ * wrapper around an Array<T> which can be indexed with an associated Element E
  * @tparam N
  * @tparam T
  */
-template<class N, class T>
+template<class E, class T>
 class MeshData : public Array<T> {
 public:
-    T& operator[](N n) { return (*this)[n.idx]; }
-    T const& operator[](N n) const { return (*this)[n.idx]; }
+
+    T& operator[](E n) {
+        CORRADE_CONSTEXPR_ASSERT(n.idx < this->size(), "Index Out of Bounds");
+        return (*this)[n.idx];
+    }
+
+    T const& operator[](E n) const {
+        CORRADE_CONSTEXPR_ASSERT(n.idx < this->size(), "Index Out of Bounds");
+        return (*this)[n.idx];
+    }
 
     using Array<T>::Array;
 };
@@ -75,22 +87,12 @@ using CornerData = MeshData<Corner, T>;
 class Mesh {
 public:
 
-    //class Feature : public LinkedListItem<Feature> {
-    //public:
-    //    Feature(Mesh& mesh) : m_mesh(&mesh) {}
-    //    virtual ~Feature() { m_mesh->features.erase()}
-    //    virtual void update() = 0;
-    //private:
-    //    Mesh* m_mesh = nullptr;
-
-    //};
-
     friend Vertex;
     friend HalfEdge;
     //friend Corner;
     //friend Edge;
     friend Face;
-    //friend Feature;
+    friend MeshFeature;
 
     explicit Mesh() = default;
 
@@ -98,13 +100,42 @@ public:
 
     void setFromData(Mg::Trade::MeshData const& meshData);
 
-    void requireEdgeLengths();
+    template<class T, class... Args>
+    void requireFeature(Args&&... args) {
+        auto feature = pointer<T>((Args&&)args...);
+        size_t idx = lookUpFeature(feature->name());
+        if(idx == Invalid) {
+            //Debug{} << "Requiring feature" << feature->name();
+            feature->update();
+            arrayAppend(m_features, InPlaceInit, std::move(feature));
+        }
+    }
 
-    void requireFaceAreas();
+    void requireEdgeLengths() { requireFeature<EdgeLengthFeature>(*this); }
 
-    void requireAngles();
+    void requireFaceAreas() { requireFeature<FaceAreaFeature>(*this); }
 
-    void requireGaussianCurvature();
+    void requireAngles() { requireFeature<AngleFeature>(*this); }
+
+    void requireGaussianCurvature() {
+        requireAngles();
+        requireFeature<GaussianCurvatureFeature>(*this);
+    }
+
+    void requireGradientOperator() {
+        requireFaceAreas();
+        requireFeature<GradientFeature>(*this);
+    }
+
+    void requireMassMatrix() {
+        requireFaceAreas();
+        requireFeature<MassMatrixFeature>(*this);
+    }
+
+    void requireIntegralOperator() {
+        requireFaceAreas();
+        requireFeature<IntegralOperatorFeature>(*this);
+    }
 
     [[nodiscard]] size_t vertexCount() const;
 
@@ -115,6 +146,8 @@ public:
     [[nodiscard]] size_t indexCount() const;
 
     [[nodiscard]] size_t halfEdgeCount() const;
+
+    [[nodiscard]] size_t angleCount() const;
 
     VertexSet vertices();
 
@@ -128,23 +161,56 @@ public:
 
     void uploadVertexBuffer(Mg::GL::Buffer& vertexBuffer) const;
 
+    void uploadScalars(Mg::GL::Buffer& vertexBuffer) const;
+
     void uploadIndexBuffer(Mg::GL::Buffer& indexBuffer) const;
 
-    StridedArrayView1D<Vector3> positions();
+    [[nodiscard]] StridedArrayView1D<const Vector3> positions() const;
 
-    StridedArrayView1D<Vector3> normals();
+    [[nodiscard]] StridedArrayView1D<Vector3> positions();
 
-    StridedArrayView1D<Float> scalars();
+    [[nodiscard]] StridedArrayView1D<const Vector3> normals() const;
 
-    StridedArrayView1D<Color4> colors();
+    [[nodiscard]] StridedArrayView1D<Vector3> normals();
 
-    EdgeData<float> edgeLength;
-    VertexData<float> gaussianCurvature;
+    [[nodiscard]] StridedArrayView1D<const Float> scalars() const;
+
+    [[nodiscard]] StridedArrayView1D<Float> scalars();
+
+    [[nodiscard]] StridedArrayView1D<const Color4> colors() const;
+
+    [[nodiscard]] StridedArrayView1D<Color4> colors();
+
+    void update();
+
+    EdgeData<double> edgeLength;
+
     CornerData<Rad> angle;
-    VertexData<size_t> degree;
-    FaceData<float> faceArea;
 
-private:
+    FaceData<double> faceArea;
+    FaceData<Vector3d> faceNormal;
+
+    VertexData<double> gaussianCurvature;
+    VertexData<size_t> degree;
+
+    /* Fem operators */
+    VertexData<double> integral;
+    Array<Triplet> massMatrix;
+    //Array<Triplet> stiffnessMatrix;
+    HalfEdgeData<Vector3d> gradient;
+
+    double surfaceArea;
+
+protected:
+
+    size_t lookUpFeature(const char*);
+
+    bool m_requireEdgeLength;
+    bool m_requireAngle;
+    bool m_requiresFaceArea;
+    bool m_requiresGaussianCurvature;
+    bool m_requireDegree;
+    bool m_requireIntegralOperator;
 
     Array<Implementation::Attributes> m_attributes;
     Array<UnsignedInt> m_indices;
@@ -161,7 +227,7 @@ private:
     size_t m_halfEdgeCount = 0;
     size_t m_cornerCount = 0;
 
-    //LinkedList<Feature> features;
+    Array<Pointer<MeshFeature>> m_features;
 };
 
 }

@@ -6,6 +6,7 @@
 #define KDTREE_KDTREE_H
 
 #include "Types.h"
+#include "StlAlgorithm.h"
 
 #include <Magnum/Magnum.h>
 #include <Magnum/Math/Vector3.h>
@@ -16,7 +17,6 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/StridedArrayView.h>
 
-#include <algorithm>
 #include <string>
 
 namespace Phasefield {

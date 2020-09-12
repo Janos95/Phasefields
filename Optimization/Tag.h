@@ -2,15 +2,15 @@
 // Created by janos on 7/14/20.
 //
 
-#ifndef PHASEFIELDS_TAG_H
-#define PHASEFIELDS_TAG_H
+#pragma once
+
+#include <cstdlib>
 
 namespace Phasefield {
 
-int getTag();
+size_t getTag();
 
-void deleteTag(int tag);
+bool deleteTag(size_t tag);
 
 }
 
-#endif //PHASEFIELDS_TAG_H

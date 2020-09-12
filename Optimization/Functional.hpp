@@ -42,6 +42,15 @@ Functional::Functional(F f): tag(getTag()) {
     //    residuals = +[](void* e) { return static_cast<F*>(e)->numResiduals(); };
     //}
 
+    evalWithGrad = +[](
+            void* e,
+            ArrayView<const double> p,
+            ArrayView<const double> w,
+            double& r,
+            ArrayView<double> gradP,
+            ArrayView<double> gradW) {
+        return (*static_cast<F*>(e))(p, w, r, gradP, gradW);
+    };
 
     /* mandatory */
     erased = ::operator new(sizeof(F), std::align_val_t(alignof(F)));
@@ -54,17 +63,17 @@ Functional::Functional(F f): tag(getTag()) {
     };
 
     params = +[](void* e) { return static_cast<F*>(e)->numParameters(); };
-    update = +[](void* e) { static_cast<F*>(e)->updateInternalDataStructures(); };
 
 
     /* optional */
-    constexpr bool hasVis = is_valid(f)([](auto p) constexpr -> decltype(f.drawImGuiOptions()) {});
-
-    if constexpr(hasVis) {
-        vis = +[](void* e, VisualizationProxy& proxy) { return static_cast<F*>(e)->updateVisualization(proxy); };
-        off = +[](void* e) { return static_cast<F*>(e)->turnVisualizationOff(); };
+    if constexpr(requires { f.drawImGuiOptions(); }) {
+        //vis = +[](void* e, VisualizationProxy& proxy) { return static_cast<F*>(e)->updateVisualization(proxy); };
+        //off = +[](void* e) { return static_cast<F*>(e)->turnVisualizationOff(); };
         options = +[](void* e) { return static_cast<F*>(e)->drawImGuiOptions(); };
     }
+
+    if constexpr (requires { F::type(); })
+        functionalType = F::type();
 
 }
 

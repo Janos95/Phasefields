@@ -3,7 +3,7 @@
 // taken from some imgui github issue
 //
 
-#include "custom_widgets.hpp"
+#include "ImGuiWidgets.h"
 
 #include <imgui.h>
 #include <imgui_internal.h>

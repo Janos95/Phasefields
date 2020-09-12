@@ -7,7 +7,7 @@
 
 #include "GraphCommon.h"
 #include "CircularBuffer.h"
-#include "../Mesh/Mesh.h"
+#include "Mesh.h"
 
 #include <Corrade/Containers/Reference.h>
 #include <Corrade/Utility/Assert.h>

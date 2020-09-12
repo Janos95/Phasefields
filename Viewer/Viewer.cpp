@@ -3,7 +3,7 @@
 //
 
 #include "Viewer.h"
-#include "custom_widgets.hpp"
+#include "ImGuiWidgets.h"
 #include "imguifilesystem.h"
 #include "Enums.h"
 #include "Tag.h"
@@ -84,7 +84,7 @@ Array<std::pair<char const*, Mg::GL::Texture2D>> makeColorMapTextures() {
 }
 
 //Solver::Status::Value OptimizationCallback::operator()(Solver::IterationSummary const&) {
-//    if(!optimize) return Solver::Status::ABORT;
+//    if(!optimize) return Solver::Status::USER_ABORTED;
 //    return Solver::Status::CONTINUE;
 //}
 
@@ -92,24 +92,27 @@ Array<std::pair<char const*, Mg::GL::Texture2D>> makeColorMapTextures() {
 Viewer::Viewer(int argc, char** argv) :
         Mg::Platform::Application{{argc, argv}, Mg::NoCreate},
         fastMarchingMethod(mesh),
-        tree{.mesh = mesh}
-        //dirichletScaling(1.), doubleWellScaling(1.), connectednessScaling(1.),
+        tree{mesh},
+        proxy(*this),
+        dirichletScaling(1.), doubleWellScaling(1.), connectednessScaling(1.),
+        problem(tree)
         //problem(tree),
         //proxy(*this),
         //segmentationTag(getTag()),
         //phasefieldTag(getTag())
 {
     {
-        //Containers::arrayAppend(options.callbacks, Containers::InPlaceInit, optimizationCallback);
+        //arrayAppend(options.callbacks, InPlaceInit, optimizationCallback);
 
     }
 
     /* Setup window */
     {
+        ScopedTimer t{"Creating OpenGL Context", true};
         const Vector2 dpiScaling = this->dpiScaling({});
         Configuration conf;
         conf.setTitle("Viewer")
-            .setSize({1000, 1000}, dpiScaling)
+            .setSize({1500, 1200}, dpiScaling)
             .setWindowFlags(Configuration::WindowFlag::Resizable);
         GLConfiguration glConf;
         glConf.setSampleCount(dpiScaling.max() < 2.0f ? 8 : 2);
@@ -118,20 +121,68 @@ Viewer::Viewer(int argc, char** argv) :
         }
     }
 
-    /* setup shaders and color map textures */
+    /* setup shaders, color map textures and mesh*/
     {
-        original = Mg::Primitives::grid3DSolid({1,1});
+        ScopedTimer t{"Setting up opengl stuff (textures etc)", true};
+        original = Mg::Primitives::grid3DSolid({300,300});
+        //original = Mg::Primitives::grid3DSolid({1,1});
         mesh.setFromData(original);
+
         fastMarchingMethod.update();
-        kdtree = KDTree{arrayCast<const Vector3>(mesh.positions())};
         tree.update();
 
-        glMesh = Mg::MeshTools::compile(original);
+        kdtree = KDTree{arrayCast<const Vector3>(mesh.positions())};
+
+        //for(Color4& c : mesh.colors())
+        //    c = Color4::red();
+
+        glMesh = Mg::GL::Mesh{};
         vertexBuffer = Mg::GL::Buffer{};
         indexBuffer = Mg::GL::Buffer{};
-        phong = Mg::Shaders::Phong{Mg::Shaders::Phong::Flag::DiffuseTexture};
+
+        mesh.uploadVertexBuffer(vertexBuffer);
+        mesh.uploadIndexBuffer(indexBuffer);
+
+        glMesh.setPrimitive(Mg::MeshPrimitive::Triangles)
+              .setCount(mesh.indexCount())
+              .setIndexBuffer(indexBuffer, 0, Mg::MeshIndexType::UnsignedInt)
+              .addVertexBuffer(vertexBuffer, 0, Phong::Position{}, Phong::Normal{}, Phong::TextureCoordinates{}, Phong::Color4{});
+
+        phongColorMap = Phong{Phong::Flag::DiffuseTexture};
+        phongVertexColors = Phong{Phong::Flag::VertexColor};
 
         colorMapTextures = makeColorMapTextures();
+
+    }
+
+    /* try to load tree from disk, otherwise fallback to empty tree with three nodes */
+    {
+        ScopedTimer t{"Loading Phasefield from disk", true};
+        if(Cr::Utility::Directory::exists("/home/janos/tree_opt.bin")) {
+            FILE* fp = std::fopen("/home/janos/tree_opt.bin", "r");
+            fseek(fp, 0, SEEK_END);
+            size_t size = std::ftell(fp);
+            fseek(fp, 0, SEEK_SET);
+
+            Array<char> data{NoInit, size};
+            fread(data.data(), sizeof(char), size, fp);
+
+            fclose(fp);
+
+            tree = Tree::deserialize(data, mesh);
+        } else {
+            tree.addChild(tree.root(), Tree::Child::Left);
+            tree.addChild(tree.root(), Tree::Child::Right);
+        }
+        proxy.setVertexColors(tree);
+
+    }
+
+    /* setup the problem */
+    {
+        arrayAppend(problem.objectives, makeFunctional(FunctionalType::DoubleWellPotential));
+        arrayAppend(problem.objectives, makeFunctional(FunctionalType::DirichletEnergy));
+        arrayAppend(problem.objectives, makeFunctional(FunctionalType::AreaRegularizer));
     }
 
     /* Setup ImGui, load a better font */
@@ -142,21 +193,20 @@ Viewer::Viewer(int argc, char** argv) :
         //ImFontConfig fontConfig;
         //fontConfig.FontDataOwnedByAtlas = false;
         //const Vector2 size = Vector2{windowSize()}/dpiScaling();
-        //Cr::Utility::Resource rs{"fonts"};
+        //Cr::Utility::Resource rs{"data"};
         //ArrayView<const char> font = rs.getRaw("SourceSansPro-Regular.ttf");
         //ImGui::GetIO().Fonts->AddFontFromMemoryTTF(
-        //        const_cast<char*>(font.data()), Int(font.size()),
-        //        20.0f*framebufferSize().x()/size.x(), &fontConfig);
+        //        const_cast<char*>(font.data()), Int(font.size()), 16.0f*framebufferSize().x()/size.x(), &fontConfig);
 
-        imgui = Mg::ImGuiIntegration::Context{*ImGui::GetCurrentContext(),
-                                          Vector2{windowSize()}/dpiScaling(), windowSize(), framebufferSize()};
+        imgui = Mg::ImGuiIntegration::Context(*ImGui::GetCurrentContext(),
+                                                  Vector2{windowSize()}/dpiScaling(), windowSize(), framebufferSize());
 
         /* Setup proper blending to be used by ImGui */
-        Mg::GL::Renderer::setBlendEquation(Mg::GL::Renderer::BlendEquation::Add,
-                                       Mg::GL::Renderer::BlendEquation::Add);
-        Mg::GL::Renderer::setBlendFunction(Mg::GL::Renderer::BlendFunction::SourceAlpha,
-                                       Mg::GL::Renderer::BlendFunction::OneMinusSourceAlpha);
-
+        GL::Renderer::setBlendEquation(
+                GL::Renderer::BlendEquation::Add, GL::Renderer::BlendEquation::Add);
+        GL::Renderer::setBlendFunction(
+                GL::Renderer::BlendFunction::SourceAlpha,
+                GL::Renderer::BlendFunction::OneMinusSourceAlpha);
     }
 
     /* Setup arcball and projection matrix */
@@ -164,15 +214,14 @@ Viewer::Viewer(int argc, char** argv) :
         const Vector3 eye = Vector3::zAxis(5.0f);
         const Vector3 viewCenter;
         const Vector3 up = Vector3::yAxis();
-        const Deg fov = 45.0_degf;
         arcBall.emplace(eye, viewCenter, up, fov, windowSize());
         arcBall->setLagging(0.85f);
 
         projection = Matrix4::perspectiveProjection(fov, Vector2{framebufferSize()}.aspectRatio(), 0.01f, 100.0f);
     }
 
-    Mg::GL::Renderer::enable(Mg::GL::Renderer::Feature::DepthTest);
-    Mg::GL::Renderer::enable(Mg::GL::Renderer::Feature::FaceCulling);
+    GL::Renderer::enable(Mg::GL::Renderer::Feature::DepthTest);
+    GL::Renderer::enable(Mg::GL::Renderer::Feature::FaceCulling);
 
     /* Start the timer, loop at 60 Hz max */
     setSwapInterval(1);
@@ -181,7 +230,7 @@ Viewer::Viewer(int argc, char** argv) :
 
 bool loadMesh(char const* path, Mg::Trade::MeshData& mesh) {
     Mg::PluginManager::Manager<Mg::Trade::AbstractImporter> manager;
-    auto importer = manager.loadAndInstantiate("AssimpImporter");
+    auto importer = manager.loadAndInstantiate("AnySceneImporter");
     auto name = importer->metadata()->name();
     Debug{} << "Trying to load mesh using " << name.c_str();
     if(!importer) std::exit(1);
@@ -208,8 +257,8 @@ bool loadMesh(char const* path, Mg::Trade::MeshData& mesh) {
 //    auto[stem, ext] = Utility::Directory::splitExtension(path);
 //    if(ext != ".ply") return false;
 //
-//    Containers::Array<Double> gradient(Containers::NoInit, phasefield.size());
-//    auto triangles = Containers::arrayCast<Vector3ui>(indices);
+//    Array<Double> gradient(NoInit, phasefield.size());
+//    auto triangles = arrayCast<Vector3ui>(indices);
 //
 //    stopOptimization();
 //    double r;
@@ -247,9 +296,9 @@ bool loadMesh(char const* path, Mg::Trade::MeshData& mesh) {
 
 
 //template<class T>
-//Containers::Array<Vector3d> positionsAsArray(Mg::Trade::MeshData const& meshData) {
+//Array<Vector3d> positionsAsArray(Mg::Trade::MeshData const& meshData) {
 //    auto view = meshData.attribute<Vector3>(Mg::Trade::MeshAttribute::Position);
-//    Containers::Array<Vector3d> positions(Containers::NoInit, view.size());
+//    Array<Vector3d> positions(NoInit, view.size());
 //    for(int i = 0; i < view.size(); ++i) {
 //        positions[i] = Vector3d{view[i]};
 //    }
@@ -282,7 +331,7 @@ bool loadMesh(char const* path, Mg::Trade::MeshData& mesh) {
 //    }
 //}
 
-//void normalizeMesh(Containers::Array<Vector3d>& vertices, Containers::Array<UnsignedInt>& indices) {
+//void normalizeMesh(Array<Vector3d>& vertices, Array<UnsignedInt>& indices) {
 //    Vector3d min{Math::Constants<Double>::inf()}, max{-Math::Constants<Double>::inf()};
 //    for(auto const& p : vertices) {
 //        for(int i = 0; i < 3; ++i) {
@@ -295,19 +344,19 @@ bool loadMesh(char const* path, Mg::Trade::MeshData& mesh) {
 //        v = (v - min)*scale;
 //    }
 //
-//    Containers::ArrayView<Vector3d> view{vertices, vertices.size()};
+//    ArrayView<Vector3d> view{vertices, vertices.size()};
 //    auto afterRemoving = MeshTools::removeDuplicatesFuzzyIndexedInPlace(indices,
-//                                                                        Containers::arrayCast<2, double>(view));
-//    Containers::arrayResize(vertices, afterRemoving);
+//                                                                        arrayCast<2, double>(view));
+//    arrayResize(vertices, afterRemoving);
 //}
 
 //void normalizeMesh(Trade::MeshData& meshData) {
-//    Containers::Array<char> is(Containers::NoInit, sizeof(UnsignedInt)*meshData.indexCount()),
-//            vs(Containers::NoInit, sizeof(Vector3)*meshData.vertexCount());
-//    auto indices = Containers::arrayCast<UnsignedInt>(is);
+//    Array<char> is(NoInit, sizeof(UnsignedInt)*meshData.indexCount()),
+//            vs(NoInit, sizeof(Vector3)*meshData.vertexCount());
+//    auto indices = arrayCast<UnsignedInt>(is);
 //    Utility::copy(meshData.indices<UnsignedInt>(), indices);
 //
-//    auto vertices = Containers::arrayCast<Vector3>(vs);
+//    auto vertices = arrayCast<Vector3>(vs);
 //    auto points = meshData.attribute<Vector3>(Trade::MeshAttribute::Position);
 //
 //    Vector3 min{Math::Constants<Float>::inf()}, max{-Math::Constants<Float>::inf()};
@@ -323,12 +372,12 @@ bool loadMesh(char const* path, Mg::Trade::MeshData& mesh) {
 //        vertices[i] = (points[i])*scale;
 //    }
 //
-//    Containers::ArrayView<Vector3> view{vertices, vertices.size()};
+//    ArrayView<Vector3> view{vertices, vertices.size()};
 //    auto afterRemoving = MeshTools::removeDuplicatesFuzzyIndexedInPlace(indices,
-//                                                                        Containers::arrayCast<2, double>(view));
+//                                                                        arrayCast<2, double>(view));
 //
-//    Containers::arrayResize(vs, afterRemoving*sizeof(Vector3));
-//    vertices = Containers::arrayCast<Vector3>(vs);
+//    arrayResize(vs, afterRemoving*sizeof(Vector3));
+//    vertices = arrayCast<Vector3>(vs);
 //
 //    Trade::MeshIndexData indexData{indices};
 //    Trade::MeshAttributeData vertexData{Trade::MeshAttribute::Position, vertices};
@@ -347,13 +396,11 @@ void Viewer::drawMeshIO() {
         //}
 
         bool newMesh = false;
-        ImGui::Separator();
 
         const bool browseButtonPressed = ImGui::Button("Choose Mesh Path");
         ImGui::SameLine();
         const bool load = ImGui::Button("Load Mesh");
         static ImGuiFs::Dialog dlg;
-        static std::string currentPath;
         const char* chosenPath = dlg.chooseFileDialog(browseButtonPressed);
         if(strlen(dlg.getChosenPath()) > 0) {
             ImGui::Text("Chosen file: \"%s\"", dlg.getChosenPath());
@@ -374,7 +421,7 @@ void Viewer::drawMeshIO() {
 
             fastMarchingMethod.update();
             tree.update();
-            //updateInternalDataStructures();
+            updateInternalDataStructures();
         }
 
         ImGui::TreePop();
@@ -395,7 +442,7 @@ void Viewer::drawBrushOptions() {
 
         const auto colBrushing = ImVec4(0.56f, 0.83f, 0.26f, 1.0f);
         const auto colNotBrushing = ImVec4(0.85f, 0.85f, 0.85f, 1.0f);
-        ImGui::TextColored(brushing ? colBrushing : colNotBrushing, "Press Left Control To Enable Brushing");
+        ImGui::TextColored(brushingModeEnabled ? colBrushing : colNotBrushing, "Press Left Control To Enable Brushing");
         ImGui::SameLine();
         ImVec2 p = ImGui::GetCursorScreenPos();
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
@@ -403,239 +450,231 @@ void Viewer::drawBrushOptions() {
         float width = height*1.55f;
         ImGui::InvisibleButton("brush modus", ImVec2(width, height));
         draw_list->AddRectFilled(p, ImVec2(p.x + width, p.y + height),
-                                 brushing ? ImGui::GetColorU32(colBrushing) : ImGui::GetColorU32(colNotBrushing),
+                                 brushingModeEnabled ? ImGui::GetColorU32(colBrushing) : ImGui::GetColorU32(colNotBrushing),
                                  height*0.1f);
         ImGui::TreePop();
     }
 }
 
-//bool Viewer::drawFunctionals(Containers::Array<Functional>& functionals) {
-//
-//    int nodeCount = 0;
-//    bool evaluateProblem = false;
-//    for(auto& f : functionals) {
-//        ImGui::PushID(++nodeCount);
-//        ImGui::Separator();
-//
-//        if(ImGui::Button("Remove")) {
-//            std::swap(f, functionals.back());
-//            break;
-//        }
-//        ImGui::SameLine();
-//
-//        DrawableType type;
-//        auto visFlag = f.drawImGuiOptions(proxy);
-//        if(visFlag & ImGuiResult::MakeExclusive) {
-//
-//        }
-//
-//        f.loss.drawImGui(nodeCount);
-//        ImGui::PopID();
-//    }
-//}
-//
-//
-//void Viewer::drawOptimizationOptions() {
-//    if(ImGui::TreeNode("Optimization Options")) {
-//
-//        static auto currentType = FunctionalType::DirichletEnergy;
-//        if(ImGui::BeginCombo("##solver", Solver::Backend::to_string(options.solver))) {
-//            for(auto type : FunctionalType::range) {
-//                bool isSelected = type == currentType;
-//                if(ImGui::Selectable(FunctionalType::to_string(type), isSelected))
-//                    currentType = type;
-//                if(isSelected)
-//                    ImGui::SetItemDefaultFocus();
-//            }
-//            ImGui::EndCombo();
-//        }
-//
-//        if(ImGui::Button("Add Functional As Objective"))
-//            Containers::arrayAppend(problem.objectives, makeFunctional(currentType));
-//
-//        int nodeCount = 0;
-//        int toRemove = -1;
-//        bool evaluateProblem = false;
-//        auto& fs = problem.objectives;
-//        auto drawFunctionals = [&](Containers::Array<Functional>& functionals){
-//            for(std::size_t i = 0; i < functionals.size(); ++i) {
-//                ImGui::PushID(++nodeCount);
-//                ImGui::Separator();
-//
-//                if(ImGui::Button("Remove")) toRemove = i;
-//                ImGui::SameLine();
-//
-//                auto result = functionals[i].drawImGuiOptions();
-//
-//                if(result & OptionsResult::EvaluateProblem)
-//                    evaluateProblem = true;
-//
-//                functionals[i].loss.drawSettings();
-//                ImGui::PopID();
-//            }
-//
-//            if(nodeCount) ImGui::Separator();
-//
-//            if(toRemove >= 0) {
-//                if(proxy.isActiveTag(fs[toRemove].tag)){
-//                    proxy.setTag(segmentationTag); /* fallback to showing the segmentation */
-//                }
-//                std::swap(fs[toRemove], fs.back());
-//                Containers::arrayResize(fs, fs.size() - 1);
-//            }
-//        };
-//
-//        drawFunctionals(problem.objectives);
-//        drawFunctionals(problem.constraints);
-//
-//        static bool drawSegmentation = true;
-//        if(ImGui::Checkbox("Segmentation", &drawSegmentation)) {
-//            if(drawSegmentation){
-//                proxy.setTag(segmentationTag);
-//            }
-//        }
-//
-//        static bool drawPhasefield = true;
-//        if(ImGui::Checkbox("Phasefield", &drawPhasefield)) {
-//            if(drawSegmentation){
-//                proxy.setTag(phasefieldTag);
-//            }
-//        }
-//
-//        ImGui::SameLine();
-//
-//        static bool checkDerivatives = false;
-//        ImGui::Checkbox("Check Derivatives using AD", &checkDerivatives);
-//
-//        evaluateProblem |= ImGui::Button("Evaluate");
-//
-//        static Double epsilon = 0.075;
-//        if(dirichletScaling.refCount() > 1 || doubleWellScaling.refCount() > 1 || connectednessScaling.refCount() > 1) {
-//            constexpr Double minEps = 0.f, maxEps = 0.3;
-//            ImGui::DragScalar("epsilon", ImGuiDataType_Double, &epsilon, .01f, &minEps, &maxEps, "%f", 2);
-//            *dirichletScaling = epsilon/2.;
-//            *doubleWellScaling = 1./epsilon;
-//            *connectednessScaling = 1./(epsilon*epsilon);
-//        }
-//
-//        static std::uint32_t iterations = 100;
-//        constexpr static std::uint32_t step = 1;
-//        ImGui::InputScalar("iterations", ImGuiDataType_S32, &options.max_num_iterations, &step, nullptr, "%u");
-//
-//        auto solverHasSearchDirection = [](Solver::Backend::Value s, Solver::LineSearchDirection::Value direction) {
-//            if(s == Solver::Backend::IPOPT) {
-//                switch(direction) {
-//                    case Solver::LineSearchDirection::LBFGS :
-//                    case Solver::LineSearchDirection::SR1 :
-//                        return true;
-//                    default:
-//                        return false;
-//                }
-//            } else if(s == Solver::Backend::CERES) {
-//                return !(direction == Solver::LineSearchDirection::SR1);
-//            }
-//            return false;
-//        };
-//
-//        if(ImGui::BeginCombo("##solver", Solver::Backend::to_string(options.solver))) {
-//            for(auto solver : Solver::Backend::range) {
-//                bool isSelected = (options.solver == solver);
-//                if(ImGui::Selectable(Solver::Backend::to_string(solver), isSelected)) {
-//                    options.solver = solver;
-//                    if(!solverHasSearchDirection(options.solver, options.line_search_direction))
-//                        options.line_search_direction = Solver::LineSearchDirection::LBFGS;
-//                }
-//                if(isSelected)
-//                    ImGui::SetItemDefaultFocus();
-//            }
-//            ImGui::EndCombo();
-//        }
-//
-//        if(ImGui::BeginCombo("##descent direction",
-//                             Solver::LineSearchDirection::to_string(options.line_search_direction))) {
-//            for(auto dir : Solver::LineSearchDirection::range) {
-//                if(!solverHasSearchDirection(options.solver, dir)) continue;
-//                bool isSelected = (options.line_search_direction == dir);
-//                if(ImGui::Selectable(Solver::LineSearchDirection::to_string(dir), isSelected))
-//                    options.line_search_direction = dir;
-//                if(isSelected)
-//                    ImGui::SetItemDefaultFocus();
-//            }
-//            ImGui::EndCombo();
-//        }
-//        ImGui::SameLine();
-//        ImGui::Text("Descent Direction");
-//
-//
-//        if(evaluateProblem && !isOptimizing) {
-//            Containers::Array<Double> gradient(Containers::NoInit, problem.numParameters());
-//            Containers::Array<Double> constraints(Containers::NoInit, problem.numConstraints());
-//            double cost;
-//            problem(tree.phasefieldData, cost, gradient, constraints, nullptr);
-//        }
-//
-//        if(ImGui::Button("Optimize") && !problem.objectives.empty()){
-//            isOptimizing = true;
-//        }
-//
-//        ImGui::SameLine();
-//
-//        if(ImGui::Button("Stop"))
-//            isOptimizing = false;
-//
-//        ImGui::TreePop();
-//    }
-//}
-//
-//bool Viewer::runOptimization(UniqueFunction<bool()>&& cb){
-//    auto abortCb = [this, cb = std::move(cb)] (Solver::IterationSummary const&) mutable {
-//        return cb() && isOptimizing ? Solver::Status::CONTINUE : Solver::Status::ABORT;
-//    };
-//    Containers::arrayAppend(options.callbacks, Containers::InPlaceInit, std::move(abortCb));
-//    Solver::solve(options, problem, tree.phasefieldData, nullptr);
-//}
-//
-///* @todo would be nice to rework this at some point to handle hard deps in constructors.. */
-//Functional Viewer::makeFunctional(FunctionalType::Value type) {
-//    switch(type) {
-//        case FunctionalType::AreaRegularizer:
-//            return AreaRegularizer{vertices, indices};
-//        case FunctionalType::DirichletEnergy: {
-//            Functional f = DirichletEnergy{vertices, indices};
-//            f.scaling = dirichletScaling;
-//            return f;
-//        }
-//        case FunctionalType::DoubleWellPotential : {
-//            Functional f = DoubleWellPotential{vertices, indices};
-//            f.scaling = doubleWellScaling;
-//            return f;
-//        }
-//        case FunctionalType::ConnectednessConstraint: {
-//            ConnectednessConstraint constraint{vertices, indices};
-//            //constraint.paths = new Paths(&scene, drawableGroup);
-//            Functional f{std::move(constraint)};
-//            f.scaling = connectednessScaling;
-//            return f;
-//        }
-//        default: return Functional{};
-//    }
-//}
+bool Viewer::drawFunctionals(Array<Functional>& functionals, size_t& id) {
+    bool evaluateProblem = false;
+    for(auto& f : functionals) {
+        ImGui::PushID(id++);
+        ImGui::Separator();
+        ImGui::Text(FunctionalType::to_string(f.functionalType));
 
-void Viewer::paint() {
+        //DrawableType type;
+        OptionsResultSet result = f.drawImGuiOptions(proxy);
+        f.loss.drawSettings();
+
+        if(ImGui::Button("Remove")) {
+            std::swap(f, functionals.back());
+            arrayResize(functionals, functionals.size() - 1);
+            ImGui::PopID();
+            break;
+        }
+
+        ImGui::SameLine();
+
+        ImGui::Checkbox("Check Derivatives using AD", &f.checkDerivatives);
+
+        ImGui::Separator();
+        ImGui::PopID();
+    }
+    return evaluateProblem;
+}
+
+
+void Viewer::drawOptimizationOptions() {
+    if(ImGui::TreeNode("Optimization Options")) {
+
+        constexpr static size_t step = 1;
+
+        static auto currentType = FunctionalType::DirichletEnergy;
+        ImGui::Text("Functionals:");
+        if(ImGui::BeginCombo("##functionals", FunctionalType::to_string(currentType))) {
+            for(auto type : FunctionalType::range) {
+                bool isSelected = type == currentType;
+                if(ImGui::Selectable(FunctionalType::to_string(type), isSelected))
+                    currentType = type;
+                if(isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
+        if(ImGui::Button("Add Functional As Objective"))
+            arrayAppend(problem.objectives, makeFunctional(currentType));
+
+        int nodeCount = 0;
+        int toRemove = -1;
+        bool evaluateProblem = false;
+
+        size_t id = 0;
+        evaluateProblem |= drawFunctionals(problem.objectives, id);
+        evaluateProblem |= drawFunctionals(problem.constraints, id);
+
+        //static bool drawSegmentation = true;
+        //if(ImGui::Checkbox("Segmentation", &drawSegmentation)) {
+        //    if(drawSegmentation){
+        //        proxy.setTag(segmentationTag);
+        //    }
+        //}
+
+        //static bool drawPhasefield = true;
+        //if(ImGui::Checkbox("Phasefield", &drawPhasefield)) {
+        //    if(drawSegmentation){
+        //        proxy.setTag(phasefieldTag);
+        //    }
+        //}
+
+
+
+        evaluateProblem |= ImGui::Button("Evaluate");
+
+        static Double epsilon = 0.075;
+        if(dirichletScaling.refCount() > 1 || doubleWellScaling.refCount() > 1 || connectednessScaling.refCount() > 1) {
+            constexpr Double minEps = 0.f, maxEps = 0.3;
+            ImGui::DragScalar("epsilon", ImGuiDataType_Double, &epsilon, .01f, &minEps, &maxEps, "%f", 2);
+            *dirichletScaling = epsilon/2.;
+            *doubleWellScaling = 1./epsilon;
+            *connectednessScaling = 1./(epsilon*epsilon);
+        }
+
+        static size_t iterations = 100;
+        ImGui::InputScalar("iterations", ImGuiDataType_U64, &options.max_num_iterations, &step, nullptr, "%u");
+
+        auto solverHasSearchDirection = [](Solver::Backend::Value s, Solver::LineSearchDirection::Value direction) {
+            if(s == Solver::Backend::IPOPT) {
+                switch(direction) {
+                    case Solver::LineSearchDirection::LBFGS :
+                    case Solver::LineSearchDirection::SR1 :
+                        return true;
+                    default:
+                        return false;
+                }
+            } else if(s == Solver::Backend::CERES) {
+                return !(direction == Solver::LineSearchDirection::SR1);
+            }
+            return false;
+        };
+
+        if(ImGui::BeginCombo("##solver", Solver::Backend::to_string(options.solver))) {
+            for(auto solver : Solver::Backend::range) {
+                bool isSelected = (options.solver == solver);
+                if(ImGui::Selectable(Solver::Backend::to_string(solver), isSelected)) {
+                    options.solver = solver;
+                    if(!solverHasSearchDirection(options.solver, options.line_search_direction))
+                        options.line_search_direction = Solver::LineSearchDirection::LBFGS;
+                }
+                if(isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
+        if(ImGui::BeginCombo("##descent direction",
+                             Solver::LineSearchDirection::to_string(options.line_search_direction))) {
+            for(auto dir : Solver::LineSearchDirection::range) {
+                if(!solverHasSearchDirection(options.solver, dir)) continue;
+                bool isSelected = (options.line_search_direction == dir);
+                if(ImGui::Selectable(Solver::LineSearchDirection::to_string(dir), isSelected))
+                    options.line_search_direction = dir;
+                if(isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+        ImGui::SameLine();
+        ImGui::Text("Descent Direction");
+
+        ImGui::InputScalar("Tree level to optimize", ImGuiDataType_U64, &problem.levelToOptimize, &step, nullptr, "%u");
+
+        if(evaluateProblem && !isOptimizing) {
+            Array<Double> gradient(problem.numParameters());
+            Array<Double> constraints(problem.numConstraints());
+            double cost = 0;
+            problem(tree.phasefieldData, cost, gradient, constraints, nullptr);
+        }
+
+        ImGui::Checkbox("Hierarchical Optimization", &hierarchicalOptimization);
+
+        ImGui::SameLine();
+
+        if(ImGui::Button("Optimize") && !problem.objectives.empty() && !isOptimizing){
+            isOptimizing = true;
+        }
+
+        ImGui::SameLine();
+
+        if(ImGui::Button("Stop"))
+            isOptimizing = false;
+
+        ImGui::TreePop();
+    }
+}
+
+void Viewer::runOptimization(UniqueFunction<bool()>&& cb){
+    auto abortCb = [this, cb = std::move(cb)] (Solver::IterationSummary const&) mutable -> Solver::Status::Value {
+        if(drawSegmentation)
+            proxy.setVertexColors(tree);
+        else
+            proxy.setVertexColors(tree.phasefields()[currentNode]);
+        return cb() && isOptimizing ? Solver::Status::CONTINUE : Solver::Status::USER_ABORTED;
+    };
+    auto& callbacks = options.callbacks;
+    arrayAppend(callbacks, InPlaceInit, std::move(abortCb));
+
+    if(hierarchicalOptimization) {
+        for(size_t d = 0; d <= tree.depth; ++d) {
+            problem.levelToOptimize = d;
+            Solver::solve(options, problem, tree.level(d), nullptr);
+        }
+    } else {
+        Solver::solve(options, problem, tree.level(problem.levelToOptimize), nullptr);
+    }
+
+    arrayResize(callbacks, callbacks.size() - 1); /* pop the last callback off */
+}
+
+Functional Viewer::makeFunctional(FunctionalType::Value type) {
+    switch(type) {
+        case FunctionalType::AreaRegularizer: {
+            Functional f = AreaRegularizer{mesh};
+            f.loss = QuadraticLoss{};
+            return f;
+        }
+        case FunctionalType::DirichletEnergy: {
+            Functional f = DirichletEnergy{mesh};
+            f.scaling = dirichletScaling;
+            return f;
+        }
+        case FunctionalType::DoubleWellPotential : {
+            Functional f = DoubleWellPotential{mesh};
+            f.scaling = doubleWellScaling;
+            return f;
+        }
+
+        default: return Functional{};
+    }
+}
+
+void Viewer::brush() {
     if(targetDist < maxDist)
         targetDist += distStep;
 
     Vertex v;
     Double distance;
-    while(fastMarchingMethod.step(v, distance) && distance < targetDist) {
-        Containers::arrayAppend(distances, Containers::InPlaceInit, distance, v);
+    while(fastMarchingMethod.step(v, distance)) {
+        arrayAppend(distances, InPlaceInit, distance, v);
+        if(distance > targetDist)
+            break;
     }
 
-    auto phasefield = tree.phasefields()[currentNode->idx];
+    auto phasefield = tree.phasefields()[currentNode];
     for(auto [d, v] : distances) {
         auto u = (1.f - recursiveFilterFactor)*phasefield[v.idx] + recursiveFilterFactor*phase;
         phasefield[v.idx] = u;
-        v.scalar() = .5f*(u + 1.f);
     }
 }
 
@@ -647,13 +686,10 @@ Vector3 Viewer::unproject(Vector2i const& windowPosition) {
     const Vector2i fbPosition{position.x(), Mg::GL::defaultFramebuffer.viewport().sizeY() - position.y() - 1};
 
     Float depth;
-    {
-        ScopedTimer timer("Reading depth from framebuffer", true);
-        Mg::Image2D data = Mg::GL::defaultFramebuffer.read(
-                Mg::Range2Di::fromSize(fbPosition, Vector2i{1}).padded(Vector2i{2}),
-                {Mg::GL::PixelFormat::DepthComponent, Mg::GL::PixelType::Float});
-        depth = Mg::Math::min<Float>(arrayCast<const Float>(data.data()));
-    }
+    Mg::Image2D data = GL::defaultFramebuffer.read(
+            Range2Di::fromSize(fbPosition, Vector2i{1}).padded(Vector2i{2}),
+            {GL::PixelFormat::DepthComponent, Mg::GL::PixelType::Float});
+    depth = Math::min<Float>(arrayCast<const Float>(data.data()));
 
     const Vector2i viewSize = wSize;
     const Vector2i viewPosition{windowPosition.x(), viewSize.y() - windowPosition.y() - 1};
@@ -682,7 +718,42 @@ void Viewer::updateInternalDataStructures() {
 
 
 void Viewer::drawVisualizationOptions() {
-    if(ImGui::TreeNode("Shader Options")) {
+    if(ImGui::TreeNode("Visualization Options")) {
+
+        if(ImGui::Checkbox("Draw Segmentation", &drawSegmentation)) {
+            if(drawSegmentation)
+                proxy.setVertexColors(tree);
+            else
+                proxy.setVertexColors(tree.phasefields()[currentNode]);
+        }
+
+        char current[100];
+        sprintf(current, "%zu", currentNode);
+        if(ImGui::BeginCombo("##solver", current)) {
+            char buffer[100];
+            for(size_t i = 0; i < tree.nodeCount(); ++i) {
+                bool isSelected = i == currentNode;
+                sprintf(buffer, "%zu", i);
+                if(ImGui::Selectable(buffer, isSelected)) {
+                    currentNode = i;
+                    if(!drawSegmentation)
+                        proxy.setVertexColors(tree.phasefields()[currentNode]);
+                }
+                if(isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
+        static char path[100];
+        ImGui::InputText("Deserialize tree to", path, 100);
+        if(ImGui::Button("Save Tree")) {
+            Array<char> data;
+            tree.serialize(data);
+            FILE* fp = fopen(path, "w");
+            fwrite(data.data(), sizeof(char), data.size(), fp);
+            fclose(fp);
+        }
 
         ImGui::TreePop();
     }
@@ -716,7 +787,7 @@ void Viewer::keyPressEvent(KeyEvent& event) {
             arcBall->reset();
             break;
         case KeyEvent::Key::LeftCtrl :
-            brushing = true;
+            brushingModeEnabled = true;
             Mg::GL::defaultFramebuffer.mapForRead(Mg::GL::DefaultFramebuffer::ReadAttachment::Front);
             break;
         default:
@@ -734,7 +805,7 @@ void Viewer::keyReleaseEvent(KeyEvent& event) {
     }
 
     if(event.key() == Viewer::KeyEvent::Key::LeftCtrl) {
-        brushing = false;
+        brushingModeEnabled = false;
         Mg::GL::defaultFramebuffer.mapForRead(Mg::GL::DefaultFramebuffer::ReadAttachment::None);
         event.setAccepted();
         return;
@@ -748,20 +819,23 @@ void Viewer::textInputEvent(TextInputEvent& event) {
     }
 }
 
+void Viewer::startBrushing(Vector3 const& point) {
+    fastMarchingMethod.reset();
+    arrayResize(distances, 0);
+    auto [idx, _] = kdtree.nearestNeighbor(point);
+    fastMarchingMethod.setSource(Vertex{size_t(idx), &mesh});
+    targetDist = 0.;
+    brushing = true;
+}
+
 void Viewer::mousePressEvent(MouseEvent& event) {
     if(imgui.handleMousePressEvent(event)) {
         event.setAccepted();
         return;
     }
 
-    if(brushing) {
-        point = Vector3(unproject(event.position()));
-        fastMarchingMethod.reset();
-        arrayResize(distances, 0);
-        auto [idx, _] = kdtree.nearestNeighbor(point);
-        fastMarchingMethod.setSource(Vertex{size_t(idx), &mesh});
-        targetDist = 0.;
-        stopPainting = false;
+    if(brushingModeEnabled) {
+        startBrushing(unproject(event.position()));
         event.setAccepted();
         return;
     }
@@ -785,8 +859,8 @@ void Viewer::mouseReleaseEvent(MouseEvent& event) {
         return;
     }
 
-    if(!stopPainting) {
-        stopPainting = true;
+    if(brushingModeEnabled) {
+        brushing = false;
         event.setAccepted();
         return;
     }
@@ -808,11 +882,11 @@ void Viewer::mouseMoveEvent(MouseMoveEvent& event) {
         return;
     }
 
-    //if(brushing){
-    //    stopPainting = true;
-    //    event.setAccepted();
-    //    return;
-    //}
+    if(brushingModeEnabled && brushing){
+        startBrushing(unproject(event.position()));
+        event.setAccepted();
+        return;
+    }
 
     if(trackingMouse) {
         if(event.modifiers() & MouseMoveEvent::Modifier::Shift)
@@ -842,15 +916,22 @@ void Viewer::mouseScrollEvent(MouseScrollEvent& event) {
 
 
 void Viewer::tickEvent() {
-    if(!stopPainting) {
-        paint();
+    if(brushing) {
+        brush();
+        if(drawSegmentation)
+            proxy.setVertexColors(tree);
+        else {
+            Debug{} << "Updating scalar values";
+            proxy.setVertexColors(tree.phasefields()[currentNode]);
+        }
 
         mesh.uploadVertexBuffer(vertexBuffer);
         redraw();
     }
 
     {
-        //proxy.update(); /* synchronize with optimization */
+        proxy.upload(); /* synchronize with optimization */
+
         //for(auto& f : problem.)
         //    f->updateVisualization(proxy);
         //for(auto& f : problem.constraints)
@@ -872,16 +953,26 @@ void Viewer::drawEvent() {
     bool camChanged = arcBall->updateTransformation();
     Matrix4 viewTf = arcBall->viewMatrix();
 
-    phong.setProjectionMatrix(projection)
-         .setTransformationMatrix(viewTf)
-         .setNormalMatrix(viewTf.normalMatrix())
-         .draw(glMesh);
+    if(proxy.shaderConfig == VisualizationProxy::ShaderConfig::ColorMaps) {
+        phongColorMap.setProjectionMatrix(projection)
+                     .setTransformationMatrix(viewTf)
+                     .setNormalMatrix(viewTf.normalMatrix())
+                     .bindDiffuseTexture(colorMapTextures[colorMapIndex].second)
+                     .setLightPosition({10,10,10})
+                     .draw(glMesh);
+    } else if (proxy.shaderConfig == VisualizationProxy::ShaderConfig::VertexColors) {
+        phongVertexColors.setProjectionMatrix(projection)
+                         .setTransformationMatrix(viewTf)
+                         .setNormalMatrix(viewTf.normalMatrix())
+                         .setLightPosition({10,10,10})
+                         .draw(glMesh);
+    }
 
     /* draw ImGui stuff */
     //drawSubdivisionOptions();
     drawMeshIO();
     drawBrushOptions();
-    //drawOptimizationOptions();
+    drawOptimizationOptions();
     drawVisualizationOptions();
 
     imgui.updateApplicationCursor(*this);

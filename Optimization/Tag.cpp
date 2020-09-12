@@ -3,36 +3,41 @@
 //
 
 #include "Tag.h"
+#include "Types.h"
+#include "StlAlgorithm.h"
 
 #include <Corrade/Containers/GrowableArray.h>
-#include <algorithm>
 
-using namespace Corrade;
+namespace Phasefield {
 
-static Containers::Array<int> g_tags;
+static Array<size_t> tags;
 
-int getTag() {
-    int tag = -1;
-    std::size_t i = 0;
-    for(; i < g_tags.size(); ++i, ++tag) {
-        if(g_tags[i] > tag + 1){
-            ++tag;
+size_t getTag() {
+    size_t tag = Invalid;
+    for(size_t i  = 1; i < tags.size(); ++i, ++tag) {
+        if(tags[i] > tags[i - 1] + 1) {
+            tag = tags[i - 1] + 1;
             break;
         }
     }
 
-    // @TODO this can be done more efficiently
-    Containers::arrayAppend(g_tags, ++tag);
-    std::sort(g_tags.begin(), g_tags.end());
+    if(tag == Invalid)
+        tag = tags.empty() ? 0 : tags.back() + 1;
+
+
+    arrayAppend(tags, ++tag);
+    std::sort(tags.begin(), tags.end());
     return tag;
 }
 
-void deleteTag(int tag) {
-    auto it = std::lower_bound(g_tags.begin(), g_tags.end(), tag);
-    if(it < g_tags.end() - 1){
-        std::memmove(it, it + 1, sizeof(int)*(g_tags.end() - (it + 1)));
-    }
-    if(it != g_tags.end()){
-        Containers::arrayResize(g_tags, g_tags.size() - 1);
-    }
+bool deleteTag(size_t tag) {
+    auto it = std::lower_bound(tags.begin(), tags.end(), tag);
+    if(it < tags.end() - 1) /* if the tag is not in the last position memmove everything back by one */
+        std::memmove(it, it + 1, sizeof(size_t)*(tags.end() - (it + 1)));
+    else if(it != tags.end()) /* if the tag is in the last position just pop the back */
+        arrayResize(tags, tags.size() - 1);
+    else return false;
+    return true;
+}
+
 }

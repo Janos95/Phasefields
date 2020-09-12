@@ -4,14 +4,15 @@
 
 #pragma once
 
-#include "Range.h"
-
-//forward declarations
+/* forward declarations */
 
 namespace Phasefield {
 
 struct UnionFind;
 
-
+/* Modica Mortola */
+struct DirichletEnergy;
+struct AreaRegularizer;
+struct DoubleWellPotential;
 
 }

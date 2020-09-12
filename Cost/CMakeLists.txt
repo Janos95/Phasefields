@@ -11,13 +11,9 @@ pkg_check_modules(Adolc REQUIRED IMPORTED_TARGET adolc)
 set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 
 add_library(Cost STATIC
-
-        #Fem.cpp
-        #Fem.h
-        #ModicaMortola.cpp
-        #ModicaMortola.h
-        #SparseMatrix.h
-        #SparseMatrix.cpp
+        Cost.h
+        ModicaMortola.cpp
+        ModicaMortola.h
         #StrangRules.hpp
         #FastMarchingMethod.cpp
         #FastMarchingMethod.h
@@ -30,13 +26,14 @@ target_include_directories(Cost PUBLIC
 
 target_link_libraries(Cost PRIVATE
         ScopedTimer::ScopedTimer
-        #Phasefield::Optimization
         )
 
 target_link_libraries(Cost PUBLIC
         Phasefield::Utilities
-        Phasefield::Visualization
-        Phasefield::VisualizationProxy
+        #Phasefield::Visualization
+        #Phasefield::VisualizationProxy
+        Phasefield::Mesh
+        Phasefield::Optimization
         Eigen3::Eigen
         )
 

@@ -5,9 +5,15 @@ add_library(Mesh STATIC
         Mesh.h
         MeshElements.cpp
         MeshElements.h
+        MeshFeature.cpp
+        MeshFeature.h
         FastMarchingMethod.cpp
         FastMarchingMethod.h
         Surface.h
+        Dijkstra.h
+        GraphCommon.h
+        FEM.cpp
+        FEM.h
         )
 
 target_include_directories(Mesh PUBLIC

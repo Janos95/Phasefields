@@ -6,6 +6,7 @@
 #include "Viewer.h"
 #include "Enums.h"
 #include "normalizeInto.hpp"
+#include "C1Functions.h"
 
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
@@ -35,26 +36,22 @@ VisualizationProxy::VisualizationProxy(Viewer& v) : viewer(v) {
 //}
 
 
-void VisualizationProxy::update() {
+void VisualizationProxy::upload() {
     if(updateFaceTexture) {
         //viewer.faceTexture.setSubImage(0, {}, Mg::ImageView2D{Magnum::PixelFormat::RGB8Srgb, {(int)faceColors.size(), 1}, faceColors});
         //updateFaceTexture = false;
     }
     if(updateVertexBuffer) {
-        auto data = viewer.vertexBuffer.map(0,
-                                            viewer.vertexBuffer.size(),
-                                            GL::Buffer::MapFlag::Write);
-
-        CORRADE_CONSTEXPR_ASSERT(data, "could not map vertex data");
-        Utility::copy(viewer.meshData.vertexData(), data);
-        viewer.vertexBuffer.unmap();
+        viewer.mesh.uploadVertexBuffer(viewer.vertexBuffer);
         updateVertexBuffer = false;
     }
 }
 
-void VisualizationProxy::setVertexColors(Containers::ArrayView<double>& data) {
-    auto coords = viewer.meshData.mutableAttribute<Vector2>(Trade::MeshAttribute::TextureCoordinates);
-    normalizeInto(data, Containers::arrayCast<2, float>(coords).slice<1>());
+void VisualizationProxy::setVertexColors(Containers::StridedArrayView1D<double> const& data) {
+    CORRADE_INTERNAL_ASSERT(data.size() == viewer.mesh.vertexCount());
+    for(size_t i = 0; i < viewer.mesh.vertexCount(); ++i)
+        viewer.mesh.scalars()[i] = data[i];
+    shaderConfig = ShaderConfig::ColorMaps;
     updateVertexBuffer = true;
 }
 
@@ -71,39 +68,43 @@ void VisualizationProxy::setVertexColors(Tree& tree) {
     if(colors.size() != tree.numLeafs*2) {
         Containers::arrayResize(colors, Containers::NoInit, tree.numLeafs*2);
         Deg hue = 42.0_degf;
-        for(auto& c : colors)
+        for(auto& c : colors) /* genereate random colors */
             c = Color4::fromHsv({hue += 137.5_degf, 0.75f, 0.9f});
     }
 
-    auto vertexColors = viewer.meshData.mutableAttribute<Color4>(Trade::MeshAttribute::Color);
+    auto vertexColors = viewer.mesh.colors();
     for(auto& c: vertexColors) c = Color4{0};
 
     auto phasefields = tree.phasefields();
-    auto prefixes = tree.temps();
-    auto n = tree.phasefieldSize;
+    auto prefixes = tree.temporaryData();
+    size_t n = tree.vertexCount();
     SmootherStep smoothStep;
 
-    int leafIdx = 0;
-    tree.traverse([&](Node& node) -> void {
+    //auto [min,max] = Math::minmax(phasefields[0]);
+    //Debug{} << min << " " << max;
+
+    size_t leafIdx = 0;
+    tree.traverse([&](Node& node) -> bool {
         if(!node.isLeaf()) {
-            for(UnsignedInt i = 0; i < n; ++i) {
-                if(node.leftChild != Node::None) {
-                    double pos = smoothStep.eval(phasefields[node.leftChild][i]);
-                    prefixes[node.leftChild][i] = pos*phasefields[node.idx][i];
+            for(size_t i = 0; i < n; ++i) {
+                if(node.leftChild != Invalid) {
+                    prefixes[node.leftChild][i] = smoothStep.eval(phasefields[node.idx][i]);
                 }
-                if(node.rightChild != Node::None) {
-                    double neg = smoothStep.eval(-phasefields[node.leftChild][i]);
-                    prefixes[node.rightChild][i] = neg*phasefields[node.idx][i];
+                if(node.rightChild != Invalid) {
+                    prefixes[node.rightChild][i] = smoothStep.eval(-phasefields[node.idx][i]);
                 }
             }
         } else {
-            for(UnsignedInt i = 0; i < n; ++i) {
-                vertexColors[i].rgb() += prefixes[node.idx][i]*colors[leafIdx].rgb();
+            for(size_t i = 0; i < n; ++i) {
+                vertexColors[i].rgb() += prefixes[node.idx][i]*smoothStep.eval(phasefields[node.idx][i])*colors[2*leafIdx].rgb();
+                vertexColors[i].rgb() += prefixes[node.idx][i]*smoothStep.eval(-phasefields[node.idx][i])*colors[2*leafIdx + 1].rgb();
             }
             ++leafIdx;
         }
+        return true;
     });
 
+    shaderConfig = ShaderConfig::VertexColors;
     updateVertexBuffer = true;
 }
 

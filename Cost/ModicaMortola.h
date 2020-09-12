@@ -4,95 +4,92 @@
 
 #pragma once
 
-#include <Corrade/Containers/Array.h>
-#include <Corrade/Containers/StridedArrayView.h>
-#include "c1_functions.hpp"
-#include "Enums.h"
+#include "Types.h"
+#include "Surface.h"
+#include "Functional.h"
 
 namespace Phasefield {
 
 struct DirichletEnergy {
-    DirichletEnergy(
-            Containers::Array<Mg::Vector3d> const& vertices,
-            Containers::Array<Mg::UnsignedInt> const& indices);
 
-    uint32_t numParameters() const;
+    explicit DirichletEnergy(Mesh& mesh);
+
+    [[nodiscard]] size_t numParameters() const;
+
+    [[nodiscard]] static FunctionalType::Value type() { return FunctionalType::DirichletEnergy; }
 
     template<class Scalar>
-    void operator()(Containers::ArrayView<const Scalar> const& parameters,
-                    Containers::ArrayView<const Scalar> const& weights,
+    void operator()(ArrayView<const Scalar> const& parameters,
+                    ArrayView<const Scalar> const& weights,
                     Scalar& out,
-                    Containers::ArrayView<Scalar> const& gradP,
-                    Containers::ArrayView<Scalar> const& gradW);
+                    ArrayView<Scalar> const& gradP,
+                    ArrayView<Scalar> const& gradW);
 
-    void updateInternalDataStructures();
-
-    Containers::Array<const Mg::UnsignedInt> const& indices;
-    Containers::Array<const Mg::Vector3d> const& vertices;
-
-    Containers::Array<Mg::Double> areas;
-
-    Containers::Array<Mg::Vector3d> edgeNormalsData;
-    Containers::StridedArrayView2D<Mg::Vector3d> edgeNormals;
+    Mesh& mesh;
 };
 
 struct AreaRegularizer {
 
-    AreaRegularizer(Containers::Array<Magnum::Vector3d> const&, Containers::Array<Mg::UnsignedInt> const&);
-
-    void updateInternalDataStructures();
+    explicit AreaRegularizer(Mesh& mesh);
 
     template<class Scalar>
-    void operator()(Containers::ArrayView<const Scalar> const& parameters,
-                    Containers::ArrayView<const Scalar> const& weights,
+    void operator()(ArrayView<const Scalar> const& parameters,
+                    ArrayView<const Scalar> const& weights,
                     Scalar& out,
-                    Containers::ArrayView<Scalar> const& gradP,
-                    Containers::ArrayView<Scalar> const& gradW);
+                    ArrayView<Scalar> const& gradP,
+                    ArrayView<Scalar> const& gradW);
 
-    mutable Mg::Double currentArea;
-    Mg::Double area, areaRatio = 0.5;
+    [[nodiscard]] size_t numParameters() const;
 
-    Containers::Array<Mg::UnsignedInt> const& indices;
-    Containers::Array<Mg::Vector3d> const& vertices;
-    Containers::Array<Mg::Double> integralOperator;
+    [[nodiscard]] static FunctionalType::Value type() { return FunctionalType::AreaRegularizer; }
+
+    double areaRatio = 0.5;
+    Mesh& mesh;
 };
 
 struct DoubleWellPotential {
 
-    DoubleWellPotential(Containers::Array<Magnum::Vector3d> const&,
-                        Containers::Array<Mg::UnsignedInt> const&);
-
-    void updateInternalDataStructures();
+    explicit DoubleWellPotential(Mesh& mesh);
 
     template<class Scalar>
-    void operator()(Containers::ArrayView<const Scalar> const& parameters,
-                    Containers::ArrayView<const Scalar> const& weights,
+    void operator()(ArrayView<const Scalar> const& parameters,
+                    ArrayView<const Scalar> const& weights,
                     Scalar& out,
-                    Containers::ArrayView<Scalar> const& gradP,
-                    Containers::ArrayView<Scalar> const& gradW);
+                    ArrayView<Scalar> const& gradP,
+                    ArrayView<Scalar> const& gradW);
 
-    Containers::Array<Mg::UnsignedInt> const& indices;
-    Containers::Array<Mg::Vector3d> const& vertices;
-    Containers::Array<Mg::Double> integralOperator;
+    [[nodiscard]] size_t numParameters() const;
+
+    [[nodiscard]] static FunctionalType::Value type() { return FunctionalType::DoubleWellPotential; }
+
+
+    Mesh& mesh;
 };
 
 
-extern template void DirichletEnergy::operator()(Containers::ArrayView<const double> const& parameters,
-                                                 Containers::ArrayView<const double> const& weights,
+extern template void DirichletEnergy::operator()(ArrayView<const double> const& parameters,
+                                                 ArrayView<const double> const& weights,
                                                  double& out,
-                                                 Containers::ArrayView<double> const& gradP,
-                                                 Containers::ArrayView<double> const& gradW);
+                                                 ArrayView<double> const& gradP,
+                                                 ArrayView<double> const& gradW);
 
-extern template void AreaRegularizer::operator()(Containers::ArrayView<const double> const& parameters,
-                                                 Containers::ArrayView<const double> const& weights,
+extern template void AreaRegularizer::operator()(ArrayView<const double> const& parameters,
+                                                 ArrayView<const double> const& weights,
                                                  double& out,
-                                                 Containers::ArrayView<double> const& gradP,
-                                                 Containers::ArrayView<double> const& gradW);
+                                                 ArrayView<double> const& gradP,
+                                                 ArrayView<double> const& gradW);
 
-extern template void DoubleWellPotential::operator()(Containers::ArrayView<const double> const& parameters,
-                                                     Containers::ArrayView<const double> const& weights,
+extern template void DoubleWellPotential::operator()(ArrayView<const double> const& parameters,
+                                                     ArrayView<const double> const& weights,
                                                      double& out,
-                                                     Containers::ArrayView<double> const& gradP,
-                                                     Containers::ArrayView<double> const& gradW);
+                                                     ArrayView<double> const& gradP,
+                                                     ArrayView<double> const& gradW);
+
+
+extern template Functional::Functional(DirichletEnergy);
+extern template Functional::Functional(AreaRegularizer);
+extern template Functional::Functional(DoubleWellPotential);
 
 }
+
+

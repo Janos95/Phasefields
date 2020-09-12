@@ -6,7 +6,7 @@
 
 #include <Magnum/Magnum.h>
 #include <Magnum/Shaders/Shaders.h>
-#include <Corrade/Containers/Tags.h>
+#include <Magnum/GL/GL.h>
 
 using namespace Corrade::Containers;
 using namespace Magnum::Shaders;
@@ -25,6 +25,8 @@ using Magnum::Matrix3;
 using Magnum::Matrix4;
 using Magnum::Color3;
 using Magnum::Color4;
+using Magnum::Range2D;
+using Magnum::Range2Di;
 
 using Magnum::Rad;
 using Magnum::Radd;
@@ -33,6 +35,7 @@ using Magnum::Deg;
 using Magnum::Debug;
 
 namespace Math = Magnum::Math;
+namespace GL = Magnum::GL;
 
 namespace Phasefield {
 constexpr size_t Invalid = ~size_t{0};

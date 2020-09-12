@@ -14,6 +14,7 @@
 #include <Magnum/Math/Constants.h>
 
 #include <cstring>
+#include <limits>
 
 namespace Phasefield {
 
@@ -25,7 +26,7 @@ namespace {
 // The super fun quadratic distance function in the Fast Marching Method on triangle meshes
 // TODO parameter c isn't actually defined in paper, so I guessed that it was an error
 double eikonalDistanceSubroutine(double a, double b, Radd theta, double dA, double dB) {
-    if(theta <= Radd{Math::Constants<double>::piHalf()}) {
+    if(theta <= Radd{Math::Constants<double>::piHalf() + 0.1}) {
         double u = dB - dA;
         double cTheta = Math::cos(theta);
         double sTheta2 = 1.0 - cTheta*cTheta;
@@ -48,7 +49,7 @@ double eikonalDistanceSubroutine(double a, double b, Radd theta, double dA, doub
     }
         // Custom by Nick to get acceptable results in obtuse triangles without fancy unfolding
     else {
-
+        Debug{} << "Obtuse triangle";
         double maxDist = Math::max(dA, dB); // all points on base are less than this far away, by convexity
         double c = Math::sqrt(a*a + b*b - 2*a*b*Math::cos(theta));
         double area = 0.5*Math::sin(theta)*a*b;
@@ -75,7 +76,7 @@ FastMarchingMethod::FastMarchingMethod(Mesh& mesh) :
 }
 
 void FastMarchingMethod::reset(){
-    for(auto& x: m_distances) x = 0.;
+    for(auto& x: m_distances) x = std::numeric_limits<double>::infinity();
     std::memset(m_finalized.data(), 0, m_finalized.size());
     m_frontier.clear();
     m_visitedVertexCount = 0;
@@ -106,8 +107,8 @@ bool FastMarchingMethod::step(Vertex& vertex, Double& distance) {
         if(m_frontier.empty()) return false;
 
         // Pop the nearest element
-        Entry item = m_frontier.extractMin();
-        vertex = item.vertex;
+        auto item = m_frontier.extractMin();
+        vertex = item.node;
         distance = item.distance;
 
     } while(m_finalized[vertex]);
@@ -116,7 +117,7 @@ bool FastMarchingMethod::step(Vertex& vertex, Double& distance) {
     m_finalized[vertex] = true;
 
     // Add any eligible neighbors
-    for(HalfEdge he : vertex.incomingHalfedges()) {
+    for(HalfEdge he : vertex.incomingHalfEdges()) {
         Vertex neighbor = he.tail();
         // Add with length
         if(!m_finalized[neighbor]) {

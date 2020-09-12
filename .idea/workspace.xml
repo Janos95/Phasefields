@@ -5,6 +5,7 @@
   </component>
   <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
     <generated>
+      <config projectName="Phasefield" targetName="Cost" />
       <config projectName="Phasefield" targetName="VisualizationProxy" />
       <config projectName="Phasefield" targetName="ImGuiFS" />
       <config projectName="Phasefield" targetName="ScopedTimer" />
@@ -19,50 +20,77 @@
   </component>
   <component name="CMakeSettings">
     <configurations>
-      <configuration PROFILE_NAME="Debug" CONFIG_NAME="Debug" TOOLCHAIN_NAME="default" GENERATION_OPTIONS="-DIMGUI_DIR=/home/janos/libraries/imgui" />
+      <configuration PROFILE_NAME="Release-default" CONFIG_NAME="Release" TOOLCHAIN_NAME="default" GENERATION_OPTIONS="-DIMGUI_DIR=/home/janos/libraries/imgui" />
     </configurations>
   </component>
   <component name="ChangeListManager">
     <list default="true" id="396f317f-5568-472a-8995-c3750ea4f1fc" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/Mesh/CMakeLists.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Mesh/FastMarchingMethod.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Mesh/FastMarchingMethod.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Mesh/Mesh.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Mesh/Mesh.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Mesh/MeshElements.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Mesh/MeshElements.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Mesh/Surface.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Utilities/MinMaxAndDAryHeap.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Utilities/Range.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.gitmodules" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Mesh/FEM.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Mesh/FEM.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Mesh/MeshFeature.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Mesh/MeshFeature.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Utilities/Serialize.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Visualization/Visualization.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/toolchains" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/Bfs.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/Bfs.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cost/Bfs.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/Bfs.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cost/Bfs.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/Bfs.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cost/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cost/ConnectednessConstraint.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/ConnectednessConstraint.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cost/ConnectednessConstraint.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/ConnectednessConstraint.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cost/ConnectednessConstraints.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/ConnectednessConstraints.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cost/Cost.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/Cost.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/Dijkstra.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/Dijkstra.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/FastMarchingMethod.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/FastMarchingMethod.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/GraphCommon.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/GraphCommon.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/Mesh.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/Mesh.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/YamabeSolver.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/YamabeSolver.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cost/Dijkstra.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cost/Dijkstra.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/Dijkstra.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cost/Fem.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cost/Fem.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cost/ModicaMortola.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/ModicaMortola.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cost/ModicaMortola.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/ModicaMortola.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cost/SparseMatrix.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/SparseMatrix.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cost/SparseMatrix.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/SparseMatrix.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/FastMarchingMethod.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/FastMarchingMethod.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/FastMarchingMethod.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/FastMarchingMethod.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/GraphCommon.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/GraphCommon.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/Mesh.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/Mesh.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/Mesh.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/Mesh.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/MeshElements.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/MeshElements.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/MeshElements.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/MeshElements.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/Surface.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/Surface.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Optimization/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/Functional.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Functional.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/Functional.h" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Functional.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/Functional.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Functional.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/LossFunction.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/LossFunction.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/LossFunctions.h" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/LossFunctions.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/RecursiveProblem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/RecursiveProblem.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/RecursiveProblem.h" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/RecursiveProblem.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/Solver.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Solver.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/Solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Solver.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/Tag.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Tag.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/Tag.h" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Tag.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Optimization/Tree.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Tree.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Optimization/Tree.h" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Tree.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ScopedTimer/include/ScopedTimer/ScopedTimer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/ScopedTimer/include/ScopedTimer/ScopedTimer.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Shaders/Phong.vert" beforeDir="false" afterPath="$PROJECT_DIR$/Shaders/Phong.vert" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/Heap.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/Heap.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utilities/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utilities/Enums.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/Enums.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Utilities/Types.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/Types.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/test.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/test.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utilities/UniqueFunction.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/UniqueFunction.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utilities/c1_functions.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/C1Functions.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Viewer/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Viewer/KDTree.h" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/KDTree.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Viewer/Viewer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Viewer.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Viewer/Viewer.h" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Viewer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/primitives.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/primitives.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Visualization/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Visualization/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Visualization/VisualizationProxy.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Visualization/VisualizationProxy.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Visualization/VisualizationProxy.h" beforeDir="false" afterPath="$PROJECT_DIR$/Visualization/VisualizationProxy.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Visualization/custom_widgets.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Visualization/ImGuiWidget.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Visualization/custom_widgets.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/Visualization/ImGuiWidgets.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/main.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/todos.txt" beforeDir="false" afterPath="$PROJECT_DIR$/todos.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -72,7 +100,7 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Release-default" />
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
@@ -96,63 +124,71 @@
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="cf.advertisement.text.has.clang-format" value="true" />
     <property name="cf.first.check.clang-format" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../libraries/geometry-central" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/Utilities" />
     <property name="nodejs_package_manager_path" value="npm" />
     <property name="settings.editor.selected.configurable" value="CMakeSettings" />
   </component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/Utilities" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/Mesh" />
       <recent name="$PROJECT_DIR$/Cost" />
     </key>
   </component>
   <component name="RunManager" selected="CMake Application.Phasefield">
-    <configuration name="ImGuiFS" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="ImGuiFS" CONFIG_NAME="Debug">
+    <configuration name="Cost" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Cost" CONFIG_NAME="Release-default">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Mesh" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Mesh" CONFIG_NAME="Debug">
+    <configuration name="ImGuiFS" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="ImGuiFS" CONFIG_NAME="Release-default">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Optimization" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Optimization" CONFIG_NAME="Debug">
+    <configuration name="Mesh" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Mesh" CONFIG_NAME="Release-default">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Phasefield" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Phasefield" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Phasefield" RUN_TARGET_NAME="Phasefield">
+    <configuration name="Optimization" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Optimization" CONFIG_NAME="Release-default">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="ScopedTimer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="ScopedTimer" CONFIG_NAME="Debug">
+    <configuration name="Phasefield" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Phasefield" CONFIG_NAME="Release-default" RUN_TARGET_PROJECT_NAME="Phasefield" RUN_TARGET_NAME="Phasefield">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Utilities" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Utilities" CONFIG_NAME="Debug">
+    <configuration name="ScopedTimer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="ScopedTimer" CONFIG_NAME="Release-default">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Viewer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Viewer" CONFIG_NAME="Debug">
+    <configuration name="Utilities" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Utilities" CONFIG_NAME="Release-default">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Viewer_RESOURCES-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Viewer_RESOURCES-dependencies" CONFIG_NAME="Debug">
+    <configuration name="Viewer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Viewer" CONFIG_NAME="Release-default">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Visualization" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Visualization" CONFIG_NAME="Debug">
+    <configuration name="Viewer_RESOURCES-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Viewer_RESOURCES-dependencies" CONFIG_NAME="Release-default">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="VisualizationProxy" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="VisualizationProxy" CONFIG_NAME="Debug">
+    <configuration name="Visualization" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Visualization" CONFIG_NAME="Release-default">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="VisualizationProxy" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="VisualizationProxy" CONFIG_NAME="Release-default">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -168,16 +204,17 @@
       </method>
     </configuration>
     <list>
+      <item itemvalue="CMake Application.Phasefield" />
+      <item itemvalue="CMake Application.Cost" />
       <item itemvalue="CMake Application.ImGuiFS" />
       <item itemvalue="CMake Application.Mesh" />
       <item itemvalue="CMake Application.Optimization" />
-      <item itemvalue="CMake Application.Phasefield" />
       <item itemvalue="CMake Application.ScopedTimer" />
       <item itemvalue="CMake Application.Utilities" />
       <item itemvalue="CMake Application.Viewer" />
       <item itemvalue="CMake Application.Viewer_RESOURCES-dependencies" />
-      <item itemvalue="CMake Application.VisualizationProxy" />
       <item itemvalue="CMake Application.Visualization" />
+      <item itemvalue="CMake Application.VisualizationProxy" />
     </list>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
@@ -211,6 +248,17 @@
       <workItem from="1599297590966" duration="9396000" />
       <workItem from="1599383308181" duration="34754000" />
       <workItem from="1599465853186" duration="42101000" />
+      <workItem from="1599553622937" duration="605000" />
+      <workItem from="1599554396084" duration="34534000" />
+      <workItem from="1599640307361" duration="19842000" />
+      <workItem from="1599726926069" duration="16724000" />
+      <workItem from="1599811372988" duration="18129000" />
+      <workItem from="1599903478402" duration="6492000" />
+      <workItem from="1599910549888" duration="1199000" />
+      <workItem from="1599912346513" duration="179000" />
+      <workItem from="1599912534469" duration="851000" />
+      <workItem from="1599913632814" duration="11945000" />
+      <workItem from="1599929313852" duration="15674000" />
     </task>
     <servers />
   </component>
@@ -218,84 +266,82 @@
     <option name="version" value="3" />
   </component>
   <component name="WindowStateProjectService">
-    <state x="1038" y="213" key="#xdebugger.evaluate" timestamp="1599507035488">
+    <state x="323" y="269" width="624" height="514" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog" timestamp="1599910518921">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="1038" y="213" key="#xdebugger.evaluate/0.0.2560.1080@0.0.2560.1080" timestamp="1599507035488" />
-    <state x="1063" y="195" width="424" height="470" key="FileChooserDialogImpl" timestamp="1599406607148">
+    <state x="323" y="269" width="624" height="514" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog/0.0.2560.1080@0.0.2560.1080" timestamp="1599910518921" />
+    <state x="1038" y="-11" key="#xdebugger.evaluate" timestamp="1599946429195">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="1063" y="195" width="424" height="470" key="FileChooserDialogImpl/0.0.2560.1080@0.0.2560.1080" timestamp="1599406607148" />
-    <state width="2514" height="345" key="GridCell.Tab.0.bottom" timestamp="1599516392733">
+    <state x="1038" y="-11" key="#xdebugger.evaluate/0.0.2560.1080@0.0.2560.1080" timestamp="1599946429195" />
+    <state x="1063" y="179" width="424" height="470" key="FileChooserDialogImpl" timestamp="1599558731427">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="345" key="GridCell.Tab.0.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1599516392733" />
-    <state width="2514" height="345" key="GridCell.Tab.0.center" timestamp="1599516392732">
+    <state x="1063" y="179" width="424" height="470" key="FileChooserDialogImpl/0.0.2560.1080@0.0.2560.1080" timestamp="1599558731427" />
+    <state width="2514" height="293" key="GridCell.Tab.0.bottom" timestamp="1599949269645">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="345" key="GridCell.Tab.0.center/0.0.2560.1080@0.0.2560.1080" timestamp="1599516392732" />
-    <state width="2514" height="345" key="GridCell.Tab.0.left" timestamp="1599516392732">
+    <state width="2514" height="293" key="GridCell.Tab.0.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1599949269645" />
+    <state width="2514" height="293" key="GridCell.Tab.0.center" timestamp="1599949269645">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="345" key="GridCell.Tab.0.left/0.0.2560.1080@0.0.2560.1080" timestamp="1599516392732" />
-    <state width="2514" height="345" key="GridCell.Tab.0.right" timestamp="1599516392732">
+    <state width="2514" height="293" key="GridCell.Tab.0.center/0.0.2560.1080@0.0.2560.1080" timestamp="1599949269645" />
+    <state width="2514" height="293" key="GridCell.Tab.0.left" timestamp="1599949269644">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="345" key="GridCell.Tab.0.right/0.0.2560.1080@0.0.2560.1080" timestamp="1599516392732" />
-    <state width="2514" height="345" key="GridCell.Tab.1.bottom" timestamp="1599516391726">
+    <state width="2514" height="293" key="GridCell.Tab.0.left/0.0.2560.1080@0.0.2560.1080" timestamp="1599949269644" />
+    <state width="2514" height="293" key="GridCell.Tab.0.right" timestamp="1599949269645">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="345" key="GridCell.Tab.1.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1599516391726" />
-    <state width="2514" height="345" key="GridCell.Tab.1.center" timestamp="1599516391726">
+    <state width="2514" height="293" key="GridCell.Tab.0.right/0.0.2560.1080@0.0.2560.1080" timestamp="1599949269645" />
+    <state width="2514" height="113" key="GridCell.Tab.1.bottom" timestamp="1599949246683">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="345" key="GridCell.Tab.1.center/0.0.2560.1080@0.0.2560.1080" timestamp="1599516391726" />
-    <state width="2514" height="345" key="GridCell.Tab.1.left" timestamp="1599516391725">
+    <state width="2514" height="113" key="GridCell.Tab.1.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1599949246683" />
+    <state width="2514" height="113" key="GridCell.Tab.1.center" timestamp="1599949246683">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="345" key="GridCell.Tab.1.left/0.0.2560.1080@0.0.2560.1080" timestamp="1599516391725" />
-    <state width="2514" height="345" key="GridCell.Tab.1.right" timestamp="1599516391726">
+    <state width="2514" height="113" key="GridCell.Tab.1.center/0.0.2560.1080@0.0.2560.1080" timestamp="1599949246683" />
+    <state width="2514" height="113" key="GridCell.Tab.1.left" timestamp="1599949246683">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="345" key="GridCell.Tab.1.right/0.0.2560.1080@0.0.2560.1080" timestamp="1599516391726" />
-    <state x="1032" y="91" key="SettingsEditor" timestamp="1599492579858">
+    <state width="2514" height="113" key="GridCell.Tab.1.left/0.0.2560.1080@0.0.2560.1080" timestamp="1599949246683" />
+    <state width="2514" height="113" key="GridCell.Tab.1.right" timestamp="1599949246683">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="1032" y="91" key="SettingsEditor/0.0.2560.1080@0.0.2560.1080" timestamp="1599492579858" />
-    <state x="1085" y="-24" width="379" height="749" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1599494583214">
+    <state width="2514" height="113" key="GridCell.Tab.1.right/0.0.2560.1080@0.0.2560.1080" timestamp="1599949246683" />
+    <state x="402" y="48" key="SettingsEditor" timestamp="1599949257272">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="1085" y="-24" width="379" height="749" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.2560.1080@0.0.2560.1080" timestamp="1599494583214" />
-    <state x="974" y="282" width="611" height="534" key="find.popup" timestamp="1599507158639">
+    <state x="402" y="48" key="SettingsEditor/0.0.2560.1080@0.0.2560.1080" timestamp="1599949257272" />
+    <state x="1085" y="-104" width="379" height="749" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1599833787257">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="974" y="282" width="611" height="534" key="find.popup/0.0.2560.1080@0.0.2560.1080" timestamp="1599507158639" />
+    <state x="1085" y="-104" width="379" height="749" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.2560.1080@0.0.2560.1080" timestamp="1599833787257" />
+    <state x="974" y="282" width="611" height="534" key="find.popup" timestamp="1599914437011">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state x="974" y="282" width="611" height="534" key="find.popup/0.0.2560.1080@0.0.2560.1080" timestamp="1599914437011" />
+    <state x="1059" y="317" width="432" height="418" key="refactoring.ChangeSignatureDialog" timestamp="1599741325003">
+      <screen x="0" y="0" width="2560" height="1080" />
+    </state>
+    <state x="1059" y="317" width="432" height="418" key="refactoring.ChangeSignatureDialog/0.0.2560.1080@0.0.2560.1080" timestamp="1599741325003" />
     <state x="944" y="255" width="672" height="677" key="run.anything.popup" timestamp="1598354507222">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="944" y="255" width="672" height="677" key="run.anything.popup/0.0.2560.1080@0.0.2560.1080" timestamp="1598354507222" />
-    <state x="943" y="253" width="672" height="678" key="search.everywhere.popup" timestamp="1599128968642">
+    <state x="943" y="253" width="672" height="678" key="search.everywhere.popup" timestamp="1599641867411">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="943" y="253" width="672" height="678" key="search.everywhere.popup/0.0.2560.1080@0.0.2560.1080" timestamp="1599128968642" />
+    <state x="943" y="253" width="672" height="678" key="search.everywhere.popup/0.0.2560.1080@0.0.2560.1080" timestamp="1599641867411" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/Mesh/Mesh.cpp</url>
-          <line>175</line>
-          <option name="timeStamp" value="45" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/Mesh/Mesh.cpp</url>
-          <line>149</line>
-          <option name="timeStamp" value="46" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/Mesh/Mesh.cpp</url>
-          <line>123</line>
-          <option name="timeStamp" value="47" />
+          <url>file://$PROJECT_DIR$/Optimization/Functional.cpp</url>
+          <line>105</line>
+          <option name="timeStamp" value="50" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

@@ -10,10 +10,12 @@ add_library(Utilities
         SmartEnum.h
         StlAlgorithm.h
         YCombinator.h
-        c1_functions.hpp
+        C1Functions.h
         Enums.h
         Heap.h
         CircularBuffer.h
+        SparseMatrix.cpp
+        SparseMatrix.h
         )
 
 target_include_directories(Utilities PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

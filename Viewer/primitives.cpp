@@ -4,7 +4,7 @@
 
 #include "primitives.hpp"
 #include "Upload.h"
-#include "custom_widgets.hpp"
+#include "ImGuiWidgets.h"
 //#include "polygonize_expression.hpp"
 
 #include <Corrade/Containers/Pointer.h>

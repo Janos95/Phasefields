@@ -4,7 +4,8 @@
 
 #include "Solver.h"
 #include "RecursiveProblem.h"
-#include "../Cost/SparseMatrix.h"
+#include "SparseMatrix.h"
+#include "FunctionRef.h"
 
 #include <ceres/iteration_callback.h>
 #include <ceres/gradient_problem_solver.h>
@@ -23,10 +24,7 @@
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Pointer.h>
 
-using namespace Corrade;
-using namespace Magnum;
-
-namespace Phasefield {
+namespace Phasefield::Solver {
 
 namespace {
 
@@ -36,7 +34,7 @@ struct IpoptWrapper : Ipopt::TNLP {
 
     explicit IpoptWrapper(
             Solver::RecursiveProblem const& pb,
-            Solver::Options const& opt,
+            Solver::Options& opt,
             Containers::ArrayView<double> const& params) :
             problem(pb), options(opt), parameters(params),
             constraints(Containers::NoInit, problem.numConstraints()),
@@ -44,7 +42,7 @@ struct IpoptWrapper : Ipopt::TNLP {
     }
 
     Solver::RecursiveProblem const& problem;
-    Solver::Options const& options;
+    Solver::Options& options;
 
     Containers::ArrayView<double> parameters;
     double objective;
@@ -117,7 +115,7 @@ struct IpoptWrapper : Ipopt::TNLP {
         CORRADE_INTERNAL_ASSERT(init_lambda == false);
 
         // initialize to the given starting point
-        Utility::copy(parameters, {x, (std::size_t) n});
+        Cr::Utility::copy(parameters, {x, std::size_t(n)});
         return true;
     }
 
@@ -141,7 +139,7 @@ struct IpoptWrapper : Ipopt::TNLP {
             Ipopt::Number* grad_f
     ) override {
         if(new_x) eval(x);
-        Utility::copy(gradient, {grad_f, (std::size_t) n});
+        Cr::Utility::copy(gradient, {grad_f, (std::size_t) n});
         return true;
     }
 
@@ -156,7 +154,7 @@ struct IpoptWrapper : Ipopt::TNLP {
             Ipopt::Number* g
     ) override {
         if(new_x) eval(x);
-        Utility::copy(constraints, {g, (std::size_t) m});
+        Cr::Utility::copy(constraints, {g, (std::size_t) m});
         return true;
     }
 
@@ -172,10 +170,10 @@ struct IpoptWrapper : Ipopt::TNLP {
     ) override {
         if(values){
             if(new_x) eval(x);
-            Utility::copy(jacobian.values, {values, (std::size_t) nele_jac});
+            Cr::Utility::copy(jacobian.values, {values, (std::size_t) nele_jac});
         } else{
-            Utility::copy(jacobian.rows, {iRow, (std::size_t) nele_jac});
-            Utility::copy(jacobian.cols, {jCol, (std::size_t) nele_jac});
+            Cr::Utility::copy(jacobian.rows, {iRow, (std::size_t) nele_jac});
+            Cr::Utility::copy(jacobian.cols, {jCol, (std::size_t) nele_jac});
         }
         return true;
     }
@@ -210,7 +208,7 @@ struct IpoptWrapper : Ipopt::TNLP {
             const Ipopt::IpoptData* ip_data,
             Ipopt::IpoptCalculatedQuantities* ip_cq
     ) override {
-        Utility::copy({x, (std::size_t) n}, parameters);
+        Cr::Utility::copy({x, (std::size_t) n}, parameters);
     }
 
     bool intermediate_callback(
@@ -229,11 +227,11 @@ struct IpoptWrapper : Ipopt::TNLP {
             Ipopt::IpoptCalculatedQuantities* ip_cq
     ) override {
         Solver::IterationSummary solverSummary; /* dummy variable */
-        for(auto const& cb : options.callbacks){
+        for(auto& cb : options.callbacks){
             switch(cb(solverSummary)) {
                 case Solver::Status::CONTINUE :
                     return true;
-                case Solver::Status::ABORT :
+                case Solver::Status::USER_ABORTED :
                 case Solver::Status::FINISHED :
                     return false;
             }
@@ -258,8 +256,11 @@ struct FirstOrderWrapper : ceres::FirstOrderFunction {
 
         auto n = problem.numParameters();
 
+        if(g)
+            for(size_t i = 0; i < n; ++i) g[i] = 0.;
+        *cost = 0;
         // @TODO where do we zero the data for sure?
-        problem({parameters, n}, *cost, {g, n}, constraints, g ? &jacobian : nullptr);
+        problem({parameters, n}, *cost, {g, g ? n : 0});
 
         if(g){
             for(Int i = 0; i < jacobian.nnz; ++i){
@@ -276,14 +277,14 @@ struct FirstOrderWrapper : ceres::FirstOrderFunction {
 struct CeresCallbackWrapper : ceres::IterationCallback {
     using callback_type = FunctionRef<Solver::Status::Value(Solver::IterationSummary const&)>;
 
-    CeresCallbackWrapper(callback_type& cb) : callback(cb) {}
+    CeresCallbackWrapper(callback_type const& cb) : callback(cb) {}
 
     callback_type callback;
 
     ceres::CallbackReturnType operator()(const ceres::IterationSummary& summary) override {
         Solver::IterationSummary solverSummary;
         switch(callback(solverSummary)) {
-            case Solver::Status::ABORT :
+            case Solver::Status::USER_ABORTED :
                 return ceres::CallbackReturnType::SOLVER_ABORT;
             case Solver::Status::CONTINUE :
                 return ceres::CallbackReturnType::SOLVER_CONTINUE;
@@ -317,16 +318,21 @@ void solve(Solver::Options& options, Solver::RecursiveProblem& problem, Containe
         ceres::GradientProblem ceresProblem(new FirstOrderWrapper(problem));
         ceres::GradientProblemSolver::Options ceresOptions{
                 .line_search_direction_type = mapLineSearchType(options.line_search_direction),
-                .max_num_iterations = options.max_num_iterations,
+                .max_num_iterations = int(options.max_num_iterations),
                 .minimizer_progress_to_stdout = options.minimizer_progress_to_stdout,
                 .update_state_every_iteration = options.update_state_every_iteration,
         };
-        Containers::Array<Containers::Pointer<CeresCallbackWrapper>> cbs(options.callbacks.size());
+
+        Array<Pointer<CeresCallbackWrapper>> cbs(options.callbacks.size());
         for(std::size_t i = 0; i < cbs.size(); ++i)
             cbs[i].reset(new CeresCallbackWrapper(options.callbacks[i]));
+
         for(auto& cb : cbs) ceresOptions.callbacks.push_back(cb.get());
+
+        /* solve the problem and print the report */
         ceres::Solve(ceresOptions, ceresProblem, params.data(), &ceresSummary);
-        Mg::Debug{} << ceresSummary.BriefReport().c_str();
+        Debug{} << ceresSummary.BriefReport().c_str();
+
     } else if(options.solver == Solver::Backend::IPOPT) {
         Ipopt::SmartPtr<Ipopt::TNLP> mynlp = new IpoptWrapper(problem, options, params);
         Ipopt::SmartPtr<Ipopt::IpoptApplication> app = IpoptApplicationFactory();
@@ -339,11 +345,16 @@ void solve(Solver::Options& options, Solver::RecursiveProblem& problem, Containe
             app->Options()->SetStringValue("limited_memory_update_type", "sr1");
         else
             CORRADE_ASSERT(false, "Line search not supported by ipopt",);
-        auto status = app->Initialize();
-        if(status != Ipopt::Solve_Succeeded)
+        Ipopt::ApplicationReturnStatus status = app->Initialize();
+        if(status < 0) {
+            Debug{} << "Ipopt : Error initializing solver";
             return;
+        }
 
         status = app->OptimizeTNLP(mynlp);
+        if(status < 0) {
+            Debug{} << "Ipopt : Error solving problem";
+        }
 
     } else
         CORRADE_ASSERT(false, "Unkown solver type",);

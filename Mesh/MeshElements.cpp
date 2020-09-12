@@ -8,6 +8,8 @@
 #include <Corrade/Containers/StridedArrayView.h>
 #include <Magnum/Math/Vector3.h>
 
+#include <cstdio>
+
 namespace Phasefield {
 
 /* ===== Half-Edge Implementation ===== */
@@ -32,9 +34,18 @@ HalfEdge HalfEdge::nextIncomingHalfEdge() const { return next().twin(); }
 
 Corner HalfEdge::corner() const { return Corner{idx, mesh}; }
 
-bool HalfEdge::isInterior() const { return twin().face().isValid() && face().isValid(); }
+bool HalfEdge::isInterior() const { return face().isValid(); }
 
-bool HalfEdge::onBoundaryLoop() const { return !face().isValid(); };
+bool HalfEdge::onBoundaryLoop() const { return !face().isValid(); }
+
+Vector3d HalfEdge::asVector() const { return Vector3d(tip().position() - tail().position()); }
+
+Debug& operator<<(Debug& debug, HalfEdge const& he) {
+    char buffer[100];
+    sprintf(buffer, "Half-Edge (%zu, %zu)", he.tail().idx, he.tip().idx);
+    debug << buffer;
+    return debug;
+}
 
 /* ===== Vertex ===== */
 
@@ -52,28 +63,64 @@ VertexCornerRange Vertex::corners() const { return {{.he = halfEdge().twin()}, {
 
 VertexAdjacentVertexRange Vertex::adjacentVertices() const { return {{.he = halfEdge()}, {.he = halfEdge()}}; }
 
-IncomingHalfEdgeRange Vertex::incomingHalfedges() const { return {{.he = halfEdge().twin()}, {.he = halfEdge().twin()}}; }
+IncomingHalfEdgeRange Vertex::incomingHalfEdges() const { return {{.he = halfEdge().twin()}, {.he = halfEdge().twin()}}; }
 
-OutgoingHalfEdgeRange Vertex::outgoingHalfedges() const { return {{.he = halfEdge()}, {.he = halfEdge()}}; }
+OutgoingHalfEdgeRange Vertex::outgoingHalfEdges() const { return {{.he = halfEdge()}, {.he = halfEdge()}}; }
 
+Debug& operator<<(Debug& debug, Vertex const& v) {
+    char buffer[100];
+    sprintf(buffer, "Vertex %zu", v.idx);
+    debug << buffer;
+    return debug;
+}
 
 /* ===== Face ===== */
 
 HalfEdge Face::halfEdge() const { return HalfEdge{mesh->m_faceHalfEdge[idx], mesh}; }
 
-CornersOfFaceRange Face::corners() const { return {{.he = halfEdge()}, {.he = halfEdge()}}; }
+FaceCornerRange Face::corners() const { return {{.he = halfEdge()}, {.he = halfEdge()}}; }
 
 FaceEdgeRange Face::edges() const { return {{.he = halfEdge()}, {.he = halfEdge()}}; }
 
 bool Face::isValid() const { return idx != Invalid; }
 
+double Face::area() const { return mesh->faceArea[*this]; }
+
+Vector3d Face::normal() const { return mesh->faceNormal[*this]; }
+
+FaceAdjacentFaceRange Face::adjacentFaces() const { return {{.he = halfEdge()}, {.he = halfEdge()}}; }
+
+FaceVertexRange Face::vertices() const { return {{.he = halfEdge()}, {.he = halfEdge()}}; }
+
+FaceHalfEdgeRange Face::halfEdges() const { return {{.he = halfEdge()}, {.he = halfEdge()}}; }
+
+Debug& operator<<(Debug& debug, Face const& f) {
+    char buffer[100];
+    Vertex vs[3];
+    HalfEdge he = f.halfEdge();
+    for(size_t i = 0; i < 3; ++i) {
+        vs[i] = he.tail();
+        he = he.next();
+    }
+    sprintf(buffer, "Face {%zu, %zu, %zu}", vs[0].idx, vs[1].idx, vs[2].idx);
+    debug << buffer;
+    return debug;
+}
+
 /* ===== Edge ===== */
 
-HalfEdge Edge::halfEdge() { return HalfEdge{2*idx, mesh}; }
+HalfEdge Edge::halfEdge() const { return HalfEdge{2*idx, mesh}; }
 
-Vertex Edge::vertex1() { return halfEdge().tail(); }
+Vertex Edge::vertex1() const { return halfEdge().tail(); }
 
-Vertex Edge::vertex2() { return halfEdge().tip(); }
+Vertex Edge::vertex2() const { return halfEdge().tip(); }
+
+Debug& operator<<(Debug& debug, Edge const& e) {
+    char buffer[100];
+    sprintf(buffer, "Edge {%zu, %zu}", e.vertex1().idx, e.vertex2().idx);
+    debug << buffer;
+    return debug;
+}
 
 /* ===== Corner ===== */
 
@@ -88,5 +135,14 @@ Face Corner::face() const { return halfEdge().face(); }
 Rad Corner::angle() const { return mesh->angle[*this]; }
 
 HalfEdge Corner::halfEdge() const { return HalfEdge{idx, mesh}; }
+
+Debug& operator<<(Debug& debug, Corner const& c) {
+    char buffer[100];
+    HalfEdge s1 = c.side1();
+    HalfEdge s2 = c.side2();
+    sprintf(buffer, "Corner {{%zu, %zu}, {%zu, %zu}}", s1.tail().idx, s1.tip().idx, s2.tail().idx, s2.tip().idx);
+    debug << buffer;
+    return debug;
+}
 
 }

@@ -3,7 +3,7 @@
 
 corrade_add_resource(Viewer_RESOURCES resources.conf)
 
-add_library(Viewer SHARED
+add_library(Viewer STATIC
         Viewer.cpp
         Viewer.h
         ArcBall.cpp
@@ -17,10 +17,11 @@ target_link_libraries(Viewer
         PUBLIC
             Phasefield::Utilities
             ScopedTimer::ScopedTimer
-            #Phasefield::Cost
+            Phasefield::Cost
             Phasefield::Optimization
             Phasefield::Visualization
             Phasefield::ImGuiFS
+            Phasefield::VisualizationProxy
 
             Magnum::GL
             Magnum::SceneGraph
