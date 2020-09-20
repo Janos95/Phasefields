@@ -20,7 +20,7 @@ HalfEdge HalfEdge::twin() const { return HalfEdge{idx ^ 1, mesh}; }
 
 Vertex HalfEdge::tip() const { return next().tail(); }
 
-Vertex HalfEdge::tail() const { return Vertex{mesh->m_halfEdges[idx].tail, mesh}; }
+Vertex HalfEdge::tail() const { return Vertex{mesh->m_halfEdges[idx].tail, const_cast<Mesh*>(mesh)}; }
 
 Face HalfEdge::face() const { return Face{mesh->m_halfEdges[idx].face, mesh}; }
 
@@ -49,13 +49,13 @@ Debug& operator<<(Debug& debug, HalfEdge const& he) {
 
 /* ===== Vertex ===== */
 
-Float Vertex::gaussianCurvature() const { return mesh->gaussianCurvature[*this]; }
+double Vertex::gaussianCurvature() const { return mesh->gaussianCurvature[*this]; }
 
-Vector3& Vertex::normal() const { return mesh->normals()[idx]; }
+Vector3 const& Vertex::normal() const { return mesh->normals()[idx]; }
 
-Vector3& Vertex::position() const { return mesh->positions()[idx]; }
+Vector3 const& Vertex::position() const { return mesh->positions()[idx]; }
 
-Float& Vertex::scalar() const { return mesh->scalars()[idx]; }
+Float Vertex::scalar() const { return mesh->scalars()[idx]; }
 
 HalfEdge Vertex::halfEdge() const { return HalfEdge{mesh->m_vertexHalfEdge[idx], mesh}; }
 
@@ -82,24 +82,28 @@ FaceCornerRange Face::corners() const { return {{.he = halfEdge()}, {.he = halfE
 
 FaceEdgeRange Face::edges() const { return {{.he = halfEdge()}, {.he = halfEdge()}}; }
 
-bool Face::isValid() const { return idx != Invalid; }
-
 double Face::area() const { return mesh->faceArea[*this]; }
 
 Vector3d Face::normal() const { return mesh->faceNormal[*this]; }
-
-FaceAdjacentFaceRange Face::adjacentFaces() const { return {{.he = halfEdge()}, {.he = halfEdge()}}; }
 
 FaceVertexRange Face::vertices() const { return {{.he = halfEdge()}, {.he = halfEdge()}}; }
 
 FaceHalfEdgeRange Face::halfEdges() const { return {{.he = halfEdge()}, {.he = halfEdge()}}; }
 
+FaceDualEdgeRange Face::dualEdges() const {
+    HalfEdge he = halfEdge();
+    do { he = he.next(); } while(!he.edge().hasDualEdge());
+    return {{.he = he}, {.he = he}};
+}
+
+double Face::diameter() const { return mesh->faceDiameter[*this]; }
+
 Debug& operator<<(Debug& debug, Face const& f) {
     char buffer[100];
     Vertex vs[3];
     HalfEdge he = f.halfEdge();
-    for(size_t i = 0; i < 3; ++i) {
-        vs[i] = he.tail();
+    for(Vertex& v : vs) {
+        v = he.tail();
         he = he.next();
     }
     sprintf(buffer, "Face {%zu, %zu, %zu}", vs[0].idx, vs[1].idx, vs[2].idx);
@@ -114,6 +118,18 @@ HalfEdge Edge::halfEdge() const { return HalfEdge{2*idx, mesh}; }
 Vertex Edge::vertex1() const { return halfEdge().tail(); }
 
 Vertex Edge::vertex2() const { return halfEdge().tip(); }
+
+bool Edge::hasDualEdge() const { return halfEdge().face().isValid() && halfEdge().twin().face().isValid(); }
+
+DualEdge Edge::dualEdge() const {
+    CORRADE_ASSERT(hasDualEdge(), "edge does not have a dual edge", {});
+    return {idx, mesh};
+}
+
+Vertex Edge::otherVertex(Vertex v) const {
+    if(v == vertex1()) return vertex2();
+    return vertex1();
+}
 
 Debug& operator<<(Debug& debug, Edge const& e) {
     char buffer[100];
@@ -141,6 +157,28 @@ Debug& operator<<(Debug& debug, Corner const& c) {
     HalfEdge s1 = c.side1();
     HalfEdge s2 = c.side2();
     sprintf(buffer, "Corner {{%zu, %zu}, {%zu, %zu}}", s1.tail().idx, s1.tip().idx, s2.tail().idx, s2.tip().idx);
+    debug << buffer;
+    return debug;
+}
+
+/* ===== Dual Edge ===== */
+
+Face DualEdge::face1() const { return edge().halfEdge().face(); }
+
+Face DualEdge::face2() const { return edge().halfEdge().twin().face(); }
+
+Edge DualEdge::edge() const { return {idx, mesh}; }
+
+Face DualEdge::otherFace(Face face) const {
+    if(face == face1()) return face2();
+    return face1();
+}
+
+Debug& operator<<(Debug& debug, DualEdge const& de) {
+    char buffer[100];
+    Face f1 = de.face1();
+    Face f2 = de.face1();
+    sprintf(buffer, "DualEdge {%zu, %zu}", f1.idx, f2.idx);
     debug << buffer;
     return debug;
 }

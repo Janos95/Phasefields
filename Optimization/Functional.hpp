@@ -7,6 +7,9 @@
 #include "Tag.h"
 #include "Functional.h"
 
+#include <Corrade/Containers/ArrayView.h>
+#include <new>
+
 namespace Phasefield {
 
 template<typename... Ts, typename TF>

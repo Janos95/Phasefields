@@ -62,33 +62,16 @@ struct DoubleWellPotential {
 
     [[nodiscard]] static FunctionalType::Value type() { return FunctionalType::DoubleWellPotential; }
 
-
     Mesh& mesh;
 };
 
+DECLARE_FUNCTIONAL_CONSTRUCTOR(DirichletEnergy)
+DECLARE_FUNCTIONAL_CONSTRUCTOR(AreaRegularizer)
+DECLARE_FUNCTIONAL_CONSTRUCTOR(DoubleWellPotential)
 
-extern template void DirichletEnergy::operator()(ArrayView<const double> const& parameters,
-                                                 ArrayView<const double> const& weights,
-                                                 double& out,
-                                                 ArrayView<double> const& gradP,
-                                                 ArrayView<double> const& gradW);
-
-extern template void AreaRegularizer::operator()(ArrayView<const double> const& parameters,
-                                                 ArrayView<const double> const& weights,
-                                                 double& out,
-                                                 ArrayView<double> const& gradP,
-                                                 ArrayView<double> const& gradW);
-
-extern template void DoubleWellPotential::operator()(ArrayView<const double> const& parameters,
-                                                     ArrayView<const double> const& weights,
-                                                     double& out,
-                                                     ArrayView<double> const& gradP,
-                                                     ArrayView<double> const& gradW);
-
-
-extern template Functional::Functional(DirichletEnergy);
-extern template Functional::Functional(AreaRegularizer);
-extern template Functional::Functional(DoubleWellPotential);
+DECLARE_FUNCTIONAL_OPERATOR(DirichletEnergy, double)
+DECLARE_FUNCTIONAL_OPERATOR(AreaRegularizer, double)
+DECLARE_FUNCTIONAL_OPERATOR(DoubleWellPotential, double)
 
 }
 

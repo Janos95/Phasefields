@@ -32,6 +32,7 @@ add_subdirectory(Visualization)
 add_subdirectory(Optimization)
 add_subdirectory(Mesh)
 add_subdirectory(Cost)
+add_subdirectory(VideoSaver)
 add_subdirectory(Viewer)
 
 #set(CMAKE_CXX_STANDARD_LIBRARIES tbb)

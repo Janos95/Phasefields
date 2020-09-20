@@ -5,6 +5,7 @@
 #pragma once
 
 #include <Corrade/Utility/Assert.h>
+#include "MeshElements.h"
 
 namespace Phasefield::Graph {
 
@@ -19,58 +20,38 @@ struct HeapElement {
     }
 };
 
-//struct Edge {
-//    Edge(int a_, int b_) : a(a_), b(b_) {}
-//
-//    int a, b;
-//#ifdef __cpp_impl_three_way_comparison
-//
-//    auto operator<=>(const Edge&) const = default;
-//
-//#else
-//
-//    bool operator<(const Edge& other) const{
-//        return std::tie(a, b) < std::tie(other.a, other.b);
-//    }
-//
-//    bool operator==(const Edge& other) const{
-//        return std::tie(a, b) == std::tie(other.a, other.b);
-//    }
-//#endif
-//};
-
 template<class A>
 class ReversedPathIterator {
 public:
-    using value_type = std::pair<size_t, size_t>;
-    using difference_type = int;
-    using reference = value_type;
-    using pointer = void;
+    using EdgeType = typename A::EdgeType;
+    using VertexType = typename A::VertexType;
 
-    ReversedPathIterator(const int node, const A& algo) :
-            m_e(node, node),
+    ReversedPathIterator(VertexType v, A const* algo) :
+            m_e(algo->m_shortestPaths[v]),
             m_algo(algo) {
-        CORRADE_INTERNAL_ASSERT(node >= 0);
+        CORRADE_INTERNAL_ASSERT(v);
         ++(*this);
     }
 
-    value_type operator*() {
+    EdgeType operator*() {
         return m_e;
     }
 
     ReversedPathIterator& operator++() {
-        CORRADE_INTERNAL_ASSERT(m_e.first >= 0);
-        m_e = std::pair{m_algo->m_prev[m_e.first], m_e.first};
+        if constexpr(std::is_same_v<VertexType, Vertex>)
+            m_e = m_algo->m_shortestPaths[m_e.vertex1()];
+        else if constexpr(std::is_same_v<VertexType, Face>)
+            m_e = m_algo->m_shortestPaths[m_e.face1()];
         return *this;
     }
 
-    bool operator!=(const ReversedPathIterator& other) const {
+    bool operator!=(ReversedPathIterator const& other) const {
         return m_e != other.m_e;
     }
 
 private:
-    std::pair<size_t, size_t> m_e;
-    Reference<std::add_const_t<A>> m_algo;
+    EdgeType m_e;
+    A const* m_algo;
 };
 
 template<class A>

@@ -4,21 +4,17 @@
 
 #pragma once
 
-#include <Corrade/Utility/StlForwardString.h>
-#include <Corrade/Containers/Pointer.h>
-
 class ScopedTimer
 {
 public:
 
-    explicit ScopedTimer(std::string name, bool verbose = false);
+    explicit ScopedTimer(char const* name, bool verbose = false);
 
     ~ScopedTimer();
 
     static void printStatistics();
 
 private:
-
     struct Impl;
-    Corrade::Containers::Pointer<Impl> m_impl;
+    Impl* m_impl;
 };

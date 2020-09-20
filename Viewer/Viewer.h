@@ -4,25 +4,22 @@
 
 #pragma once
 
+
+
 #include "ArcBall.h"
-//#include "primitives.hpp"
 #include "Solver.h"
 #include "Functional.h"
-#include "ModicaMortola.h"
 #include "RecursiveProblem.h"
-//#include "Enums.h"
 #include "VisualizationProxy.h"
 #include "Tree.h"
-#include "Dijkstra.h"
-//#include "UniqueFunction.h"
-#include "../Mesh/FastMarchingMethod.h"
+#include "FastMarchingMethod.h"
 #include "KDTree.h"
-#include "../Mesh/Mesh.h"
+#include "Mesh.h"
 #include "Types.h"
+#include "VideoSaver.h"
 
 #include <Magnum/Platform/Sdl2Application.h>
 #include <Magnum/ImGuiIntegration/Context.h>
-//#include <MagnumPlugins/PrimitiveImporter/PrimitiveImporter.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Trade/MeshData.h>
 #include <Magnum/Shaders/Phong.h>
@@ -87,6 +84,7 @@ struct Viewer : public Mg::Platform::Application {
     bool drawFunctionals(Array<Functional>&, size_t& id);
 
     void startBrushing(Vector3 const&);
+
     void brush();
 
     void updateInternalDataStructures();
@@ -106,8 +104,8 @@ struct Viewer : public Mg::Platform::Application {
     Float near = 0.01f, far = 100.f;
     Deg fov = 45._degf;
 
-    Mg::GL::Mesh glMesh{Mg::NoCreate};
-    Mg::GL::Buffer indexBuffer{Mg::NoCreate}, vertexBuffer{Mg::NoCreate};
+    GL::Mesh glMesh{Mg::NoCreate};
+    GL::Buffer indexBuffer{Mg::NoCreate}, vertexBuffer{Mg::NoCreate};
 
     Phong phongColorMap{Mg::NoCreate};
     Phong phongVertexColors{Mg::NoCreate};
@@ -119,6 +117,7 @@ struct Viewer : public Mg::Platform::Application {
     Tree tree;
     bool isOptimizing = false;
     bool hierarchicalOptimization = false;
+    bool initializeLevel = false;
 
     //connectedness vis data
     //Mg::GL::Texture2D faceTexture{Mg::NoCreate};
@@ -144,10 +143,15 @@ struct Viewer : public Mg::Platform::Application {
 
     VisualizationProxy proxy;
 
-    size_t currentNode = 0;
+    Node currentNode{Invalid, &tree};
     bool drawSegmentation = true;
     UnsignedInt colorMapIndex = 0;
     Array<std::pair<const char*, Magnum::GL::Texture2D>> colorMapTextures;
+
+
+    bool animate = false;
+    bool recording = false;
+    VideoSaver videoSaver;
 
     //Cr::PluginManager::Manager<Mg::Trade::AbstractImporter> manager;
     //Mg::Trade::PrimitiveImporter primitiveImporter;

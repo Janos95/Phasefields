@@ -4,30 +4,32 @@
 
 #include "UnionFind.h"
 
-using namespace Corrade;
+namespace Phasefield {
 
-UnionFind::UnionFind(int n) : Containers::Array<Node>(Containers::NoInit, n) {
-    for(int i = 0; i < n; ++i){
+using Node = Implementation::Node;
+
+UnionFind::UnionFind(size_t n) : Array<Implementation::Node>(NoInit, n) {
+    for(size_t i = 0; i < n; ++i) {
         (*this)[i] = Node{1, i};
     }
 }
 
-int& UnionFind::parent(int x) {
+size_t& UnionFind::parent(size_t x) {
     return (*this)[x].parent;
 }
 
-int& UnionFind::rank(int x) {
+size_t& UnionFind::rank(size_t x) {
     return (*this)[x].rank;
 }
 
 
-int UnionFind::find(int x) {
+size_t UnionFind::find(size_t x) {
     auto root = x;
-    while(parent(root) != root){
+    while(parent(root) != root) {
         root = parent(root);
     }
 
-    while(parent(x) != root){
+    while(parent(x) != root) {
         auto p = parent(x);
         (*this)[x].parent = root;
         x = p;
@@ -36,7 +38,7 @@ int UnionFind::find(int x) {
     return root;
 }
 
-void UnionFind::unite(int x, int y) {
+void UnionFind::unite(size_t x, size_t y) {
     auto xRoot = find(x);
     auto yRoot = find(y);
 
@@ -51,3 +53,4 @@ void UnionFind::unite(int x, int y) {
         ++rank(xRoot);
 }
 
+}

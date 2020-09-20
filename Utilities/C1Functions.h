@@ -78,31 +78,35 @@ struct DoubleWell {
 };
 
 struct SmootherStep {
-
-    double edge0 = -1., edge1 = 1.;
-
     template<class T>
     T eval(T x) const {
-        x = Math::clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
-        // Evaluate polynomial
-        return x * x * (3 - 2 * x);
+        if(x <= -1) return T{0};
+        if(x <= 1.){
+            x = .5*(x + 1.);
+            return x*x*(3. - 2.*x);
+        }
+        return T{1};
     }
 
     template<class T>
     T grad(T x) const {
-        x = Math::clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
-        // Evaluate polynomial
-        return x * x * (3 - 2 * x);
+        if(x <= -1) return T{0};
+        if(x <= 1.){
+            x = .5*(x + 1.);
+            return 3.*x*(1. - x);
+        }
+        return T{0};
     }
 };
 
 
-template<class T>
-struct Indicator {
+struct SmoothIndicatorFunction {
+    template<class T>
     auto eval(const T x) const {
-        return 0.25*std::pow(x + 1., 2);
+        return 0.25*Math::pow<2>(x + 1.);
     }
 
+    template<class T>
     auto grad(const T x) const {
         return .5*(x + 1.);
     }

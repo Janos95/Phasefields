@@ -10,6 +10,7 @@
 #include "Types.h"
 #include "Mesh.h"
 #include "Serialize.h"
+#include "Optimization.h"
 
 #include <Corrade/Containers/Array.h>
 #include <Magnum/Math/Functions.h>
@@ -18,25 +19,60 @@ namespace Phasefield {
 
 namespace Cr = Corrade;
 
-struct Node {
-
+struct NodeData {
     size_t leftChild = Invalid;
     size_t rightChild = Invalid;
     size_t parent = Invalid;
-    size_t idx;
-    size_t depth;
-
-    [[nodiscard]] bool isLeaf() const {
-        return leftChild == Invalid && rightChild == Invalid;
-    }
+    size_t depth = 0;
 };
+
+struct Node {
+    size_t idx = Invalid;
+    Tree* tree = nullptr;
+
+    auto operator<=>(Node const& other) const { return idx <=> other.idx; }
+    bool operator==(Node const& other) const = default;
+
+    [[nodiscard]] bool isLeaf() const { return !hasLeftChild() && !hasRightChild(); }
+
+    [[nodiscard]] bool isValid() const { return idx != Invalid; }
+
+    [[nodiscard]] bool hasLeftChild() const { return leftChild().isValid(); }
+
+    [[nodiscard]] bool hasRightChild() const { return rightChild().isValid(); }
+
+    [[nodiscard]] bool isLeftChild() const { return parent().leftChild() == *this; }
+
+    [[nodiscard]] bool isRightChild() const { return parent().rightChild() == *this; }
+
+    [[nodiscard]] ArrayView<Double> phasefield() const;
+
+    [[nodiscard]] ArrayView<Double> temporary() const;
+
+    [[nodiscard]] Node parent() const;
+
+    Node addLeftChild();
+
+    Node addRightChild();
+
+    Node addChild(bool left);
+
+    void initializePhasefieldFromParent() const;
+
+    [[nodiscard]] size_t depth() const;
+
+    [[nodiscard]] Node leftChild() const;
+
+    [[nodiscard]] Node rightChild() const;
+
+    explicit operator bool() const { return idx != Invalid; }
+};
+
+Debug& operator<<(Debug& debug, Node const& n);
 
 struct Tree {
 
-    enum class Child {
-        Left,
-        Right
-    };
+    friend Node;
 
     explicit Tree(Mesh&);
 
@@ -45,18 +81,14 @@ struct Tree {
     Array<double> phasefieldData;
     Array<double> tempsData;
 
-    Array<Node> nodes;
+    Array<NodeData> nodeData;
+
     size_t numLeafs = 0;
     size_t depth = 0;
-    size_t m_vertexCount = 0;
 
-    Node& root() { return nodes.front(); }
+    Node root() { return {0, this}; }
 
     ArrayView<double> level(size_t d);
-
-    StridedArrayView2D<Double> phasefields();
-
-    StridedArrayView2D<Double> temporaryData();
 
     void update();
 
@@ -65,53 +97,56 @@ struct Tree {
      * @param level depth in the tree
      * @return idx of the first node on the requested level
      */
-    size_t levelStartIndex(size_t level) {
-        size_t nodeIdx = nodes.size();
-        traverse([&](Node& node){
-            if(node.depth == level) {
-                if(nodeIdx == nodes.size())
-                    nodeIdx = &node - nodes.begin();
-                return false;
-            } else return true;
-        });
-        return nodeIdx;
-    }
+    size_t levelStartIndex(size_t level);
 
-    size_t nodeCountOnLevel(size_t level) {
-        return levelStartIndex(level + 1) - levelStartIndex(level);
-    }
+    size_t nodeCountOnLevel(size_t level) { return levelStartIndex(level + 1) - levelStartIndex(level); }
 
     //void subdivide(Containers::Array<Mg::UnsignedInt>& indices, Containers::Array<Vector3d>& vertices);
 
-    void remove(Node& node);
+    //void remove(Node node);
 
-    void addChild(Node& node, Child child);
+    Node insertNodeAtIndex(size_t idx);
 
-    [[nodiscard]] size_t nodeCount() const { return nodes.size(); }
+    Range<HorizontalNodeIterator> nodesOnLevel(size_t l);
 
-    [[nodiscard]] size_t vertexCount() const { return m_vertexCount; }
+    Range<HorizontalNodeIterator> nodesBelowLevel(size_t l);
 
-    template<class F>
-    void traverse(F&& f, Node* node = nullptr){
-        auto visitor = YCombinator{
-            [&](auto&& visitor, Node& node) -> void {
-                if(!f(node)) return;
-                if(!node.isLeaf()) {
-                    if(node.leftChild != Invalid)
-                        visitor(nodes[node.leftChild]);
-                    if(node.rightChild != Invalid)
-                        visitor(nodes[node.rightChild]);
-                }
-            }
-        };
-        visitor(node ? *node : root());
-    }
+    Range<HorizontalNodeIterator> nodes();
 
-    [[nodiscard]] bool isLeftChild(Node const& node) const;
+    Range<InternalNodeIterator> internalNodes();
+
+    Array<Node> ancestorsOfLevel(size_t l);
+
+    Range<LeafIterator> leafs();
+
+    [[nodiscard]] size_t nodeCount() const { return nodeData.size(); }
+
+    [[nodiscard]] size_t vertexCount() const { return mesh->vertexCount(); }
 
     void serialize(Array<char>& data) const;
 
     static Tree deserialize(Array<char> const& data, Mesh& m);
 };
+
+template<int IteratorType>
+struct NodeIterator {
+    Node node;
+
+    Node operator *() const { return node; }
+    NodeIterator& operator++() requires (IteratorType == 2){ node.idx++; return *this; }
+
+    NodeIterator& operator++() requires (IteratorType == 0) {
+        do { node.idx++; } while(node.idx < node.tree->nodeCount() && !node.isLeaf());
+        return *this;
+    }
+
+    NodeIterator& operator++() requires (IteratorType == 1) {
+        do { node.idx++; } while(node.idx < node.tree->nodeCount() && node.isLeaf());
+        return *this;
+    }
+
+    bool operator !=(NodeIterator const& other) const { return node != other.node; }
+};
+
 
 }

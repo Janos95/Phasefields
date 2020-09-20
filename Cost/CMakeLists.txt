@@ -14,11 +14,15 @@ add_library(Cost STATIC
         Cost.h
         ModicaMortola.cpp
         ModicaMortola.h
+        ConnectednessConstraint.h
+        ConnectednessConstraint.cpp
         #StrangRules.hpp
-        #FastMarchingMethod.cpp
-        #FastMarchingMethod.h
-        #YamabeSolver.cpp
-        #YamabeSolver.h
+        StoppingCriteria.cpp
+        StoppingCriteria.h
+        UnionFind.cpp
+        UnionFind.h
+        WeakYamabe.cpp
+        WeakYamabe.h
         )
 
 target_include_directories(Cost PUBLIC

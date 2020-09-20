@@ -50,7 +50,7 @@ void VisualizationProxy::upload() {
 void VisualizationProxy::setVertexColors(Containers::StridedArrayView1D<double> const& data) {
     CORRADE_INTERNAL_ASSERT(data.size() == viewer.mesh.vertexCount());
     for(size_t i = 0; i < viewer.mesh.vertexCount(); ++i)
-        viewer.mesh.scalars()[i] = data[i];
+        viewer.mesh.scalars()[i] = 0.5*(data[i] + 1.);
     shaderConfig = ShaderConfig::ColorMaps;
     updateVertexBuffer = true;
 }
@@ -66,43 +66,43 @@ bool VisualizationProxy::isActiveTag(Mg::Int tag) const {
 void VisualizationProxy::setVertexColors(Tree& tree) {
 
     if(colors.size() != tree.numLeafs*2) {
-        Containers::arrayResize(colors, Containers::NoInit, tree.numLeafs*2);
-        Deg hue = 42.0_degf;
+        arrayResize(colors, Containers::NoInit, tree.numLeafs*2);
+        Deg hue = 100.0_degf;
         for(auto& c : colors) /* genereate random colors */
-            c = Color4::fromHsv({hue += 137.5_degf, 0.75f, 0.9f});
+            c = Color4::fromHsv({hue += 137.5_degf, 0.9f, 0.9f});
     }
 
     auto vertexColors = viewer.mesh.colors();
     for(auto& c: vertexColors) c = Color4{0};
 
-    auto phasefields = tree.phasefields();
-    auto prefixes = tree.temporaryData();
     size_t n = tree.vertexCount();
     SmootherStep smoothStep;
 
     //auto [min,max] = Math::minmax(phasefields[0]);
     //Debug{} << min << " " << max;
 
-    size_t leafIdx = 0;
-    tree.traverse([&](Node& node) -> bool {
-        if(!node.isLeaf()) {
-            for(size_t i = 0; i < n; ++i) {
-                if(node.leftChild != Invalid) {
-                    prefixes[node.leftChild][i] = smoothStep.eval(phasefields[node.idx][i]);
-                }
-                if(node.rightChild != Invalid) {
-                    prefixes[node.rightChild][i] = smoothStep.eval(-phasefields[node.idx][i]);
-                }
+    for(Node node : tree.internalNodes()) {
+        auto weights = node.temporary();
+        for(size_t i = 0; i < n; ++i) {
+            if(node.hasLeftChild()) {
+                Node leftChild = node.leftChild();
+                leftChild.temporary()[i] = smoothStep.eval(node.phasefield()[i])*weights[i];
             }
-        } else {
-            for(size_t i = 0; i < n; ++i) {
-                vertexColors[i].rgb() += prefixes[node.idx][i]*smoothStep.eval(phasefields[node.idx][i])*colors[2*leafIdx].rgb();
-                vertexColors[i].rgb() += prefixes[node.idx][i]*smoothStep.eval(-phasefields[node.idx][i])*colors[2*leafIdx + 1].rgb();
+            if(node.hasRightChild()) {
+                Node rightChild = node.leftChild();
+                rightChild.temporary()[i] = smoothStep.eval(-node.phasefield()[i])*weights[i];
             }
-            ++leafIdx;
         }
-        return true;
-    });
+    }
+
+    size_t leafIdx = 0;
+    for(Node leaf : tree.leafs()) {
+        for(size_t i = 0; i < n; ++i) {
+            vertexColors[i].rgb() += leaf.temporary()[i]*smoothStep.eval(leaf.phasefield()[i])*colors[2*leafIdx].rgb();
+            vertexColors[i].rgb() += leaf.temporary()[i]*smoothStep.eval(-leaf.phasefield()[i])*colors[2*leafIdx + 1].rgb();
+        }
+        ++leafIdx;
+    }
 
     shaderConfig = ShaderConfig::VertexColors;
     updateVertexBuffer = true;

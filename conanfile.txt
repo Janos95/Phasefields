@@ -1,5 +1,7 @@
 [requires]
 ipopt/3.13.2
+ffmpeg/4.2@bincrafters/stable
+libpng/1.6.37
 
 [generators]
 cmake_find_package

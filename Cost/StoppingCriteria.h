@@ -4,41 +4,36 @@
 
 #pragma once
 
+#include "Types.h"
+#include "Surface.h"
+
 #include <Corrade/Utility/Assert.h>
 #include <Corrade/Containers/Array.h>
 
 namespace Cr = Corrade;
 
-template<class R, class T>
-void updateWeight(const int target, const T& w, R& neighbors) {
-    auto it = neighbors.begin();
-    for(; it != neighbors.end(); ++it){
-        if(it->vertex == target)
-            break;
-    }
-    CORRADE_INTERNAL_ASSERT(it != neighbors.end());
-    it->weight = w;
-}
+namespace Phasefield {
 
 struct StoppingCriteria {
     StoppingCriteria() = default;
 
-    StoppingCriteria(int source, int numComponents, Cr::Containers::Array<int>& components);
+    StoppingCriteria(Face source, size_t numComponents, FaceData<size_t>& components);
 
-    bool operator()(int target);
+    bool operator()(Face target);
 
     [[nodiscard]] bool foundAll() const;
 
-    [[nodiscard]] int target(int i) const;
+    [[nodiscard]] Face target(size_t i) const;
 
-    int m_startComponent;
-    int m_numComponentsToFind;
-    Cr::Containers::Array<int>* m_components;
+    size_t m_startComponent = 0;
+    size_t m_numComponentsToFind = 0;
+    FaceData<size_t>* m_components = nullptr;
 
-    int m_numComponentsFound = 0;
-    Cr::Containers::Array<bool> m_found;
-    Cr::Containers::Array<int> m_targetVertices;
+    size_t m_numComponentsFound = 0;
+    Array<char> m_found;
+    Array<Face> m_targetVertices;
 };
 
+}
 
 

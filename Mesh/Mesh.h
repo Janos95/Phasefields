@@ -47,7 +47,9 @@ struct HalfEdgeIncidency {
 }
 
 /**
- * wrapper around an Array<T> which can be indexed with an associated Element E
+ * wrapper around an Array and ArrayView which support type safe indexing
+ * and also check for out of bounds array access which can be disabled by
+ * defining CORRADE_NO_ASSERT
  * @tparam N
  * @tparam T
  */
@@ -68,28 +70,46 @@ public:
     using Array<T>::Array;
 };
 
-template<class T>
-using VertexData = MeshData<Vertex, T>;
+template<class E, class T>
+class MeshDataView : public ArrayView<T> {
+public:
 
-template<class T>
-using FaceData = MeshData<Face, T>;
+    T& operator[](E n) {
+        CORRADE_CONSTEXPR_ASSERT(n.idx < this->size(), "Index Out of Bounds");
+        return (*this)[n.idx];
+    }
 
-template<class T>
-using EdgeData = MeshData<Edge, T>;
+    T const& operator[](E n) const {
+        CORRADE_CONSTEXPR_ASSERT(n.idx < this->size(), "Index Out of Bounds");
+        return (*this)[n.idx];
+    }
 
-template<class T>
-using HalfEdgeData = MeshData<HalfEdge, T>;
+    using ArrayView<T>::ArrayView;
+};
 
-template<class T>
-using CornerData = MeshData<Corner, T>;
+template<class T> using VertexData = MeshData<Vertex, T>;
+template<class T> using VertexDataView = MeshDataView<Vertex, T>;
 
+template<class T> using FaceData = MeshData<Face, T>;
+template<class T> using FaceDataView = MeshDataView<Face, T>;
+
+template<class T> using EdgeData = MeshData<Edge, T>;
+template<class T> using EdgeDataView = MeshDataView<Edge, T>;
+
+template<class T> using HalfEdgeData = MeshData<HalfEdge, T>;
+template<class T> using HalfEdgeDataView = MeshDataView<HalfEdge, T>;
+
+template<class T> using CornerData = MeshData<Corner, T>;
+template<class T> using CornerDataView = MeshDataView<Corner, T>;
+
+template<class T> using DualEdgeData = MeshData<DualEdge, T>;
+template<class T> using DualEdgeDataView = MeshDataView<DualEdge, T>;
 
 class Mesh {
 public:
 
     friend Vertex;
     friend HalfEdge;
-    //friend Corner;
     //friend Edge;
     friend Face;
     friend MeshFeature;
@@ -149,6 +169,8 @@ public:
 
     [[nodiscard]] size_t angleCount() const;
 
+    [[nodiscard]] size_t dualEdgeCount() const;
+
     VertexSet vertices();
 
     FaceSet faces();
@@ -158,6 +180,8 @@ public:
     HalfEdgeSet halfEdges();
 
     CornerSet corners();
+
+    DualEdgeSet dualEdges();
 
     void uploadVertexBuffer(Mg::GL::Buffer& vertexBuffer) const;
 
@@ -189,6 +213,7 @@ public:
 
     FaceData<double> faceArea;
     FaceData<Vector3d> faceNormal;
+    FaceData<double> faceDiameter;
 
     VertexData<double> gaussianCurvature;
     VertexData<size_t> degree;
@@ -226,6 +251,7 @@ protected:
     size_t m_edgeCount = 0;
     size_t m_halfEdgeCount = 0;
     size_t m_cornerCount = 0;
+    size_t m_dualEdgeCount = 0;
 
     Array<Pointer<MeshFeature>> m_features;
 };

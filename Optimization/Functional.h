@@ -110,4 +110,23 @@ struct Functional {
     int tag = -1;
 };
 
+
+#define DECLARE_FUNCTIONAL_OPERATOR(name, type) \
+extern template void name::operator()(ArrayView<const type> const& parameters, \
+                                      ArrayView<const type> const& weights, \
+                                      type& out, \
+                                      ArrayView<type> const& gradP, \
+                                      ArrayView<type> const& gradW);
+
+#define DEFINE_FUNCTIONAL_OPERATOR(name, type) \
+template void name::operator()(ArrayView<const type> const& parameters, \
+                                      ArrayView<const type> const& weights, \
+                                      type& out, \
+                                      ArrayView<type> const& gradP, \
+                                      ArrayView<type> const& gradW);
+
+#define DECLARE_FUNCTIONAL_CONSTRUCTOR(name) extern template Functional::Functional(name);
+#define DEFINE_FUNCTIONAL_CONSTRUCTOR(name) template Functional::Functional(name);
+
 }
+

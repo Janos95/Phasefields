@@ -16,7 +16,7 @@ Mesh& MeshFeature::mesh() { return m_mesh; }
 
 void AngleFeature::update() {
     Mesh& m = mesh();
-    arrayResize(m.angle, DirectInit, m.angleCount(), Invalid);
+    arrayResize(m.angle, DirectInit, m.halfEdgeCount(), Invalid);
     for(Corner corner : m.corners()) {
         HalfEdge side1 = corner.side1();
         HalfEdge side2 = corner.side2();

@@ -20,35 +20,48 @@ namespace Cr = Corrade;
  * Dijsktra shortest path algorithm. Can either operate on the face or
  * vertex graph induced by the manifold mesh.
  */
-template<class E, class T>
+template<class V, class T>
 class Dijkstra {
 public:
 
-    Dijkstra() = default;
+    using VertexType = V;
+    using EdgeType = std::conditional_t<std::is_same_v<V, Vertex>, Edge, DualEdge>;
 
-    explicit Dijkstra(Mesh& mesh, EdgeData<T> const& weights) : m_mesh(mesh), m_weights(weights) {
-        reset();
+    explicit Dijkstra() = default;
+
+    explicit Dijkstra(Mesh const& mesh, MeshData<EdgeType, T> const& weights) : m_mesh(&mesh), m_weights(&weights) {
+        update();
     }
 
-    void setSource(E source) {
+    void setSource(V source) {
         m_heap.emplace(source, 0.);
         m_dist[source] = 0;
     }
 
     void reset() {
         m_heap.clear();
-        for(size_t& prev : m_prev) prev = Invalid;
+        for(EdgeType& prev : m_shortestPaths) prev = EdgeType{Invalid, m_mesh};
         for(double& dist : m_dist) dist = std::numeric_limits<double>::infinity();
     }
 
     void update() {
-        size_t n = std::is_same_v<E, Face> ? m_mesh.faceCount() : m_mesh.vertexCount();
+        size_t n = std::is_same_v<V, Face> ? m_mesh->faceCount() : m_mesh->vertexCount();
         arrayResize(m_dist, NoInit, n);
-        arrayResize(m_prev, NoInit, n);
+        arrayResize(m_shortestPaths, NoInit, n);
         reset();
     }
 
-    bool step(E& node, double& distance) {
+    auto getEdges(VertexType node) {
+        if constexpr (std::is_same_v<VertexType, Vertex>) return node.edges();
+        if constexpr (std::is_same_v<VertexType, Face>) return node.dualEdges();
+    }
+
+    auto getNeighbor(VertexType v, EdgeType edge) {
+        if constexpr (std::is_same_v<EdgeType, Edge>) return edge.otherVertex(v);
+        if constexpr (std::is_same_v<EdgeType , DualEdge>) return edge.otherFace(v);
+    }
+
+    bool step(V& node, double& distance) {
         if(m_heap.empty()) return false;
 
         auto top = m_heap.extractMin();
@@ -58,60 +71,43 @@ public:
         if(distance > m_dist[node])
             return true;
 
-        if constexpr(std::is_same_v<E, Face>) {
-            HalfEdge he = node.halfEdge();
-            HalfEdge it = he;
-            do {
-                E neighbor = it.twin().face();
-                loopBody(node, it.edge(), neighbor, distance);
-                it = it.next();
-            } while (he != it);
-        } else {
-            for(HalfEdge he : node.outgoingHalfEdges()) {
-                //Debug{} << he;
-                E neighbor = he.tip();
-                loopBody(node, he.edge(), neighbor, distance);
+        for(EdgeType e : getEdges(node)) {
+            VertexType neighbor = getNeighbor(node, e);
+            double weight = (*m_weights)[e];
+            double relaxedDist = weight + distance;
+            if(relaxedDist < m_dist[neighbor]){
+                m_dist[neighbor] = relaxedDist;
+                m_shortestPaths[neighbor] = e;
+                m_heap.emplace(neighbor, relaxedDist);
             }
         }
 
         return true;
     }
 
-    void loopBody(E node, Edge e, E neighbor, double distance) {
-        double weight = m_weights[e];
-        double relaxedDist = weight + distance;
-        if(relaxedDist < m_dist[neighbor]){
-            m_dist[neighbor] = relaxedDist;
-            m_prev[neighbor.idx] = node.idx;
-            m_heap.emplace(neighbor, relaxedDist);
-        }
-    }
-
     template<class... F>
-    inline auto run(F&& ... cbs) {
-        E e;
+    inline void run(F&& ... cbs) {
+        V v;
         double d;
-        while(step(e, d)) {
-            if((cbs(e) || ... ))
+        while(step(v, d)) {
+            if((cbs(v) || ... ))
                 break;
         }
-
     }
 
-    Graph::ReversedShortestPath<Dijkstra> getShortestPathReversed(E start, E target) const {
-        auto& self = *this;
-        return {{target, self}, {start,  self}};
+    Graph::ReversedShortestPath<Dijkstra> getShortestPathReversed(V start, V target) const {
+        return {{target, this}, {start,  this}};
     }
 
 private:
     friend Graph::ReversedPathIterator<Dijkstra>;
 
-    Mesh const& m_mesh;
-    EdgeData<T> const& m_weights;
+    Mesh const* m_mesh = nullptr;
+    MeshData<EdgeType, T> const* m_weights = nullptr;
 
-    Heap<Graph::HeapElement<E>> m_heap;
-    MeshData<E, double> m_dist;
-    Array<size_t> m_prev;
+    Heap<Graph::HeapElement<V>> m_heap;
+    MeshData<V, double> m_dist;
+    MeshData<VertexType, EdgeType> m_shortestPaths;
 };
 
 }

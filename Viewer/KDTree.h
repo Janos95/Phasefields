@@ -88,9 +88,9 @@ public:
 
     auto& point(NodeHandle handle) const { return m_points[m_nodes[handle].pointIndex]; }
 
-    auto leftChild(NodeHandle handle) const { return m_nodes[handle].leftChild; }
+    auto leftChild(NodeHandle handle) const { return m_nodes[handle].m_leftChild; }
 
-    auto rightChild(NodeHandle handle) const { return m_nodes[handle].rightChild; }
+    auto rightChild(NodeHandle handle) const { return m_nodes[handle].m_rightChild; }
 
     auto root() const { return m_root; }
 

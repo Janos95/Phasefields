@@ -3,39 +3,157 @@
 //
 
 #include "Tree.h"
-#include "../Mesh/Mesh.h"
+#include "Mesh.h"
+#include "C1Functions.h"
 
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Utility/MurmurHash2.h>
+#include <Corrade/Utility/FormatStl.h>
 
 #include <Magnum/Math/Vector4.h>
 #include <Magnum/Magnum.h>
 
 #include <cstdio>
 #include <unordered_map>
+#include <queue>
 
 namespace Phasefield {
 
-namespace {
 
-struct Edge {
-    Edge(UnsignedInt v1_, UnsignedInt v2_) : v1(std::min(v1_, v2_)), v2(std::max(v1_, v2_)) {}
+Node Node::parent() const { return {tree->nodeData[idx].parent, tree}; }
 
-    UnsignedInt v1, v2;
+Node Node::leftChild() const { return {tree->nodeData[idx].leftChild, tree}; }
 
-    auto operator<=>(const Edge&) const = default;
-};
+Node Node::rightChild() const { return {tree->nodeData[idx].rightChild, tree}; }
 
-struct EdgeHash {
-    std::size_t operator()(Edge const& e) const {
-        return *((std::size_t*) (Cr::Utility::MurmurHash2{}((char*) &e, sizeof(size_t)).byteArray()));
-    }
-};
+size_t Node::depth() const { return tree->nodeData[idx].depth; }
 
+ArrayView<Double> Node::phasefield() const {
+    size_t n = tree->vertexCount();
+    return tree->phasefieldData.slice(idx*n, (idx + 1)*n);
 }
 
-Tree::Tree(Mesh& m) : mesh(&m), nodes(1), numLeafs(1) {}
+ArrayView<Double> Node::temporary() const {
+    size_t n = tree->vertexCount();
+    return tree->tempsData.slice(idx*n, (idx + 1)*n);
+}
+
+Node Node::addChild(bool left) {
+
+    bool wasLeaf = isLeaf();
+
+    size_t i = tree->levelStartIndex(depth() + 1);
+    for(Node node : tree->nodesOnLevel(depth() + 1)) {
+        if(node.parent() > *this || (node.parent() == *this && left))
+            break;
+        i++;
+    }
+
+
+    Node child = tree->insertNodeAtIndex(i);
+
+    /* hook up both pointers */
+    tree->nodeData[child.idx].parent = idx;
+    if(left) {
+        tree->nodeData[idx].leftChild = child.idx;
+    } else {
+        tree->nodeData[idx].rightChild = child.idx;
+    }
+    tree->nodeData[child.idx].depth = depth() + 1;
+
+    if(!wasLeaf)
+        ++(tree->numLeafs);
+    if(child.depth() > tree->depth)
+        tree->depth = child.depth();
+
+    return child;
+}
+
+Node Node::addRightChild() { return addChild(false); }
+
+Node Node::addLeftChild() { return addChild(true); }
+
+void Node::initializePhasefieldFromParent() const {
+    Mesh* mesh = tree->mesh;
+    mesh->requireFaceAreas();
+
+    SmootherStep smoothStep;
+
+    auto weights = temporary();
+    const auto phase = phasefield();
+
+    for(double& x : weights) x = 1.;
+
+    /* walk up the tree and compute the weights */
+    Node n = *this;
+    while(n.parent().isValid()) {
+        double sign = n.isLeftChild() ? 1. : -1.;
+        auto parentPhase = n.parent().phasefield();
+        for(size_t i = 0; i < mesh->vertexCount(); ++i) {
+            weights[i] *= smoothStep.eval(sign*parentPhase[i]);
+        }
+
+        n = n.parent();
+    }
+
+    FaceData<char> thresholded{NoInit, mesh->faceCount()};
+    double totalArea = 0.;
+    Face start{Invalid, mesh};
+    for(Face f : mesh->faces()) {
+        double v = 0;
+        for(Vertex vertex : f.vertices())
+            v += weights[vertex.idx]*phase[vertex.idx];
+        if(v/3. > 0) {
+            totalArea += f.area();
+            thresholded[f] = 1;
+            start = f;
+        } else
+            thresholded[f] = 0;
+    }
+
+    if(start.isValid()) {
+        FaceData<char> visited{mesh->faceCount()};
+        std::queue<Face> q;
+        double area = 0;
+        while(!q.empty()) {
+            Face f = q.front();
+            q.pop();
+
+            area += f.area();
+            if(area > totalArea*0.5) break;
+
+            for(DualEdge edge : f.dualEdges()){
+                Face neighbor = edge.otherFace(f);
+                if(!visited[neighbor] && thresholded[neighbor] > 0.) {
+                    visited[neighbor] = true;
+                    q.push(neighbor);
+                }
+            }
+        }
+
+        for(size_t i = 0; i < mesh->vertexCount(); ++i) {
+            if(thresholded[i] > 0.) {
+                if(visited[i])
+                    phase[i] = 1;
+                else
+                    phase[i] = -1;
+            }
+        }
+    } else Debug{} << "Could not find any face for which weights are positive";
+}
+
+
+Debug& operator<<(Debug& debug, Node const& n) {
+    std::string leftChild = n.leftChild().isValid() ? std::to_string(n.leftChild().idx) : "Invalid";
+    std::string rightChild = n.rightChild().isValid() ? std::to_string(n.rightChild().idx) : "Invalid";
+    std::string parent = n.parent().isValid() ? std::to_string(n.parent().idx) : "Invalid";
+    std::string formatted = Cr::Utility::formatString("Node (idx = {}, depth = {}, left child = {}, right child = {}, parent  = {})", n.idx, n.depth(), leftChild, rightChild, parent);
+    debug << formatted.c_str();
+    return debug;
+}
+
+Tree::Tree(Mesh& m) : mesh(&m), nodeData(1), numLeafs(1) {}
 
 //void Tree::subdivide(Containers::Array<UnsignedInt>& indices, Containers::Array<Vector3d>& vertices) {
 //
@@ -103,134 +221,74 @@ Tree::Tree(Mesh& m) : mesh(&m), nodes(1), numLeafs(1) {}
 
 void Tree::update() {
     size_t n = mesh->vertexCount();
-    Array<double> data(DirectInit, n*nodeCount(), 0.5);
-    StridedArrayView2D<double> view{data, {nodes.size(), n}};
-    auto oldView = phasefields();
-    for(std::size_t i = 0; i < nodes.size(); ++i) {
-        size_t min = Math::min(n, m_vertexCount);
-        Cr::Utility::copy(oldView[i].prefix(min), view[i].prefix(min));
+    size_t min = Math::min(n, phasefieldData.size()/nodeCount());
+
+    Array<double> data(DirectInit, n*nodeCount(), 0);
+
+    if(min) {
+        StridedArrayView2D<double> view{data, {nodeData.size(), n}};
+        size_t i = 0;
+        for(Node node : nodes()) {
+            Cr::Utility::copy(node.phasefield().prefix(min), view[i++].prefix(min));
+        }
     }
 
-    m_vertexCount = n;
     arrayResize(tempsData, data.size());
     phasefieldData = std::move(data);
 }
 
-bool Tree::isLeftChild(Node const& node) const {
-    auto leftChildOfParent = nodes[node.parent].leftChild;
-    return node.idx == nodes[leftChildOfParent].idx;
-}
+Node Tree::insertNodeAtIndex(size_t idx) {
+    size_t n = nodeCount();
+    size_t m = vertexCount();
 
-Containers::StridedArrayView2D<Double> Tree::phasefields() {
-    return {phasefieldData, {nodes.size(), m_vertexCount}};
-}
-
-Containers::StridedArrayView2D<Double> Tree::temporaryData() {
-    return {tempsData, {nodes.size(), m_vertexCount}};
-}
-
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "misc-no-recursion"
-
-void Tree::remove(Node& nodeToDelete) {
-
-    CORRADE_ASSERT(&nodeToDelete != &root(), "Cannot remove root node",);
-
-    Containers::Array<double> newData;
-    Containers::Array<Node> newNodes;
-
-    size_t nodeIdx = 0;
-    numLeafs = 0;
-    depth = 0;
-
-    auto visitor = YCombinator{
-            [&](auto&& visitor, Node& node, size_t d = 0) -> size_t {
-                if(&node == &nodeToDelete)
-                    return Invalid;
-
-                Int idx = nodeIdx++;
-
-                Containers::ArrayView<const double> view{phasefields()[node.idx].asContiguous()};
-                Containers::arrayAppend(newData, view);
-
-                Node newNode = node;
-                static_assert(size_t(-1) == Invalid);
-                newNode.parent = idx - 1; /* For the root node this is -1 which is the same as Invalid */
-                newNode.idx = idx;
-
-                depth = Math::max(d, depth);
-
-                if(!node.isLeaf()) {
-                    if(node.leftChild != Invalid)
-                        newNode.leftChild = visitor(nodes[node.leftChild], d + 1);
-                    if(node.rightChild != Invalid)
-                        newNode.rightChild = visitor(nodes[node.rightChild], d + 1);
-                } else {
-                    ++numLeafs;
-                }
-
-                Containers::arrayAppend(newNodes, newNode);
-
-                return idx;
-            }
-    };
-
-    visitor(root());
-
-    Containers::arrayResize(tempsData, newData.size());
-    phasefieldData = std::move(newData);
-
-}
-
-#pragma clang diagnostic pop
-
-void Tree::addChild(Node& node, Child childType) {
-    bool wasLeaf = node.isLeaf();
-
-    arrayResize(phasefieldData, NoInit, (nodeCount() + 1)*vertexCount());
-    arrayResize(tempsData, NoInit, (nodeCount() + 1)*vertexCount());
-
-    size_t idx = levelStartIndex(node.depth + 1);
-    double* data = phasefieldData.data();
-    size_t sizeToMove = (nodes.size() - idx)*m_vertexCount*sizeof(double);
-    if(sizeToMove) {
-        memmove(data + (idx + 1)*m_vertexCount, data + idx*m_vertexCount, sizeToMove);
+    /* reset pointers*/
+    for(NodeData& nd : nodeData) {
+        if(nd.parent != Invalid && nd.parent >= idx) ++nd.parent;
+        if(nd.leftChild != Invalid && nd.leftChild >= idx) ++nd.leftChild;
+        if(nd.rightChild != Invalid && nd.rightChild >= idx) ++nd.rightChild;
     }
 
-    for(double& x : phasefields()[idx]) x = 0.;
+    arrayResize(tempsData, NoInit, m*(n + 1));
+    arrayResize(phasefieldData, NoInit, m*(n + 1));
+    arrayResize(nodeData, NoInit, n + 1);
 
-    if(childType == Child::Right)
-        node.rightChild = idx;
-    else if(childType == Child::Left)
-        node.leftChild = idx;
+    double* ptrTemp = tempsData.data();
+    double* ptrPhase = phasefieldData.data();
+    NodeData* nodeDataPtr = nodeData.data();
 
-    Node child{.parent = node.idx, .idx = idx, .depth = node.depth + 1};
-    arrayAppend(nodes, child);
+    /* move everything back by one */
+    memmove(ptrTemp + m*(idx + 1), ptrTemp + m*idx, (n - idx)*m*sizeof(double));
+    memmove(ptrPhase + m*(idx + 1), ptrPhase + m*idx, (n - idx)*m*sizeof(double));
+    memmove(nodeDataPtr + idx + 1, nodeDataPtr + idx, (n - idx)*sizeof(NodeData));
 
-    if(!wasLeaf)
-        ++numLeafs;
-    if(node.depth + 1 > depth)
-        depth = node.depth + 1;
+    nodeData[idx].depth = Invalid;
+    nodeData[idx].leftChild = Invalid;
+    nodeData[idx].rightChild = Invalid;
+    nodeData[idx].parent = Invalid;
 
+    Node node{idx, this};
+    for(double& x : node.phasefield()) x = 0.;
+
+    return node;
 }
+
 
 ArrayView<double> Tree::level(size_t d) {
     size_t begin = levelStartIndex(d);
     size_t end = levelStartIndex(d + 1);
-    return phasefieldData.slice(begin*m_vertexCount, end*m_vertexCount);
+    return phasefieldData.slice(begin*vertexCount(), end*vertexCount());
 }
 
 void Tree::serialize(Array<char>& data) const {
     size_t dataSize = phasefieldData.size();
     arrayAppend(data, {(char*)&dataSize, sizeof(size_t)});
     arrayAppend(data, arrayCast<char>(phasefieldData));
-    size_t nodesSize = nodes.size();
+    size_t nodesSize = nodeData.size();
     arrayAppend(data, {(char*)&nodesSize, sizeof(size_t)});
-    arrayAppend(data, arrayCast<char>(nodes));
+    arrayAppend(data, arrayCast<char>(nodeData));
 
     arrayAppend(data, {(char*)&numLeafs, sizeof(size_t)});
     arrayAppend(data, {(char*)&depth, sizeof(size_t)});
-    arrayAppend(data, {(char*)&m_vertexCount, sizeof(size_t)});
 }
 
 Tree Tree::deserialize(Array<char> const& data, Mesh& m) {
@@ -243,15 +301,59 @@ Tree Tree::deserialize(Array<char> const& data, Mesh& m) {
     pc += sizeof(double)*dataSize;
 
     size_t nodesSize = deserializeTrivial<size_t>(pc);
-    arrayResize(t.nodes, NoInit, nodesSize);
-    memcpy(t.nodes.data(), pc, sizeof(Node)*nodesSize);
+    arrayResize(t.nodeData, NoInit, nodesSize);
+    memcpy(t.nodeData.data(), pc, sizeof(Node)*nodesSize);
+
     pc += sizeof(Node)*nodesSize;
 
     t.numLeafs = deserializeTrivial<size_t>(pc);
     t.depth = deserializeTrivial<size_t>(pc);
-    t.m_vertexCount = deserializeTrivial<size_t>(pc);
 
     return t;
+}
+
+size_t Tree::levelStartIndex(size_t level) {
+    for(size_t i = 0; i < nodeData.size(); ++i) {
+        if(nodeData[i].depth == level) return i;
+    }
+    return nodeData.size();
+}
+
+Range<LeafIterator> Tree::leafs() {
+    LeafIterator b{0, this};
+    if(!b.node.isLeaf()) ++b;
+    return {b, {nodeCount(), this}};
+}
+
+Range<HorizontalNodeIterator> Tree::nodesOnLevel(size_t l) {
+    size_t b = levelStartIndex(l);
+    size_t e = levelStartIndex(l + 1);
+    return {{b, this}, {e, this}};
+}
+
+Range<HorizontalNodeIterator> Tree::nodesBelowLevel(size_t l) { return {{0, this}, {levelStartIndex(l + 1), this}}; }
+
+Range<HorizontalNodeIterator> Tree::nodes() { return {{0, this}, {nodeCount(), this}}; }
+
+Range<InternalNodeIterator> Tree::internalNodes() {
+    InternalNodeIterator b{0, this};
+    if(b.node.isLeaf()) ++b;
+    return {b, {nodeCount(), this}};
+}
+
+Array<Node> Tree::ancestorsOfLevel(size_t l) {
+    Array<Node> ancestors;
+    for(Node node : nodesOnLevel(l)) {
+        while(node.parent()) { /* walk up the tree */
+            arrayAppend(ancestors, node.parent());
+            node = node.parent();
+        }
+    }
+
+    std::sort(ancestors.begin(), ancestors.end());
+    Node* it = std::unique(ancestors.begin(), ancestors.end());
+    arrayResize(ancestors, it - ancestors.begin());
+    return ancestors;
 }
 
 }

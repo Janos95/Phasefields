@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "ConnectednessConstraints.h"
+#include "ConnectednessConstraint.h"
 #include "Dijkstra.h"
 #include "StoppingCriteria.h"
 #include "UnionFind.h"
@@ -41,121 +41,114 @@ namespace Mn = Magnum;
 namespace Cr = Corrade;
 
 
-/* this is called holding our 'global' mutex from the gui thread */
-template<class Scalar>
-void ConnectednessConstraint<Scalar>::updateVisualization(VisualizationProxy& proxy) {
-    if(updateInstanceData){
-        paths->instanceData = std::move(instanceData);
-        updateInstanceData = false;
-    }
+///* this is called holding our 'global' mutex from the gui thread */
+//template<class Scalar>
+//void ConnectednessConstraint<Scalar>::updateVisualization(VisualizationProxy& proxy) {
+//    if(updateInstanceData){
+//        paths->instanceData = std::move(instanceData);
+//        updateInstanceData = false;
+//    }
+//
+//    if(updateComponents){
+//        Mg::Deg hue = 42.0_degf;
+//        Cr::Containers::Array<Mg::Color3ub> randomColors(Cr::Containers::NoInit, numComponents);
+//        for(int i = 0; i < numComponents; ++i)
+//            randomColors[i] = Mg::Color3ub::fromHsv({hue += 137.5_degf, 0.75f, 0.9f});
+//
+//        for(int i = 0; i < components.size(); ++i){
+//            if(components[i] >= 0 && !randomColors.empty())
+//                (*faceColors)[i] = randomColors[components[i]];
+//            else
+//                (*faceColors)[i] = Mg::Color3ub(255, 253, 208);
+//        }
+//
+//        *update = VisualizationFlag::ConnectedComponents;
+//    }
+//    if(updateWs){
+//        auto colorMap = Mg::DebugTools::ColorMap::turbo();
+//        auto[min, max] = Mg::Math::minmax(ws);
+//        Mg::Double length = max - min;
+//        if(length < std::numeric_limits<Mg::Double>::epsilon())
+//            std::fill(faceColors->begin(), faceColors->end(), Mg::Color3ub(255, 253, 208));
+//        else{
+//            for(int i = 0; i < ws.size(); ++i){
+//                int idx = static_cast<int>((ws[i] - min)/length*(colorMap.size() - 1.));
+//                CORRADE_ASSERT(0 <= idx && idx <= 255, "Bad index for colormap", false);
+//                (*faceColors)[i] = colorMap[idx];
+//            }
+//        }
+//        *update = VisualizationFlag::GeodesicWeights;
+//    }
+//    if(updateGrad){
+//        auto coords = meshData->mutableAttribute(Mg::Trade::MeshAttribute::TextureCoordinates);
+//        auto xcoords = Cr::Containers::arrayCast<2, Mg::Float>(coords).slice<1>();
+//        normalizeInto({*jacobian, numVertices}, xcoords);
+//        *update = VisualizationFlag::Gradient;
+//    }
+//
+//    if(generateLineStrips){
+//        instanceData = std::move(instanceData);
+//        updateInstanceData = true;
+//    }
+//}
+//
+//
+///**
+// * returns true if an event triggered an exclusive visualizations options.
+// * Also note that we can safely read from meta.flags since the optimization thread
+// * only reads from those as well (even taking the lock in case we modify)
+// */
+//template<class Scalar>
+//void ConnectednessConstraint<Scalar>::drawImGuiOptions(bool& makeExclusive, DrawableType& type, bool& evaluateProblem) {
+//    ImGui::Text(this->name.c_str());
+//    dragDoubleRange2("Positive Interval", &a, &b, 0.01f, -1.f, 1.f, "Min: %.2f", "Max: %.2f", 1.f);
+//
+//    ImGui::BeginGroup();
+//    if(ImGui::Checkbox("Visualize Shortest Paths", &paths->drawPaths)){
+//        if(paths->drawPaths){
+//            evaluateProblem = true;
+//            generateLineStrips = true;
+//        } else{
+//            generateLineStrips = false;
+//        }
+//    }
+//
+//    bool visGeodesicWeights = static_cast<bool>(flags & VisualizationFlag::GeodesicWeights);
+//    if(ImGui::Checkbox("Geodesic Weights", &visGeodesicWeights)){
+//        if(visGeodesicWeights){
+//            type = DrawableType::FaceColored;
+//            makeExclusive = true;
+//            flags = VisualizationFlag::GeodesicWeights;
+//            evaluateProblem = true;
+//        } else flags &= ~VisualizationFlag::GeodesicWeights;
+//    }
+//    ImGui::EndGroup();
+//    ImGui::SameLine();
+//    ImGui::BeginGroup();
+//    bool visComponents = static_cast<bool>(flags & VisualizationFlag::ConnectedComponents);
+//    if(ImGui::Checkbox("Connected Components", &visComponents)){
+//        if(visComponents){
+//            type = DrawableType::FaceColored;
+//            makeExclusive = true;
+//            flags = VisualizationFlag::ConnectedComponents;
+//            evaluateProblem = true;
+//        } else flags &= ~VisualizationFlag::ConnectedComponents;
+//    }
+//
+//    bool visGradient = static_cast<bool>(flags & VisualizationFlag::Gradient);
+//    if(ImGui::Checkbox("Gradient", &visGradient)){
+//        if(visGradient){
+//            type = DrawableType::PhongDiffuse;
+//            makeExclusive = true;
+//            flags = VisualizationFlag::Gradient;
+//            evaluateProblem = true;
+//        } else flags &= ~VisualizationFlag::Gradient;
+//    }
+//    ImGui::EndGroup();
+//}
 
-    if(updateComponents){
-        Mg::Deg hue = 42.0_degf;
-        Cr::Containers::Array<Mg::Color3ub> randomColors(Cr::Containers::NoInit, numComponents);
-        for(int i = 0; i < numComponents; ++i)
-            randomColors[i] = Mg::Color3ub::fromHsv({hue += 137.5_degf, 0.75f, 0.9f});
-
-        for(int i = 0; i < components.size(); ++i){
-            if(components[i] >= 0 && !randomColors.empty())
-                (*faceColors)[i] = randomColors[components[i]];
-            else
-                (*faceColors)[i] = Mg::Color3ub(255, 253, 208);
-        }
-
-        *update = VisualizationFlag::ConnectedComponents;
-    }
-    if(updateWs){
-        auto colorMap = Mg::DebugTools::ColorMap::turbo();
-        auto[min, max] = Mg::Math::minmax(ws);
-        Mg::Double length = max - min;
-        if(length < std::numeric_limits<Mg::Double>::epsilon())
-            std::fill(faceColors->begin(), faceColors->end(), Mg::Color3ub(255, 253, 208));
-        else{
-            for(int i = 0; i < ws.size(); ++i){
-                int idx = static_cast<int>((ws[i] - min)/length*(colorMap.size() - 1.));
-                CORRADE_ASSERT(0 <= idx && idx <= 255, "Bad index for colormap", false);
-                (*faceColors)[i] = colorMap[idx];
-            }
-        }
-        *update = VisualizationFlag::GeodesicWeights;
-    }
-    if(updateGrad){
-        auto coords = meshData->mutableAttribute(Mg::Trade::MeshAttribute::TextureCoordinates);
-        auto xcoords = Cr::Containers::arrayCast<2, Mg::Float>(coords).slice<1>();
-        normalizeInto({*jacobian, numVertices}, xcoords);
-        *update = VisualizationFlag::Gradient;
-    }
-
-    if(generateLineStrips){
-        instanceData = std::move(instanceData);
-        updateInstanceData = true;
-    }
-}
 
 
-/**
- * returns true if an event triggered an exclusive visualizations options.
- * Also note that we can safely read from meta.flags since the optimization thread
- * only reads from those as well (even taking the lock in case we modify)
- */
-template<class Scalar>
-void ConnectednessConstraint<Scalar>::drawImGuiOptions(bool& makeExclusive, DrawableType& type, bool& evaluateProblem) {
-    ImGui::Text(this->name.c_str());
-    dragDoubleRange2("Positive Interval", &a, &b, 0.01f, -1.f, 1.f, "Min: %.2f", "Max: %.2f", 1.f);
-
-    ImGui::BeginGroup();
-    if(ImGui::Checkbox("Visualize Shortest Paths", &paths->drawPaths)){
-        if(paths->drawPaths){
-            evaluateProblem = true;
-            generateLineStrips = true;
-        } else{
-            generateLineStrips = false;
-        }
-    }
-
-    bool visGeodesicWeights = static_cast<bool>(flags & VisualizationFlag::GeodesicWeights);
-    if(ImGui::Checkbox("Geodesic Weights", &visGeodesicWeights)){
-        if(visGeodesicWeights){
-            type = DrawableType::FaceColored;
-            makeExclusive = true;
-            flags = VisualizationFlag::GeodesicWeights;
-            evaluateProblem = true;
-        } else flags &= ~VisualizationFlag::GeodesicWeights;
-    }
-    ImGui::EndGroup();
-    ImGui::SameLine();
-    ImGui::BeginGroup();
-    bool visComponents = static_cast<bool>(flags & VisualizationFlag::ConnectedComponents);
-    if(ImGui::Checkbox("Connected Components", &visComponents)){
-        if(visComponents){
-            type = DrawableType::FaceColored;
-            makeExclusive = true;
-            flags = VisualizationFlag::ConnectedComponents;
-            evaluateProblem = true;
-        } else flags &= ~VisualizationFlag::ConnectedComponents;
-    }
-
-    bool visGradient = static_cast<bool>(flags & VisualizationFlag::Gradient);
-    if(ImGui::Checkbox("Gradient", &visGradient)){
-        if(visGradient){
-            type = DrawableType::PhongDiffuse;
-            makeExclusive = true;
-            flags = VisualizationFlag::Gradient;
-            evaluateProblem = true;
-        } else flags &= ~VisualizationFlag::Gradient;
-    }
-    ImGui::EndGroup();
-}
-
-
-template<class Scalar>
-ConnectednessConstraint<Scalar>::ConnectednessConstraint(
-        Cr::Containers::Array<const Mg::Vector3d> const& vs,
-        Cr::Containers::Array<const Mg::UnsignedInt> const& is):
-        vertices(vs),
-        indices(is) {
-    updateInternalDataStructures();
-}
 
 template<class Scalar>
 void ConnectednessConstraint<Scalar>::updateInternalDataStructures() {

@@ -74,3 +74,33 @@ bool dragDoubleRange2(const char* label, double* v_current_min, double* v_curren
     ImGui::PopID();
     return value_changed;
 }
+
+//ImRect RenderTree(Node* n)
+//{
+//    const bool recurse = ImGui::TreeNode(...);
+//    const ImRect nodeRect = ImRect(ImGui::GetItemRectMin(), ImGui::GetItemRectMax());
+//
+//    if (recurse)
+//    {
+//        const ImColor TreeLineColor = ImGui::GetColorU32(ImGuiCol_Text);
+//        const float SmallOffsetX = 11.0f; //for now, a hardcoded value; should take into account tree indent size
+//        ImDrawList* drawList = ImGui::GetWindowDrawList();
+//
+//        ImVec2 verticalLineStart = ImGui::GetCursorScreenPos();
+//        verticalLineStart.x += SmallOffsetX; //to nicely line up with the arrow symbol
+//        ImVec2 verticalLineEnd = verticalLineStart;
+//
+//        for (Node* child : *n)
+//        {
+//            const float HorizontalTreeLineSize = 8.0f; //chosen arbitrarily
+//            const ImRect childRect = RenderTree(child);
+//            const float midpoint = (childRect.Min.y + childRect.Max.y) / 2.0f;
+//            drawList->AddLine(ImVec2(verticalLineStart.x, midpoint), ImVec(verticalLineStart.x + HorizontalTreeLineSize, midpoint), TreeLineColor);
+//            verticalLineEnd.y = midpoint;
+//        }
+//
+//        drawList->AddLine(verticalLineStart, verticalLineEnd, TreeLineColor);
+//    }
+//
+//    return nodeRect;
+//}

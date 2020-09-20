@@ -6,7 +6,7 @@
 
 #include <Corrade/Containers/GrowableArray.h>
 
-namespace Phasefield::Containers {
+namespace Phasefield {
 
 namespace Cr = Corrade;
 
@@ -106,7 +106,7 @@ public:
             case RelocationOption::RightBound : offset = data.size() - m_size; break;
         }
         for(std::uint32_t i = 0; i < m_size; ++i)
-            data[i + offset] = m_data[(m_begin + i) & m_mask];
+            data[i + offset] = std::move(m_data[(m_begin + i) & m_mask]);
 
         m_data = std::move(data);
         m_begin = offset;

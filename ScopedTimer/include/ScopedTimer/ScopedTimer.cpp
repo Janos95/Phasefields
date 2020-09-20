@@ -4,14 +4,11 @@
 
 #include "ScopedTimer.h"
 
-#include <Corrade/Containers/Pointer.h>
 #include <mutex>
 #include <unordered_map>
 #include <chrono>
 #include <cmath>
 #include <cstdio>
-
-using namespace Corrade;
 
 using my_clock = std::chrono::steady_clock;
 using my_duration = std::chrono::duration<double, std::nano>;
@@ -53,13 +50,12 @@ struct ScopedTimer::Impl{
 std::unordered_map<std::string, TimingInfo> log_;
 std::mutex mutex_;
 
-ScopedTimer::ScopedTimer(std::string name, bool verbose):
-    m_impl(Containers::pointer<Impl>(std::move(name), my_clock::now(), verbose))
+ScopedTimer::ScopedTimer(char const* name, bool verbose):
+    m_impl(new Impl{name, my_clock::now(), verbose})
 {
 }
 
-ScopedTimer::~ScopedTimer()
-{
+ScopedTimer::~ScopedTimer() {
     const auto end = my_clock::now();
     my_duration time = end - m_impl->start_;
     if(m_impl->verbose_)
@@ -73,6 +69,8 @@ ScopedTimer::~ScopedTimer()
     mean += delta1 / count;
     auto delta2 = time - mean;
     M2 += delta1.count() * delta2.count();
+
+    delete m_impl;
 }
 
 void ScopedTimer::printStatistics()

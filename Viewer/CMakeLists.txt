@@ -11,7 +11,6 @@ add_library(Viewer STATIC
         KDTree.h
         ${viewer_RESOURCES})
 
-
 target_include_directories(Viewer PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(Viewer
         PUBLIC
@@ -22,6 +21,7 @@ target_link_libraries(Viewer
             Phasefield::Visualization
             Phasefield::ImGuiFS
             Phasefield::VisualizationProxy
+            Phasefield::VideoSaver
 
             Magnum::GL
             Magnum::SceneGraph
@@ -32,7 +32,10 @@ target_link_libraries(Viewer
             Magnum::Shaders
             Magnum::DebugTools
             MagnumIntegration::ImGui
+
             ImGui::SourcesMiscCpp
+
+            /usr/lib/libavcodec.so
         )
 
 add_library(Phasefield::Viewer ALIAS Viewer)

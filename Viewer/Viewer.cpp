@@ -7,9 +7,9 @@
 #include "imguifilesystem.h"
 #include "Enums.h"
 #include "Tag.h"
-
-//#include "isotropic_remeshing.hpp"
-//#include "polygonize_wireframe.hpp"
+#include "ModicaMortola.h"
+#include "ConnectednessConstraint.h"
+#include "WeakYamabe.h"
 
 #include <ScopedTimer/ScopedTimer.h>
 
@@ -58,11 +58,36 @@ using namespace Mg::Math::Literals;
 
 namespace {
 
+bool loadMesh(char const* path, Mg::Trade::MeshData& mesh) {
+    Mg::PluginManager::Manager<Mg::Trade::AbstractImporter> manager;
+    auto importer = manager.loadAndInstantiate("AnySceneImporter");
+    auto name = importer->metadata()->name();
+    Debug{} << "Trying to load mesh using " << name.c_str();
+    if(!importer) std::exit(1);
+
+    Debug{} << "Opening file" << path;
+
+    if(!importer->openFile(path)) {
+        puts("could not open file");
+        std::exit(4);
+    }
+
+    Debug{} << "Imported " << importer->meshCount() << " meshes";
+
+    if(importer->meshCount() && importer->mesh(0)) {
+        mesh = *importer->mesh(0);
+        return true;
+    } else {
+        Debug{} << "Could not load mesh";
+        return false;
+    }
+}
+
 Array<std::pair<char const*, Mg::GL::Texture2D>> makeColorMapTextures() {
 
     Array<std::pair<char const*, Mg::GL::Texture2D>> textures;
     using L = std::initializer_list<std::pair<char const*, StaticArrayView<256, const Vector3ub>>>;
-    for(auto&&[name, colorMap] : L{
+    for(auto&& [name, colorMap] : L{
             {"Turbo",   Magnum::DebugTools::ColorMap::turbo()},
             {"Magma",   Magnum::DebugTools::ColorMap::magma()},
             {"Plasma",  Magnum::DebugTools::ColorMap::plasma()},
@@ -112,7 +137,7 @@ Viewer::Viewer(int argc, char** argv) :
         const Vector2 dpiScaling = this->dpiScaling({});
         Configuration conf;
         conf.setTitle("Viewer")
-            .setSize({1500, 1200}, dpiScaling)
+            .setSize({1200, 1200}, dpiScaling)
             .setWindowFlags(Configuration::WindowFlag::Resizable);
         GLConfiguration glConf;
         glConf.setSampleCount(dpiScaling.max() < 2.0f ? 8 : 2);
@@ -124,8 +149,9 @@ Viewer::Viewer(int argc, char** argv) :
     /* setup shaders, color map textures and mesh*/
     {
         ScopedTimer t{"Setting up opengl stuff (textures etc)", true};
-        original = Mg::Primitives::grid3DSolid({300,300});
-        //original = Mg::Primitives::grid3DSolid({1,1});
+        loadMesh("/home/janos/meshes/spot.ply", original);
+        //original = Mg::Primitives::grid3DSolid({300,300});
+        //original = Mg::Primitives::grid3DSolid({2,2});
         mesh.setFromData(original);
 
         fastMarchingMethod.update();
@@ -148,8 +174,8 @@ Viewer::Viewer(int argc, char** argv) :
               .setIndexBuffer(indexBuffer, 0, Mg::MeshIndexType::UnsignedInt)
               .addVertexBuffer(vertexBuffer, 0, Phong::Position{}, Phong::Normal{}, Phong::TextureCoordinates{}, Phong::Color4{});
 
-        phongColorMap = Phong{Phong::Flag::DiffuseTexture};
-        phongVertexColors = Phong{Phong::Flag::VertexColor};
+        phongColorMap = Phong{Phong::Flag::DiffuseTexture, 2};
+        phongVertexColors = Phong{Phong::Flag::VertexColor, 2};
 
         colorMapTextures = makeColorMapTextures();
 
@@ -158,8 +184,8 @@ Viewer::Viewer(int argc, char** argv) :
     /* try to load tree from disk, otherwise fallback to empty tree with three nodes */
     {
         ScopedTimer t{"Loading Phasefield from disk", true};
-        if(Cr::Utility::Directory::exists("/home/janos/tree_opt.bin")) {
-            FILE* fp = std::fopen("/home/janos/tree_opt.bin", "r");
+        if(false && Cr::Utility::Directory::exists("/home/janos/spot.bin")) {
+            FILE* fp = std::fopen("/home/janos/spot.bin", "r");
             fseek(fp, 0, SEEK_END);
             size_t size = std::ftell(fp);
             fseek(fp, 0, SEEK_SET);
@@ -171,9 +197,17 @@ Viewer::Viewer(int argc, char** argv) :
 
             tree = Tree::deserialize(data, mesh);
         } else {
-            tree.addChild(tree.root(), Tree::Child::Left);
-            tree.addChild(tree.root(), Tree::Child::Right);
+            Node root = tree.root();
+            Node right = root.addRightChild();
+            right.addRightChild();
+            right.addLeftChild();
+            Node left = root.addLeftChild();
+            left.addRightChild();
+            left.addLeftChild();
         }
+
+        for(Node n : tree.nodes())
+            Debug{} << n;
         proxy.setVertexColors(tree);
 
     }
@@ -228,30 +262,7 @@ Viewer::Viewer(int argc, char** argv) :
     setMinimalLoopPeriod(16);
 }
 
-bool loadMesh(char const* path, Mg::Trade::MeshData& mesh) {
-    Mg::PluginManager::Manager<Mg::Trade::AbstractImporter> manager;
-    auto importer = manager.loadAndInstantiate("AnySceneImporter");
-    auto name = importer->metadata()->name();
-    Debug{} << "Trying to load mesh using " << name.c_str();
-    if(!importer) std::exit(1);
 
-    Debug{} << "Opening file" << path;
-
-    if(!importer->openFile(path)) {
-        puts("could not open file");
-        std::exit(4);
-    }
-
-    Debug{} << "Imported " << importer->meshCount() << " meshes";
-
-    if(importer->meshCount() && importer->mesh(0)) {
-        mesh = *importer->mesh(0);
-        return true;
-    } else {
-        Debug{} << "Could not load mesh";
-        return false;
-    }
-}
 
 //bool Viewer::saveMesh(std::string const& path) {
 //    auto[stem, ext] = Utility::Directory::splitExtension(path);
@@ -554,7 +565,7 @@ void Viewer::drawOptimizationOptions() {
                         return false;
                 }
             } else if(s == Solver::Backend::CERES) {
-                return !(direction == Solver::LineSearchDirection::SR1);
+                return direction != Solver::LineSearchDirection::SR1;
             }
             return false;
         };
@@ -590,14 +601,11 @@ void Viewer::drawOptimizationOptions() {
 
         ImGui::InputScalar("Tree level to optimize", ImGuiDataType_U64, &problem.levelToOptimize, &step, nullptr, "%u");
 
-        if(evaluateProblem && !isOptimizing) {
-            Array<Double> gradient(problem.numParameters());
-            Array<Double> constraints(problem.numConstraints());
-            double cost = 0;
-            problem(tree.phasefieldData, cost, gradient, constraints, nullptr);
-        }
-
         ImGui::Checkbox("Hierarchical Optimization", &hierarchicalOptimization);
+
+        ImGui::SameLine();
+
+        ImGui::Checkbox("Initialize Next Depth Level", &initializeLevel);
 
         ImGui::SameLine();
 
@@ -611,6 +619,13 @@ void Viewer::drawOptimizationOptions() {
             isOptimizing = false;
 
         ImGui::TreePop();
+
+        if(evaluateProblem && !isOptimizing) {
+            Array<Double> gradient(problem.numParameters());
+            Array<Double> constraints(problem.numConstraints());
+            double cost = 0;
+            problem(tree.phasefieldData, cost, gradient, constraints, nullptr);
+        }
     }
 }
 
@@ -619,18 +634,42 @@ void Viewer::runOptimization(UniqueFunction<bool()>&& cb){
         if(drawSegmentation)
             proxy.setVertexColors(tree);
         else
-            proxy.setVertexColors(tree.phasefields()[currentNode]);
+            proxy.setVertexColors(currentNode.phasefield());
         return cb() && isOptimizing ? Solver::Status::CONTINUE : Solver::Status::USER_ABORTED;
     };
     auto& callbacks = options.callbacks;
     arrayAppend(callbacks, InPlaceInit, std::move(abortCb));
 
     if(hierarchicalOptimization) {
+        double areaRatio = 0.5;
         for(size_t d = 0; d <= tree.depth; ++d) {
             problem.levelToOptimize = d;
+
+            for(Functional& f : problem.objectives) {
+                if(f.functionalType == FunctionalType::AreaRegularizer) {
+                    reinterpret_cast<AreaRegularizer*>(f.erased)->areaRatio = areaRatio;
+                }
+            }
+
+            if(initializeLevel) {
+                for(Node node : tree.nodesOnLevel(d)) {
+                    node.initializePhasefieldFromParent();
+                }
+            }
+
             Solver::solve(options, problem, tree.level(d), nullptr);
+
+            areaRatio /= 2.;
         }
     } else {
+        double areaRatio = 0.5;
+        for(size_t i = 0; i < problem.levelToOptimize; ++i) areaRatio /= 2.;
+
+        for(Functional& f : problem.objectives) {
+            if(f.functionalType == FunctionalType::AreaRegularizer) {
+                reinterpret_cast<AreaRegularizer*>(f.erased)->areaRatio = areaRatio;
+            }
+        }
         Solver::solve(options, problem, tree.level(problem.levelToOptimize), nullptr);
     }
 
@@ -654,6 +693,12 @@ Functional Viewer::makeFunctional(FunctionalType::Value type) {
             f.scaling = doubleWellScaling;
             return f;
         }
+        case FunctionalType::ConnectednessConstraint : {
+            Functional f = ConnectednessConstraint{mesh};
+            f.scaling = connectednessScaling;
+            return f;
+        }
+        case FunctionalType::WeakYamabe : return WeakYamabe{mesh};
 
         default: return Functional{};
     }
@@ -671,7 +716,7 @@ void Viewer::brush() {
             break;
     }
 
-    auto phasefield = tree.phasefields()[currentNode];
+    auto phasefield = currentNode.phasefield();
     for(auto [d, v] : distances) {
         auto u = (1.f - recursiveFilterFactor)*phasefield[v.idx] + recursiveFilterFactor*phase;
         phasefield[v.idx] = u;
@@ -724,25 +769,41 @@ void Viewer::drawVisualizationOptions() {
             if(drawSegmentation)
                 proxy.setVertexColors(tree);
             else
-                proxy.setVertexColors(tree.phasefields()[currentNode]);
+                proxy.setVertexColors(currentNode.phasefield());
         }
 
         char current[100];
         sprintf(current, "%zu", currentNode);
         if(ImGui::BeginCombo("##solver", current)) {
             char buffer[100];
-            for(size_t i = 0; i < tree.nodeCount(); ++i) {
-                bool isSelected = i == currentNode;
-                sprintf(buffer, "%zu", i);
+            for(Node node : tree.nodes()) {
+                bool isSelected = node == currentNode;
+                sprintf(buffer, "%zu", node.idx);
                 if(ImGui::Selectable(buffer, isSelected)) {
-                    currentNode = i;
+                    currentNode = node;
                     if(!drawSegmentation)
-                        proxy.setVertexColors(tree.phasefields()[currentNode]);
+                        proxy.setVertexColors(currentNode.phasefield());
                 }
                 if(isSelected)
                     ImGui::SetItemDefaultFocus();
             }
             ImGui::EndCombo();
+        }
+
+
+        if(ImGui::Button("Initialize Node")) {
+            currentNode.initializePhasefieldFromParent();
+        }
+
+        ImGui::SameLine();
+
+        if(ImGui::Button("Add Children")) {
+            /* the node handle (potentially) gets invalidated after we add the other child */
+            Node rightChild = currentNode.addRightChild();
+            rightChild.initializePhasefieldFromParent();
+
+            Node leftChild = currentNode.addLeftChild();
+            leftChild.initializePhasefieldFromParent();
         }
 
         static char path[100];
@@ -754,6 +815,53 @@ void Viewer::drawVisualizationOptions() {
             fwrite(data.data(), sizeof(char), data.size(), fp);
             fclose(fp);
         }
+
+        ImGui::SameLine();
+        if(ImGui::Button("Load Tree")) {
+            if(Cr::Utility::Directory::exists(path)) {
+                FILE* fp = std::fopen(path, "r");
+                fseek(fp, 0, SEEK_END);
+                size_t size = std::ftell(fp);
+                fseek(fp, 0, SEEK_SET);
+
+                Array<char> data{NoInit, size};
+                fread(data.data(), sizeof(char), size, fp);
+
+                fclose(fp);
+
+                tree = Tree::deserialize(data, mesh);
+                if(drawSegmentation)
+                    proxy.setVertexColors(tree);
+                else
+                    proxy.setVertexColors(currentNode.phasefield());
+            }
+        }
+
+        ImGui::Checkbox("Animate", &animate);
+
+        static char recordingPath[100] = "/home/janos/test.mp4";
+        ImGui::InputText("Video Path", recordingPath, 100);
+
+        const auto green = ImVec4(0.56f, 0.83f, 0.26f, 1.0f);
+        const auto red = ImVec4(0.83f, 0.56f, 0.26f, 1.0f);
+
+        ImGui::PushStyleColor(ImGuiCol{}, recording ? red : green);
+        if(ImGui::Button("Start Recording")) {
+            if(!recording) {
+                videoSaver.startRecording(recordingPath, framebufferSize());
+                recording = true;
+            }
+        }
+        ImGui::PopStyleColor();
+        ImGui::SameLine();
+        ImGui::PushStyleColor(ImGuiCol{}, recording ? green : red);
+        if(ImGui::Button("Stop Recording")) {
+            if(recording) {
+                videoSaver.endRecording();
+                recording = false;
+            }
+        }
+        ImGui::PopStyleColor();
 
         ImGui::TreePop();
     }
@@ -921,8 +1029,7 @@ void Viewer::tickEvent() {
         if(drawSegmentation)
             proxy.setVertexColors(tree);
         else {
-            Debug{} << "Updating scalar values";
-            proxy.setVertexColors(tree.phasefields()[currentNode]);
+            proxy.setVertexColors(currentNode.phasefield());
         }
 
         mesh.uploadVertexBuffer(vertexBuffer);
@@ -949,6 +1056,14 @@ void Viewer::drawEvent() {
     else if(!ImGui::GetIO().WantTextInput && isTextInputActive())
         stopTextInput();
 
+
+    if(animate) {
+        Vector2i m = windowSize()/2;
+        arcBall->initTransformation(m);
+        arcBall->rotate(m + Vector2i{5, 0});
+    }
+
+
     /* draw scene */
     bool camChanged = arcBall->updateTransformation();
     Matrix4 viewTf = arcBall->viewMatrix();
@@ -958,14 +1073,21 @@ void Viewer::drawEvent() {
                      .setTransformationMatrix(viewTf)
                      .setNormalMatrix(viewTf.normalMatrix())
                      .bindDiffuseTexture(colorMapTextures[colorMapIndex].second)
-                     .setLightPosition({10,10,10})
+
                      .draw(glMesh);
     } else if (proxy.shaderConfig == VisualizationProxy::ShaderConfig::VertexColors) {
         phongVertexColors.setProjectionMatrix(projection)
                          .setTransformationMatrix(viewTf)
                          .setNormalMatrix(viewTf.normalMatrix())
-                         .setLightPosition({10,10,10})
+                         .setLightPositions({{10,10,10}, {-10, -10, 10}})
+                         .setLightColors({Color4{0.5}, Color4{0.5}})
+                         .setSpecularColor(Color4{0.1})
                          .draw(glMesh);
+    }
+
+    if(recording) {
+        Mg::Image2D image = GL::defaultFramebuffer.read({{},framebufferSize()}, {GL::PixelFormat::RGBA, Mg::GL::PixelType::UnsignedByte});
+        videoSaver.appendFrame(std::move(image));
     }
 
     /* draw ImGui stuff */
@@ -991,6 +1113,7 @@ void Viewer::drawEvent() {
         Mg::GL::Renderer::enable(Mg::GL::Renderer::Feature::FaceCulling);
         Mg::GL::Renderer::disable(Mg::GL::Renderer::Feature::Blending);
     }
+
 
     swapBuffers();
     redraw();

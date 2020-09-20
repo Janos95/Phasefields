@@ -1,20 +1,17 @@
 
 high priority
+    * check if scaling is correct by checking if for epsilon -> 0
+        the modica mortola functional goes to 1 for the square example
+    * check why numeric diff is not the same for the dirichlet energy
+    *
     * shape optimization
         * finish writing up the approach in latex
 
 medium prioritiy
     ** port to emscripten and make a web demo?
-    * use imgui docking branch
+    * use imgui docking branch + nice tree visualization
     * plasticy mesh vis
 
-nice to have
-    * fast (compile + runtime) hash map
-    * bounding volume hierarchy
-    * implicit surface meshing (https://hal.archives-ouvertes.fr/hal-00533568/document)
-    * parameterization, e.g. scaf (https://hal.archives-ouvertes.fr/hal-00533568/document)
-    * cutting to disk : https://jeffe.cs.illinois.edu/pubs/pdf/optcycles.pdf
-    * approximation to optimal cut graph
-    * images of color map
+
 
 

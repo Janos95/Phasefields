@@ -12,6 +12,14 @@ struct Functional;
 struct LossFunction;
 struct SparseMatrix;
 
+struct Tree;
+struct Node;
+
+template<int IteratorType> struct NodeIterator;
+using LeafIterator = NodeIterator<0>;
+using InternalNodeIterator = NodeIterator<1>;
+using HorizontalNodeIterator = NodeIterator<2>;
+
 namespace Solver {
 
 struct Problem;

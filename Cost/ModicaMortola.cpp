@@ -85,7 +85,7 @@ void AreaRegularizer::operator()(ArrayView<const Scalar> const& parameters,
             gradW[idx] += f.eval(parameters[idx])*mesh.integral[vertex];
         }
     }
-    out += integral - areaRatio*(mesh.surfaceArea*0.5);
+    out += integral - areaRatio*mesh.surfaceArea;
 }
 
 DoubleWellPotential::DoubleWellPotential(Mesh& m) : mesh(m) {
@@ -120,33 +120,12 @@ void DoubleWellPotential::operator()(ArrayView<const Scalar> const& parameters,
 
 /* explicit instantiations */
 
-template void DirichletEnergy::operator()(
-        ArrayView<const double> const& parameters,
-        ArrayView<const double> const& weights,
-        double& out,
-        ArrayView<double> const& gradP,
-        ArrayView<double> const& gradW);
+DEFINE_FUNCTIONAL_CONSTRUCTOR(DirichletEnergy)
+DEFINE_FUNCTIONAL_CONSTRUCTOR(AreaRegularizer)
+DEFINE_FUNCTIONAL_CONSTRUCTOR(DoubleWellPotential)
 
-template void AreaRegularizer::operator()(
-        ArrayView<const double> const& parameters,
-        ArrayView<const double> const& weights,
-        double& out,
-        ArrayView<double> const& gradP,
-        ArrayView<double> const& gradW);
-
-
-template void DoubleWellPotential::operator()(
-        ArrayView<const double> const& parameters,
-        ArrayView<const double> const& weights,
-        double& out,
-        ArrayView<double> const& gradP,
-        ArrayView<double> const& gradW);
-
-
-template Functional::Functional(DirichletEnergy);
-
-template Functional::Functional(AreaRegularizer);
-
-template Functional::Functional(DoubleWellPotential);
+DEFINE_FUNCTIONAL_OPERATOR(DirichletEnergy, double)
+DEFINE_FUNCTIONAL_OPERATOR(AreaRegularizer, double)
+DEFINE_FUNCTIONAL_OPERATOR(DoubleWellPotential, double)
 
 }

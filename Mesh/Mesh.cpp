@@ -41,9 +41,11 @@ inline Debug& operator<<(Debug& debug, const Implementation::HalfEdge& he) {
 }
 
 void Mesh::setFromData(const Mg::Trade::MeshData& meshData) {
+    CORRADE_ASSERT(meshData.isIndexed(), "Mesh needs to be indexed",);
     m_vertexCount = meshData.vertexCount();
     m_cornerCount = meshData.indexCount();
     m_faceCount = meshData.indexCount() / 3;
+    m_dualEdgeCount = 0;
     m_halfEdgeCount = 0;
 
     arrayResize(m_attributes, NoInit, m_vertexCount);
@@ -51,8 +53,6 @@ void Mesh::setFromData(const Mg::Trade::MeshData& meshData) {
 
     /* setup index array */
     Cr::Utility::copy(arrayCast<const UnsignedInt>(meshData.indexData()), m_indices);
-
-
 
     /* setup attribute array */
     bool hasNormals = meshData.hasAttribute(Mg::Trade::MeshAttribute::Normal);
@@ -90,6 +90,7 @@ void Mesh::setFromData(const Mg::Trade::MeshData& meshData) {
             if (it != map.end()) {
                 heIdx[i] = it->second ^ size_t{1};
                 m_halfEdges[heIdx[i]].face = faceIdx;
+                ++m_dualEdgeCount; /* incident face was already handled, so there must be a dual edge here */
             } else {
                 Implementation::HalfEdge he, twin;
                 he.face = faceIdx;
@@ -238,9 +239,15 @@ EdgeSet Mesh::edges() { return {{0, this}, {m_edgeCount, this}}; }
 
 HalfEdgeSet Mesh::halfEdges() { return {{0, this}, {m_halfEdgeCount, this}}; }
 
+DualEdgeSet Mesh::dualEdges() {
+    DualEdgeIterator b{0, this};
+    if(m_edgeCount && !b.isValid()) ++b;
+    return {b, {m_edgeCount, this}};
+}
+
 CornerSet Mesh::corners() {
     CornerIterator b{0, this};
-    if(m_halfEdgeCount && !b.isCorner()) ++b;
+    if(m_halfEdgeCount && !b.isValid()) ++b;
     return {b, {m_halfEdgeCount, this}};
 }
 
@@ -265,7 +272,9 @@ size_t Mesh::indexCount() const { return m_indices.size(); }
 
 size_t Mesh::halfEdgeCount() const { return m_halfEdgeCount; }
 
-size_t Mesh::angleCount() const { return m_halfEdgeCount; }
+size_t Mesh::angleCount() const { return m_cornerCount; }
+
+size_t Mesh::dualEdgeCount() const { return m_dualEdgeCount; }
 
 size_t Mesh::lookUpFeature(const char* lookUpName) {
     for(size_t i = 0; i < m_features.size(); ++i) {
@@ -282,5 +291,6 @@ void Mesh::update() {
     for(auto& feature : m_features)
         feature->update();
 }
+
 
 }

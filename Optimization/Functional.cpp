@@ -106,20 +106,21 @@ void Functional::operator()(ArrayView<const double> parameters,
             double f1 = 0, f2 = 0;
             double old = perturbedParams[i];
             perturbedParams[i] += h;
-            evalWithGrad(erased, parameters, weights, f2, nullptr, nullptr);
+            evalWithGrad(erased, perturbedParams, weights, f2, nullptr, nullptr);
             perturbedParams[i] = old - h;
-            evalWithGrad(erased, parameters, weights, f1, nullptr, nullptr);
+            evalWithGrad(erased, perturbedParams, weights, f1, nullptr, nullptr);
             perturbedParams[i] = old;
 
             double gradNumeric = (f2 - f1)/(2*h);
             double gradAnalytic = gradPWithoutLoss[i];
 
             if(Math::abs(gradNumeric - gradPWithoutLoss[i]) > tol) {
-                Debug{} << Cr::Utility::formatString("Gradient Checker Error: (Analytic, Numeric) = ({},{}) at index {}\n", gradAnalytic, gradNumeric, i).c_str();
+                Debug{} << "Gradient Error in" << FunctionalType::to_string(functionalType);
+                Debug{} << Cr::Utility::formatString("(Analytic = {}, Numeric = {}) at index {}\n", gradAnalytic, gradNumeric, i).c_str();
+                CORRADE_INTERNAL_ASSERT(false);
             }
 
             double progress = double(counter++)/double(n);
-            printProgress(progress);
         }
     }
 }

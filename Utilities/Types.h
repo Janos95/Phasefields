@@ -19,12 +19,15 @@ using Magnum::Int;
 using Magnum::Vector3;
 using Magnum::Vector2;
 using Magnum::Vector2i;
+using Magnum::Vector2ui;
 using Magnum::Vector3ub;
 using Magnum::Vector3d;
 using Magnum::Matrix3;
 using Magnum::Matrix4;
 using Magnum::Color3;
+using Magnum::Color3ub;
 using Magnum::Color4;
+using Magnum::Color4ub;
 using Magnum::Range2D;
 using Magnum::Range2Di;
 

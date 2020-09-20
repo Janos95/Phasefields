@@ -1,5 +1,5 @@
 cmake-*/
-build/
+build*/
 assets/
 shaders/
 Cost/external/
@@ -7,3 +7,4 @@ conan_modules/*
 math/openblas_modules/*
 docs/
 log.md
+.vscode

@@ -13,9 +13,9 @@ struct RecursiveProblem {
 
     explicit RecursiveProblem(Tree& t);
 
-    size_t numParameters() const;
+    [[nodiscard]] size_t numParameters() const;
 
-    size_t numConstraints() const;
+    [[nodiscard]] size_t numConstraints() const;
 
     void operator()(
             Containers::ArrayView<const double> parameters,

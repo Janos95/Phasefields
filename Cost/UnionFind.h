@@ -4,24 +4,32 @@
 
 #pragma once
 
+#include "Types.h"
 #include <Corrade/Containers/Array.h>
 
+namespace Phasefield {
+
+namespace Implementation {
 struct Node {
-    int rank;
-    int parent;
+    size_t rank;
+    size_t parent;
 };
 
-struct UnionFind : public Corrade::Containers::Array<Node> {
+}
 
-    explicit UnionFind(int n);
+struct UnionFind : Array<Implementation::Node> {
 
-    [[nodiscard]] int& parent(int x);
+    explicit UnionFind(size_t n);
 
-    [[nodiscard]] int& rank(int x);
+    [[nodiscard]] size_t& parent(size_t x);
 
-    int find(int x);
+    [[nodiscard]] size_t& rank(size_t x);
 
-    void unite(int x, int y);
+    size_t find(size_t x);
+
+    void unite(size_t x, size_t y);
 
 };
+
+}
 
