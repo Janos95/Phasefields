@@ -112,8 +112,6 @@ struct Face {
     [[nodiscard]] double diameter() const;
 
     [[nodiscard]] explicit operator bool() const { return idx != Invalid; }
-
-    [[nodiscard]] bool isValid() const { return idx != Invalid; }
 };
 
 struct Edge {
@@ -156,9 +154,11 @@ struct Corner {
 
     [[nodiscard]] Face face() const;
 
-    [[nodiscard]] Rad angle() const;
+    [[nodiscard]] Radd angle() const;
 
     [[nodiscard]] HalfEdge halfEdge() const;
+
+    [[nodiscard]] bool isValid() const { return !halfEdge().onBoundaryLoop(); }
 
     [[nodiscard]] explicit operator bool() const { return idx != Invalid; }
 
@@ -178,6 +178,8 @@ struct DualEdge {
     [[nodiscard]] Edge edge() const;
 
     [[nodiscard]] Face otherFace(Face) const;
+
+    [[nodiscard]] bool isValid() const { return edge().hasDualEdge(); }
 
     [[nodiscard]] explicit operator bool() const { return idx != Invalid; }
 };

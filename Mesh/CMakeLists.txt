@@ -11,6 +11,7 @@ add_library(Mesh STATIC
         FastMarchingMethod.h
         Surface.h
         Dijkstra.h
+        Bfs.h
         GraphCommon.h
         FEM.cpp
         FEM.h

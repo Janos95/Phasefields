@@ -198,12 +198,13 @@ Viewer::Viewer(int argc, char** argv) :
             tree = Tree::deserialize(data, mesh);
         } else {
             Node root = tree.root();
+            root.initializePhasefieldFromParent();
+
             Node right = root.addRightChild();
-            right.addRightChild();
-            right.addLeftChild();
+            right.initializePhasefieldFromParent();
+
             Node left = root.addLeftChild();
-            left.addRightChild();
-            left.addLeftChild();
+            left.initializePhasefieldFromParent();
         }
 
         for(Node n : tree.nodes())

@@ -139,7 +139,7 @@ bool FastMarchingMethod::step(Vertex& vertex, Double& distance) {
                 double distB = distance;
                 double lenA = m_mesh.edgeLength[he.next().edge()];
                 double distA = m_distances[neighbor];
-                Rad theta = m_mesh.angle[he.next().next().corner()];
+                Radd theta = m_mesh.angle[he.next().next().corner()];
                 double newDist = eikonalDistanceSubroutine(lenA, lenB, Radd{theta}, distA, distB);
 
                 if(newDist < m_distances[newVert]) {
@@ -160,7 +160,7 @@ bool FastMarchingMethod::step(Vertex& vertex, Double& distance) {
                 double distB = distance;
                 double lenA = m_mesh.edgeLength[heT.next().next().edge()];
                 double distA = m_distances[neighbor];
-                Rad theta = m_mesh.angle[heT.next().next().corner()];
+                Radd theta = m_mesh.angle[heT.next().next().corner()];
                 double newDist = eikonalDistanceSubroutine(lenA, lenB, Radd{theta}, distA, distB);
 
                 if(newDist < m_distances[newVert]) {

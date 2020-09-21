@@ -122,6 +122,8 @@ public:
         return m_size == 0;
     }
 
+    void clear() { m_begin = 0; m_end = 0; m_size = 0; m_mask = 0; }
+
 private:
     std::uint32_t m_begin = 0, m_end = 0, m_size = 0;
     Cr::Containers::Array<T> m_data;

@@ -30,7 +30,7 @@ struct AngleFeature : public MeshFeature {
     const char* name() override { return "Angle"; }
 };
 
-struct FaceAreaFeature : public MeshFeature {
+struct FaceInformationFeature : public MeshFeature {
     using MeshFeature::MeshFeature;
     void update() override;
     const char* name() override { return "FaceArea"; }

@@ -9,70 +9,96 @@
 #include "CircularBuffer.h"
 #include "Mesh.h"
 
-#include <Corrade/Containers/Reference.h>
+#include <queue>
 #include <Corrade/Utility/Assert.h>
-
 
 namespace Phasefield {
 
+template<class V>
 class Bfs {
 public:
 
-    explicit Bfs(Mesh const&, int source) :
-            m_adjacencyList(adjacencyList),
-            m_prev(Cr::Containers::DirectInit, adjacencyList.size(), -1),
-            m_visited(Cr::Containers::DirectInit, adjacencyList.size(), false) {
-        m_q.emplaceBack(source);
+    using VertexType = V;
+    using EdgeType = std::conditional_t<std::is_same_v<V, Vertex>, Edge, DualEdge>;
+
+    explicit Bfs() = default;
+
+    explicit Bfs(Mesh const& mesh) : m_mesh(&mesh) {
+        update();
     }
 
-    bool step(int& v) {
-        if(m_q.empty())
-            return false;
+    void setSource(V source) {
+        m_queue.emplace(source);
+        m_dist[source] = 0;
+    }
 
-        v = m_q.popFront();
+    void reset() {
+        m_queue = std::queue<VertexType>();
+        for(EdgeType& prev : m_shortestPaths) prev = EdgeType{Invalid, m_mesh};
+        for(size_t& dist : m_dist) dist = ~size_t{0};
+    }
 
-        for(const auto&[w, _]: m_adjacencyList[v]) {
-            if(!m_visited[w]) {
-                m_prev[w] = v;
-                m_visited[w] = true;
-                m_q.emplaceBack(w);
+    void update() {
+        size_t n = std::is_same_v<V, Face> ? m_mesh->faceCount() : m_mesh->vertexCount();
+        arrayResize(m_dist, NoInit, n);
+        arrayResize(m_shortestPaths, NoInit, n);
+        reset();
+    }
+
+    auto getEdges(VertexType node) {
+        if constexpr (std::is_same_v<VertexType, Vertex>) return node.edges();
+        if constexpr (std::is_same_v<VertexType, Face>) return node.dualEdges();
+    }
+
+    auto getNeighbor(VertexType v, EdgeType edge) {
+        if constexpr (std::is_same_v<EdgeType, Edge>) return edge.otherVertex(v);
+        if constexpr (std::is_same_v<EdgeType , DualEdge>) return edge.otherFace(v);
+    }
+
+    bool step(V& v) {
+        if(m_queue.empty()) return false;
+
+        v = m_queue.front();
+        m_queue.pop();
+        size_t distance = m_dist[v];
+
+        for(EdgeType e : getEdges(v)) {
+            VertexType neighbor = getNeighbor(v, e);
+            size_t relaxedDist = 1 + distance;
+            if(relaxedDist < m_dist[neighbor]) {
+                m_dist[neighbor] = relaxedDist;
+                m_shortestPaths[neighbor] = e;
+                m_queue.emplace(neighbor);
             }
         }
+
         return true;
     }
 
-    void setSource(Mg::UnsignedInt source) {
-
-    }
-
-    auto run() {
-        int node;
-        while(step(node));
-    }
-
-    [[nodiscard]] bool isConnected() const {
-        bool all = false;
-        for(auto visited : m_visited) {
-            all &= visited;
-            if(!all) break;
+    template<class... F>
+    inline void run(F&& ... cbs) {
+        V v;
+        double d;
+        while(step(v, d)) {
+            if((cbs(v) || ... ))
+                break;
         }
-        return all;
     }
 
-    Graph::ReversedShortestPath<Bfs> getShortestPathReversed(const int start, const int target) const {
-        auto& self = *this;
-        CORRADE_INTERNAL_ASSERT(target >= 0 && start >= 0);
-        return {{target, self},
-                {start,  self}};
+    Graph::ReversedShortestPath<Bfs> getShortestPathReversed(V start, V target) const {
+        return {{target, this}, {start,  this}};
     }
+
+    bool visited(VertexType v) { return m_dist[v] != Invalid; }
 
 private:
     friend Graph::ReversedPathIterator<Bfs>;
 
-    const R& m_adjacencyList;
-    Cr::Containers::Array<int> m_prev;
-    Cr::Containers::Array<bool> m_visited;
-    Containers::CircularBuffer<int> m_q;
+    Mesh const* m_mesh = nullptr;
+
+    std::queue<VertexType> m_queue;
+    MeshData<V, size_t> m_dist;
+    MeshData<VertexType, EdgeType> m_shortestPaths;
 };
 
 }

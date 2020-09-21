@@ -13,7 +13,7 @@
 namespace Phasefield {
 
 DirichletEnergy::DirichletEnergy(Mesh& m) : mesh(m) {
-    mesh.requireFaceAreas();
+    mesh.requireFaceInformation();
     mesh.requireGradientOperator();
 }
 

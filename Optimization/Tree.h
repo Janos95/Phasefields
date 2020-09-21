@@ -45,9 +45,9 @@ struct Node {
 
     [[nodiscard]] bool isRightChild() const { return parent().rightChild() == *this; }
 
-    [[nodiscard]] ArrayView<Double> phasefield() const;
+    [[nodiscard]] VertexDataView<Double> phasefield() const;
 
-    [[nodiscard]] ArrayView<Double> temporary() const;
+    [[nodiscard]] VertexDataView<Double> temporary() const;
 
     [[nodiscard]] Node parent() const;
 
@@ -57,7 +57,7 @@ struct Node {
 
     Node addChild(bool left);
 
-    void initializePhasefieldFromParent() const;
+    void initializePhasefieldFromParent();
 
     [[nodiscard]] size_t depth() const;
 

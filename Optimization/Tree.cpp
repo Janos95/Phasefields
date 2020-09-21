@@ -5,6 +5,7 @@
 #include "Tree.h"
 #include "Mesh.h"
 #include "C1Functions.h"
+#include "Bfs.h"
 
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Containers/GrowableArray.h>
@@ -29,12 +30,12 @@ Node Node::rightChild() const { return {tree->nodeData[idx].rightChild, tree}; }
 
 size_t Node::depth() const { return tree->nodeData[idx].depth; }
 
-ArrayView<Double> Node::phasefield() const {
+VertexDataView<Double> Node::phasefield() const {
     size_t n = tree->vertexCount();
     return tree->phasefieldData.slice(idx*n, (idx + 1)*n);
 }
 
-ArrayView<Double> Node::temporary() const {
+VertexDataView<Double> Node::temporary() const {
     size_t n = tree->vertexCount();
     return tree->tempsData.slice(idx*n, (idx + 1)*n);
 }
@@ -74,14 +75,14 @@ Node Node::addRightChild() { return addChild(false); }
 
 Node Node::addLeftChild() { return addChild(true); }
 
-void Node::initializePhasefieldFromParent() const {
+void Node::initializePhasefieldFromParent() {
     Mesh* mesh = tree->mesh;
-    mesh->requireFaceAreas();
+    mesh->requireFaceInformation();
 
     SmootherStep smoothStep;
 
     auto weights = temporary();
-    const auto phase = phasefield();
+    auto phase = phasefield();
 
     for(double& x : weights) x = 1.;
 
@@ -103,7 +104,7 @@ void Node::initializePhasefieldFromParent() const {
     for(Face f : mesh->faces()) {
         double v = 0;
         for(Vertex vertex : f.vertices())
-            v += weights[vertex.idx]*phase[vertex.idx];
+            v += weights[vertex.idx];
         if(v/3. > 0) {
             totalArea += f.area();
             thresholded[f] = 1;
@@ -112,35 +113,29 @@ void Node::initializePhasefieldFromParent() const {
             thresholded[f] = 0;
     }
 
-    if(start.isValid()) {
-        FaceData<char> visited{mesh->faceCount()};
-        std::queue<Face> q;
+    if(!!start) {
+        Bfs<Face> bfs{*mesh};
+        bfs.setSource(start);
         double area = 0;
-        while(!q.empty()) {
-            Face f = q.front();
-            q.pop();
-
+        Face f;
+        while(bfs.step(f)) {
             area += f.area();
-            if(area > totalArea*0.5) break;
+            if(area > totalArea*0.5)
+                break;
+        }
 
-            for(DualEdge edge : f.dualEdges()){
-                Face neighbor = edge.otherFace(f);
-                if(!visited[neighbor] && thresholded[neighbor] > 0.) {
-                    visited[neighbor] = true;
-                    q.push(neighbor);
+        Debug{} << area;
+
+        for(Face face : mesh->faces()) {
+            if(thresholded[face] > 0.) {
+                for(Vertex v : face.vertices()) {
+                   phase[v] = bfs.visited(face) ? 1. : -1.;
                 }
             }
         }
-
-        for(size_t i = 0; i < mesh->vertexCount(); ++i) {
-            if(thresholded[i] > 0.) {
-                if(visited[i])
-                    phase[i] = 1;
-                else
-                    phase[i] = -1;
-            }
-        }
     } else Debug{} << "Could not find any face for which weights are positive";
+
+    Debug{} << totalArea;
 }
 
 
@@ -153,7 +148,7 @@ Debug& operator<<(Debug& debug, Node const& n) {
     return debug;
 }
 
-Tree::Tree(Mesh& m) : mesh(&m), nodeData(1), numLeafs(1) {}
+Tree::Tree(Mesh& m) : mesh(&m), nodeData(1), numLeafs(1) { mesh->requireFaceInformation(); }
 
 //void Tree::subdivide(Containers::Array<UnsignedInt>& indices, Containers::Array<Vector3d>& vertices) {
 //

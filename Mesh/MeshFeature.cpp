@@ -6,6 +6,7 @@
 #include "Mesh.h"
 #include "MeshElements.h"
 
+#include <Magnum/Math/FunctionsBatch.h>
 #include <Corrade/Containers/GrowableArray.h>
 
 namespace Phasefield {
@@ -20,25 +21,33 @@ void AngleFeature::update() {
     for(Corner corner : m.corners()) {
         HalfEdge side1 = corner.side1();
         HalfEdge side2 = corner.side2();
-        m.angle[corner] = Rad{Mg::Math::angle(side1.direction().normalized(), side2.direction().normalized())};
+        m.angle[corner] = Radd{Mg::Math::angle(side1.direction().normalized(), side2.direction().normalized())};
     }
 }
 
-void FaceAreaFeature::update() {
+void FaceInformationFeature::update() {
     Mesh& m = mesh();
     arrayResize(m.faceArea, m.faceCount());
     arrayResize(m.faceNormal, m.faceCount());
+    arrayResize(m.faceDiameter, m.faceCount());
 
     m.surfaceArea = 0;
     for(Face face : m.faces()) {
-        Corner corner = face.halfEdge().corner();
-        Vector3 side1 = corner.side1().direction();
-        Vector3 side2 = corner.side2().direction();
+        size_t i = 0;
+        Vector3 vertices[3];
+        for(Vertex v : face.vertices()) vertices[i++] = v.position();
+
+        Vector3 side1 = vertices[2] - vertices[0];
+        Vector3 side2 = vertices[1] - vertices[0];
+        Vector3 side3 = vertices[2] - vertices[1];
+
         Vector3d normal = Vector3d{Math::cross(side1, side2)};
+
         double area = normal.length()*0.5;
         m.surfaceArea += area;
         m.faceArea[face] = area;
         m.faceNormal[face] = normal.normalized();
+        m.faceDiameter[face] = double(Math::max({side1.length(), side2.length(), side3.length()}));
     }
 }
 
@@ -46,7 +55,7 @@ void EdgeLengthFeature::update() {
     Mesh& m = mesh();
     arrayResize(m.edgeLength, m.edgeCount());
     for(Edge edge : m.edges())
-        m.edgeLength[edge] = (edge.vertex1().position() - edge.vertex2().position()).length();
+        m.edgeLength[edge] = double((edge.vertex1().position() - edge.vertex2().position()).length());
 }
 
 void GaussianCurvatureFeature::update() {
@@ -54,10 +63,10 @@ void GaussianCurvatureFeature::update() {
     m.requireAngles();
     arrayReserve(m.gaussianCurvature, m.vertexCount());
     for(Vertex vertex : m.vertices()) {
-        Rad angleSum{0};
+        Radd angleSum{0};
         for(Corner corner : vertex.corners())
             angleSum += corner.angle();
-        m.gaussianCurvature[vertex] = 2.f*Mg::Math::Constants<float>::pi() - static_cast<float>(angleSum);
+        m.gaussianCurvature[vertex] = 2.*Mg::Math::Constants<double>::pi() - double(angleSum);
     }
 }
 

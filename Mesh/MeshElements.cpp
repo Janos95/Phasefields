@@ -34,9 +34,9 @@ HalfEdge HalfEdge::nextIncomingHalfEdge() const { return next().twin(); }
 
 Corner HalfEdge::corner() const { return Corner{idx, mesh}; }
 
-bool HalfEdge::isInterior() const { return face().isValid(); }
+bool HalfEdge::isInterior() const { return !!face(); }
 
-bool HalfEdge::onBoundaryLoop() const { return !face().isValid(); }
+bool HalfEdge::onBoundaryLoop() const { return !face(); }
 
 Vector3d HalfEdge::asVector() const { return Vector3d(tip().position() - tail().position()); }
 
@@ -119,7 +119,7 @@ Vertex Edge::vertex1() const { return halfEdge().tail(); }
 
 Vertex Edge::vertex2() const { return halfEdge().tip(); }
 
-bool Edge::hasDualEdge() const { return halfEdge().face().isValid() && halfEdge().twin().face().isValid(); }
+bool Edge::hasDualEdge() const { return !!(halfEdge().face()) && !!(halfEdge().twin().face()); }
 
 DualEdge Edge::dualEdge() const {
     CORRADE_ASSERT(hasDualEdge(), "edge does not have a dual edge", {});
@@ -148,7 +148,7 @@ Vertex Corner::vertex() const { return halfEdge().tip(); }
 
 Face Corner::face() const { return halfEdge().face(); }
 
-Rad Corner::angle() const { return mesh->angle[*this]; }
+Radd Corner::angle() const { return mesh->angle[*this]; }
 
 HalfEdge Corner::halfEdge() const { return HalfEdge{idx, mesh}; }
 

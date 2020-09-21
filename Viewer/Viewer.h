@@ -143,7 +143,7 @@ struct Viewer : public Mg::Platform::Application {
 
     VisualizationProxy proxy;
 
-    Node currentNode{Invalid, &tree};
+    Node currentNode{0, &tree};
     bool drawSegmentation = true;
     UnsignedInt colorMapIndex = 0;
     Array<std::pair<const char*, Magnum::GL::Texture2D>> colorMapTextures;

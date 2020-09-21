@@ -25,7 +25,24 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="396f317f-5568-472a-8995-c3750ea4f1fc" name="Default Changelist" comment="" />
+    <list default="true" id="396f317f-5568-472a-8995-c3750ea4f1fc" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cost/ModicaMortola.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/ModicaMortola.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/Bfs.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/Bfs.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/Bfs.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/FastMarchingMethod.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/FastMarchingMethod.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/Mesh.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/Mesh.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/MeshElements.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/MeshElements.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/MeshElements.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/MeshElements.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/MeshFeature.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/MeshFeature.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/MeshFeature.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/MeshFeature.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/Tree.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Tree.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/Tree.h" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Tree.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utilities/CircularBuffer.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/CircularBuffer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/Viewer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Viewer.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/Viewer.h" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Viewer.h" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -45,6 +62,9 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
     <option name="ROOT_SYNC" value="SYNC" />
+  </component>
+  <component name="OCResolveContextSettings">
+    <option name="configuration" value="0-Debug-Optimization" />
   </component>
   <component name="ProjectId" id="1g32PC06JgwCPbkVF0H8xHVXEU1" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -73,6 +93,11 @@
     </key>
   </component>
   <component name="RunManager" selected="CMake Application.Phasefield">
+    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="Cost" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Cost" CONFIG_NAME="Debug-default">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -129,11 +154,6 @@
       </method>
     </configuration>
     <configuration name="VisualizationProxy" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="VisualizationProxy" CONFIG_NAME="Debug-default">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -207,7 +227,8 @@
       <workItem from="1600415221413" duration="4986000" />
       <workItem from="1600420763492" duration="19748000" />
       <workItem from="1600506760552" duration="21429000" />
-      <workItem from="1600598399043" duration="12154000" />
+      <workItem from="1600598399043" duration="12490000" />
+      <workItem from="1600677708565" duration="5120000" />
     </task>
     <servers />
   </component>
@@ -227,38 +248,38 @@
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="1063" y="147" width="424" height="470" key="FileChooserDialogImpl/0.0.2560.1080@0.0.2560.1080" timestamp="1600105553194" />
-    <state width="2514" height="247" key="GridCell.Tab.0.bottom" timestamp="1600620598018">
+    <state width="2514" height="201" key="GridCell.Tab.0.bottom" timestamp="1600682150271">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="247" key="GridCell.Tab.0.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1600620598018" />
-    <state width="2514" height="247" key="GridCell.Tab.0.center" timestamp="1600620598018">
+    <state width="2514" height="201" key="GridCell.Tab.0.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1600682150271" />
+    <state width="2514" height="201" key="GridCell.Tab.0.center" timestamp="1600682150270">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="247" key="GridCell.Tab.0.center/0.0.2560.1080@0.0.2560.1080" timestamp="1600620598018" />
-    <state width="2514" height="247" key="GridCell.Tab.0.left" timestamp="1600620598018">
+    <state width="2514" height="201" key="GridCell.Tab.0.center/0.0.2560.1080@0.0.2560.1080" timestamp="1600682150270" />
+    <state width="2514" height="201" key="GridCell.Tab.0.left" timestamp="1600682150270">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="247" key="GridCell.Tab.0.left/0.0.2560.1080@0.0.2560.1080" timestamp="1600620598018" />
-    <state width="2514" height="247" key="GridCell.Tab.0.right" timestamp="1600620598018">
+    <state width="2514" height="201" key="GridCell.Tab.0.left/0.0.2560.1080@0.0.2560.1080" timestamp="1600682150270" />
+    <state width="2514" height="201" key="GridCell.Tab.0.right" timestamp="1600682150270">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="247" key="GridCell.Tab.0.right/0.0.2560.1080@0.0.2560.1080" timestamp="1600620598018" />
-    <state width="2514" height="247" key="GridCell.Tab.1.bottom" timestamp="1600620598019">
+    <state width="2514" height="201" key="GridCell.Tab.0.right/0.0.2560.1080@0.0.2560.1080" timestamp="1600682150270" />
+    <state width="2514" height="201" key="GridCell.Tab.1.bottom" timestamp="1600682136313">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="247" key="GridCell.Tab.1.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1600620598019" />
-    <state width="2514" height="247" key="GridCell.Tab.1.center" timestamp="1600620598019">
+    <state width="2514" height="201" key="GridCell.Tab.1.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1600682136313" />
+    <state width="2514" height="201" key="GridCell.Tab.1.center" timestamp="1600682136312">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="247" key="GridCell.Tab.1.center/0.0.2560.1080@0.0.2560.1080" timestamp="1600620598019" />
-    <state width="2514" height="247" key="GridCell.Tab.1.left" timestamp="1600620598019">
+    <state width="2514" height="201" key="GridCell.Tab.1.center/0.0.2560.1080@0.0.2560.1080" timestamp="1600682136312" />
+    <state width="2514" height="201" key="GridCell.Tab.1.left" timestamp="1600682136312">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="247" key="GridCell.Tab.1.left/0.0.2560.1080@0.0.2560.1080" timestamp="1600620598019" />
-    <state width="2514" height="247" key="GridCell.Tab.1.right" timestamp="1600620598019">
+    <state width="2514" height="201" key="GridCell.Tab.1.left/0.0.2560.1080@0.0.2560.1080" timestamp="1600682136312" />
+    <state width="2514" height="201" key="GridCell.Tab.1.right" timestamp="1600682136312">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="247" key="GridCell.Tab.1.right/0.0.2560.1080@0.0.2560.1080" timestamp="1600620598019" />
+    <state width="2514" height="201" key="GridCell.Tab.1.right/0.0.2560.1080@0.0.2560.1080" timestamp="1600682136312" />
     <state x="443" y="122" key="SettingsEditor" timestamp="1600617373857">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
@@ -285,6 +306,15 @@
     <state x="943" y="253" width="672" height="678" key="search.everywhere.popup/0.0.2560.1080@0.0.2560.1080" timestamp="1600433678589" />
   </component>
   <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Viewer/Viewer.cpp</url>
+          <line>201</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
     <watches-manager>
       <configuration name="CMakeRunConfiguration">
         <watch expression="this" />

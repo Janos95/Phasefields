@@ -59,11 +59,13 @@ public:
 
     T& operator[](E n) {
         CORRADE_CONSTEXPR_ASSERT(n.idx < this->size(), "Index Out of Bounds");
+        if constexpr (std::is_same_v<E, Corner> || std::is_same_v<E, DualEdge>)
+            CORRADE_CONSTEXPR_ASSERT(n.isValid(), "Element does not represent a valid index");
         return (*this)[n.idx];
     }
 
     T const& operator[](E n) const {
-        CORRADE_CONSTEXPR_ASSERT(n.idx < this->size(), "Index Out of Bounds");
+        CORRADE_CONSTEXPR_ASSERT(n.idx < this->size() && n, "Index Out of Bounds");
         return (*this)[n.idx];
     }
 
@@ -73,6 +75,8 @@ public:
 template<class E, class T>
 class MeshDataView : public ArrayView<T> {
 public:
+
+    /* implicit */ MeshDataView(ArrayView<T> v) : ArrayView<T>(v) {}
 
     T& operator[](E n) {
         CORRADE_CONSTEXPR_ASSERT(n.idx < this->size(), "Index Out of Bounds");
@@ -86,24 +90,6 @@ public:
 
     using ArrayView<T>::ArrayView;
 };
-
-template<class T> using VertexData = MeshData<Vertex, T>;
-template<class T> using VertexDataView = MeshDataView<Vertex, T>;
-
-template<class T> using FaceData = MeshData<Face, T>;
-template<class T> using FaceDataView = MeshDataView<Face, T>;
-
-template<class T> using EdgeData = MeshData<Edge, T>;
-template<class T> using EdgeDataView = MeshDataView<Edge, T>;
-
-template<class T> using HalfEdgeData = MeshData<HalfEdge, T>;
-template<class T> using HalfEdgeDataView = MeshDataView<HalfEdge, T>;
-
-template<class T> using CornerData = MeshData<Corner, T>;
-template<class T> using CornerDataView = MeshDataView<Corner, T>;
-
-template<class T> using DualEdgeData = MeshData<DualEdge, T>;
-template<class T> using DualEdgeDataView = MeshDataView<DualEdge, T>;
 
 class Mesh {
 public:
@@ -133,7 +119,7 @@ public:
 
     void requireEdgeLengths() { requireFeature<EdgeLengthFeature>(*this); }
 
-    void requireFaceAreas() { requireFeature<FaceAreaFeature>(*this); }
+    void requireFaceInformation() { requireFeature<FaceInformationFeature>(*this); }
 
     void requireAngles() { requireFeature<AngleFeature>(*this); }
 
@@ -143,17 +129,17 @@ public:
     }
 
     void requireGradientOperator() {
-        requireFaceAreas();
+        requireFaceInformation();
         requireFeature<GradientFeature>(*this);
     }
 
     void requireMassMatrix() {
-        requireFaceAreas();
+        requireFaceInformation();
         requireFeature<MassMatrixFeature>(*this);
     }
 
     void requireIntegralOperator() {
-        requireFaceAreas();
+        requireFaceInformation();
         requireFeature<IntegralOperatorFeature>(*this);
     }
 
@@ -209,7 +195,7 @@ public:
 
     EdgeData<double> edgeLength;
 
-    CornerData<Rad> angle;
+    CornerData<Radd> angle;
 
     FaceData<double> faceArea;
     FaceData<Vector3d> faceNormal;
