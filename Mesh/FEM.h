@@ -13,7 +13,7 @@ struct IntegralOperatorFeature : public MeshFeature {
 
     void update() override;
 
-    const char* name() override { return "IntegralOperator"; }
+    FEATURE_NAME("IntegralOperator")
 };
 
 struct MassMatrixFeature : public MeshFeature {
@@ -21,23 +21,23 @@ struct MassMatrixFeature : public MeshFeature {
 
     void update() override;
 
-    const char* name() override { return "MassMatrix"; }
+    FEATURE_NAME("MassMatrix")
 };
 
-//struct StiffnessMatrixFeature : public MeshFeature {
-//    using MeshFeature::MeshFeature;
-//
-//    void update() override;
-//
-//    const char* name() override { return "StiffnessMatrix"; }
-//};
+struct StiffnessMatrixFeature : public MeshFeature {
+    using MeshFeature::MeshFeature;
+
+    void update() override;
+
+    FEATURE_NAME("StiffnessMatrix")
+};
 
 struct GradientFeature : public MeshFeature {
     using MeshFeature::MeshFeature;
 
     void update() override;
 
-    const char* name() override { return "Gradient"; }
+    FEATURE_NAME("Gradient")
 };
 
 }

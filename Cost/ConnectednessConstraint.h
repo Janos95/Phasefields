@@ -5,25 +5,33 @@
 #pragma once
 
 #include "Functional.h"
-#include "Dijkstra.h"
 #include "Surface.h"
+
+class adouble;
 
 namespace Phasefield {
 
 namespace Mn = Magnum;
 namespace Cr = Corrade;
 
+class Viewer;
+
 struct ConnectednessConstraint {
     explicit ConnectednessConstraint(Mesh&);
 
     template<class Scalar>
-    void operator()(ArrayView<const Scalar> const& parameters,
-                    ArrayView<const Scalar> const& weights,
+    void operator()(ArrayView<const Scalar> parameters,
+                    ArrayView<const Scalar> weights,
                     Scalar& out,
-                    ArrayView<Scalar> const& gradP,
-                    ArrayView<Scalar> const& gradW);
+                    ArrayView<Scalar> gradP,
+                    ArrayView<Scalar> gradW);
 
     [[nodiscard]] size_t numParameters() const;
+    [[nodiscard]] static FunctionalType::Value type() { return FunctionalType::ConnectednessConstraint; }
+
+    void drawImGuiOptions(VisualizationProxy&);
+
+    void draw(Viewer&);
 
     Mesh* mesh;
 
@@ -37,7 +45,10 @@ struct ConnectednessConstraint {
      */
     //void collectVisualizationData(Containers::ArrayView<const double*> const& grad);
 
-    double a = 0.05, b = 1.;
+    double a = -1.1, b = 0;
+    bool drawComponents = false;
+    bool drawGradient = false;
+    bool ignoreSmallComponents = false;
     //double pathThickness = 0.01;
 
     //Cr::Containers::Array<InstanceData> instanceData; //tf from cylinder to path section
@@ -49,7 +60,10 @@ struct ConnectednessConstraint {
     //bool updateWs = false;
 };
 
+
 DECLARE_FUNCTIONAL_CONSTRUCTOR(ConnectednessConstraint)
 DECLARE_FUNCTIONAL_OPERATOR(ConnectednessConstraint, double)
+DECLARE_FUNCTIONAL_OPERATOR(ConnectednessConstraint, adouble)
 
 }
+

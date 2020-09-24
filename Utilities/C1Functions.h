@@ -9,31 +9,33 @@
 #include <Corrade/Utility/StlMath.h>
 #include <Magnum/Math/Functions.h>
 
-template<class T>
 struct F {
+
+    template<class T>
     T eval(const T x) const {
         if(x < a) return pow(x - a, 2);
         if(x < b) return T{0};
         return pow(x - b, 2);
     }
 
+    template<class T>
     T grad(const T x) const {
         if(x < a) return 2*(x - a);
         if(x < b) return T{0};
         return 2*(x - b);
     }
 
-    T a, b;
+    double a, b;
 };
 
 class W {
 public:
 
-    W(const double a, const double b) : m_a(a), m_b(b), m_c3(-30./std::pow(a - b, 5)) {
+    W(const double a, const double b) : m_a(a), m_b(b), m_c3(-30./pow(a - b, 5)) {
     }
 
     template<class T>
-    T operator()(const T& x) const {
+    T eval(const T& x) const {
         if(x < m_a)
             return 0.;
         if(x < m_b)
@@ -42,17 +44,8 @@ public:
         return 0.;
     }
 
-private:
-    const double m_a, m_b, m_c3;
-};
-
-class WGrad {
-public:
-
-    WGrad(const double a, const double b) : m_a(a), m_b(b), m_c3(-30./std::pow(a - b, 5)) {
-    }
-
-    inline double operator()(const double x) const {
+    template<class Scalar>
+    inline Scalar grad(Scalar x) const {
         if(x < m_a)
             return 0.;
         if(x < m_b)
@@ -62,19 +55,6 @@ public:
 
 private:
     const double m_a, m_b, m_c3;
-};
-
-struct DoubleWell {
-    template<typename T>
-    auto eval(const T x) const {
-        return 9./16.*std::pow(x*x - 1., 2);
-    }
-
-    template<typename T>
-    auto grad(const T x) const {
-        return 9./4.*(x*x - 1)*x;
-    }
-
 };
 
 struct SmootherStep {
@@ -99,16 +79,47 @@ struct SmootherStep {
     }
 };
 
+struct DoubleWell {
+    template<typename T>
+    auto eval(const T x) const {
+        return 9./16.*(x*x - 1.)*(x*x - 1);
+    }
+
+    template<typename T>
+    auto grad(const T x) const {
+        return 9./4.*(x*x - 1)*x;
+    }
+
+};
 
 struct SmoothIndicatorFunction {
     template<class T>
     auto eval(const T x) const {
-        return 0.25*Math::pow<2>(x + 1.);
+        return 0.25*(x + 1.)*(x + 1.);
     }
 
     template<class T>
     auto grad(const T x) const {
         return .5*(x + 1.);
+    }
+};
+
+struct WeightExitPenalty {
+
+    double p = 10;
+
+    template<class T>
+    T eval(const T x) const {
+        if(x < 1.)
+            return p*(x - 1)*(x - 1);
+        return T(0.);
+    }
+
+    template<class T>
+    T grad(const T x) const {
+        if(x < 1.)
+            return 2*p*(x - 1);
+        return T(0.);
     }
 };
 

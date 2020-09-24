@@ -9,6 +9,7 @@ add_library(Viewer STATIC
         ArcBall.cpp
         ArcBall.h
         KDTree.h
+        KDTree.cpp
         ${viewer_RESOURCES})
 
 target_include_directories(Viewer PUBLIC ${CMAKE_CURRENT_LIST_DIR})
@@ -34,8 +35,6 @@ target_link_libraries(Viewer
             MagnumIntegration::ImGui
 
             ImGui::SourcesMiscCpp
-
-            /usr/lib/libavcodec.so
         )
 
 add_library(Phasefield::Viewer ALIAS Viewer)

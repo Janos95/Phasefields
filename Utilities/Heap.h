@@ -56,6 +56,20 @@ public:
 
     explicit Heap(size_t n, Comp comp = {}) : m_comp{comp} { reserve(n); }
 
+    Heap(Heap&& other) noexcept  { other.swap(*this); }
+
+    Heap& operator=(Heap&& other) { other.swap(*this); return *this; }
+
+    Heap(Heap const& other) = delete;
+    Heap& operator=(Heap const& other) = delete;
+
+    void swap(Heap& other) {
+        std::swap(m_data, other.m_data);
+        std::swap(m_size, other.m_size);
+        std::swap(m_capacity, other.m_capacity);
+        std::swap(m_comp, other.m_comp);
+    }
+
     template<class It>
     explicit Heap(It first, It end, Comp comp = {}) : m_comp{comp} {
         m_size = end - first;

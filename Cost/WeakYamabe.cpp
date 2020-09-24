@@ -9,6 +9,8 @@
 
 #include <Corrade/Containers/Array.h>
 
+#include <adolc/adouble.h>
+
 namespace Phasefield {
 
 WeakYamabe::WeakYamabe(Mesh& m) : mesh(&m) {
@@ -20,8 +22,9 @@ WeakYamabe::WeakYamabe(Mesh& m) : mesh(&m) {
  * ∫ ∇s(∇χ(u)⋅ϕ + χ(u)⋅∇ϕ) - K⋅χ(u)⋅ϕ
  */
 template<class Scalar>
-void WeakYamabe::operator()(const ArrayView<const Scalar>& parameters, const ArrayView<const Scalar>& weights, double& out,
-                       const ArrayView<Scalar>& gradP, const ArrayView<Scalar>& gradW) {
+void WeakYamabe::operator()(
+         ArrayView<const Scalar> parameters, ArrayView<const Scalar> weights, Scalar& out,
+         ArrayView<Scalar> gradP, ArrayView<Scalar> gradW) {
 
     SmoothIndicatorFunction chi;
 
@@ -32,13 +35,14 @@ void WeakYamabe::operator()(const ArrayView<const Scalar>& parameters, const Arr
     VertexData<Scalar> difference{n};
 
     for(Face face : mesh->faces()) {
-        Vector3d gradScaling{0};
-        Vector3d gradChiOfU{0};
+        Math::Vector3<Scalar> gradScaling{0};
+        Math::Vector3<Scalar> gradChiOfU{0};
 
         for(HalfEdge he : face.halfEdges()) {
             Vertex v = he.next().tip();
-            gradScaling += scalingFactor[v.idx]*mesh->gradient[he];
-            gradChiOfU += chi.eval(phasefield[v.idx])*mesh->gradient[he];
+            Math::Vector3<Scalar> gradBasis{mesh->gradient[he]};
+            gradScaling += scalingFactor[v.idx]*gradBasis;
+            gradChiOfU += chi.eval(phasefield[v.idx])*gradBasis;
         }
 
         Scalar scaleDotChi = Math::dot(gradScaling, gradChiOfU);
@@ -48,7 +52,7 @@ void WeakYamabe::operator()(const ArrayView<const Scalar>& parameters, const Arr
             size_t idx = v.idx;
 
             Scalar chiOfU = chi.eval(phasefield[v.idx]);
-            Vector3d gradBasis = mesh->gradient[he];
+            Math::Vector3<Scalar> gradBasis{mesh->gradient[he]};
 
             difference[v] += (scaleDotChi + chiOfU*Math::dot(gradScaling, gradBasis) - v.gaussianCurvature()*chiOfU)*1./3.*face.area();
         }
@@ -63,5 +67,6 @@ size_t WeakYamabe::numParameters() const { return mesh->vertexCount(); }
 
 DEFINE_FUNCTIONAL_CONSTRUCTOR(WeakYamabe)
 DEFINE_FUNCTIONAL_OPERATOR(WeakYamabe, double)
+DEFINE_FUNCTIONAL_OPERATOR(WeakYamabe, adouble)
 
 }

@@ -21,11 +21,43 @@
 
 namespace Phasefield {
 
-using namespace Magnum;
-using namespace Corrade;
+using namespace Mg::Math::Literals;
 
-VisualizationProxy::VisualizationProxy(Viewer& v) : viewer(v) {
+const Color4 kelly_colors[] = {
+    0xFFFFB300_rgbf, //Vivid Yellow
+    0xFF803E75_rgbf, //Strong Purple
+    0xFFFF6800_rgbf, //Vivid Orange
+    0xFFA6BDD7_rgbf, //Very Light Blue
+    0xFFC10020_rgbf, //Vivid Red
+    0xFFCEA262_rgbf, //Grayish Yellow
+    0xFF817066_rgbf, //Medium Gray
+    0xFF007D34_rgbf, //Vivid Green
+    0xFFF6768E_rgbf, //Strong Purplish Pink
+    0xFF00538A_rgbf, //Strong Blue
+    0xFFFF7A5C_rgbf, //Strong Yellowish Pink
+    0xFF53377A_rgbf, //Strong Violet
+    0xFFFF8E00_rgbf, //Vivid Orange Yellow
+    0xFFB32851_rgbf, //Strong Purplish Red
+    0xFFF4C800_rgbf, //Vivid Greenish Yellow
+    0xFF7F180D_rgbf, //Strong Reddish Brown
+    0xFF93AA00_rgbf, //Vivid Yellowish Green
+    0xFF593315_rgbf, //Deep Yellowish Brown
+    0xFFF13A13_rgbf, //Vivid Reddish Orange
+    0xFF232C16_rgbf //Dark Olive Green
+};
+
+Array<Color4>& getColors(size_t n) {
+    static Array<Color4> colors;
+    if(n != colors.size()) {
+        arrayResize(colors, n);
+        Deg hue = 100.0_degf;
+        for(auto& c : colors) /* generate random colors */
+            c = Color4::fromHsv({hue += 137.5_degf, 0.9f, 0.9f});
+    }
+    return colors;
 }
+
+VisualizationProxy::VisualizationProxy(Viewer& v) : viewer(v) { setDefaultCallback(); }
 
 //void VisualizationProxy::setFaceColors(Containers::ArrayView<double>& data){
 //    std::lock_guard l(mutex);
@@ -47,33 +79,28 @@ void VisualizationProxy::upload() {
     }
 }
 
-void VisualizationProxy::setVertexColors(Containers::StridedArrayView1D<double> const& data) {
+void VisualizationProxy::drawPhasefield() {
+    auto data = viewer.currentNode.phasefield();
     CORRADE_INTERNAL_ASSERT(data.size() == viewer.mesh.vertexCount());
     for(size_t i = 0; i < viewer.mesh.vertexCount(); ++i)
         viewer.mesh.scalars()[i] = 0.5*(data[i] + 1.);
-    shaderConfig = ShaderConfig::ColorMaps;
-    updateVertexBuffer = true;
 }
 
-void VisualizationProxy::setTag(Mg::Int tag) {
-    activeTag = tag;
+void VisualizationProxy::drawWeights() {
+    auto data = viewer.currentNode.temporary();
+    for(size_t i = 0; i < viewer.mesh.vertexCount(); ++i)
+        viewer.mesh.scalars()[i] = 0.5*(data[i] + 1.);
 }
 
-bool VisualizationProxy::isActiveTag(Mg::Int tag) const {
-    return tag == activeTag;
-}
+void VisualizationProxy::drawSegmentation() {
 
-void VisualizationProxy::setVertexColors(Tree& tree) {
+    Tree& tree = viewer.tree;
 
-    if(colors.size() != tree.numLeafs*2) {
-        arrayResize(colors, Containers::NoInit, tree.numLeafs*2);
-        Deg hue = 100.0_degf;
-        for(auto& c : colors) /* genereate random colors */
-            c = Color4::fromHsv({hue += 137.5_degf, 0.9f, 0.9f});
-    }
-
+    auto& colors = getColors(tree.numLeafs*2);
     auto vertexColors = viewer.mesh.colors();
-    for(auto& c: vertexColors) c = Color4{0};
+
+    for(double& w : tree.root().temporary()) w = 1.;
+    for(Color4& c : vertexColors) c = Color4{};
 
     size_t n = tree.vertexCount();
     SmootherStep smoothStep;
@@ -82,6 +109,7 @@ void VisualizationProxy::setVertexColors(Tree& tree) {
     //Debug{} << min << " " << max;
 
     for(Node node : tree.internalNodes()) {
+        Debug{} << node;
         auto weights = node.temporary();
         for(size_t i = 0; i < n; ++i) {
             if(node.hasLeftChild()) {
@@ -89,7 +117,7 @@ void VisualizationProxy::setVertexColors(Tree& tree) {
                 leftChild.temporary()[i] = smoothStep.eval(node.phasefield()[i])*weights[i];
             }
             if(node.hasRightChild()) {
-                Node rightChild = node.leftChild();
+                Node rightChild = node.rightChild();
                 rightChild.temporary()[i] = smoothStep.eval(-node.phasefield()[i])*weights[i];
             }
         }
@@ -104,8 +132,36 @@ void VisualizationProxy::setVertexColors(Tree& tree) {
         ++leafIdx;
     }
 
-    shaderConfig = ShaderConfig::VertexColors;
+}
+
+void VisualizationProxy::redraw() {
+    cb(&viewer);
+    viewer.redraw();
     updateVertexBuffer = true;
 }
+
+void VisualizationProxy::setDefaultCallback() {
+    isDefaultCallback = true;
+    switch(option) {
+        case VisOption::Segmentation :
+            cb = [this](Viewer*) { drawSegmentation(); };
+            shaderConfig = ShaderConfig::VertexColors;
+            break;
+        case VisOption::Phasefield :
+            cb = [this](Viewer*) { drawPhasefield(); };
+            shaderConfig = ShaderConfig::ColorMaps;
+            break;
+        case VisOption::Weight :
+            cb = [this](Viewer*) { drawWeights(); };
+            shaderConfig = ShaderConfig::ColorMaps;
+            break;
+    }
+}
+
+void VisualizationProxy::setCallback(UniqueFunction<void(Viewer*)>&& cb_) {
+    cb = std::move(cb_);
+    isDefaultCallback = false;
+}
+
 
 }

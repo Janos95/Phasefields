@@ -11,13 +11,32 @@
 
 namespace Phasefield {
 
-MeshFeature::MeshFeature(Mesh& mesh): m_mesh(mesh) {}
+MeshFeature::MeshFeature(Mesh& mesh, bool ownedByMesh): m_mesh(&mesh), m_ownedByMesh(ownedByMesh) {
+    arrayAppend(mesh.m_features, this);
+}
 
-Mesh& MeshFeature::mesh() { return m_mesh; }
+Mesh& MeshFeature::mesh() { return *m_mesh; }
+
+MeshFeature::~MeshFeature() {
+    if(!m_ownedByMesh) { /* if the mesh is now owning the feature we deregister the feature */
+        size_t j = Invalid;
+        auto& features = m_mesh->m_features;
+        for(size_t i = 0; i < features.size(); ++i) {
+            if(m_mesh->m_features[i] == this) {
+                j = i;
+                break;
+            }
+        }
+        if(j != Invalid) {
+            std::swap(features[j], features.back());
+            arrayResize(features, features.size() - 1);
+        }
+    }
+}
 
 void AngleFeature::update() {
     Mesh& m = mesh();
-    arrayResize(m.angle, DirectInit, m.halfEdgeCount(), Invalid);
+    m.angle = CornerData<Radd>{m.halfEdgeCount()};
     for(Corner corner : m.corners()) {
         HalfEdge side1 = corner.side1();
         HalfEdge side2 = corner.side2();
@@ -27,11 +46,12 @@ void AngleFeature::update() {
 
 void FaceInformationFeature::update() {
     Mesh& m = mesh();
-    arrayResize(m.faceArea, m.faceCount());
-    arrayResize(m.faceNormal, m.faceCount());
-    arrayResize(m.faceDiameter, m.faceCount());
 
+    m.faceArea = FaceData<double>{m.faceCount()};
+    m.faceNormal = FaceData<Vector3d>{m.faceCount()};
+    m.faceDiameter = FaceData<double>{m.faceCount()};
     m.surfaceArea = 0;
+
     for(Face face : m.faces()) {
         size_t i = 0;
         Vector3 vertices[3];
@@ -53,7 +73,7 @@ void FaceInformationFeature::update() {
 
 void EdgeLengthFeature::update() {
     Mesh& m = mesh();
-    arrayResize(m.edgeLength, m.edgeCount());
+    m.edgeLength = EdgeData<double>{m.edgeCount()};
     for(Edge edge : m.edges())
         m.edgeLength[edge] = double((edge.vertex1().position() - edge.vertex2().position()).length());
 }
@@ -61,7 +81,7 @@ void EdgeLengthFeature::update() {
 void GaussianCurvatureFeature::update() {
     Mesh& m = mesh();
     m.requireAngles();
-    arrayReserve(m.gaussianCurvature, m.vertexCount());
+    m.gaussianCurvature = VertexData<double>{m.vertexCount()};
     for(Vertex vertex : m.vertices()) {
         Radd angleSum{0};
         for(Corner corner : vertex.corners())

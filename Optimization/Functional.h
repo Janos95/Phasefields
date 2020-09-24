@@ -17,14 +17,15 @@ class adouble;
 
 namespace Phasefield {
 
-enum class OptionsResult : Mg::UnsignedInt {
-    EvaluateProblem = 1,
-    MakeUniqueVisualizer = 2,
-};
+//enum class OptionsResult : Mg::UnsignedInt {
+//    EvaluateProblem = 1,
+//    MakeUniqueVisualizer = 2,
+//    UnmakeUniqueVisualizer = 3,
+//};
 
-using OptionsResultSet = Cr::Containers::EnumSet<OptionsResult>;
-
-CORRADE_ENUMSET_OPERATORS(OptionsResultSet)
+//using OptionsResultSet = Cr::Containers::EnumSet<OptionsResult>;
+//
+//CORRADE_ENUMSET_OPERATORS(OptionsResultSet)
 
 struct Functional {
 
@@ -60,9 +61,7 @@ struct Functional {
                     ArrayView<double> gradP,
                     ArrayView<double> gradW) const;
 
-    //void
-    //operator()(Containers::ArrayView<const adouble> const& params, Containers::ArrayView<const adouble> const& weights,
-    //           adouble& residual) const;
+    //void operator()(Containers::ArrayView<const adouble> const& params, Containers::ArrayView<const adouble> const& weights, adouble& residual) const;
 
     //void tapeEvaluation(double const* x) const;
 
@@ -72,7 +71,7 @@ struct Functional {
 
     //void turnVisualizationOff();
 
-    OptionsResultSet drawImGuiOptions(VisualizationProxy&);
+    void drawImGuiOptions(VisualizationProxy&);
 
     /* mandatory */
     void* erased = nullptr;
@@ -86,7 +85,7 @@ struct Functional {
 
     //void (* off)(void*) = nullptr;
 
-    OptionsResultSet (* options)(void*, VisualizationProxy&) = nullptr;
+    void (* options)(void*, VisualizationProxy&) = nullptr;
 
     //std::size_t (* residuals)(void*) = nullptr;
 
@@ -96,7 +95,7 @@ struct Functional {
                           ArrayView<double> gradP,
                           ArrayView<double> gradW);
 
-    //void (* ad)(void*, adouble const*, adouble const*, adouble*) = nullptr;
+    void (* ad)(void*, ArrayView<const adouble>, ArrayView<const adouble>, adouble&) = nullptr;
 
     //int tag = -1;
     //mutable bool isFirstEvaluation = false;
@@ -107,23 +106,24 @@ struct Functional {
     LossFunction loss = TrivialLoss{};
     SharedRessource<double> scaling = nullptr;
 
-    int tag = -1;
+    size_t tag = Invalid;
+    bool drawGradient = false;
 };
 
 
 #define DECLARE_FUNCTIONAL_OPERATOR(name, type) \
-extern template void name::operator()(ArrayView<const type> const& parameters, \
-                                      ArrayView<const type> const& weights, \
+extern template void name::operator()(ArrayView<const type> parameters, \
+                                      ArrayView<const type> weights, \
                                       type& out, \
-                                      ArrayView<type> const& gradP, \
-                                      ArrayView<type> const& gradW);
+                                      ArrayView<type> gradP, \
+                                      ArrayView<type> gradW);
 
 #define DEFINE_FUNCTIONAL_OPERATOR(name, type) \
-template void name::operator()(ArrayView<const type> const& parameters, \
-                                      ArrayView<const type> const& weights, \
+template void name::operator()(ArrayView<const type> parameters, \
+                                      ArrayView<const type> weights, \
                                       type& out, \
-                                      ArrayView<type> const& gradP, \
-                                      ArrayView<type> const& gradW);
+                                      ArrayView<type> gradP, \
+                                      ArrayView<type> gradW);
 
 #define DECLARE_FUNCTIONAL_CONSTRUCTOR(name) extern template Functional::Functional(name);
 #define DEFINE_FUNCTIONAL_CONSTRUCTOR(name) template Functional::Functional(name);

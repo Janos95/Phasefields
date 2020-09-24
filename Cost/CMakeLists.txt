@@ -1,6 +1,6 @@
 find_package(Ceres CONFIG REQUIRED)
 find_package(TBB CONFIG REQUIRED)
-
+find_package(OpenMP)
 find_package(PkgConfig REQUIRED)
 
 list(APPEND CMAKE_PREFIX_PATH /home/janos/libraries/prefix/)
@@ -30,15 +30,20 @@ target_include_directories(Cost PUBLIC
 
 target_link_libraries(Cost PRIVATE
         ScopedTimer::ScopedTimer
+        OpenMP::OpenMP_CXX
+        Eigen3::Eigen
+        ImGui::ImGui
+        Phasefield::Viewer
+        TBB::tbb
+        PkgConfig::Adolc
         )
 
 target_link_libraries(Cost PUBLIC
         Phasefield::Utilities
         #Phasefield::Visualization
-        #Phasefield::VisualizationProxy
+        Phasefield::VisualizationProxy
         Phasefield::Mesh
         Phasefield::Optimization
-        Eigen3::Eigen
         )
 
 set_property(TARGET Cost PROPERTY POSITION_INDEPENDENT_CODE ON)

@@ -48,7 +48,7 @@ struct HalfEdgeIncidency {
 
 /**
  * wrapper around an Array and ArrayView which support type safe indexing
- * and also check for out of bounds array access which can be disabled by
+ * and also check for incorrect array access which can be disabled by
  * defining CORRADE_NO_ASSERT
  * @tparam N
  * @tparam T
@@ -101,46 +101,45 @@ public:
     friend MeshFeature;
 
     explicit Mesh() = default;
+     ~Mesh();
 
     explicit Mesh(Mg::Trade::MeshData const& meshData);
 
     void setFromData(Mg::Trade::MeshData const& meshData);
 
-    template<class T, class... Args>
-    void requireFeature(Args&&... args) {
-        auto feature = pointer<T>((Args&&)args...);
-        size_t idx = lookUpFeature(feature->name());
+    [[nodiscard]] Mg::Trade::MeshData meshDataView() const;
+
+    template<class T>
+    void checkAndAddFeature() {
+        size_t idx = lookUpFeature(T::Name);
         if(idx == Invalid) {
-            //Debug{} << "Requiring feature" << feature->name();
-            feature->update();
-            arrayAppend(m_features, InPlaceInit, std::move(feature));
+            MeshFeature* f = new T{*this};
+            f->update();
         }
     }
 
-    void requireEdgeLengths() { requireFeature<EdgeLengthFeature>(*this); }
-
-    void requireFaceInformation() { requireFeature<FaceInformationFeature>(*this); }
-
-    void requireAngles() { requireFeature<AngleFeature>(*this); }
-
+    void requireEdgeLengths() { checkAndAddFeature<EdgeLengthFeature>(); }
+    void requireFaceInformation() { checkAndAddFeature<FaceInformationFeature>(); }
+    void requireAngles() { checkAndAddFeature<AngleFeature>(); }
     void requireGaussianCurvature() {
         requireAngles();
-        requireFeature<GaussianCurvatureFeature>(*this);
+        checkAndAddFeature<GaussianCurvatureFeature>();
     }
-
     void requireGradientOperator() {
         requireFaceInformation();
-        requireFeature<GradientFeature>(*this);
+        checkAndAddFeature<GradientFeature>();
     }
-
     void requireMassMatrix() {
         requireFaceInformation();
-        requireFeature<MassMatrixFeature>(*this);
+        checkAndAddFeature<MassMatrixFeature>();
     }
-
+    void requireStiffnessMatrix() {
+        requireFaceInformation();
+        checkAndAddFeature<StiffnessMatrixFeature>();
+    }
     void requireIntegralOperator() {
         requireFaceInformation();
-        requireFeature<IntegralOperatorFeature>(*this);
+        checkAndAddFeature<IntegralOperatorFeature>();
     }
 
     [[nodiscard]] size_t vertexCount() const;
@@ -191,6 +190,18 @@ public:
 
     [[nodiscard]] StridedArrayView1D<Color4> colors();
 
+    [[nodiscard]] Color4 const& color(Vertex const&) const;
+
+    [[nodiscard]] Color4& color(Vertex const&);
+
+    [[nodiscard]] Float& scalar(Vertex const&);
+
+    [[nodiscard]] StridedArrayView1D<const Vector2> textureCoordinates() const;
+
+    [[nodiscard]] StridedArrayView1D<Vector2> textureCoordinates();
+
+    [[nodiscard]] ArrayView<const Vector3ui> triangels() const;
+
     void update();
 
     EdgeData<double> edgeLength;
@@ -207,21 +218,17 @@ public:
     /* Fem operators */
     VertexData<double> integral;
     Array<Triplet> massMatrix;
-    //Array<Triplet> stiffnessMatrix;
+    Array<Triplet> stiffnessMatrix;
     HalfEdgeData<Vector3d> gradient;
 
     double surfaceArea;
 
+    bool isTriangularMesh();
+    bool checkDualGraph();
+
 protected:
 
     size_t lookUpFeature(const char*);
-
-    bool m_requireEdgeLength;
-    bool m_requireAngle;
-    bool m_requiresFaceArea;
-    bool m_requiresGaussianCurvature;
-    bool m_requireDegree;
-    bool m_requireIntegralOperator;
 
     Array<Implementation::Attributes> m_attributes;
     Array<UnsignedInt> m_indices;
@@ -230,8 +237,6 @@ protected:
     Array<UnsignedInt> m_faceHalfEdge;
     Array<UnsignedInt> m_vertexHalfEdge;
 
-    Array<size_t> m_outgoingHalfEdges;
-
     size_t m_faceCount = 0;
     size_t m_vertexCount = 0;
     size_t m_edgeCount = 0;
@@ -239,7 +244,7 @@ protected:
     size_t m_cornerCount = 0;
     size_t m_dualEdgeCount = 0;
 
-    Array<Pointer<MeshFeature>> m_features;
+    Array<MeshFeature*> m_features;
 };
 
 }

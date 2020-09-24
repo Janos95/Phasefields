@@ -7,7 +7,7 @@
 #include <Corrade/Utility/StlMath.h>
 #include <Corrade/Utility/Assert.h>
 
-#include <adolc/adouble.h>
+//#include <adolc/adouble.h>
 
 #include <imgui.h>
 #include <utility>
@@ -19,9 +19,9 @@ template<class T>
 LossFunction::LossFunction(T f) {
     erased = ::operator new(sizeof(T), std::align_val_t(alignof(T)));
     ::new(erased) T(std::move(f));
-    ad = +[](void* e, adouble const& x, adouble& y) {
-        (*static_cast<T*>(e))(x, y);
-    };
+    //ad = +[](void* e, adouble const& x, adouble& y) {
+    //    (*static_cast<T*>(e))(x, y);
+    //};
     loss = +[](void* e, double x, double ys[3]) {
         (*static_cast<T*>(e))(x, ys);
     };
@@ -88,7 +88,7 @@ LossFunction& LossFunction::operator=(LossFunction&& other) noexcept {
 }
 
 void LossFunction::swap(LossFunction& other) {
-    std::swap(ad, other.ad);
+    //std::swap(ad, other.ad);
     std::swap(loss, other.loss);
     std::swap(destroy, other.destroy);
     std::swap(erased, other.erased);
@@ -102,10 +102,10 @@ void LossFunction::operator()(double const& in, double out[3]) const {
     for(size_t i = 0; i < 3; ++i) out[i] *= weight;
 }
 
-void LossFunction::operator()(adouble const& x, adouble& y) const {
-    ad(erased, x, y);
-    y *= weight;
-}
+//void LossFunction::operator()(adouble const& x, adouble& y) const {
+//    ad(erased, x, y);
+//    y *= weight;
+//}
 
 void TrivialLoss::operator()(double const& in, double out[3]) const {
     out[0] = in;

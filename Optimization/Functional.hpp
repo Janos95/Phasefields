@@ -55,6 +55,14 @@ Functional::Functional(F f): tag(getTag()) {
         return (*static_cast<F*>(e))(p, w, r, gradP, gradW);
     };
 
+    ad = +[](
+            void* e,
+            ArrayView<const adouble> p,
+            ArrayView<const adouble> w,
+            adouble& r) {
+        return (*static_cast<F*>(e)).template operator()<adouble>(p, w, r, nullptr, nullptr);
+    };
+
     /* mandatory */
     erased = ::operator new(sizeof(F), std::align_val_t(alignof(F)));
     ::new(erased) F(std::move(f));
@@ -69,16 +77,18 @@ Functional::Functional(F f): tag(getTag()) {
 
 
     /* optional */
-    if constexpr(requires { f.drawImGuiOptions(); }) {
+    if constexpr(requires(VisualizationProxy& p) { f.drawImGuiOptions(p); }) {
         //vis = +[](void* e, VisualizationProxy& proxy) { return static_cast<F*>(e)->updateVisualization(proxy); };
         //off = +[](void* e) { return static_cast<F*>(e)->turnVisualizationOff(); };
-        options = +[](void* e) { return static_cast<F*>(e)->drawImGuiOptions(); };
+        options = +[](void* e, VisualizationProxy& p) { static_cast<F*>(e)->drawImGuiOptions(p); };
     }
 
     if constexpr (requires { F::type(); })
         functionalType = F::type();
 
+    Debug{} << tag;
 }
+
 
 }
 

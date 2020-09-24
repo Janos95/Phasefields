@@ -26,22 +26,60 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="396f317f-5568-472a-8995-c3750ea4f1fc" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/Mesh/CatmullClark.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Mesh/CatmullClark.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Viewer/KDTree.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cost/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cost/ConnectednessConstraint.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/ConnectednessConstraint.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cost/ConnectednessConstraint.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/ConnectednessConstraint.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cost/ModicaMortola.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/ModicaMortola.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Mesh/Bfs.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cost/ModicaMortola.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/ModicaMortola.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cost/StoppingCriteria.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/StoppingCriteria.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cost/StoppingCriteria.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/StoppingCriteria.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cost/UnionFind.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/UnionFind.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cost/WeakYamabe.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/WeakYamabe.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cost/WeakYamabe.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/WeakYamabe.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Mesh/Bfs.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/Bfs.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Mesh/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/Dijkstra.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/Dijkstra.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/FEM.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/FEM.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/FEM.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/FEM.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Mesh/FastMarchingMethod.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/FastMarchingMethod.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/FastMarchingMethod.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/FastMarchingMethod.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/GraphCommon.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/GraphCommon.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/Mesh.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/Mesh.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Mesh/Mesh.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/Mesh.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Mesh/MeshElements.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/MeshElements.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Mesh/MeshElements.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/MeshElements.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Mesh/MeshFeature.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/MeshFeature.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Mesh/MeshFeature.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/MeshFeature.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/Surface.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/Surface.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/Functional.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Functional.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/Functional.h" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Functional.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/Functional.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Functional.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/LossFunction.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/LossFunction.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/LossFunctions.h" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/LossFunctions.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/RecursiveProblem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/RecursiveProblem.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/RecursiveProblem.h" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/RecursiveProblem.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/Solver.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Solver.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/Tag.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Tag.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Optimization/Tree.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Tree.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Optimization/Tree.h" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Tree.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/CircularBuffer.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/CircularBuffer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utilities/C1Functions.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/C1Functions.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utilities/Heap.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/Heap.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utilities/SparseMatrix.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/SparseMatrix.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utilities/Types.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/Types.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/KDTree.h" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/KDTree.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Viewer/Viewer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Viewer.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Viewer/Viewer.h" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Viewer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Visualization/VisualizationProxy.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Visualization/VisualizationProxy.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Visualization/VisualizationProxy.h" beforeDir="false" afterPath="$PROJECT_DIR$/Visualization/VisualizationProxy.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/conanfile.txt" beforeDir="false" afterPath="$PROJECT_DIR$/conanfile.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,9 +101,6 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
     <option name="ROOT_SYNC" value="SYNC" />
   </component>
-  <component name="OCResolveContextSettings">
-    <option name="configuration" value="0-Debug-Optimization" />
-  </component>
   <component name="ProjectId" id="1g32PC06JgwCPbkVF0H8xHVXEU1" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
@@ -78,7 +113,7 @@
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="cf.advertisement.text.has.clang-format" value="true" />
     <property name="cf.first.check.clang-format" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../texture_map_optimization" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../ipopt_test" />
     <property name="nodejs_package_manager_path" value="npm" />
     <property name="settings.editor.selected.configurable" value="CMakeSettings" />
   </component>
@@ -228,7 +263,9 @@
       <workItem from="1600420763492" duration="19748000" />
       <workItem from="1600506760552" duration="21429000" />
       <workItem from="1600598399043" duration="12490000" />
-      <workItem from="1600677708565" duration="5120000" />
+      <workItem from="1600677708565" duration="32067000" />
+      <workItem from="1600761514431" duration="22464000" />
+      <workItem from="1600849958600" duration="68130000" />
     </task>
     <servers />
   </component>
@@ -240,58 +277,58 @@
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="323" y="269" width="624" height="514" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog/0.0.2560.1080@0.0.2560.1080" timestamp="1599910518921" />
-    <state x="1038" y="229" key="#xdebugger.evaluate" timestamp="1600011398504">
+    <state x="1038" y="133" key="#xdebugger.evaluate" timestamp="1600943880187">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="1038" y="229" key="#xdebugger.evaluate/0.0.2560.1080@0.0.2560.1080" timestamp="1600011398504" />
-    <state x="1063" y="147" width="424" height="470" key="FileChooserDialogImpl" timestamp="1600105553194">
+    <state x="1038" y="133" key="#xdebugger.evaluate/0.0.2560.1080@0.0.2560.1080" timestamp="1600943880187" />
+    <state x="1063" y="131" width="424" height="470" key="FileChooserDialogImpl" timestamp="1600892484746">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="1063" y="147" width="424" height="470" key="FileChooserDialogImpl/0.0.2560.1080@0.0.2560.1080" timestamp="1600105553194" />
-    <state width="2514" height="201" key="GridCell.Tab.0.bottom" timestamp="1600682150271">
+    <state x="1063" y="131" width="424" height="470" key="FileChooserDialogImpl/0.0.2560.1080@0.0.2560.1080" timestamp="1600892484746" />
+    <state width="2514" height="112" key="GridCell.Tab.0.bottom" timestamp="1600957041019">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="201" key="GridCell.Tab.0.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1600682150271" />
-    <state width="2514" height="201" key="GridCell.Tab.0.center" timestamp="1600682150270">
+    <state width="2514" height="112" key="GridCell.Tab.0.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1600957041019" />
+    <state width="2514" height="112" key="GridCell.Tab.0.center" timestamp="1600957041018">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="201" key="GridCell.Tab.0.center/0.0.2560.1080@0.0.2560.1080" timestamp="1600682150270" />
-    <state width="2514" height="201" key="GridCell.Tab.0.left" timestamp="1600682150270">
+    <state width="2514" height="112" key="GridCell.Tab.0.center/0.0.2560.1080@0.0.2560.1080" timestamp="1600957041018" />
+    <state width="2514" height="112" key="GridCell.Tab.0.left" timestamp="1600957041018">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="201" key="GridCell.Tab.0.left/0.0.2560.1080@0.0.2560.1080" timestamp="1600682150270" />
-    <state width="2514" height="201" key="GridCell.Tab.0.right" timestamp="1600682150270">
+    <state width="2514" height="112" key="GridCell.Tab.0.left/0.0.2560.1080@0.0.2560.1080" timestamp="1600957041018" />
+    <state width="2514" height="112" key="GridCell.Tab.0.right" timestamp="1600957041018">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="201" key="GridCell.Tab.0.right/0.0.2560.1080@0.0.2560.1080" timestamp="1600682150270" />
-    <state width="2514" height="201" key="GridCell.Tab.1.bottom" timestamp="1600682136313">
+    <state width="2514" height="112" key="GridCell.Tab.0.right/0.0.2560.1080@0.0.2560.1080" timestamp="1600957041018" />
+    <state width="2514" height="157" key="GridCell.Tab.1.bottom" timestamp="1600956707360">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="201" key="GridCell.Tab.1.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1600682136313" />
-    <state width="2514" height="201" key="GridCell.Tab.1.center" timestamp="1600682136312">
+    <state width="2514" height="157" key="GridCell.Tab.1.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1600956707360" />
+    <state width="2514" height="157" key="GridCell.Tab.1.center" timestamp="1600956707360">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="201" key="GridCell.Tab.1.center/0.0.2560.1080@0.0.2560.1080" timestamp="1600682136312" />
-    <state width="2514" height="201" key="GridCell.Tab.1.left" timestamp="1600682136312">
+    <state width="2514" height="157" key="GridCell.Tab.1.center/0.0.2560.1080@0.0.2560.1080" timestamp="1600956707360" />
+    <state width="2514" height="157" key="GridCell.Tab.1.left" timestamp="1600956707359">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="201" key="GridCell.Tab.1.left/0.0.2560.1080@0.0.2560.1080" timestamp="1600682136312" />
-    <state width="2514" height="201" key="GridCell.Tab.1.right" timestamp="1600682136312">
+    <state width="2514" height="157" key="GridCell.Tab.1.left/0.0.2560.1080@0.0.2560.1080" timestamp="1600956707359" />
+    <state width="2514" height="157" key="GridCell.Tab.1.right" timestamp="1600956707360">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="201" key="GridCell.Tab.1.right/0.0.2560.1080@0.0.2560.1080" timestamp="1600682136312" />
-    <state x="443" y="122" key="SettingsEditor" timestamp="1600617373857">
+    <state width="2514" height="157" key="GridCell.Tab.1.right/0.0.2560.1080@0.0.2560.1080" timestamp="1600956707360" />
+    <state x="769" y="40" key="SettingsEditor" timestamp="1600943135102">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="443" y="122" key="SettingsEditor/0.0.2560.1080@0.0.2560.1080" timestamp="1600617373857" />
-    <state x="1085" y="-504" width="379" height="749" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1600512731119">
+    <state x="769" y="40" key="SettingsEditor/0.0.2560.1080@0.0.2560.1080" timestamp="1600943135102" />
+    <state x="1085" y="-680" width="379" height="749" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1600956134130">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="1085" y="-504" width="379" height="749" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.2560.1080@0.0.2560.1080" timestamp="1600512731119" />
-    <state x="974" y="282" width="611" height="534" key="find.popup" timestamp="1600009123649">
+    <state x="1085" y="-680" width="379" height="749" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.2560.1080@0.0.2560.1080" timestamp="1600956134130" />
+    <state x="974" y="282" width="642" height="534" key="find.popup" timestamp="1600938854920">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="974" y="282" width="611" height="534" key="find.popup/0.0.2560.1080@0.0.2560.1080" timestamp="1600009123649" />
+    <state x="974" y="282" width="642" height="534" key="find.popup/0.0.2560.1080@0.0.2560.1080" timestamp="1600938854920" />
     <state x="1059" y="317" width="432" height="418" key="refactoring.ChangeSignatureDialog" timestamp="1599741325003">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
@@ -300,18 +337,18 @@
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="944" y="255" width="672" height="677" key="run.anything.popup/0.0.2560.1080@0.0.2560.1080" timestamp="1598354507222" />
-    <state x="943" y="253" width="672" height="678" key="search.everywhere.popup" timestamp="1600433678589">
+    <state x="943" y="253" width="672" height="678" key="search.everywhere.popup" timestamp="1600867468202">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="943" y="253" width="672" height="678" key="search.everywhere.popup/0.0.2560.1080@0.0.2560.1080" timestamp="1600433678589" />
+    <state x="943" y="253" width="672" height="678" key="search.everywhere.popup/0.0.2560.1080@0.0.2560.1080" timestamp="1600867468202" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/Viewer/Viewer.cpp</url>
-          <line>201</line>
-          <option name="timeStamp" value="2" />
+          <url>file://$PROJECT_DIR$/Visualization/VisualizationProxy.cpp</url>
+          <line>49</line>
+          <option name="timeStamp" value="39" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

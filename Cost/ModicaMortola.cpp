@@ -9,6 +9,9 @@
 #include <Magnum/Magnum.h>
 #include <Magnum/Math/Vector3.h>
 
+#include <Eigen/SparseCore>
+#include <igl/cotmatrix.h>
+#include <adolc/adouble.h>
 
 namespace Phasefield {
 
@@ -22,44 +25,56 @@ size_t DirichletEnergy::numParameters() const {
 }
 
 template<class Scalar>
-void DirichletEnergy::operator()(ArrayView<const Scalar> const& parameters,
-                                 ArrayView<const Scalar> const& weights,
+void DirichletEnergy::operator()(ArrayView<const Scalar> parameters,
+                                 ArrayView<const Scalar> weights,
                                  Scalar& out,
-                                 ArrayView<Scalar> const& gradP,
-                                 ArrayView<Scalar> const& gradW) {
+                                 ArrayView<Scalar> gradP,
+                                 ArrayView<Scalar> gradW) {
+
+    //mesh.requireStiffnessMatrix();
+
+    //std::vector<Eigen::Triplet<double>> triplets;
+    //for(auto [a,b,w] : mesh.stiffnessMatrix) {
+    //    triplets.emplace_back(a, b, w);
+    //}
+
+    //Eigen::SparseMatrix<double> SM(mesh.vertexCount(), mesh.vertexCount());
+    //SM.setFromTriplets(triplets.begin(), triplets.end());
+
+    //Eigen::Map<const Eigen::VectorXd> map(parameters.data(), parameters.size());
+    //double result = map.transpose()*SM*map;
 
     for(Face face : mesh.faces()) {
-        Vector3d grad{0};
+        Math::Vector3<Scalar> grad{0};
         Scalar weight{0};
 
         for(HalfEdge he : face.halfEdges()) {
             Vertex v = he.next().tip();
-            grad += parameters[v.idx]*mesh.gradient[he];
+            grad += parameters[v.idx]*Math::Vector3<Scalar>{mesh.gradient[he]};
             weight += weights[v.idx];
         }
 
         weight /= Scalar{3};
 
         Scalar gradNormSquared = grad.dot();
-        CORRADE_INTERNAL_ASSERT(!Math::isNan(gradNormSquared));
+        //CORRADE_INTERNAL_ASSERT(!Math::isNan(gradNormSquared));
         out += mesh.faceArea[face]*gradNormSquared*weight;
 
         if(gradP) {
             for(HalfEdge he : face.halfEdges()){
                 Vertex v = he.next().tip();
-                gradP[v.idx] += mesh.faceArea[face]*2*Math::dot(grad, mesh.gradient[he])*weight;
+                gradP[v.idx] += mesh.faceArea[face]*2*Math::dot(grad, Math::Vector3<Scalar>{mesh.gradient[he]})*weight;
             }
         }
         if(gradW) {
-            //for(int j = 0; j < 3; ++j) {
-            //    gradW[t[j]] += mesh.faceArea[face]*gradNormSquared/Scalar{3};
-            //}
             for(HalfEdge he : face.halfEdges()) {
                 Vertex v = he.next().tip();
                 gradW[v.idx] += mesh.faceArea[face]*gradNormSquared/Scalar{3};
             }
         }
     }
+
+    //Debug{} << Math::abs(result - out);
 }
 
 AreaRegularizer::AreaRegularizer(Mesh& m) : mesh(m) {}
@@ -67,11 +82,11 @@ AreaRegularizer::AreaRegularizer(Mesh& m) : mesh(m) {}
 size_t AreaRegularizer::numParameters() const { return mesh.vertexCount(); }
 
 template<class Scalar>
-void AreaRegularizer::operator()(ArrayView<const Scalar> const& parameters,
-                                 ArrayView<const Scalar> const& weights,
+void AreaRegularizer::operator()(ArrayView<const Scalar> parameters,
+                                 ArrayView<const Scalar> weights,
                                  Scalar& out,
-                                 ArrayView<Scalar> const& gradP,
-                                 ArrayView<Scalar> const& gradW) {
+                                 ArrayView<Scalar> gradP,
+                                 ArrayView<Scalar> gradW) {
 
     Scalar integral = 0;
     SmootherStep f;
@@ -85,7 +100,7 @@ void AreaRegularizer::operator()(ArrayView<const Scalar> const& parameters,
             gradW[idx] += f.eval(parameters[idx])*mesh.integral[vertex];
         }
     }
-    out += integral - areaRatio*mesh.surfaceArea;
+    out += integral - targetArea;
 }
 
 DoubleWellPotential::DoubleWellPotential(Mesh& m) : mesh(m) {
@@ -94,11 +109,11 @@ DoubleWellPotential::DoubleWellPotential(Mesh& m) : mesh(m) {
 size_t DoubleWellPotential::numParameters() const { return mesh.vertexCount(); }
 
 template<class Scalar>
-void DoubleWellPotential::operator()(ArrayView<const Scalar> const& parameters,
-                                     ArrayView<const Scalar> const& weights,
+void DoubleWellPotential::operator()(ArrayView<const Scalar> parameters,
+                                     ArrayView<const Scalar> weights,
                                      Scalar& cost,
-                                     ArrayView<Scalar> const& gradP,
-                                     ArrayView<Scalar> const& gradW) {
+                                     ArrayView<Scalar> gradP,
+                                     ArrayView<Scalar> gradW) {
 
     DoubleWell f;
     CORRADE_INTERNAL_ASSERT(parameters.size() == weights.size());
@@ -127,5 +142,9 @@ DEFINE_FUNCTIONAL_CONSTRUCTOR(DoubleWellPotential)
 DEFINE_FUNCTIONAL_OPERATOR(DirichletEnergy, double)
 DEFINE_FUNCTIONAL_OPERATOR(AreaRegularizer, double)
 DEFINE_FUNCTIONAL_OPERATOR(DoubleWellPotential, double)
+
+DEFINE_FUNCTIONAL_OPERATOR(DirichletEnergy, adouble)
+DEFINE_FUNCTIONAL_OPERATOR(AreaRegularizer, adouble)
+DEFINE_FUNCTIONAL_OPERATOR(DoubleWellPotential, adouble)
 
 }

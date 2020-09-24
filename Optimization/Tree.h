@@ -45,17 +45,21 @@ struct Node {
 
     [[nodiscard]] bool isRightChild() const { return parent().rightChild() == *this; }
 
+     void splitAndInitialize(Node* n);
+
+    [[nodiscard]] double integrateWeight(Mesh& mesh) const;
+
     [[nodiscard]] VertexDataView<Double> phasefield() const;
 
     [[nodiscard]] VertexDataView<Double> temporary() const;
 
     [[nodiscard]] Node parent() const;
 
-    Node addLeftChild();
+    Node addLeftChild(Node* n = nullptr);
 
-    Node addRightChild();
+    Node addRightChild(Node* n = nullptr);
 
-    Node addChild(bool left);
+    Node addChild(bool left, Node* n);
 
     void initializePhasefieldFromParent();
 
@@ -107,6 +111,8 @@ struct Tree {
 
     Node insertNodeAtIndex(size_t idx);
 
+    void reset();
+
     Range<HorizontalNodeIterator> nodesOnLevel(size_t l);
 
     Range<HorizontalNodeIterator> nodesBelowLevel(size_t l);
@@ -121,7 +127,9 @@ struct Tree {
 
     [[nodiscard]] size_t nodeCount() const { return nodeData.size(); }
 
-    [[nodiscard]] size_t vertexCount() const { return mesh->vertexCount(); }
+    [[nodiscard]] size_t vertexCount() const { return phasefieldData.size()/nodeCount(); }
+
+    void computeWeightsOfAncestorsOfLevel(size_t l);
 
     void serialize(Array<char>& data) const;
 

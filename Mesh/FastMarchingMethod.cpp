@@ -49,7 +49,7 @@ double eikonalDistanceSubroutine(double a, double b, Radd theta, double dA, doub
     }
         // Custom by Nick to get acceptable results in obtuse triangles without fancy unfolding
     else {
-        Debug{} << "Obtuse triangle";
+        //Debug{} << "Obtuse triangle";
         double maxDist = Math::max(dA, dB); // all points on base are less than this far away, by convexity
         double c = Math::sqrt(a*a + b*b - 2*a*b*Math::cos(theta));
         double area = 0.5*Math::sin(theta)*a*b;
@@ -79,7 +79,6 @@ void FastMarchingMethod::reset(){
     for(auto& x: m_distances) x = std::numeric_limits<double>::infinity();
     std::memset(m_finalized.data(), 0, m_finalized.size());
     m_frontier.clear();
-    m_visitedVertexCount = 0;
 }
 
 void FastMarchingMethod::update() {
@@ -89,6 +88,8 @@ void FastMarchingMethod::update() {
 
     arrayResize(m_finalized, NoInit, m_mesh.vertexCount());
     arrayResize(m_distances, NoInit, m_mesh.vertexCount());
+
+    reset();
 }
 
 void FastMarchingMethod::setSource(Vertex v){
@@ -96,9 +97,6 @@ void FastMarchingMethod::setSource(Vertex v){
 }
 
 bool FastMarchingMethod::step(Vertex& vertex, Double& distance) {
-
-    // TODO this could handle nonmanifold geometry with a few small tweaks
-    //CORRADE_ASSERT(m_mesh.isManifold(), "handling of nonmanifold mesh not yet implemented",{});
 
     size_t nVert = m_mesh.vertexCount();
 

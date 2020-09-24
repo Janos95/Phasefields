@@ -15,6 +15,8 @@ add_library(Mesh STATIC
         GraphCommon.h
         FEM.cpp
         FEM.h
+        CatmullClark.cpp
+        CatmullClark.h
         )
 
 target_include_directories(Mesh PUBLIC

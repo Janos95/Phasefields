@@ -37,7 +37,6 @@ private:
     VertexData<double> m_distances;
     VertexData<char> m_finalized;
 
-    size_t m_visitedVertexCount;
 };
 
 }

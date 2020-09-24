@@ -24,7 +24,7 @@ size_t& UnionFind::rank(size_t x) {
 
 
 size_t UnionFind::find(size_t x) {
-    auto root = x;
+    size_t root = x;
     while(parent(root) != root) {
         root = parent(root);
     }

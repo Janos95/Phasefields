@@ -61,11 +61,17 @@ HalfEdge Vertex::halfEdge() const { return HalfEdge{mesh->m_vertexHalfEdge[idx],
 
 VertexCornerRange Vertex::corners() const { return {{.he = halfEdge().twin()}, {.he = halfEdge().twin()}}; }
 
-VertexAdjacentVertexRange Vertex::adjacentVertices() const { return {{.he = halfEdge()}, {.he = halfEdge()}}; }
+VertexVertexRange Vertex::adjacentVertices() const { return {{.he = halfEdge()}, {.he = halfEdge()}}; }
 
-IncomingHalfEdgeRange Vertex::incomingHalfEdges() const { return {{.he = halfEdge().twin()}, {.he = halfEdge().twin()}}; }
+VertexIncomingHalfEdgeRange Vertex::incomingHalfEdges() const { return {{.he = halfEdge().twin()}, {.he = halfEdge().twin()}}; }
 
-OutgoingHalfEdgeRange Vertex::outgoingHalfEdges() const { return {{.he = halfEdge()}, {.he = halfEdge()}}; }
+VertexOutgoingHalfEdgeRange Vertex::outgoingHalfEdges() const { return {{.he = halfEdge()}, {.he = halfEdge()}}; }
+
+size_t Vertex::degree() const { return mesh->degree[*this]; }
+
+VertexFaceRange Vertex::faces() const { return {{.he = halfEdge()}, {.he = halfEdge()}}; }
+
+VertexEdgeRange Vertex::edges() const { return {{.he = halfEdge()}, {.he = halfEdge()}}; }
 
 Debug& operator<<(Debug& debug, Vertex const& v) {
     char buffer[100];
@@ -177,7 +183,7 @@ Face DualEdge::otherFace(Face face) const {
 Debug& operator<<(Debug& debug, DualEdge const& de) {
     char buffer[100];
     Face f1 = de.face1();
-    Face f2 = de.face1();
+    Face f2 = de.face2();
     sprintf(buffer, "DualEdge {%zu, %zu}", f1.idx, f2.idx);
     debug << buffer;
     return debug;

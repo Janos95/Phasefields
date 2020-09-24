@@ -15,7 +15,7 @@ struct RecursiveProblem {
 
     [[nodiscard]] size_t numParameters() const;
 
-    [[nodiscard]] size_t numConstraints() const;
+    //[[nodiscard]] size_t numConstraints() const;
 
     void operator()(
             Containers::ArrayView<const double> parameters,
@@ -29,13 +29,15 @@ struct RecursiveProblem {
             double& cost,
             Containers::ArrayView<double> gradient) const;
 
-    void determineSparsityStructure(SparseMatrix& jacobian) const;
+    //void determineSparsityStructure(SparseMatrix& jacobian) const;
 
     Tree& tree;
-    size_t levelToOptimize = 0;
+    Node nodeToOptimize{Invalid, nullptr};
 
-    Containers::Array<Functional> objectives;
-    Containers::Array<Functional> constraints;
+    Array<Functional>* functionals = &objectives;
+
+    Array<Functional> objectives;
+    Array<Functional> constraints;
 };
 
 }

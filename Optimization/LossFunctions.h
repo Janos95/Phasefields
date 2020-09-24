@@ -2,7 +2,7 @@
 
 #include "SmartEnum.h"
 
-class adouble;
+//class adouble;
 
 namespace Phasefield {
 
@@ -34,11 +34,11 @@ struct LossFunction {
 
     void operator()(double const& in, double out[3]) const;
 
-    void operator()(adouble const& x, adouble& y) const;
+    //void operator()(adouble const& x, adouble& y) const;
 
     void drawSettings();
 
-    void (* ad)(void*, adouble const&, adouble&) = nullptr;
+    //void (* ad)(void*, adouble const&, adouble&) = nullptr;
 
     void (* loss)(void*, double, double[3]) = nullptr;
 

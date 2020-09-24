@@ -73,7 +73,9 @@ public:
 
         for(EdgeType e : getEdges(node)) {
             VertexType neighbor = getNeighbor(node, e);
-            double weight = (*m_weights)[e];
+            double weight;
+            if constexpr (std::is_same_v<T, adouble>) weight = (*m_weights)[e].getValue();
+            else weight = (*m_weights)[e];
             double relaxedDist = weight + distance;
             if(relaxedDist < m_dist[neighbor]){
                 m_dist[neighbor] = relaxedDist;
@@ -102,6 +104,7 @@ public:
 private:
     friend Graph::ReversedPathIterator<Dijkstra>;
 
+    /* using pointers to make it default constructible */
     Mesh const* m_mesh = nullptr;
     MeshData<EdgeType, T> const* m_weights = nullptr;
 

@@ -15,11 +15,11 @@ namespace Phasefield::Solver {
 
 RecursiveProblem::RecursiveProblem(Tree& t) : tree(t) {}
 
-size_t RecursiveProblem::numParameters() const { return tree.level(levelToOptimize).size(); }
+size_t RecursiveProblem::numParameters() const { return tree.vertexCount(); }
 
-size_t RecursiveProblem::numConstraints() const { return tree.numLeafs*constraints.size(); }
+//size_t RecursiveProblem::numConstraints() const { return tree.numLeafs*constraints.size(); }
 
-void RecursiveProblem::determineSparsityStructure(SparseMatrix& jacobian) const {
+//void RecursiveProblem::determineSparsityStructure(SparseMatrix& jacobian) const {
     //jacobian.clear();
     //jacobian.numCols = numParameters();
     //jacobian.numRows = numConstraints()*tree.numLeafs;
@@ -49,7 +49,7 @@ void RecursiveProblem::determineSparsityStructure(SparseMatrix& jacobian) const 
     //});
     //jacobian.nnz = jacobian.rows.size();
     //arrayResize(jacobian.values, jacobian.nnz);
-}
+//}
 
 void RecursiveProblem::operator()(
         Containers::ArrayView<const double> data,
@@ -141,38 +141,35 @@ void RecursiveProblem::operator()(
 
 void RecursiveProblem::operator()(ArrayView<const double> parameters, double& cost, ArrayView<double> gradient) const {
     size_t n = tree.vertexCount();
-    SmootherStep smootherStep;
+    //SmootherStep smootherStep;
 
-    size_t nodeCountOnLevel = tree.nodeCountOnLevel(levelToOptimize);
-    StridedArrayView2D<double> gradientsOnLevel{gradient, {nodeCountOnLevel, n}};
-    StridedArrayView2D<const double> phasesOnLevel{parameters, {nodeCountOnLevel, n}};
+    //size_t nodeCountOnLevel = tree.nodeCountOnLevel(levelToOptimize);
+    //StridedArrayView2D<double> gradientsOnLevel{gradient, {nodeCountOnLevel, n}};
+    //StridedArrayView2D<const double> phasesOnLevel{parameters, {nodeCountOnLevel, n}};
 
-    for(double& x : tree.root().temporary()) x = 1.;
+    //for(double& x : tree.root().temporary()) x = 1.;
+    //for(Node node : tree.ancestorsOfLevel(levelToOptimize)) {
+    //    auto weights = node.temporary();
+    //    for(size_t i = 0; i < n; ++i) {
+    //        if(node.hasLeftChild()) {
+    //            Node leftChild = node.leftChild();
+    //            leftChild.temporary()[i] = smootherStep.eval(node.phasefield()[i])*weights[i];
+    //        }
+    //        if(node.hasRightChild()) {
+    //            Node rightChild = node.rightChild();
+    //            rightChild.temporary()[i] = smootherStep.eval(-node.phasefield()[i])*weights[i];
+    //        }
+    //    }
+    //}
+
     if(gradient)
         for(double& x : gradient) x = 0.;
     cost = 0.;
 
-    for(Node node : tree.ancestorsOfLevel(levelToOptimize)) {
-        auto weights = node.temporary();
-        for(size_t i = 0; i < n; ++i) {
-            if(node.hasLeftChild()) {
-                Node leftChild = node.leftChild();
-                leftChild.temporary()[i] = smootherStep.eval(node.phasefield()[i])*weights[i];
-            }
-            if(node.hasRightChild()) {
-                Node rightChild = node.rightChild();
-                rightChild.temporary()[i] = smootherStep.eval(-node.phasefield()[i])*weights[i];
-            }
-        }
-    }
-
-    size_t i = 0;
-    for(Node node : tree.nodesOnLevel(levelToOptimize)) {
-        for(Functional const& f : objectives) {
-            f(phasesOnLevel[i].asContiguous(), node.temporary(), cost, gradientsOnLevel[i].asContiguous(), nullptr);
-        }
-        ++i;
+    for(Functional const& f : *functionals) {
+        f(parameters, nodeToOptimize.temporary(), cost, gradient, nullptr);
     }
 }
+
 
 }

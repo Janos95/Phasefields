@@ -6,30 +6,31 @@
 #include "Functional.h"
 #include "SparseMatrix.h"
 #include "Tag.h"
+#include "VisualizationProxy.h"
+#include "Viewer.h"
 
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/FormatStl.h>
 #include <Magnum/Math/Functions.h>
+#include <Magnum/Math/FunctionsBatch.h>
 
 #include <adolc/adouble.h>
 #include <adolc/taping.h>
-#include <adolc/adolc_sparse.h>
+#include <adolc/drivers/drivers.h>
+//#include <adolc/adolc_sparse.h>
 
 
-// for debug
-#include <cstdio>
-#include <atomic>
 
-//#include <imgui.h>
+#include <imgui.h>
 
 namespace Phasefield {
 
 Functional::~Functional() {
-    deleteTag(tag);
+    //deleteTag(tag);
     if(erased) {
         destroy(erased);
-        //deleteTag(tag);
+        deleteTag(tag);
     }
 }
 
@@ -93,35 +94,74 @@ void Functional::operator()(ArrayView<const double> parameters,
 
     if(checkDerivatives && gradP) {
         Debug{} << "Checking Derivatives";
-        Array<double> perturbedParams{NoInit, n};
-        Cr::Utility::copy(parameters, perturbedParams);
 
-        double h = 1e-6;
-        double tol = 1e-4;
+        CORRADE_INTERNAL_ASSERT(tag != -1);
+        trace_on(tag);
 
-        std::atomic_size_t counter = 0;
+        Array<adouble> paramsAd{n};
+        Array<adouble> weightsAd{n};
+        adouble residual = 0;
 
-//#pragma omp parallel for
+        Array<double> gradientsAd(2*n);
+        Array<double> variables(2*n);
+
+        for(size_t i = 0; i < n; i++) {
+            paramsAd[i] <<= parameters[i];
+            variables[i] = parameters[i];
+        }
+        for(size_t i = 0; i < n; i++) {
+            weightsAd[i] <<= weights[i];
+            variables[i + n] = weights[i];
+        }
+        ad(erased, paramsAd, weightsAd, residual);
+
+        double dummy;
+        residual >>= dummy;
+
+        trace_off();
+
+        gradient(tag,2*n,variables.data(),gradientsAd.data());
+
+        auto gradParamsAd = gradientsAd.prefix(n);
+
+        double tol = 1e-6;
         for(size_t i = 0; i < n; ++i) {
-            double f1 = 0, f2 = 0;
-            double old = perturbedParams[i];
-            perturbedParams[i] += h;
-            evalWithGrad(erased, perturbedParams, weights, f2, nullptr, nullptr);
-            perturbedParams[i] = old - h;
-            evalWithGrad(erased, perturbedParams, weights, f1, nullptr, nullptr);
-            perturbedParams[i] = old;
-
-            double gradNumeric = (f2 - f1)/(2*h);
-            double gradAnalytic = gradPWithoutLoss[i];
-
-            if(Math::abs(gradNumeric - gradPWithoutLoss[i]) > tol) {
+            if(Math::abs(gradParamsAd[i] - gradPWithoutLoss[i]) > tol) {
                 Debug{} << "Gradient Error in" << FunctionalType::to_string(functionalType);
-                Debug{} << Cr::Utility::formatString("(Analytic = {}, Numeric = {}) at index {}\n", gradAnalytic, gradNumeric, i).c_str();
+                Debug{} << Cr::Utility::formatString("(Analytic = {}, AD = {}) at index {}\n", gradPWithoutLoss[i], gradParamsAd[i], i).c_str();
                 CORRADE_INTERNAL_ASSERT(false);
             }
-
-            double progress = double(counter++)/double(n);
         }
+
+        //Array<double> perturbedParams{NoInit, n};
+        //Cr::Utility::copy(parameters, perturbedParams);
+
+        //double h = 1e-6;
+        //double tol = 1e-4;
+
+        //std::atomic_size_t counter = 0;
+
+//#pragm//a omp parallel for
+        //for(size_t i = 0; i < n; ++i) {
+        //    double f1 = 0, f2 = 0;
+        //    double old = perturbedParams[i];
+        //    perturbedParams[i] += h;
+        //    evalWithGrad(erased, perturbedParams, weights, f2, nullptr, nullptr);
+        //    perturbedParams[i] = old - h;
+        //    evalWithGrad(erased, perturbedParams, weights, f1, nullptr, nullptr);
+        //    perturbedParams[i] = old;
+
+        //    double gradNumeric = (f2 - f1)/(2*h);
+        //    double gradAnalytic = gradPWithoutLoss[i];
+
+        //    if(Math::abs(gradNumeric - gradPWithoutLoss[i]) > tol) {
+        //        Debug{} << "Gradient Error in" << FunctionalType::to_string(functionalType);
+        //        Debug{} << Cr::Utility::formatString("(Analytic = {}, Numeric = {}) at index {}\n", gradAnalytic, gradNumeric, i).c_str();
+        //        CORRADE_INTERNAL_ASSERT(false);
+        //    }
+
+        //    double progress = double(counter++)/double(n);
+        //}
     }
 }
 #pragma clang diagnostic pop
@@ -230,12 +270,42 @@ void Functional::operator()(ArrayView<const double> parameters,
 //    trace_off();
 //}
 
-OptionsResultSet Functional::drawImGuiOptions(VisualizationProxy& proxy) {
-    if(options) {
-        //ImGui::Checkbox("Check Derivatives", &checkDerivatives);
-        return options(erased, proxy);
+void Functional::drawImGuiOptions(VisualizationProxy& proxy) {
+
+    ImGui::Text(FunctionalType::to_string(functionalType));
+
+    //DrawableType type;
+    loss.drawSettings();
+
+    if(ImGui::Checkbox("Draw Derivative", &drawGradient)) {
+        if(drawGradient) {
+            proxy.setCallback([this](Viewer* viewer) {
+                auto parameters = viewer->currentNode.phasefield();
+                auto weights = viewer->currentNode.temporary();
+                Array<double> gradP(parameters.size());
+                double cost = 0;
+                (*this)(parameters, weights, cost, gradP, nullptr);
+
+                auto [minimum, maximum] = Math::minmax(gradP);
+                double scale = 1./(maximum - minimum);
+
+                for(Vertex v : viewer->mesh.vertices()) {
+                    viewer->mesh.scalar(v) = scale*(gradP[v.idx] - minimum);
+                }
+            });
+            proxy.shaderConfig = VisualizationProxy::ShaderConfig::ColorMaps;
+        } else {
+            proxy.setDefaultCallback();
+        }
+        proxy.redraw();
     }
-    return OptionsResult{};
+
+    ImGui::SameLine();
+    ImGui::Checkbox("Check Derivatives Using AD", &checkDerivatives);
+
+    if(options) {
+        options(erased, proxy);
+    }
 
 }
 
@@ -255,6 +325,8 @@ void Functional::swap(Functional& other) {
     std::swap(options, other.options);
     std::swap(evalWithGrad, other.evalWithGrad);
     std::swap(functionalType, other.functionalType);
+    std::swap(tag, other.tag);
+    std::swap(ad, other.ad);
 
     loss.swap(other.loss);
     scaling.swap(other.scaling);

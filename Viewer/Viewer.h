@@ -47,8 +47,6 @@ struct Viewer : public Mg::Platform::Application {
 
     void drawEvent() override;
 
-    void tickEvent() override;
-
     void viewportEvent(ViewportEvent& event) override;
 
     void keyPressEvent(KeyEvent& event) override;
@@ -67,7 +65,7 @@ struct Viewer : public Mg::Platform::Application {
 
     //void drawSubdivisionOptions();
 
-    void drawMeshIO();
+    void loadScene(const char*, const char*);
 
     //bool saveMesh(std::string const&);
 
@@ -86,8 +84,6 @@ struct Viewer : public Mg::Platform::Application {
     void startBrushing(Vector3 const&);
 
     void brush();
-
-    void updateInternalDataStructures();
 
     Vector3 unproject(Vector2i const&);
 
@@ -118,6 +114,8 @@ struct Viewer : public Mg::Platform::Application {
     bool isOptimizing = false;
     bool hierarchicalOptimization = false;
     bool initializeLevel = false;
+    size_t maximumDepth = 1;
+    Node currentNode{0, &tree};
 
     //connectedness vis data
     //Mg::GL::Texture2D faceTexture{Mg::NoCreate};
@@ -143,8 +141,6 @@ struct Viewer : public Mg::Platform::Application {
 
     VisualizationProxy proxy;
 
-    Node currentNode{0, &tree};
-    bool drawSegmentation = true;
     UnsignedInt colorMapIndex = 0;
     Array<std::pair<const char*, Magnum::GL::Texture2D>> colorMapTextures;
 
@@ -156,7 +152,7 @@ struct Viewer : public Mg::Platform::Application {
     //Cr::PluginManager::Manager<Mg::Trade::AbstractImporter> manager;
     //Mg::Trade::PrimitiveImporter primitiveImporter;
 
-    KDTree<Mg::Vector3> kdtree;
+    KDTree kdtree;
     FastMarchingMethod fastMarchingMethod;
 };
 

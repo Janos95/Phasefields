@@ -1,14 +1,10 @@
 find_package(Ceres CONFIG REQUIRED)
 find_package(TBB CONFIG REQUIRED)
-
 find_package(PkgConfig REQUIRED)
 find_package(OpenMP)
 
-list(APPEND CMAKE_PREFIX_PATH /home/janos/libraries/prefix/)
-set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH ON)
-
+pkg_check_modules(Ipopt REQUIRED IMPORTED_TARGET ipopt)
 pkg_check_modules(Adolc REQUIRED IMPORTED_TARGET adolc)
-
 set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 
 add_library(Optimization STATIC
@@ -33,14 +29,15 @@ target_include_directories(Optimization PUBLIC
 
 target_link_libraries(Optimization PRIVATE
         Ceres::ceres
-        ipopt::ipopt
         TBB::tbb
         ScopedTimer::ScopedTimer
         ImGui::ImGui
         OpenMP::OpenMP_CXX
+        Phasefield::Viewer
         )
 
 target_link_libraries(Optimization PUBLIC
+        PkgConfig::Ipopt
         PkgConfig::Adolc
         Phasefield::Mesh
         Phasefield::VisualizationProxy

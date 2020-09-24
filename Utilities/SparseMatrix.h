@@ -26,7 +26,7 @@ struct SparseMatrix {
 
     explicit SparseMatrix(Array<Triplet> triplets);
 
-    int numRows, numCols, nnz;
+    size_t numRows, numCols, nnz;
 
     Array<double> values;
     Array<size_t> rows;

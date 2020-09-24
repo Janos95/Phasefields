@@ -26,6 +26,8 @@
 
 namespace Phasefield::Solver {
 
+using Cr::Utility::copy;
+
 namespace {
 
 struct IpoptWrapper : Ipopt::TNLP {
@@ -33,27 +35,30 @@ struct IpoptWrapper : Ipopt::TNLP {
     const double NegativeInfinity = -2e19;
 
     explicit IpoptWrapper(
-            Solver::RecursiveProblem const& pb,
+            Solver::RecursiveProblem& pb,
             Solver::Options& opt,
-            Containers::ArrayView<double> const& params) :
+            ArrayView<double> const& params) :
             problem(pb), options(opt), parameters(params),
-            constraints(Containers::NoInit, problem.numConstraints()),
-            gradient(Containers::NoInit, problem.numParameters()) {
-    }
+            gradientO(NoInit, problem.numParameters()),
+            gradientC(NoInit, problem.numParameters()) {
+        }
 
-    Solver::RecursiveProblem const& problem;
+    Solver::RecursiveProblem& problem;
     Solver::Options& options;
 
-    Containers::ArrayView<double> parameters;
+    ArrayView<double> parameters;
     double objective;
-    Containers::Array<double> constraints;
-    Containers::Array<double> gradient; /* gradient of the objective function */
-    SparseMatrix jacobian;
+    double constraint;
+    Array<double> gradientO; /* gradient of the objective function */
+    Array<double> gradientC; /* gradient of the constraint function */
 
     static_assert(std::is_same_v<Ipopt::Number, double>);
 
     void eval(double const* const x) {
-        problem({x, problem.numParameters()}, objective, gradient, constraints, &jacobian);
+        problem({x, problem.numParameters()}, objective, gradientO);
+        problem.functionals = &problem.constraints;
+        problem({x, problem.numParameters()}, constraint, gradientC);
+        problem.functionals = &problem.objectives;
     }
 
     bool get_nlp_info(
@@ -65,10 +70,11 @@ struct IpoptWrapper : Ipopt::TNLP {
     ) override {
 
         n = problem.numParameters();
-        m = problem.numConstraints();
-        problem.determineSparsityStructure(jacobian);
+        m = 1;
+        //m = problem.numConstraints();
 
-        nnz_jac_g = jacobian.nnz;
+        nnz_jac_g = n;
+        nnz_h_lag = 0;
 
         /* 0 based indexing (i.e. how any sane human would index arrays */
         index_style = TNLP::C_STYLE;
@@ -115,7 +121,7 @@ struct IpoptWrapper : Ipopt::TNLP {
         CORRADE_INTERNAL_ASSERT(init_lambda == false);
 
         // initialize to the given starting point
-        Cr::Utility::copy(parameters, {x, std::size_t(n)});
+        copy(parameters, {x, size_t(n)});
         return true;
     }
 
@@ -139,7 +145,7 @@ struct IpoptWrapper : Ipopt::TNLP {
             Ipopt::Number* grad_f
     ) override {
         if(new_x) eval(x);
-        Cr::Utility::copy(gradient, {grad_f, (std::size_t) n});
+        copy(gradientO, {grad_f, size_t(n)});
         return true;
     }
 
@@ -154,7 +160,7 @@ struct IpoptWrapper : Ipopt::TNLP {
             Ipopt::Number* g
     ) override {
         if(new_x) eval(x);
-        Cr::Utility::copy(constraints, {g, (std::size_t) m});
+        *g = constraint;
         return true;
     }
 
@@ -170,10 +176,15 @@ struct IpoptWrapper : Ipopt::TNLP {
     ) override {
         if(values){
             if(new_x) eval(x);
-            Cr::Utility::copy(jacobian.values, {values, (std::size_t) nele_jac});
+            copy(gradientC, {values, size_t(nele_jac)});
         } else{
-            Cr::Utility::copy(jacobian.rows, {iRow, (std::size_t) nele_jac});
-            Cr::Utility::copy(jacobian.cols, {jCol, (std::size_t) nele_jac});
+            for (int i = 0; i < n; ++i) {
+                for (int j = 0; j < m; ++j) {
+                    jCol[j * n + i] = i;
+                    iRow[j * n + i] = j;
+                }
+            }
+
         }
         return true;
     }
@@ -208,7 +219,7 @@ struct IpoptWrapper : Ipopt::TNLP {
             const Ipopt::IpoptData* ip_data,
             Ipopt::IpoptCalculatedQuantities* ip_cq
     ) override {
-        Cr::Utility::copy({x, (std::size_t) n}, parameters);
+        copy({x, size_t(n)}, parameters);
     }
 
     bool intermediate_callback(
@@ -226,6 +237,20 @@ struct IpoptWrapper : Ipopt::TNLP {
             const Ipopt::IpoptData* ip_data,
             Ipopt::IpoptCalculatedQuantities* ip_cq
     ) override {
+
+        Ipopt::TNLPAdapter* tnlp_adapter = nullptr;
+        if(ip_cq) {
+            Ipopt::OrigIpoptNLP* orignlp;
+            orignlp = dynamic_cast<Ipopt::OrigIpoptNLP*>(GetRawPtr(ip_cq->GetIpoptNLP()));
+            if(orignlp)
+                tnlp_adapter = dynamic_cast<Ipopt::TNLPAdapter*>(GetRawPtr(orignlp->nlp()));
+        }
+
+        if(tnlp_adapter) {
+            /* this updates the phasefield parameters */
+            tnlp_adapter->ResortX(*ip_data->curr()->x(), parameters.data());
+        }
+
         Solver::IterationSummary solverSummary; /* dummy variable */
         for(auto& cb : options.callbacks){
             switch(cb(solverSummary)) {
@@ -244,11 +269,11 @@ struct FirstOrderWrapper : ceres::FirstOrderFunction {
 
     Solver::RecursiveProblem& problem;
     mutable SparseMatrix jacobian;
-    mutable Containers::Array<double> constraints;
 
-    explicit FirstOrderWrapper(Solver::RecursiveProblem& pb) : problem(pb), constraints(Containers::NoInit, pb.numConstraints()) {
+    explicit FirstOrderWrapper(Solver::RecursiveProblem& pb) : problem(pb) {
+        pb.functionals = &pb.objectives;
         CORRADE_ASSERT(pb.constraints.empty(), "Solver : ceres does not support constraints",);
-        problem.determineSparsityStructure(jacobian);
+        //problem.determineSparsityStructure(jacobian);
     }
 
 
@@ -256,17 +281,13 @@ struct FirstOrderWrapper : ceres::FirstOrderFunction {
 
         auto n = problem.numParameters();
 
-        if(g)
-            for(size_t i = 0; i < n; ++i) g[i] = 0.;
-        *cost = 0;
-        // @TODO where do we zero the data for sure?
         problem({parameters, n}, *cost, {g, g ? n : 0});
 
-        if(g){
-            for(Int i = 0; i < jacobian.nnz; ++i){
-                g[jacobian.cols[i]] += jacobian.values[i];
-            }
-        }
+        //if(g){
+        //    for(Int i = 0; i < jacobian.nnz; ++i){
+        //        g[jacobian.cols[i]] += jacobian.values[i];
+        //    }
+        //}
 
         return true;
     }
@@ -312,7 +333,7 @@ ceres::LineSearchDirectionType mapLineSearchType(Solver::LineSearchDirection::Va
 
 }
 
-void solve(Solver::Options& options, Solver::RecursiveProblem& problem, Containers::ArrayView<double> params, Solver::Summary* summary) {
+void solve(Solver::Options& options, Solver::RecursiveProblem& problem, ArrayView<double> params, Solver::Summary* summary) {
     if(options.solver == Solver::Backend::CERES) {
         ceres::GradientProblemSolver::Summary ceresSummary;
         ceres::GradientProblem ceresProblem(new FirstOrderWrapper(problem));
@@ -320,7 +341,7 @@ void solve(Solver::Options& options, Solver::RecursiveProblem& problem, Containe
                 .line_search_direction_type = mapLineSearchType(options.line_search_direction),
                 .max_num_iterations = int(options.max_num_iterations),
                 .minimizer_progress_to_stdout = options.minimizer_progress_to_stdout,
-                .update_state_every_iteration = options.update_state_every_iteration,
+                .update_state_every_iteration = options.update_state_every_iteration
         };
 
         Array<Pointer<CeresCallbackWrapper>> cbs(options.callbacks.size());
@@ -337,7 +358,7 @@ void solve(Solver::Options& options, Solver::RecursiveProblem& problem, Containe
         Ipopt::SmartPtr<Ipopt::TNLP> mynlp = new IpoptWrapper(problem, options, params);
         Ipopt::SmartPtr<Ipopt::IpoptApplication> app = IpoptApplicationFactory();
         app->Options()->SetNumericValue("tol", 1e-7);
-        app->Options()->SetIntegerValue("print_level", 8);
+        app->Options()->SetIntegerValue("print_level", 0);
         app->Options()->SetStringValue("hessian_approximation", "limited-memory");
         if(options.line_search_direction == Solver::LineSearchDirection::LBFGS)
             app->Options()->SetStringValue("limited_memory_update_type", "bfgs");

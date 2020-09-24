@@ -26,31 +26,28 @@ public:
     using EdgeType = typename A::EdgeType;
     using VertexType = typename A::VertexType;
 
-    ReversedPathIterator(VertexType v, A const* algo) :
-            m_e(algo->m_shortestPaths[v]),
-            m_algo(algo) {
+    ReversedPathIterator(VertexType v, A const* algo) : m_v(v), m_algo(algo) {
         CORRADE_INTERNAL_ASSERT(v);
-        ++(*this);
     }
 
     EdgeType operator*() {
-        return m_e;
+        return m_algo->m_shortestPaths[m_v];
     }
 
     ReversedPathIterator& operator++() {
         if constexpr(std::is_same_v<VertexType, Vertex>)
-            m_e = m_algo->m_shortestPaths[m_e.vertex1()];
+            m_v = m_algo->m_shortestPaths[m_v].otherVertex(m_v);
         else if constexpr(std::is_same_v<VertexType, Face>)
-            m_e = m_algo->m_shortestPaths[m_e.face1()];
+            m_v = m_algo->m_shortestPaths[m_v].otherFace(m_v);
         return *this;
     }
 
     bool operator!=(ReversedPathIterator const& other) const {
-        return m_e != other.m_e;
+        return m_v != other.m_v;
     }
 
 private:
-    EdgeType m_e;
+    VertexType m_v;
     A const* m_algo;
 };
 

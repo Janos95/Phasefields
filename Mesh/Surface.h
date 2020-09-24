@@ -17,17 +17,20 @@ struct DualEdge;
 
 template<class> struct ElementIterator;
 template<class> struct FaceCirculationIterator;
-
-struct VertexCornerIterator;
-struct VertexAdjacentVertexIterator;
-struct IncomingHalfEdgeIterator;
-struct OutgoingHalfEdgeIterator;
+template<class> struct VertexCirculationIterator;
 
 using FaceCornerIterator = FaceCirculationIterator<Corner>;
 using FaceVertexIterator = FaceCirculationIterator<Vertex>;
 using FaceEdgeIterator = FaceCirculationIterator<Edge>;
 using FaceHalfEdgeIterator = FaceCirculationIterator<HalfEdge>;
 using FaceDualEdgeIterator = FaceCirculationIterator<DualEdge>;
+
+using VertexCornerIterator = VertexCirculationIterator<Corner>;
+using VertexVertexIterator = VertexCirculationIterator<Vertex>;
+using VertexEdgeIterator = VertexCirculationIterator<Edge>;
+using VertexFaceIterator = VertexCirculationIterator<Face>;
+using VertexIncomingHalfEdgeIterator = VertexCirculationIterator<HalfEdge>;
+struct VertexOutgoingHalfEdgeIterator;
 
 using VertexIterator = ElementIterator<Vertex>;
 using FaceIterator = ElementIterator<Face>;
@@ -38,10 +41,12 @@ using DualEdgeIterator = ElementIterator<DualEdge>;
 
 template<class> struct Range;
 
+using VertexEdgeRange = Range<VertexEdgeIterator>;
 using VertexCornerRange = Range<VertexCornerIterator>;
-using VertexAdjacentVertexRange = Range<VertexAdjacentVertexIterator>;
-using IncomingHalfEdgeRange = Range<IncomingHalfEdgeIterator>;
-using OutgoingHalfEdgeRange = Range<OutgoingHalfEdgeIterator>;
+using VertexVertexRange = Range<VertexVertexIterator>;
+using VertexOutgoingHalfEdgeRange = Range<VertexOutgoingHalfEdgeIterator>;
+using VertexIncomingHalfEdgeRange = Range<VertexIncomingHalfEdgeIterator>;
+using VertexFaceRange = Range<VertexFaceIterator>;
 
 using FaceEdgeRange = Range<FaceEdgeIterator>;
 using FaceCornerRange = Range<FaceCornerIterator>;

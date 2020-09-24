@@ -35,7 +35,7 @@ public:
     void reset() {
         m_queue = std::queue<VertexType>();
         for(EdgeType& prev : m_shortestPaths) prev = EdgeType{Invalid, m_mesh};
-        for(size_t& dist : m_dist) dist = ~size_t{0};
+        for(size_t& dist : m_dist) dist = Invalid;
     }
 
     void update() {
@@ -47,7 +47,7 @@ public:
 
     auto getEdges(VertexType node) {
         if constexpr (std::is_same_v<VertexType, Vertex>) return node.edges();
-        if constexpr (std::is_same_v<VertexType, Face>) return node.dualEdges();
+        if constexpr (std::is_same_v<VertexType, Face>) { return node.dualEdges(); }
     }
 
     auto getNeighbor(VertexType v, EdgeType edge) {
@@ -63,6 +63,7 @@ public:
         size_t distance = m_dist[v];
 
         for(EdgeType e : getEdges(v)) {
+            if constexpr (std::is_same_v<EdgeType, DualEdge>) CORRADE_ASSERT(e.isValid(), "Dual Edge not valid", false);
             VertexType neighbor = getNeighbor(v, e);
             size_t relaxedDist = 1 + distance;
             if(relaxedDist < m_dist[neighbor]) {

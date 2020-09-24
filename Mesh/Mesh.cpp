@@ -141,6 +141,8 @@ void Mesh::setFromData(const Mg::Trade::MeshData& meshData) {
     }
 
     update();
+    CORRADE_ASSERT(isTriangularMesh(), "Mesh is not triangular", );
+    CORRADE_ASSERT(checkDualGraph(), "Dual Graph is not correct", );
 
     //for(Vertex v : vertices()) {
     //    HalfEdge he = v.halfEdge();
@@ -205,6 +207,15 @@ StridedArrayView1D<const Vector3> Mesh::normals() const {
 
 StridedArrayView1D<Vector3> Mesh::normals() {
     return stridedArrayView(m_attributes).slice(&Implementation::Attributes::normal);
+}
+
+StridedArrayView1D<const Vector2> Mesh::textureCoordinates() const {
+    StridedArrayView1D<const Implementation::Attributes> view{m_attributes};
+    return view.slice<const Vector2>(&Implementation::Attributes::uv);
+}
+
+StridedArrayView1D<Vector2> Mesh::textureCoordinates() {
+    return stridedArrayView(m_attributes).slice(&Implementation::Attributes::uv);
 }
 
 namespace {
@@ -285,12 +296,70 @@ size_t Mesh::lookUpFeature(const char* lookUpName) {
 }
 
 void Mesh::update() {
-
-
-
-    for(auto& feature : m_features)
+    for(MeshFeature* feature : m_features) {
+        Debug{} << "Updating feature" << feature->name();
         feature->update();
+    }
 }
 
+Mg::Trade::MeshData Mesh::meshDataView() const {
+    Mg::Trade::MeshIndexData indexData{m_indices};
+    Array<Mg::Trade::MeshAttributeData> m_attributeDescription{InPlaceInit, {
+            Mg::Trade::MeshAttributeData{Mg::Trade::MeshAttribute::Position, positions()},
+            Mg::Trade::MeshAttributeData{Mg::Trade::MeshAttribute::Normal, normals()},
+            Mg::Trade::MeshAttributeData{Mg::Trade::MeshAttribute::TextureCoordinates, textureCoordinates()},
+            Mg::Trade::MeshAttributeData{Mg::Trade::MeshAttribute::Color, colors()},
+    }};
+
+    return Mg::Trade::MeshData{Mg::MeshPrimitive::Triangles, {},
+                               m_indices,
+                               indexData,
+                               {},
+                               m_attributes,
+                               std::move(m_attributeDescription)};
+}
+
+Mesh::~Mesh() {
+    for(MeshFeature* feature : m_features) {
+        if(feature->ownedByMesh()) delete feature;
+    }
+}
+
+ArrayView<const Vector3ui> Mesh::triangels() const { return arrayCast<const Vector3ui>(m_indices); }
+
+bool Mesh::isTriangularMesh() {
+    for(Face face : faces()) {
+        HalfEdge he = face.halfEdge();
+        HalfEdge it = he;
+        for(size_t i = 0; i < 3; ++i)
+            it = it.next();
+        if(he != it) return false;
+    }
+    return true;
+}
+
+bool Mesh::checkDualGraph() {
+
+    auto haveCommonEdge = [](Face a, Face b) {
+        for(Edge e1 : a.edges())
+        for(Edge e2 : b.edges())
+            if(e1 == e2) return true;
+        return false;
+    };
+
+    for(Face face : faces()) {
+        for(DualEdge de : face.dualEdges()) {
+            Face other = de.otherFace(face);
+            if(!haveCommonEdge(face, other)) return false;
+        }
+    }
+    return true;
+}
+
+Color4& Mesh::color(Vertex const& v) { return colors()[v.idx]; }
+
+Color4 const& Mesh::color(Vertex const& v) const { return colors()[v.idx]; }
+
+Float& Mesh::scalar(const Vertex& v) { return scalars()[v.idx]; }
 
 }

@@ -8,6 +8,8 @@
 #include "Types.h"
 #include "Functional.h"
 
+class adouble;
+
 namespace Phasefield {
 
 struct WeakYamabe {
@@ -15,11 +17,11 @@ struct WeakYamabe {
     explicit WeakYamabe(Mesh& m);
 
     template<class Scalar>
-    void operator()(ArrayView<const Scalar> const& parameters,
-                    ArrayView<const Scalar> const& weights,
-                    double& out,
-                    ArrayView<Scalar> const& gradP,
-                    ArrayView<Scalar> const& gradW);
+    void operator()(ArrayView<const Scalar> parameters,
+                    ArrayView<const Scalar> weights,
+                    Scalar& out,
+                    ArrayView<Scalar> gradP,
+                    ArrayView<Scalar> gradW);
 
     [[nodiscard]] size_t numParameters() const;
 
@@ -28,6 +30,7 @@ struct WeakYamabe {
 
 DECLARE_FUNCTIONAL_CONSTRUCTOR(WeakYamabe)
 DECLARE_FUNCTIONAL_OPERATOR(WeakYamabe, double)
+DECLARE_FUNCTIONAL_OPERATOR(WeakYamabe, adouble)
 
 }
 
