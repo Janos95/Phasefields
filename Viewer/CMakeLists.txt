@@ -20,7 +20,6 @@ target_link_libraries(Viewer
             Phasefield::Cost
             Phasefield::Optimization
             Phasefield::Visualization
-            Phasefield::ImGuiFS
             Phasefield::VisualizationProxy
             Phasefield::VideoSaver
 

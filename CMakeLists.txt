@@ -24,7 +24,6 @@ find_package(TBB CONFIG REQUIRED)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory(Utilities)
-add_subdirectory(ImGuiFS)
 add_subdirectory(ScopedTimer)
 add_subdirectory(Visualization)
 #add_subdirectory(polygonizer)
