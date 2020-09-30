@@ -52,7 +52,7 @@ void ConnectednessConstraint::operator()(ArrayView<const Scalar> parameters,
         Scalar sumU{0};
         Scalar penalty{0};
         for(Vertex v : face.vertices()) {
-            sumU += weights[v.idx]*parameters[v.idx];
+            sumU += parameters[v.idx];
             penalty += weights[v.idx];
         }
         uT[face] = 1./3.*sumU;
@@ -75,10 +75,10 @@ void ConnectednessConstraint::operator()(ArrayView<const Scalar> parameters,
             Scalar fuT1 = f.eval(uT[face1]);
             Scalar fuT2 = f.eval(uT[face2]);
 
-            Scalar penalty = 0.5*(facePenalties[face1] + facePenalties[face2]);
+            //Scalar penalty = 0.5*(facePenalties[face1] + facePenalties[face2]);
 
             Scalar w = .5*(face1.diameter() + face2.diameter())*.5*(fuT1 + fuT2);
-            dualEdgeWeights[de] = w + penalty;
+            dualEdgeWeights[de] = w;
             if(inInterface[face1] && inInterface[face2]) {
                 set.unite(face1.idx, face2.idx);
             }
@@ -230,29 +230,31 @@ void ConnectednessConstraint::operator()(ArrayView<const Scalar> parameters,
         }
 
         if(gradP) {
-            //ScopedTimer tDiff("connectedness diff", verbose);
-            //for(Face face : mesh->faces()) {
-            //    if(components[face] == Invalid) //not in interface
-            //        continue;
-            //    Scalar wgrad = bump.grad(uT[face]);
-            //    if(wgrad*wgrad < std::numeric_limits<double>::epsilon())
-            //        continue;
-            //    size_t i = components[face];
-            //    for(size_t j = 0; j < numComponents; ++j) {
-            //        if(i == j)
-            //            continue;
-            //        Scalar weightedGrad = distances[i][j]*W[j]*wgrad*face.area()/3.;
-            //        /* each incident vertex has the same influence */
-            //        for(Vertex v : face.vertices())
-            //            gradP[v.idx] += weightedGrad;
-            //    }
-            //}
+            ScopedTimer tDiff("connectedness diff", verbose);
+            for(Face face : mesh->faces()) {
+                if(components[face] == Invalid) //not in interface
+                    continue;
+                Scalar wgrad = bump.grad(uT[face]);
+                if(wgrad*wgrad < std::numeric_limits<double>::epsilon())
+                    continue;
+                size_t i = components[face];
+                for(size_t j = 0; j < numComponents; ++j) {
+                    if(i == j)
+                        continue;
+                    Scalar weightedGrad = distances[i][j]*W[j]*wgrad*face.area()/3.;
+                    /* each incident vertex has the same influence */
+                    for(Vertex v : face.vertices())
+                        gradP[v.idx] += weightedGrad;
+                }
+            }
         }
     }
 
     /* we scale everything by two since we computed only half the integral */
     d *= 2.;
     cost = d;
+
+    //Debug{} << W;
 
     if(gradP) {
         for(Vertex v : mesh->vertices()) gradP[v.idx] *= 2.;
@@ -266,8 +268,9 @@ void ConnectednessConstraint::drawImGuiOptions(VisualizationProxy& proxy) {
     dragDoubleRange2("##interval", &a, &b, 0.01, -1, 1, "a: %.2f", "b: %.2f", 1);
     if(ImGui::Checkbox("Show Connected Components", &drawComponents)) {
         if(drawComponents) {
-            proxy.setCallback([this](Viewer* v) { draw(*v); });
-            proxy.shaderConfig = VisualizationProxy::ShaderConfig::VertexColors;
+            proxy.setCallbacks(
+                    [this](Viewer* v) { draw(*v); },
+                    [this] { drawComponents = false; });
         } else proxy.setDefaultCallback();
         proxy.redraw();
     }

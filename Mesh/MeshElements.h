@@ -261,17 +261,11 @@ struct ElementIterator {
 
     ElementIterator& operator++() {
         if constexpr (std::is_same_v<T, Corner>)
-            do { ++e.idx; } while(e.idx < e.mesh->halfEdgeCount() && !isValid());
-        if constexpr (std::is_same_v<T, DualEdge>)
-            do { ++e.idx; } while(e.idx < e.mesh->edgeCount() && !isValid());
+            do { ++e.idx; } while(e.idx < e.mesh->halfEdgeCount() && !e.isValid());
+        else if constexpr (std::is_same_v<T, DualEdge>)
+            do { ++e.idx; } while(e.idx < e.mesh->edgeCount() && !e.isValid());
         else ++e.idx;
         return *this;
-    }
-
-    bool isValid() {
-        if constexpr (std::is_same_v<Corner, T>) return !e.halfEdge().onBoundaryLoop();
-        if constexpr (std::is_same_v<DualEdge, T>) return e.edge().hasDualEdge();
-        return true;
     }
 
     bool operator !=(ElementIterator const& other) const { return e != other.e; }

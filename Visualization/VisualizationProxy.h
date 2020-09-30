@@ -34,34 +34,27 @@ struct VisualizationProxy {
 
     void upload();
 
-    bool updateFaceTexture = false;
     bool updateVertexBuffer = false;
 
     //Containers::Array<Mg::Color3ub> faceColors;
     Viewer& viewer;
 
-    enum class ShaderConfig {
-        VertexColors,
-        ColorMaps
-    };
-
-    ShaderConfig shaderConfig = ShaderConfig::ColorMaps;
-
-
-    void drawPhasefield();
-
-    void drawWeights();
-
     void drawSegmentation();
+
+    void drawValues(VertexDataView<double> values, UniqueFunction<double(double)> tf);
 
     void setDefaultCallback();
 
-    void setCallback(UniqueFunction<void(Viewer*)>&& cb_);
+    void setCallbacks(UniqueFunction<void(Viewer*)>, UniqueFunction<void()>);
 
-    UniqueFunction<void(Viewer*)> cb;
+    UniqueFunction<void(Viewer*)> drawCb;
+    UniqueFunction<void()> releaseCb;
 
     VisOption::Value option;
     bool isDefaultCallback = true;
+
+    using P = std::pair<const char*, Array<Color4>>;
+    Array<P> colorMaps;
 };
 
 }

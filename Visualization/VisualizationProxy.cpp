@@ -14,9 +14,11 @@
 #include <Magnum/GL/Sampler.h>
 #include <Magnum/GL/Buffer.h>
 #include <Magnum/GL/Mesh.h>
+#include <Magnum/DebugTools/ColorMap.h>
 #include <Magnum/Trade/MeshData.h>
 
 #include <Corrade/Utility/Algorithms.h>
+#include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/GrowableArray.h>
 
 namespace Phasefield {
@@ -57,7 +59,24 @@ Array<Color4>& getColors(size_t n) {
     return colors;
 }
 
-VisualizationProxy::VisualizationProxy(Viewer& v) : viewer(v) { setDefaultCallback(); }
+
+VisualizationProxy::VisualizationProxy(Viewer& v) : viewer(v) {
+    using L = std::initializer_list<std::pair<const char*, StaticArrayView<256, const Vector3ub>>>;
+    for(auto [name, colors] : L{
+            {"Turbo",   Magnum::DebugTools::ColorMap::turbo()},
+            {"Magma",   Magnum::DebugTools::ColorMap::magma()},
+            {"Plasma",  Magnum::DebugTools::ColorMap::plasma()},
+            {"Inferno", Magnum::DebugTools::ColorMap::inferno()},
+            {"Viridis", Magnum::DebugTools::ColorMap::viridis()}
+    }) {
+        Array<Color4> converted{256};
+        for(size_t i = 0; i < 256; ++i) {
+            converted[i] = Color4{Math::unpack<Color3>(colors[i])};
+        }
+        arrayAppend(colorMaps, InPlaceInit, name, std::move(converted));
+    }
+    setDefaultCallback();
+}
 
 //void VisualizationProxy::setFaceColors(Containers::ArrayView<double>& data){
 //    std::lock_guard l(mutex);
@@ -69,27 +88,10 @@ VisualizationProxy::VisualizationProxy(Viewer& v) : viewer(v) { setDefaultCallba
 
 
 void VisualizationProxy::upload() {
-    if(updateFaceTexture) {
-        //viewer.faceTexture.setSubImage(0, {}, Mg::ImageView2D{Magnum::PixelFormat::RGB8Srgb, {(int)faceColors.size(), 1}, faceColors});
-        //updateFaceTexture = false;
-    }
     if(updateVertexBuffer) {
         viewer.mesh.uploadVertexBuffer(viewer.vertexBuffer);
         updateVertexBuffer = false;
     }
-}
-
-void VisualizationProxy::drawPhasefield() {
-    auto data = viewer.currentNode.phasefield();
-    CORRADE_INTERNAL_ASSERT(data.size() == viewer.mesh.vertexCount());
-    for(size_t i = 0; i < viewer.mesh.vertexCount(); ++i)
-        viewer.mesh.scalars()[i] = 0.5*(data[i] + 1.);
-}
-
-void VisualizationProxy::drawWeights() {
-    auto data = viewer.currentNode.temporary();
-    for(size_t i = 0; i < viewer.mesh.vertexCount(); ++i)
-        viewer.mesh.scalars()[i] = 0.5*(data[i] + 1.);
 }
 
 void VisualizationProxy::drawSegmentation() {
@@ -135,7 +137,7 @@ void VisualizationProxy::drawSegmentation() {
 }
 
 void VisualizationProxy::redraw() {
-    cb(&viewer);
+    drawCb(&viewer);
     viewer.redraw();
     updateVertexBuffer = true;
 }
@@ -144,24 +146,43 @@ void VisualizationProxy::setDefaultCallback() {
     isDefaultCallback = true;
     switch(option) {
         case VisOption::Segmentation :
-            cb = [this](Viewer*) { drawSegmentation(); };
-            shaderConfig = ShaderConfig::VertexColors;
+            drawCb = [this](Viewer*) { drawSegmentation(); };
             break;
         case VisOption::Phasefield :
-            cb = [this](Viewer*) { drawPhasefield(); };
-            shaderConfig = ShaderConfig::ColorMaps;
+            drawCb = [this](Viewer*) { drawValues(viewer.currentNode.phasefield(), [](double x){ return 0.5*(x + 1); }); };
             break;
         case VisOption::Weight :
-            cb = [this](Viewer*) { drawWeights(); };
-            shaderConfig = ShaderConfig::ColorMaps;
+            drawCb = [this](Viewer*) { drawValues(viewer.currentNode.temporary(), [](double x){ return x; }); };
             break;
     }
+    releaseCb = []{};
 }
 
-void VisualizationProxy::setCallback(UniqueFunction<void(Viewer*)>&& cb_) {
-    cb = std::move(cb_);
+void VisualizationProxy::setCallbacks(UniqueFunction<void(Viewer*)> draw, UniqueFunction<void()> release) {
+    releaseCb();
+    drawCb = std::move(draw);
+    releaseCb = std::move(release);
     isDefaultCallback = false;
 }
 
+void VisualizationProxy::drawValues(VertexDataView<double> values, UniqueFunction<double(double)> tf) {
+    auto& map = colorMaps[0].second;
+    CORRADE_INTERNAL_ASSERT(values.size() == viewer.mesh.vertexCount());
+    for(Vertex v : viewer.mesh.vertices()) {
+        double i = tf(values[v])*255.;
+        Color4 c;
+        if(i <= 0.) {
+            viewer.mesh.color(v) = map[0];
+        }
+        else if(i >= 255.) {
+            viewer.mesh.color(v) = map[255];
+        }
+        else {
+            double u = Math::ceil(i);
+            double l = Math::floor(i);
+            viewer.mesh.color(v) = (u - i)*map[size_t(l)] + (i - l)*map[size_t(u)];
+        }
+    }
+}
 
 }

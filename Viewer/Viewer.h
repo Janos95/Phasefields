@@ -23,6 +23,8 @@
 #include <Magnum/Math/Color.h>
 #include <Magnum/Trade/MeshData.h>
 #include <Magnum/Shaders/Phong.h>
+#include <MagnumPlugins/PrimitiveImporter/PrimitiveImporter.h>
+#include <MagnumPlugins/AssimpImporter/AssimpImporter.h>
 
 namespace Phasefield {
 
@@ -77,6 +79,8 @@ struct Viewer : public Mg::Platform::Application {
 
     void drawVisualizationOptions();
 
+    void drawIO();
+
     Functional makeFunctional(FunctionalType::Value);
 
     bool drawFunctionals(Array<Functional>&, size_t& id);
@@ -84,6 +88,8 @@ struct Viewer : public Mg::Platform::Application {
     void startBrushing(Vector3 const&);
 
     void brush();
+
+    void setScalingFactors();
 
     Vector3 unproject(Vector2i const&);
 
@@ -103,8 +109,7 @@ struct Viewer : public Mg::Platform::Application {
     GL::Mesh glMesh{Mg::NoCreate};
     GL::Buffer indexBuffer{Mg::NoCreate}, vertexBuffer{Mg::NoCreate};
 
-    Phong phongColorMap{Mg::NoCreate};
-    Phong phongVertexColors{Mg::NoCreate};
+    Phong phong{Mg::NoCreate};
 
     Color4 clearColor = 0x72909aff_rgbaf;
 
@@ -121,9 +126,10 @@ struct Viewer : public Mg::Platform::Application {
     //Mg::GL::Texture2D faceTexture{Mg::NoCreate};
     //Mg::GL::Texture2D* texture = nullptr;
 
+    double epsilon = 0.015;
     SharedRessource<double> doubleWellScaling;
     SharedRessource<double> dirichletScaling;
-    SharedRessource<Mg::Double> connectednessScaling;
+    SharedRessource<double> connectednessScaling;
 
     Double phase = 1.;
     Double targetDist = 0.;
@@ -154,6 +160,11 @@ struct Viewer : public Mg::Platform::Application {
 
     KDTree kdtree;
     FastMarchingMethod fastMarchingMethod;
+
+
+    Pointer<Mg::Trade::AbstractImporter> primitiveImporter1;
+    Mg::Trade::PrimitiveImporter* primitiveImporter;
+    Mg::Trade::AssimpImporter assimpImporter;
 };
 
 }

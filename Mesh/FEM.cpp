@@ -45,7 +45,7 @@ void GradientFeature::update() {
 
     for(Face face : m.faces()) {
         Vector3d normal = face.normal();
-        double dblA = face.area();
+        double dblA = 2*face.area();
         for(HalfEdge he : face.halfEdges()) {
             Vector3d v = he.asVector();
             m.gradient[he] = Math::cross(normal, v).normalized()*v.length()/dblA;

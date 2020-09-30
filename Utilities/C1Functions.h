@@ -31,7 +31,10 @@ struct F {
 class W {
 public:
 
-    W(const double a, const double b) : m_a(a), m_b(b), m_c3(-30./pow(a - b, 5)) {
+    W(const double a, const double b) : m_a(a), m_b(b) {
+        //double steepestPoint = 1./6.*(Math::sqrt(3) * Math::abs(b-a) + 3*(a+b));
+        //m_scale = .01/Math::abs(grad(steepestPoint));
+        m_scale = -30./pow(a - b, 5);
     }
 
     template<class T>
@@ -39,7 +42,7 @@ public:
         if(x < m_a)
             return 0.;
         if(x < m_b)
-            return pow(x - m_a, 2)*pow(x - m_b, 2)*m_c3;
+            return pow(x - m_a, 2)*pow(x - m_b, 2)*m_scale;
 
         return 0.;
     }
@@ -49,12 +52,13 @@ public:
         if(x < m_a)
             return 0.;
         if(x < m_b)
-            return 2.*((x - m_a)*pow(x - m_b, 2) + pow(x - m_a, 2)*(x - m_b))*m_c3;
+            return 2.*m_scale*((x - m_a)*pow(x - m_b, 2) + pow(x - m_a, 2)*(x - m_b));
         return 0.;
     }
 
 private:
-    const double m_a, m_b, m_c3;
+    const double m_a, m_b;
+    double m_scale = 1.;
 };
 
 struct SmootherStep {

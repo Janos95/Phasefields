@@ -32,6 +32,8 @@ target_link_libraries(Viewer
             Magnum::Shaders
             Magnum::DebugTools
             MagnumIntegration::ImGui
+            MagnumPlugins::PrimitiveImporter
+            MagnumPlugins::AssimpImporter
 
             ImGui::SourcesMiscCpp
         )

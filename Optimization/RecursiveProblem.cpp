@@ -167,7 +167,9 @@ void RecursiveProblem::operator()(ArrayView<const double> parameters, double& co
     cost = 0.;
 
     for(Functional const& f : *functionals) {
-        f(parameters, nodeToOptimize.temporary(), cost, gradient, nullptr);
+        if(!f.disable) {
+            f(parameters, nodeToOptimize.temporary(), cost, gradient, nullptr);
+        }
     }
 }
 

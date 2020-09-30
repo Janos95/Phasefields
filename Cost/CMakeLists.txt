@@ -1,6 +1,7 @@
 find_package(Ceres CONFIG REQUIRED)
 find_package(TBB CONFIG REQUIRED)
 find_package(OpenMP)
+find_package(SuiteSparse REQUIRED UMFPACK)
 find_package(PkgConfig REQUIRED)
 
 list(APPEND CMAKE_PREFIX_PATH /home/janos/libraries/prefix/)
@@ -36,6 +37,7 @@ target_link_libraries(Cost PRIVATE
         Phasefield::Viewer
         TBB::tbb
         PkgConfig::Adolc
+        SuiteSparse::UMFPACK
         )
 
 target_link_libraries(Cost PUBLIC

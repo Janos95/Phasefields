@@ -84,12 +84,12 @@ void GaussianCurvatureFeature::update() {
     m.gaussianCurvature = VertexData<double>{m.vertexCount()};
     for(Vertex vertex : m.vertices()) {
         Radd angleSum{0};
-        for(Corner corner : vertex.corners())
+        for(Corner corner : vertex.corners()) {
             angleSum += corner.angle();
+        }
         m.gaussianCurvature[vertex] = 2.*Mg::Math::Constants<double>::pi() - double(angleSum);
     }
 }
-
 }
 
 

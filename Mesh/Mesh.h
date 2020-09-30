@@ -53,24 +53,7 @@ struct HalfEdgeIncidency {
  * @tparam N
  * @tparam T
  */
-template<class E, class T>
-class MeshData : public Array<T> {
-public:
 
-    T& operator[](E n) {
-        CORRADE_CONSTEXPR_ASSERT(n.idx < this->size(), "Index Out of Bounds");
-        if constexpr (std::is_same_v<E, Corner> || std::is_same_v<E, DualEdge>)
-            CORRADE_CONSTEXPR_ASSERT(n.isValid(), "Element does not represent a valid index");
-        return (*this)[n.idx];
-    }
-
-    T const& operator[](E n) const {
-        CORRADE_CONSTEXPR_ASSERT(n.idx < this->size() && n, "Index Out of Bounds");
-        return (*this)[n.idx];
-    }
-
-    using Array<T>::Array;
-};
 
 template<class E, class T>
 class MeshDataView : public ArrayView<T> {
@@ -89,6 +72,34 @@ public:
     }
 
     using ArrayView<T>::ArrayView;
+    operator ArrayView<T>() {
+        auto* p = reinterpret_cast<Array<T>*>(this);
+        return *p;
+    }
+};
+
+template<class E, class T>
+class MeshData : public Array<T> {
+public:
+
+    T& operator[](E n) {
+        CORRADE_CONSTEXPR_ASSERT(n.idx < this->size(), "Index Out of Bounds");
+        if constexpr (std::is_same_v<E, Corner> || std::is_same_v<E, DualEdge>)
+            CORRADE_CONSTEXPR_ASSERT(n.isValid(), "Element does not represent a valid index");
+        return (*this)[n.idx];
+    }
+
+    T const& operator[](E n) const {
+        CORRADE_CONSTEXPR_ASSERT(n.idx < this->size() && n, "Index Out of Bounds");
+        return (*this)[n.idx];
+    }
+
+    using Array<T>::Array;
+    operator MeshDataView<E, T>() {
+        auto* p = reinterpret_cast<Array<T>*>(this);
+        ArrayView<T> view = *p;
+        return view;
+    }
 };
 
 class Mesh {

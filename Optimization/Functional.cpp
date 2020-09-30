@@ -84,8 +84,8 @@ void Functional::operator()(ArrayView<const double> parameters,
 
     out += rho[0];
 
+    double lossGrad = rho[1]*phi[1];
     if(gradP || gradW) {
-        double lossGrad = rho[1]*phi[1];
         for(size_t i = 0; i < n; ++i) {
             if(gradP) gradP[i] += lossGrad*gradPWithoutLoss[i];
             if(gradW) gradW[i] += lossGrad*gradWWithoutLoss[i];
@@ -114,6 +114,8 @@ void Functional::operator()(ArrayView<const double> parameters,
             variables[i + n] = weights[i];
         }
         ad(erased, paramsAd, weightsAd, residual);
+        if(scaling) residual *= *scaling;
+        loss(residual, residual);
 
         double dummy;
         residual >>= dummy;
@@ -126,7 +128,7 @@ void Functional::operator()(ArrayView<const double> parameters,
 
         double tol = 1e-6;
         for(size_t i = 0; i < n; ++i) {
-            if(Math::abs(gradParamsAd[i] - gradPWithoutLoss[i]) > tol) {
+            if(Math::abs(gradParamsAd[i] - lossGrad*gradPWithoutLoss[i]) > tol) {
                 Debug{} << "Gradient Error in" << FunctionalType::to_string(functionalType);
                 Debug{} << Cr::Utility::formatString("(Analytic = {}, AD = {}) at index {}\n", gradPWithoutLoss[i], gradParamsAd[i], i).c_str();
                 CORRADE_INTERNAL_ASSERT(false);
@@ -279,12 +281,13 @@ void Functional::drawImGuiOptions(VisualizationProxy& proxy) {
 
     if(ImGui::Checkbox("Draw Derivative", &drawGradient)) {
         if(drawGradient) {
-            proxy.setCallback([this](Viewer* viewer) {
+            proxy.setCallbacks([this](Viewer* viewer) {
                 auto parameters = viewer->currentNode.phasefield();
                 auto weights = viewer->currentNode.temporary();
                 Array<double> gradP(parameters.size());
                 double cost = 0;
                 (*this)(parameters, weights, cost, gradP, nullptr);
+
 
                 auto [minimum, maximum] = Math::minmax(gradP);
                 double scale = 1./(maximum - minimum);
@@ -292,8 +295,8 @@ void Functional::drawImGuiOptions(VisualizationProxy& proxy) {
                 for(Vertex v : viewer->mesh.vertices()) {
                     viewer->mesh.scalar(v) = scale*(gradP[v.idx] - minimum);
                 }
-            });
-            proxy.shaderConfig = VisualizationProxy::ShaderConfig::ColorMaps;
+            },
+            [this]{ drawGradient = false; });
         } else {
             proxy.setDefaultCallback();
         }

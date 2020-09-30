@@ -10,9 +10,6 @@
 #include "Visualization.h"
 #include "SharedRessource.h"
 
-#include <Corrade/Containers/EnumSet.h>
-#include <Corrade/Containers/Containers.h>
-
 class adouble;
 
 namespace Phasefield {
@@ -108,6 +105,7 @@ struct Functional {
 
     size_t tag = Invalid;
     bool drawGradient = false;
+    bool disable = false;
 };
 
 

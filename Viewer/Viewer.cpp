@@ -13,6 +13,7 @@
 #include <ScopedTimer/ScopedTimer.h>
 
 #include <Corrade/Utility/Algorithms.h>
+#include <Corrade/Utility/Configuration.h>
 #include <Corrade/Utility/Resource.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/PluginManager/Manager.h>
@@ -47,11 +48,12 @@
 #include <Magnum/ImGuiIntegration/Context.hpp>
 
 #include <Magnum/MeshTools/Compile.h>
+#include <Magnum/MeshTools/RemoveDuplicates.h>
 
 #include <Magnum/Primitives/Capsule.h>
 #include <Magnum/Primitives/Cylinder.h>
 #include <Magnum/Primitives/Grid.h>
-#include <Corrade/Utility/Debug.h>
+#include <MagnumPlugins/PrimitiveImporter/PrimitiveImporter.h>
 
 namespace Phasefield {
 
@@ -190,8 +192,7 @@ Viewer::Viewer(int argc, char** argv) :
               .setIndexBuffer(indexBuffer, 0, Mg::MeshIndexType::UnsignedInt)
               .addVertexBuffer(vertexBuffer, 0, Phong::Position{}, Phong::Normal{}, Phong::TextureCoordinates{}, Phong::Color4{});
 
-        phongColorMap = Phong{Phong::Flag::DiffuseTexture, 2};
-        phongVertexColors = Phong{Phong::Flag::VertexColor, 2};
+        phong = Phong{Phong::Flag::VertexColor, 2};
 
         colorMapTextures = makeColorMapTextures();
 
@@ -207,8 +208,16 @@ Viewer::Viewer(int argc, char** argv) :
 
     /* try to load tree from disk, otherwise fallback to empty tree with three nodes */
     {
-        ScopedTimer t{"Loading experiment from disk", true};
-        loadScene("/home/janos/meshes/testing", "h_shape");
+
+        Mg::PluginManager::Manager<Mg::Trade::AbstractImporter> manager;
+        primitiveImporter = new Mg::Trade::PrimitiveImporter{manager, "PrimitiveImporter"};
+        primitiveImporter->openData("deadbeef");
+
+        //primitiveImporter = manager.instantiate("PrimitiveImporter");
+
+        ScopedTimer t{"Loading scene from disk", true};
+        loadScene("/home/janos/meshes/testing", "spiky_cube");
+
     }
 
     /* Setup ImGui, load a better font */
@@ -255,12 +264,14 @@ Viewer::Viewer(int argc, char** argv) :
 }
 
 void Viewer::loadScene(const char* path, const char* postfix) {
+    bool loadedTree = false;
+    Optional<Mg::Trade::MeshData> md;
+
     if(Cr::Utility::Directory::exists(path)) {
 
         std::string meshPath = Cr::Utility::Directory::join(path, std::string{postfix} + ".ply");
         std::string treePath = Cr::Utility::Directory::join(path, std::string{postfix} + ".bin");
 
-        bool loadedTree = false;
 
         if(Cr::Utility::Directory::exists(treePath)) {
             FILE* fp = std::fopen(treePath.c_str(), "r");
@@ -276,11 +287,34 @@ void Viewer::loadScene(const char* path, const char* postfix) {
         }
 
         if(Cr::Utility::Directory::exists(meshPath)) {
-            Mg::Trade::MeshData md{Mg::MeshPrimitive::Points, 0};
-            if(loadMesh(meshPath.c_str(), md)) mesh.setFromData(md);
 
-            if(!loadedTree) tree.update();
+            Debug{} << "Opening file" << meshPath;
+
+            if(assimpImporter.openFile(meshPath)) {
+                Debug{} << "Imported " << assimpImporter.meshCount() << " meshes";
+
+                if(assimpImporter.meshCount() && assimpImporter.mesh(0)) {
+                    md = assimpImporter.mesh(0);
+                } else {
+                    Debug{} << "Could not load mesh";
+                }
+            } else {
+                puts("could not open file");
+            }
         }
+
+    } else { /* try a primitive */
+        Cr::Utility::Configuration conf{"/home/janos/Phasefield/primitives.conf"};
+        auto* group = conf.group(postfix);
+        auto* importerGroup = primitiveImporter->configuration().group(postfix);
+
+        //primitiveImporter->configuration() = *conf.group("configuration");
+        md = primitiveImporter->mesh(postfix);
+    }
+
+    if(md) {
+        auto cleaned = Mg::MeshTools::removeDuplicatesFuzzy(*md);
+        mesh.setFromData(cleaned);
 
         mesh.uploadVertexBuffer(vertexBuffer);
         mesh.uploadIndexBuffer(indexBuffer);
@@ -291,6 +325,14 @@ void Viewer::loadScene(const char* path, const char* postfix) {
               .addVertexBuffer(vertexBuffer, 0, Phong::Position{}, Phong::Normal{}, Phong::TextureCoordinates{},
                                Phong::Color4{});
 
+        tree.computeWeightsOfAncestorsOfLevel(tree.depth);
+    }
+
+    if(md && !loadedTree) {
+        tree.update();
+    }
+
+    if(md || loadedTree) {
         proxy.redraw();
     }
 }
@@ -426,6 +468,12 @@ bool Viewer::drawFunctionals(Array<Functional>& functionals, size_t& id) {
             break;
         }
 
+        ImGui::SameLine();
+
+        if(ImGui::Checkbox("Disable", &f.disable)) {
+            proxy.redraw();
+        }
+
         f.drawImGuiOptions(proxy);
 
         ImGui::Separator();
@@ -481,17 +529,34 @@ void Viewer::drawOptimizationOptions() {
         //    }
         //}
 
+        static bool drawProblemGradient = false;
+        if(ImGui::Checkbox("Total Gradient", &drawProblemGradient)) {
+            if(drawProblemGradient) {
+                proxy.setCallbacks([this](Viewer*) {
+                    auto parameters = currentNode.phasefield();
+                    Array<double> gradP(parameters.size());
+                    double cost = 0;
+                    problem.nodeToOptimize = currentNode;
+                    problem(parameters, cost, gradP);
 
+                    auto [minimum, maximum] = Math::minmax(gradP);
+                    double scale = 1./(maximum - minimum);
 
-        evaluateProblem |= ImGui::Button("Evaluate");
+                    for(Vertex v : mesh.vertices()) {
+                        mesh.scalar(v) = scale*(gradP[v.idx] - minimum);
+                    }
+                },
+                [this] { drawProblemGradient = false; });
+            } else {
+                proxy.setDefaultCallback();
+            }
+            proxy.redraw();
+        }
 
-        static Double epsilon = 0.015;
         if(dirichletScaling.refCount() > 1 || doubleWellScaling.refCount() > 1 || connectednessScaling.refCount() > 1) {
             constexpr Double minEps = 0.f, maxEps = 0.1;
-            ImGui::DragScalar("epsilon", ImGuiDataType_Double, &epsilon, .0001f, &minEps, &maxEps, "%f", 1);
-            *dirichletScaling = epsilon/2.;
-            *doubleWellScaling = 1./epsilon;
-            *connectednessScaling = 1./(epsilon*epsilon);
+            if(ImGui::DragScalar("epsilon", ImGuiDataType_Double, &epsilon, .0001f, &minEps, &maxEps, "%f", 1))
+                setScalingFactors();
         }
 
         static size_t iterations = 100;
@@ -542,7 +607,7 @@ void Viewer::drawOptimizationOptions() {
         ImGui::InputScalar("Max Depth", ImGuiDataType_U64, &maximumDepth, &step, nullptr, "%u");
         ImGui::Checkbox("Hierarchical Optimization", &hierarchicalOptimization);
 
-        if(ImGui::Button("Optimize") && !problem.objectives.empty() && !isOptimizing){
+        if(ImGui::Button("Optimize") && !problem.objectives.empty() && !isOptimizing) {
             isOptimizing = true;
         }
 
@@ -573,6 +638,7 @@ void Viewer::runOptimization(UniqueFunction<bool()>&& cb){
     if(hierarchicalOptimization) {
         tree.root().initializePhasefieldFromParent();
 
+        double largeScaleEpsilon = 0.1;
         for(size_t d = 0; d <= maximumDepth; ++d) {
             tree.computeWeightsOfAncestorsOfLevel(d);
 
@@ -584,9 +650,16 @@ void Viewer::runOptimization(UniqueFunction<bool()>&& cb){
                 }
 
                 problem.nodeToOptimize = node;
+                //double oldEpsilon = epsilon;
+                //epsilon = largeScaleEpsilon;
+                //setScalingFactors();
+                //Solver::solve(options, problem, node.phasefield(), nullptr);
+                //epsilon = oldEpsilon;
+                //setScalingFactors();
                 Solver::solve(options, problem, node.phasefield(), nullptr);
             }
 
+            largeScaleEpsilon *= 0.5;
             if(d != maximumDepth) {
                 for(Node node : tree.nodesOnLevel(d))
                     node.splitAndInitialize(&currentNode);
@@ -655,6 +728,12 @@ void Viewer::brush() {
     }
 }
 
+void Viewer::setScalingFactors() {
+    *dirichletScaling = epsilon/2.;
+    *doubleWellScaling = 1./epsilon;
+    *connectednessScaling = 1./(epsilon*epsilon*epsilon);
+}
+
 Vector3 Viewer::unproject(Vector2i const& windowPosition) {
     auto fbSize = framebufferSize();
     auto wSize = windowSize();
@@ -691,6 +770,26 @@ void Viewer::drawVisualizationOptions() {
                     ImGui::SetItemDefaultFocus();
             }
             ImGui::EndCombo();
+        }
+
+        static bool drawLogScaling = false;
+        if(ImGui::Checkbox("Compute Optimal Conformal Scaling", &drawLogScaling)) {
+            if(drawLogScaling) {
+                proxy.setCallbacks(
+                        [this](Viewer*){
+                            VertexData<double> solution;
+                            solveDiffuseYamabeEquation(mesh, currentNode.phasefield(), currentNode.temporary(), solution);
+                            double min, max, w;
+                            std::tie(min, max) = Math::minmax(ArrayView<double>(solution));
+                            if(max - min < 1e-10)
+                                w = 1;
+                            else
+                                w = max - min;
+                            proxy.drawValues(solution, [=](double value){ return (value - min)/w; });
+                            },
+                        [this]{ drawLogScaling = false; });
+            } else proxy.setDefaultCallback();
+            proxy.redraw();
         }
 
         char current[100];
@@ -750,13 +849,50 @@ void Viewer::drawVisualizationOptions() {
             proxy.redraw();
         }
 
+        if(ImGui::Button("Colorize With Selected Phase")) {
+            for(double& x : currentNode.phasefield()) x = 0;
+            proxy.redraw();
+        }
+
+        ImGui::TreePop();
+    }
+}
+
+void Viewer::drawIO() {
+    if(ImGui::TreeNode("IO")) {
+
+        const char* primitives[] = {
+            "capsule3DSolid",
+            "circle3DSolid",
+            "coneSolid",
+            "cylinderSolid",
+            "grid3DSolid",
+            "icosphereSolid",
+            "planeSolid",
+            "squareSolid",
+            "uvSphereSolid"
+        };
+
+        static const char* currentPrimitive = primitives[5];
+        if(ImGui::BeginCombo("##primitive", currentPrimitive)) {
+            for(const char* prim : primitives) {
+                bool isSelected = prim == currentPrimitive;
+                if(ImGui::Selectable(prim, isSelected)) {
+                    currentPrimitive = prim;
+                }
+                if(isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
         static char path[50] = "/home/janos/meshes/experiments";
         static char postfix[25] = "spot";
 
         ImGui::PushItemWidth(150);
 
         ImGui::BeginGroup();
-        ImGui::Text("Export to");
+        ImGui::Text("Import/Export to");
         ImGui::InputText("##Export to", path, sizeof(path));
         ImGui::EndGroup();
 
@@ -791,6 +927,11 @@ void Viewer::drawVisualizationOptions() {
         ImGui::SameLine();
         if(ImGui::Button("Load Scene")) {
             loadScene(path, postfix);
+        }
+
+        ImGui::SameLine();
+        if(ImGui::Button("Load Primitive")) {
+            loadScene("deadbeef", currentPrimitive);
         }
 
         ImGui::Checkbox("Animate", &animate);
@@ -1006,22 +1147,14 @@ void Viewer::drawEvent() {
     bool camChanged = arcBall->updateTransformation();
     Matrix4 viewTf = arcBall->viewMatrix();
 
-    if(proxy.shaderConfig == VisualizationProxy::ShaderConfig::ColorMaps) {
-        phongColorMap.setProjectionMatrix(projection)
-                     .setTransformationMatrix(viewTf)
-                     .setNormalMatrix(viewTf.normalMatrix())
-                     .bindDiffuseTexture(colorMapTextures[colorMapIndex].second)
 
-                     .draw(glMesh);
-    } else if (proxy.shaderConfig == VisualizationProxy::ShaderConfig::VertexColors) {
-        phongVertexColors.setProjectionMatrix(projection)
-                         .setTransformationMatrix(viewTf)
-                         .setNormalMatrix(viewTf.normalMatrix())
-                         .setLightPositions({{10,10,10}, {-10, -10, 10}})
-                         .setLightColors({Color4{0.5}, Color4{0.5}})
-                         .setSpecularColor(Color4{0.1})
-                         .draw(glMesh);
-    }
+    phong.setProjectionMatrix(projection)
+         .setTransformationMatrix(viewTf)
+         .setNormalMatrix(viewTf.normalMatrix())
+         .setLightPositions({{10,10,10}, {-10, -10, 10}})
+         .setLightColors({Color4{0.5}, Color4{0.5}})
+         .setSpecularColor(Color4{0.1})
+         .draw(glMesh);
 
     if(recording) {
         Mg::Image2D image = GL::defaultFramebuffer.read({{},framebufferSize()}, {GL::PixelFormat::RGBA, Mg::GL::PixelType::UnsignedByte});
@@ -1037,6 +1170,7 @@ void Viewer::drawEvent() {
     drawBrushOptions();
     drawOptimizationOptions();
     drawVisualizationOptions();
+    drawIO();
 
     imgui.updateApplicationCursor(*this);
 
@@ -1059,5 +1193,6 @@ void Viewer::drawEvent() {
     swapBuffers();
     redraw();
 }
+
 
 }

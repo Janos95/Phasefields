@@ -28,6 +28,8 @@ struct WeakYamabe {
     Mesh* mesh;
 };
 
+void solveDiffuseYamabeEquation(Mesh& m, VertexDataView<const double> parameters, VertexDataView<const double> weights, VertexData<double>& solutions);
+
 DECLARE_FUNCTIONAL_CONSTRUCTOR(WeakYamabe)
 DECLARE_FUNCTIONAL_OPERATOR(WeakYamabe, double)
 DECLARE_FUNCTIONAL_OPERATOR(WeakYamabe, adouble)

@@ -24,6 +24,7 @@ using Magnum::Vector3ub;
 using Magnum::Vector3ui;
 using Magnum::Vector3d;
 using Magnum::Matrix3;
+using Magnum::Matrix3d;
 using Magnum::Matrix4;
 using Magnum::Color3;
 using Magnum::Color3ub;

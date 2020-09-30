@@ -252,13 +252,13 @@ HalfEdgeSet Mesh::halfEdges() { return {{0, this}, {m_halfEdgeCount, this}}; }
 
 DualEdgeSet Mesh::dualEdges() {
     DualEdgeIterator b{0, this};
-    if(m_edgeCount && !b.isValid()) ++b;
+    if(m_edgeCount && !b.e.isValid()) ++b;
     return {b, {m_edgeCount, this}};
 }
 
 CornerSet Mesh::corners() {
     CornerIterator b{0, this};
-    if(m_halfEdgeCount && !b.isValid()) ++b;
+    if(m_halfEdgeCount && !b.e.isValid()) ++b;
     return {b, {m_halfEdgeCount, this}};
 }
 
