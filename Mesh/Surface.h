@@ -83,4 +83,5 @@ template<class T> using CornerDataView = MeshDataView<Corner, T>;
 template<class T> using DualEdgeData = MeshData<DualEdge, T>;
 template<class T> using DualEdgeDataView = MeshDataView<DualEdge, T>;
 
+struct FEM;
 }

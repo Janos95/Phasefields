@@ -269,7 +269,7 @@ void ConnectednessConstraint::drawImGuiOptions(VisualizationProxy& proxy) {
     if(ImGui::Checkbox("Show Connected Components", &drawComponents)) {
         if(drawComponents) {
             proxy.setCallbacks(
-                    [this](Viewer* v) { draw(*v); },
+                    [this](Node node) { draw(node); },
                     [this] { drawComponents = false; });
         } else proxy.setDefaultCallback();
         proxy.redraw();
@@ -279,9 +279,9 @@ void ConnectednessConstraint::drawImGuiOptions(VisualizationProxy& proxy) {
     ImGui::Checkbox("Ignore Small Components", &ignoreSmallComponents);
 }
 
-void ConnectednessConstraint::draw(Viewer& viewer) {
-    auto parameters = viewer.currentNode.phasefield();
-    auto weights = viewer.currentNode.temporary();
+void ConnectednessConstraint::draw(Node& node) {
+    auto parameters = node.phasefield();
+    auto weights = node.temporary();
 
     if(drawComponents) {
         FaceData<size_t> components(mesh->faceCount());
@@ -354,7 +354,7 @@ void ConnectednessConstraint::draw(Viewer& viewer) {
 
         auto& vertexColors = getColors(numComponents);
 
-        for(Vertex v : viewer.mesh.vertices()) {
+        for(Vertex v : mesh->vertices()) {
             float n = 0.f;
             Color4 color;
             for(Face f : v.faces()) {
@@ -365,7 +365,7 @@ void ConnectednessConstraint::draw(Viewer& viewer) {
                 }
             }
             color *= 1.f/n;
-            viewer.mesh.color(v) = color;
+            mesh->color(v) = color;
         }
     }
 }

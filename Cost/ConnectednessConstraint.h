@@ -14,7 +14,7 @@ namespace Phasefield {
 namespace Mn = Magnum;
 namespace Cr = Corrade;
 
-class Viewer;
+struct Node;
 
 struct ConnectednessConstraint {
     explicit ConnectednessConstraint(Mesh&);
@@ -31,7 +31,7 @@ struct ConnectednessConstraint {
 
     void drawImGuiOptions(VisualizationProxy&);
 
-    void draw(Viewer&);
+    void draw(Node&);
 
     Mesh* mesh;
 

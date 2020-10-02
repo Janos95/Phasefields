@@ -63,7 +63,7 @@ private:
 
 struct SmootherStep {
     template<class T>
-    T eval(T x) const {
+    constexpr T eval(T x) const {
         if(x <= -1) return T{0};
         if(x <= 1.){
             x = .5*(x + 1.);
@@ -73,13 +73,37 @@ struct SmootherStep {
     }
 
     template<class T>
-    T grad(T x) const {
+    constexpr T grad(T x) const {
         if(x <= -1) return T{0};
         if(x <= 1.){
             x = .5*(x + 1.);
             return 3.*x*(1. - x);
         }
         return T{0};
+    }
+};
+
+struct LinearChi {
+    template<class T>
+    constexpr T eval(T x) const {
+        return 0.5*(x+1);
+    }
+
+    template<class T>
+    constexpr T grad(T x) const {
+        return 0.5;
+    }
+};
+
+struct QuadraticChi {
+    template<class T>
+    constexpr T eval(T x) const {
+        return 0.25*(x+1)*(x+1);
+    }
+
+    template<class T>
+    constexpr T grad(T x) const {
+        return 0.5*(x + 1);
     }
 };
 

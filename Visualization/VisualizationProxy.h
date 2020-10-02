@@ -5,10 +5,12 @@
 #pragma once
 
 #include "Enums.h"
-#include "Mesh.h"
 #include "UniqueFunction.h"
+#include "Surface.h"
 
-#include <Corrade/Containers/Array.h>
+
+//TODO UniqueFunction blacks out with reference to incomplete type ??
+#include "Tree.h"
 
 namespace Phasefield {
 
@@ -23,7 +25,18 @@ SMART_ENUM(VisOption, size_t,
  */
 Array<Color4>& getColors(size_t n);
 
+/**
+ * The main purpose of this class is to avoid including the whole Viewer.h
+ * everywhere we want to manipulate some of the drawing state.
+ */
 struct VisualizationProxy {
+
+    enum class ShaderConfig {
+        VertexColors,
+        ColorMaps
+    };
+
+    ShaderConfig shaderConfig = ShaderConfig::ColorMaps;
 
     VisualizationProxy(class Viewer&);
 
@@ -41,20 +54,18 @@ struct VisualizationProxy {
 
     void drawSegmentation();
 
-    void drawValues(VertexDataView<double> values, UniqueFunction<double(double)> tf);
+    void drawValues(VertexDataView<double> const& values, UniqueFunction<double(double)> tf = [](double x){ return x; });
+
+    void drawValuesNormalized(VertexDataView<double> const& values);
 
     void setDefaultCallback();
 
-    void setCallbacks(UniqueFunction<void(Viewer*)>, UniqueFunction<void()>);
+    void setCallbacks(UniqueFunction<void(Node)>, UniqueFunction<void()>);
 
-    UniqueFunction<void(Viewer*)> drawCb;
+    UniqueFunction<void(Node)> drawCb;
     UniqueFunction<void()> releaseCb;
 
     VisOption::Value option;
-    bool isDefaultCallback = true;
-
-    using P = std::pair<const char*, Array<Color4>>;
-    Array<P> colorMaps;
 };
 
 }

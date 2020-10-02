@@ -36,7 +36,7 @@ SMART_ENUM(FunctionalType, Mg::UnsignedInt,
            DoubleWellPotential,
            AreaRegularizer,
            ConnectednessConstraint,
-           WeakYamabe,
+           DiffuseYamabe,
            Unknown)
 
 enum class DrawableType : Magnum::Int {

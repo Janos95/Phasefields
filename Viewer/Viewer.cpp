@@ -8,7 +8,7 @@
 #include "Tag.h"
 #include "ModicaMortola.h"
 #include "ConnectednessConstraint.h"
-#include "WeakYamabe.h"
+#include "DiffuseYamabe.h"
 
 #include <ScopedTimer/ScopedTimer.h>
 
@@ -137,7 +137,7 @@ Viewer::Viewer(int argc, char** argv) :
         tree{mesh},
         kdtree{mesh},
         proxy(*this),
-        dirichletScaling(1.), doubleWellScaling(1.), connectednessScaling(1.),
+        dirichletScaling(1.), connectednessScaling(1.),
         problem(tree)
         //problem(tree),
         //proxy(*this),
@@ -192,7 +192,8 @@ Viewer::Viewer(int argc, char** argv) :
               .setIndexBuffer(indexBuffer, 0, Mg::MeshIndexType::UnsignedInt)
               .addVertexBuffer(vertexBuffer, 0, Phong::Position{}, Phong::Normal{}, Phong::TextureCoordinates{}, Phong::Color4{});
 
-        phong = Phong{Phong::Flag::VertexColor, 2};
+        phongColorMap = Phong{Phong::Flag::DiffuseTexture, 2};
+        phongVertexColors = Phong{Phong::Flag::VertexColor, 2};
 
         colorMapTextures = makeColorMapTextures();
 
@@ -202,8 +203,9 @@ Viewer::Viewer(int argc, char** argv) :
     {
         arrayAppend(problem.objectives, makeFunctional(FunctionalType::DoubleWellPotential));
         arrayAppend(problem.objectives, makeFunctional(FunctionalType::DirichletEnergy));
-        arrayAppend(problem.objectives, makeFunctional(FunctionalType::AreaRegularizer));
-        arrayAppend(problem.objectives, makeFunctional(FunctionalType::ConnectednessConstraint));
+        arrayAppend(problem.objectives, makeFunctional(FunctionalType::DiffuseYamabe));
+        //arrayAppend(problem.objectives, makeFunctional(FunctionalType::AreaRegularizer));
+        //arrayAppend(problem.objectives, makeFunctional(FunctionalType::ConnectednessConstraint));
     }
 
     /* try to load tree from disk, otherwise fallback to empty tree with three nodes */
@@ -532,7 +534,7 @@ void Viewer::drawOptimizationOptions() {
         static bool drawProblemGradient = false;
         if(ImGui::Checkbox("Total Gradient", &drawProblemGradient)) {
             if(drawProblemGradient) {
-                proxy.setCallbacks([this](Viewer*) {
+                proxy.setCallbacks([this](Node) {
                     auto parameters = currentNode.phasefield();
                     Array<double> gradP(parameters.size());
                     double cost = 0;
@@ -553,7 +555,7 @@ void Viewer::drawOptimizationOptions() {
             proxy.redraw();
         }
 
-        if(dirichletScaling.refCount() > 1 || doubleWellScaling.refCount() > 1 || connectednessScaling.refCount() > 1) {
+        if(dirichletScaling.refCount() > 1 || connectednessScaling.refCount() > 1) {
             constexpr Double minEps = 0.f, maxEps = 0.1;
             if(ImGui::DragScalar("epsilon", ImGuiDataType_Double, &epsilon, .0001f, &minEps, &maxEps, "%f", 1))
                 setScalingFactors();
@@ -643,19 +645,13 @@ void Viewer::runOptimization(UniqueFunction<bool()>&& cb){
             tree.computeWeightsOfAncestorsOfLevel(d);
 
             for(Node node : tree.nodesOnLevel(d)) {
-                double area = 0.5*node.integrateWeight(mesh);
+                double area = currentNode.integrateWeight(mesh);
                 for(Functional& f : problem.objectives) {
                     if(f.functionalType == FunctionalType::AreaRegularizer)
-                        reinterpret_cast<AreaRegularizer*>(f.erased)->targetArea = area;
+                        reinterpret_cast<AreaRegularizer*>(f.erased)->totalArea = area;
                 }
 
                 problem.nodeToOptimize = node;
-                //double oldEpsilon = epsilon;
-                //epsilon = largeScaleEpsilon;
-                //setScalingFactors();
-                //Solver::solve(options, problem, node.phasefield(), nullptr);
-                //epsilon = oldEpsilon;
-                //setScalingFactors();
                 Solver::solve(options, problem, node.phasefield(), nullptr);
             }
 
@@ -667,11 +663,11 @@ void Viewer::runOptimization(UniqueFunction<bool()>&& cb){
         }
     } else {
         tree.computeWeightsOfAncestorsOfLevel(currentNode.depth());
-        double area = 0.5*currentNode.integrateWeight(mesh);
+        double area = currentNode.integrateWeight(mesh);
         Debug{} << "Target area" << area;
         for(Functional& f : problem.objectives) {
             if(f.functionalType == FunctionalType::AreaRegularizer) {
-                reinterpret_cast<AreaRegularizer*>(f.erased)->targetArea = area;
+                reinterpret_cast<AreaRegularizer*>(f.erased)->totalArea = area;
             }
         }
         problem.nodeToOptimize = currentNode;
@@ -694,16 +690,14 @@ Functional Viewer::makeFunctional(FunctionalType::Value type) {
             return f;
         }
         case FunctionalType::DoubleWellPotential : {
-            Functional f = DoubleWellPotential{mesh};
-            f.scaling = doubleWellScaling;
-            return f;
+            return DoubleWellPotential{mesh};
         }
         case FunctionalType::ConnectednessConstraint : {
             Functional f = ConnectednessConstraint{mesh};
             f.scaling = connectednessScaling;
             return f;
         }
-        case FunctionalType::WeakYamabe : return WeakYamabe{mesh};
+        case FunctionalType::DiffuseYamabe : return DiffuseYamabe{mesh};
 
         default: return Functional{};
     }
@@ -729,9 +723,8 @@ void Viewer::brush() {
 }
 
 void Viewer::setScalingFactors() {
-    *dirichletScaling = epsilon/2.;
-    *doubleWellScaling = 1./epsilon;
-    *connectednessScaling = 1./(epsilon*epsilon*epsilon);
+    *dirichletScaling = epsilon*epsilon/2.;
+    *connectednessScaling = 1./(epsilon*epsilon);
 }
 
 Vector3 Viewer::unproject(Vector2i const& windowPosition) {
@@ -758,6 +751,10 @@ Vector3 Viewer::unproject(Vector2i const& windowPosition) {
 void Viewer::drawVisualizationOptions() {
     if(ImGui::TreeNode("Visualization Options")) {
 
+        if(ImGui::Button("Redraw")) {
+            proxy.redraw();
+        }
+
         if(ImGui::BeginCombo("##visOptions", VisOption::to_string(proxy.option))) {
             for(auto type : VisOption::range) {
                 bool isSelected = type == proxy.option;
@@ -770,26 +767,6 @@ void Viewer::drawVisualizationOptions() {
                     ImGui::SetItemDefaultFocus();
             }
             ImGui::EndCombo();
-        }
-
-        static bool drawLogScaling = false;
-        if(ImGui::Checkbox("Compute Optimal Conformal Scaling", &drawLogScaling)) {
-            if(drawLogScaling) {
-                proxy.setCallbacks(
-                        [this](Viewer*){
-                            VertexData<double> solution;
-                            solveDiffuseYamabeEquation(mesh, currentNode.phasefield(), currentNode.temporary(), solution);
-                            double min, max, w;
-                            std::tie(min, max) = Math::minmax(ArrayView<double>(solution));
-                            if(max - min < 1e-10)
-                                w = 1;
-                            else
-                                w = max - min;
-                            proxy.drawValues(solution, [=](double value){ return (value - min)/w; });
-                            },
-                        [this]{ drawLogScaling = false; });
-            } else proxy.setDefaultCallback();
-            proxy.redraw();
         }
 
         char current[100];
@@ -849,8 +826,15 @@ void Viewer::drawVisualizationOptions() {
             proxy.redraw();
         }
 
-        if(ImGui::Button("Colorize With Selected Phase")) {
-            for(double& x : currentNode.phasefield()) x = 0;
+        static bool drawCurvature = false;
+        if(ImGui::Checkbox("Gaussian Curvature", &drawCurvature)) {
+            if(drawCurvature) {
+                proxy.setCallbacks(
+                        [this](Node node) {
+                            proxy.drawValuesNormalized(mesh.gaussianCurvature);
+                        },
+                        [this]{ drawCurvature = false; });
+            } else proxy.setDefaultCallback();
             proxy.redraw();
         }
 
@@ -1057,6 +1041,12 @@ void Viewer::mousePressEvent(MouseEvent& event) {
         event.setAccepted();
         redraw(); /* camera has changed, redraw! */
     }
+
+    if(event.button() == MouseEvent::Button::Right) {
+        Vector3 p = unproject(event.position());
+        auto [idx, _] = kdtree.nearestNeighbor(point);
+        Debug{} << "Phasefield value at mouse location" << currentNode.phasefield()[idx];
+    }
 }
 
 void Viewer::mouseReleaseEvent(MouseEvent& event) {
@@ -1147,14 +1137,23 @@ void Viewer::drawEvent() {
     bool camChanged = arcBall->updateTransformation();
     Matrix4 viewTf = arcBall->viewMatrix();
 
+    if(proxy.shaderConfig == VisualizationProxy::ShaderConfig::ColorMaps) {
+        phongColorMap.setProjectionMatrix(projection)
+                     .setTransformationMatrix(viewTf)
+                     .setNormalMatrix(viewTf.normalMatrix())
+                     .bindDiffuseTexture(colorMapTextures[colorMapIndex].second)
 
-    phong.setProjectionMatrix(projection)
-         .setTransformationMatrix(viewTf)
-         .setNormalMatrix(viewTf.normalMatrix())
-         .setLightPositions({{10,10,10}, {-10, -10, 10}})
-         .setLightColors({Color4{0.5}, Color4{0.5}})
-         .setSpecularColor(Color4{0.1})
-         .draw(glMesh);
+                     .draw(glMesh);
+    } else if (proxy.shaderConfig == VisualizationProxy::ShaderConfig::VertexColors) {
+        phongVertexColors.setProjectionMatrix(projection)
+                         .setTransformationMatrix(viewTf)
+                         .setNormalMatrix(viewTf.normalMatrix())
+                         .setLightPositions({{10,10,10}, {-10, -10, 10}})
+                         .setLightColors({Color4{0.5}, Color4{0.5}})
+                         .setSpecularColor(Color4{0.1})
+                         .draw(glMesh);
+    }
+
 
     if(recording) {
         Mg::Image2D image = GL::defaultFramebuffer.read({{},framebufferSize()}, {GL::PixelFormat::RGBA, Mg::GL::PixelType::UnsignedByte});

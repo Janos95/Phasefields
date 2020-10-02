@@ -22,8 +22,8 @@ add_library(Cost STATIC
         StoppingCriteria.h
         UnionFind.cpp
         UnionFind.h
-        WeakYamabe.cpp
-        WeakYamabe.h
+        DiffuseYamabe.cpp
+        DiffuseYamabe.h
         )
 
 target_include_directories(Cost PUBLIC

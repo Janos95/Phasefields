@@ -222,17 +222,16 @@ public:
     FaceData<double> faceArea;
     FaceData<Vector3d> faceNormal;
     FaceData<double> faceDiameter;
+    double surfaceArea;
 
     VertexData<double> gaussianCurvature;
     VertexData<size_t> degree;
 
     /* Fem operators */
     VertexData<double> integral;
-    Array<Triplet> massMatrix;
-    Array<Triplet> stiffnessMatrix;
     HalfEdgeData<Vector3d> gradient;
 
-    double surfaceArea;
+    Pointer<FEM> fem = nullptr;
 
     bool isTriangularMesh();
     bool checkDualGraph();

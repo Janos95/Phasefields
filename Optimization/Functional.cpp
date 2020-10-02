@@ -281,20 +281,13 @@ void Functional::drawImGuiOptions(VisualizationProxy& proxy) {
 
     if(ImGui::Checkbox("Draw Derivative", &drawGradient)) {
         if(drawGradient) {
-            proxy.setCallbacks([this](Viewer* viewer) {
-                auto parameters = viewer->currentNode.phasefield();
-                auto weights = viewer->currentNode.temporary();
+            proxy.setCallbacks([this, &proxy](Node node) {
+                auto parameters = node.phasefield();
+                auto weights = node.temporary();
                 Array<double> gradP(parameters.size());
                 double cost = 0;
                 (*this)(parameters, weights, cost, gradP, nullptr);
-
-
-                auto [minimum, maximum] = Math::minmax(gradP);
-                double scale = 1./(maximum - minimum);
-
-                for(Vertex v : viewer->mesh.vertices()) {
-                    viewer->mesh.scalar(v) = scale*(gradP[v.idx] - minimum);
-                }
+                proxy.drawValuesNormalized(gradP);
             },
             [this]{ drawGradient = false; });
         } else {

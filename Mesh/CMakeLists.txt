@@ -31,6 +31,7 @@ target_link_libraries(Mesh PRIVATE
 
 target_link_libraries(Mesh PUBLIC
         Phasefield::Utilities
+        Eigen3::Eigen
         )
 
 set_property(TARGET Mesh PROPERTY POSITION_INDEPENDENT_CODE ON)

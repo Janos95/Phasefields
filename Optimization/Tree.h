@@ -5,7 +5,6 @@
 #pragma once
 
 #include "Enums.h"
-#include "YCombinator.h"
 #include "Range.h"
 #include "Types.h"
 #include "Mesh.h"

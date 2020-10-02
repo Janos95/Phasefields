@@ -6,6 +6,8 @@
 #include "SparseMatrix.h"
 #include "Mesh.h"
 
+#include "FEM.hpp"
+
 namespace Phasefield {
 
 void IntegralOperatorFeature::update() {
@@ -23,19 +25,16 @@ void IntegralOperatorFeature::update() {
 void MassMatrixFeature::update() {
     Mesh& m = mesh();
 
-    arrayResize(m.massMatrix, 0);
-    arrayReserve(m.massMatrix, 9*m.faceCount());
-
+    Eigen::VectorXd integral{m.vertexCount()};
+    integral.setZero();
     for(Face face : m.faces()) {
         double area = face.area();
-
         for(Vertex v : face.vertices()) {
-            for(Vertex w : face.vertices()) {
-                double factor = v == w  ? 2. : 1.;
-                arrayAppend(m.massMatrix, InPlaceInit, v.idx, w.idx, factor*area);
-            }
+            integral[v.idx] += area/3.;
         }
     }
+
+    m.fem->mass = integral.asDiagonal();
 }
 
 void GradientFeature::update() {
@@ -56,37 +55,29 @@ void GradientFeature::update() {
 void StiffnessMatrixFeature::update() {
     Mesh& m = mesh();
 
-    Array<Triplet> triplets;
-    arrayReserve(triplets, 12*m.faceCount());
+    size_t n = m.vertexCount();
 
+    Array<Eigen::Triplet<double>> triplets{12*m.faceCount()};
+
+    size_t i = 0;
     for(Face face : m.faces()) {
-
-        size_t i = 0;
-        size_t t[3];
-        Vector3 vertices[3];
-        for(Vertex v : face.vertices()) {
-            vertices[i] = v.position();
-            t[i++] = v.idx;
-        }
-
-        Vector3 a = vertices[1] - vertices[2];
-        Vector3 b = vertices[2] - vertices[0];
-        Vector3 c = vertices[0] - vertices[1];
-
-        double area = double(face.area());
-        auto lengthSqr = Vector3d{Vector3(a.dot(), b.dot(), c.dot())};
-
-        // add local contribution
-        for(int j = 0; j < 3; j++) {
-            double entry = 0.125*(lengthSqr[j] - lengthSqr[(j + 1)%3] - lengthSqr[(j + 2)%3])/area;
-            arrayAppend(triplets, InPlaceInit, t[(j + 1)%3], t[(j + 2)%3], entry);
-            arrayAppend(triplets, InPlaceInit, t[(j + 2)%3], t[(j + 1)%3], entry);
-            arrayAppend(triplets, InPlaceInit, t[(j + 1)%3], t[(j + 1)%3], -entry);
-            arrayAppend(triplets, InPlaceInit, t[(j + 2)%3], t[(j + 2)%3], -entry);
+        for(HalfEdge he1 : face.halfEdges()) {
+            Vertex v = he1.next().tip();
+            for(HalfEdge he2 : face.halfEdges()) {
+                Vertex w = he2.next().tip();
+                double value = Math::dot(m.gradient[he2], m.gradient[he1])*face.area();
+                triplets[i++] = Eigen::Triplet<double>{v.idx, w.idx, value};
+            }
         }
     }
 
-    m.stiffnessMatrix = std::move(triplets);
+    Eigen::SparseMatrix<double> stiffness(n,n);
+    stiffness.setFromTriplets(triplets.begin(), triplets.end());
+
+    if(!m.fem) {
+        m.fem = pointer<FEM>();
+    }
+    m.fem->stiffness = std::move(stiffness);
 }
 
 }

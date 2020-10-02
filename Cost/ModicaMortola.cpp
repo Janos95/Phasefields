@@ -88,6 +88,7 @@ void AreaRegularizer::operator()(ArrayView<const Scalar> parameters,
                                  ArrayView<Scalar> gradP,
                                  ArrayView<Scalar> gradW) {
 
+    double invTotalArea = 1./totalArea;
     Scalar integral = 0;
     SmootherStep f;
     for(Vertex vertex : mesh.vertices()) {
@@ -100,7 +101,7 @@ void AreaRegularizer::operator()(ArrayView<const Scalar> parameters,
             gradW[idx] += f.eval(parameters[idx])*mesh.integral[vertex];
         }
     }
-    out += integral - targetArea;
+    out += (integral - 0.5*totalArea);
 }
 
 DoubleWellPotential::DoubleWellPotential(Mesh& m) : mesh(m) {

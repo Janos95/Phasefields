@@ -109,7 +109,8 @@ struct Viewer : public Mg::Platform::Application {
     GL::Mesh glMesh{Mg::NoCreate};
     GL::Buffer indexBuffer{Mg::NoCreate}, vertexBuffer{Mg::NoCreate};
 
-    Phong phong{Mg::NoCreate};
+    Phong phongVertexColors{Mg::NoCreate};
+    Phong phongColorMap{Mg::NoCreate};
 
     Color4 clearColor = 0x72909aff_rgbaf;
 
@@ -126,8 +127,7 @@ struct Viewer : public Mg::Platform::Application {
     //Mg::GL::Texture2D faceTexture{Mg::NoCreate};
     //Mg::GL::Texture2D* texture = nullptr;
 
-    double epsilon = 0.015;
-    SharedRessource<double> doubleWellScaling;
+    double epsilon = 0.065;
     SharedRessource<double> dirichletScaling;
     SharedRessource<double> connectednessScaling;
 
