@@ -2,6 +2,8 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/contrib/imgui" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/contrib/magnum-integration" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/docs/m.css" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/toolchains" vcs="Git" />
   </component>

@@ -34,6 +34,4 @@ target_link_libraries(Mesh PUBLIC
         Eigen3::Eigen
         )
 
-set_property(TARGET Mesh PROPERTY POSITION_INDEPENDENT_CODE ON)
-
 add_library(Phasefield::Mesh ALIAS Mesh)

@@ -3,23 +3,45 @@ project(Phasefield)
 
 set(CMAKE_CXX_STANDARD 20)
 
+#add_subdirectory(contrib)
+
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/modules)
-#list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/conan_modules)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-find_package(Eigen3 CONFIG REQUIRED)
-find_package(Corrade CONFIG REQUIRED PluginManager Containers TestSuite)
-find_package(Magnum CONFIG REQUIRED GL SceneGraph MeshTools Sdl2Application Shaders Primitives DebugTools)
-find_package(MagnumPlugins CONFIG REQUIRED AssimpImporter PrimitiveImporter)
-find_package(MagnumIntegration CONFIG REQUIRED ImGui)
-find_package(ImGui REQUIRED COMPONENTS SourcesMiscCpp)
-find_package(TBB CONFIG REQUIRED)
+#find_package(TBB CONFIG REQUIRED)
 #find_package(ipopt REQUIRED)
 
 #set_compile_options("-Wno-old-style-cast")
 #list(INSERT CMAKE_CXX_FLAGS 0 "-Wno-old-style-cast")
 #set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
+
+
+find_package(Corrade REQUIRED Containers Utility)
+find_package(Magnum REQUIRED GL MeshTools Shaders Primitives DebugTools)
+find_package(MagnumPlugins REQUIRED PrimitiveImporter)
+find_package(MagnumIntegration REQUIRED ImGui)
+find_package(Eigen3)
+find_package(Ceres)
+
+if (NOT CORRADE_TARGET_EMSCRIPTEN)
+    find_package(TBB CONFIG REQUIRED)
+    find_package(PkgConfig REQUIRED)
+    find_package(OpenMP)
+    find_package(SuiteSparse REQUIRED UMFPACK)
+    find_package(MagnumPlugins REQUIRED AssimpImporter)
+    find_package(Magnum REQUIRED Sdl2Application)
+
+    pkg_check_modules(Ipopt REQUIRED IMPORTED_TARGET ipopt)
+    pkg_check_modules(Adolc REQUIRED IMPORTED_TARGET adolc)
+
+    pkg_check_modules(libavcodec REQUIRED IMPORTED_TARGET libavcodec)
+    pkg_check_modules(libavutil REQUIRED IMPORTED_TARGET libavutil)
+    pkg_check_modules(libswscale REQUIRED IMPORTED_TARGET libswscale)
+else()
+    find_package(Magnum REQUIRED EmscriptenApplication)
+endif()
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 add_subdirectory(Utilities)
@@ -27,7 +49,6 @@ add_subdirectory(ScopedTimer)
 add_subdirectory(Visualization)
 #add_subdirectory(polygonizer)
 #add_subdirectory(math)
-#add_subdirectory(Shaders)
 add_subdirectory(Optimization)
 add_subdirectory(Mesh)
 add_subdirectory(Cost)

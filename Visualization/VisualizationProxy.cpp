@@ -53,9 +53,15 @@ Array<Color4>& getColors(size_t n) {
     static Array<Color4> colors;
     if(n != colors.size()) {
         arrayResize(colors, n);
-        Deg hue = 100.0_degf;
-        for(auto& c : colors) /* generate random colors */
-            c = Color4::fromHsv({hue += 137.5_degf, 0.9f, 0.9f});
+        if(n > 20 || true) {
+            Deg hue = 100.0_degf;
+            for(auto& c : colors) /* generate random colors */
+                c = Color4::fromHsv({hue += 137.5_degf, 0.9f, 0.9f});
+        } else {
+            for(size_t i = 0; i < n; ++i) {
+                colors[i] = kelly_colors[i];
+            }
+        }
     }
     return colors;
 }

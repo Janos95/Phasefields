@@ -1,14 +1,3 @@
-find_package(Ceres CONFIG REQUIRED)
-find_package(TBB CONFIG REQUIRED)
-find_package(OpenMP)
-find_package(SuiteSparse REQUIRED UMFPACK)
-find_package(PkgConfig REQUIRED)
-
-list(APPEND CMAKE_PREFIX_PATH /home/janos/libraries/prefix/)
-set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH ON)
-
-pkg_check_modules(Adolc REQUIRED IMPORTED_TARGET adolc)
-
 set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 
 add_library(Cost STATIC
@@ -31,13 +20,8 @@ target_include_directories(Cost PUBLIC
 
 target_link_libraries(Cost PRIVATE
         ScopedTimer::ScopedTimer
-        OpenMP::OpenMP_CXX
         Eigen3::Eigen
-        ImGui::ImGui
         Phasefield::Viewer
-        TBB::tbb
-        PkgConfig::Adolc
-        SuiteSparse::UMFPACK
         )
 
 target_link_libraries(Cost PUBLIC
@@ -49,7 +33,17 @@ target_link_libraries(Cost PUBLIC
         )
 
 set_property(TARGET Cost PROPERTY POSITION_INDEPENDENT_CODE ON)
-
 add_library(Phasefield::Cost ALIAS Cost)
+
+
+if (NOT CORRADE_TARGET_EMSCRIPTEN)
+    target_link_libraries(Cost PRIVATE
+            OpenMP::OpenMP_CXX
+            TBB::tbb
+            PkgConfig::Adolc
+            SuiteSparse::UMFPACK
+            )
+
+endif ()
 
 

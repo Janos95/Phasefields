@@ -72,19 +72,7 @@ inline adouble abs2(const adouble& x)  { return x*x; }
 
 namespace Phasefield {
 
-#define CHI QuadraticChi
-
-struct SmootherStepParametric {
-    double edge0, edge1;
-
-    template<class T>
-    [[nodiscard]] constexpr T eval(T x) const {
-        // Scale, and clamp x to 0..1 range
-        x = Math::clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
-        // Evaluate polynomial
-        return x * x * x * (x * (x * 6. - 15.) + 10.);
-    }
-};
+constexpr Quadratic chi;
 
 void handleSolverInfo(Eigen::ComputationInfo info) {
     switch(info) {
@@ -127,45 +115,49 @@ void assembleAndSolve(
     using Vec3 = Math::Vector3<Scalar>;
     using VecX = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
 
-    constexpr CHI chi;
 
-    static_assert(chi.eval(-1.) == 0.);
+    static_assert(chi.eval(-1.) == 1.);
     static_assert(chi.eval(1.) == 1.);
 
-    mesh.requireIntegralOperator();
-    mesh.requireGradientOperator();
-    mesh.requireGaussianCurvature();
-    mesh.requireFaceInformation();
-    mesh.requireStiffnessMatrix();
-    mesh.requireMassMatrix();
+    std::vector<Eigen::Triplet<Scalar>> triplets;
+    triplets.reserve(12*m);
 
-    //Array<Eigen::Triplet<Scalar>> triplets{12*m};
+    {
+        for(Face face : mesh.faces()) {
 
-    //{
-    //    size_t i = 0;
-    //    for(Face face : mesh.faces()) {
+            for(HalfEdge he1 : face.halfEdges()) {
+                Vertex v = he1.next().tip();
+                if(v.onBoundary()) continue;
+                Vec3 gradChi = chi.eval(parameters[v.idx])*Vec3{mesh.gradient[he1]};
+                for(HalfEdge he2 : face.halfEdges()) {
+                    Vertex w = he2.next().tip();
+                    if(w.onBoundary()) continue;
+                    Scalar value = Math::dot(Vec3{mesh.gradient[he2]}, gradChi)*face.area();
+                    triplets.emplace_back(v.idx, w.idx, value);
+                }
+            }
 
-    //        for(HalfEdge he1 : face.halfEdges()) {
-    //            Vertex v = he1.next().tip();
-    //            auto gradChi = chi.eval(parameters[v.idx])*Vec3{mesh.gradient[he1]};
-    //            for(HalfEdge he2 : face.halfEdges()) {
-    //                Vertex w = he2.next().tip();
-    //                Scalar value = Math::dot(Vec3{mesh.gradient[he2]}, gradChi)*face.area();
-    //                triplets[i++] = Eigen::Triplet<Scalar>{v.idx, w.idx, value};
-    //            }
-    //        }
+            for(Vertex v : face.vertices()) {
+                if(!v.onBoundary()) {
+                    Scalar value = lambda*face.area()/3.*(1. - chi.eval(parameters[v.idx]));
+                    triplets.emplace_back(v.idx, v.idx, value);
+                }
+            }
+        }
+    }
 
-    //        for(Vertex v : face.vertices()) {
-    //            Scalar value = face.area()/3.*(1. - chi.eval(parameters[v.idx]));
-    //            CORRADE_ASSERT(i < triplets.size(), "Index out of bounds",);
-    //            triplets[i++] = Eigen::Triplet<Scalar>{v.idx, v.idx, value};
-    //        }
+    b.resize(n);
+    for(Vertex v : mesh.vertices()) {
+        if(!v.onBoundary())
+            b[v.idx] = 100*mesh.gaussianCurvature[v]*chi.eval(parameters[v])*mesh.integral[v];
+        else {
+            b[v.idx] = 0;
+            triplets.emplace_back(v.idx, v.idx, 1);
+        }
+    }
 
-    //    }
-    //}
-
-    //A.resize(n,n);
-    //A.setFromTriplets(triplets.begin(), triplets.end());
+    A.resize(n,n);
+    A.setFromTriplets(triplets.begin(), triplets.end());
 
     VecX chiOfU{n}, negChiOfU{n};
     for(size_t j = 0; j < n; ++j) {
@@ -173,23 +165,16 @@ void assembleAndSolve(
         negChiOfU[j] = 1 - chi.eval(parameters[j]);
     }
 
-    A = chiOfU.asDiagonal()*mesh.fem->stiffness.cast<Scalar>() + lambda*negChiOfU.asDiagonal()*mesh.fem->mass.cast<Scalar>();
+    //A = chiOfU.asDiagonal()*mesh.fem->stiffness.cast<Scalar>() + lambda*negChiOfU.asDiagonal()*mesh.fem->mass.cast<Scalar>();
 
     //if constexpr (std::is_same_v<Scalar, double>)
     //    Debug{} << (Atest - A).norm();
 
-    b.resize(n);
-    for(Vertex v : mesh.vertices()) {
-        b[v.idx] = mesh.gaussianCurvature[v]*mesh.integral[v]*chi.eval(parameters[v.idx]);
-    }
-
     if constexpr(!std::is_same_v<Scalar, adouble>) {
-        ScopedTimer t{"Umfpack", true};
         Eigen::UmfPackLU<Eigen::SparseMatrix<Scalar>> solver{A};
         handleSolverInfo(solver.info());
         x = solver.solve(b);
     } else {
-        ScopedTimer t{"Eigen LU", true};
         Eigen::SparseLU<Eigen::SparseMatrix<Scalar>> solver{A};
         handleSolverInfo(solver.info());
         x = solver.solve(b);
@@ -198,64 +183,219 @@ void assembleAndSolve(
 }
 
 template<class Scalar>
+void assembleAndSolve2(
+        Mesh& mesh,
+        Scalar lambda,
+        VertexDataView<const Scalar> parameters,
+        VertexDataView<const Scalar> weights,
+        Eigen::SparseMatrix<Scalar>& A1,
+        Eigen::SparseMatrix<Scalar>& A2,
+        Eigen::Matrix<Scalar, Eigen::Dynamic, 1>& x1,
+        Eigen::Matrix<Scalar, Eigen::Dynamic, 1>& x2,
+        Eigen::Matrix<Scalar, Eigen::Dynamic, 1>& b1,
+        Eigen::Matrix<Scalar, Eigen::Dynamic, 1>& b2) {
+
+
+    constexpr QuadraticChi chi1;
+
+    size_t n = mesh.vertexCount();
+    size_t m = mesh.faceCount();
+    using Vec3 = Math::Vector3<Scalar>;
+    using VecX = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
+
+    std::vector<Eigen::Triplet<Scalar>> triplets1;
+    std::vector<Eigen::Triplet<Scalar>> triplets2;
+
+    triplets1.reserve(12*m);
+    triplets2.reserve(12*m);
+
+    {
+        for(Face face : mesh.faces()) {
+
+            for(HalfEdge he1 : face.halfEdges()) {
+                Vertex v = he1.next().tip();
+                if(v.onBoundary()) continue;
+                Vec3 gradChi1 = chi1.eval(parameters[v.idx])*Vec3{mesh.gradient[he1]};
+                Vec3 gradChi2 = (1. - chi1.eval(parameters[v.idx]))*Vec3{mesh.gradient[he1]};
+                for(HalfEdge he2 : face.halfEdges()) {
+                    Vertex w = he2.next().tip();
+                    if(w.onBoundary()) continue;
+                    Scalar value1 = Math::dot(Vec3{mesh.gradient[he2]}, gradChi1)*face.area();
+                    Scalar value2 = Math::dot(Vec3{mesh.gradient[he2]}, gradChi2)*face.area();
+                    triplets1.emplace_back(v.idx, w.idx, value1);
+                    triplets2.emplace_back(v.idx, w.idx, value2);
+                }
+            }
+
+            for(Vertex v : face.vertices()) {
+                if(!v.onBoundary()) {
+                    Scalar value1 = lambda*face.area()/3.*(1. - chi1.eval(parameters[v.idx]));
+                    Scalar value2 = lambda*face.area()/3.*chi1.eval(parameters[v.idx]);
+                    triplets1.emplace_back(v.idx, v.idx, value1);
+                    triplets2.emplace_back(v.idx, v.idx, value2);
+                }
+            }
+        }
+    }
+
+    b1.resize(n);
+    b2.resize(n);
+
+    for(Vertex v : mesh.vertices()) {
+        if(!v.onBoundary()) {
+            b1[v.idx] = mesh.gaussianCurvature[v]*chi1.eval(parameters[v])*mesh.integral[v];
+            b2[v.idx] = mesh.gaussianCurvature[v]*(1-chi1.eval(parameters[v]))*mesh.integral[v];
+        }
+        else {
+            b1[v.idx] = 0;
+            b2[v.idx] = 0;
+            triplets1.emplace_back(v.idx, v.idx, 1);
+            triplets2.emplace_back(v.idx, v.idx, 1);
+        }
+    }
+
+    A1.resize(n, n);
+    A2.resize(n, n);
+
+    A1.setFromTriplets(triplets1.begin(), triplets1.end());
+    A2.setFromTriplets(triplets2.begin(), triplets2.end());
+
+    VecX chiOfU{n}, negChiOfU{n};
+    for(size_t j = 0; j < n; ++j) {
+        chiOfU[j] = chi.eval(parameters[j]);
+        negChiOfU[j] = 1 - chi.eval(parameters[j]);
+    }
+
+    //A = chiOfU.asDiagonal()*mesh.fem->stiffness.cast<Scalar>() + lambda*negChiOfU.asDiagonal()*mesh.fem->mass.cast<Scalar>();
+
+    //if constexpr (std::is_same_v<Scalar, double>)
+    //    Debug{} << (Atest - A).norm();
+
+    if constexpr(!std::is_same_v<Scalar, adouble>) {
+        Eigen::UmfPackLU<Eigen::SparseMatrix<Scalar>> solver;
+        solver.solve(A1);
+        handleSolverInfo(solver.info());
+        x1 = solver.solve(b1);
+
+        solver.solve(A2);
+        handleSolverInfo(solver.info());
+        x2 = solver.solve(b2);
+    } else {
+        Eigen::SparseLU<Eigen::SparseMatrix<Scalar>> solver;
+        solver.solve(A1);
+        handleSolverInfo(solver.info());
+        x1 = solver.solve(b1);
+
+        solver.solve(A2);
+        handleSolverInfo(solver.info());
+        x2 = solver.solve(b2);
+    }
+}
+
+    template<class Scalar>
 void DiffuseYamabe::operator()(
          ArrayView<const Scalar> parameters, ArrayView<const Scalar> weights, Scalar& out,
          ArrayView<Scalar> gradP, ArrayView<Scalar> gradW) {
-
-    ScopedTimer t{"Yamabe", true};
-
-    adouble s,r;
-    s *= r;
 
     using Vec3 = Math::Vector3<Scalar>;
     using VecX = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
 
     size_t n = mesh.vertexCount();
     size_t m = mesh.faceCount();
+    double lambda = lambdaWeight*(lambdaScaling ? *lambdaScaling : 1.);
 
     Eigen::SparseMatrix<Scalar> A;
     VecX b,x;
     assembleAndSolve<Scalar>(mesh, lambda, parameters, weights, A, x, b);
 
-    VecX gradDirichlet{gradP ? n : 0};
-    gradDirichlet.setZero();
+    VecX gradX{gradP ? n : 0};
+    gradX.setZero();
 
-    for(Face face : mesh.faces()) {
-        Math::Vector3<Scalar> grad{0};
+    if(energy == EnergyType::Dirichlet) {
+        for(Face face : mesh.faces()) {
+            Math::Vector3<Scalar> grad{0};
+            Scalar rescaling = (curvatureRescaling ? getRescalingFactor(face) : 1.);
 
-        for(HalfEdge he : face.halfEdges()) {
-            Vertex v = he.next().tip();
-            grad += x[v.idx]*Vec3{mesh.gradient[he]};
-        }
-
-        if(gradP) {
-            for(HalfEdge he : face.halfEdges()){
+            for(HalfEdge he : face.halfEdges()) {
                 Vertex v = he.next().tip();
-                gradDirichlet[v.idx] += mesh.faceArea[face]*2*Math::dot(grad, Vec3{mesh.gradient[he]});
+                grad += x[v.idx]*Vec3{mesh.gradient[he]};
+            }
+
+            if(gradP) {
+                for(HalfEdge he : face.halfEdges()){
+                    Vertex v = he.next().tip();
+                    gradX[v.idx] += rescaling*mesh.faceArea[face]*2*Math::dot(grad, Vec3{mesh.gradient[he]});
+                }
+            }
+
+            Scalar gradNormSquared = grad.dot() * rescaling;
+            //CORRADE_INTERNAL_ASSERT(!Math::isNan(gradNormSquared));
+            out += mesh.faceArea[face]*gradNormSquared;
+        }
+    } else if(energy == EnergyType::Hencky) {
+        for(Vertex v : mesh.vertices()) {
+            Scalar rescaling = (curvatureRescaling ? getRescalingFactor(v) : 1.);
+            out += x[v.idx]*x[v.idx]*mesh.integral[v];
+            if(gradP) {
+                gradX[v.idx] += 2*x[v.idx]*mesh.integral[v]*rescaling;
+                //gradP[v.idx] += x[v.idx]*x[v.idx]*mesh.integral[v]*chi.grad(parameters[v.idx]);
             }
         }
-
-        Scalar gradNormSquared = grad.dot();
-        //CORRADE_INTERNAL_ASSERT(!Math::isNan(gradNormSquared));
-        out += mesh.faceArea[face]*gradNormSquared;
     }
 
     if(gradP) {
         if constexpr (!std::is_same_v<Scalar, adouble>) {
-            constexpr CHI chi;
 
             Eigen::UmfPackLU<Eigen::SparseMatrix<Scalar>> solver{A.transpose()};
-            VecX l = solver.solve(gradDirichlet);
+            VecX l = solver.solve(gradX);
 
-            VecX chiPrime{n}, bp{n};
-            for(size_t j = 0; j < n; ++j) {
-                Scalar chiGrad = chi.grad(parameters[j]);
-                bp[j] = mesh.gaussianCurvature[j]*mesh.integral[j]*chiGrad;
-                chiPrime[j] = chiGrad;
+            VecX bp{n};
+            for(Vertex v : mesh.vertices()) {
+                if(!v.onBoundary())
+                    bp[v.idx] = 100*mesh.gaussianCurvature[v]*mesh.integral[v]*chi.grad(parameters[v.idx]);
+                else
+                    bp[v.idx] = 0;
             }
 
-            Eigen::SparseMatrix<Scalar> Ap = chiPrime.asDiagonal()*mesh.fem->stiffness - lambda*chiPrime.asDiagonal()*mesh.fem->mass;
+            std::vector<Eigen::Triplet<Scalar>> triplets;
+            triplets.reserve(12*m);
+
+            {
+                for(Face face : mesh.faces()) {
+
+                    for(HalfEdge he1 : face.halfEdges()) {
+                        Vertex v = he1.next().tip();
+                        if(v.onBoundary()) continue;
+                        auto gradChi = chi.grad(parameters[v.idx])*Vec3{mesh.gradient[he1]};
+                        for(HalfEdge he2 : face.halfEdges()) {
+                            Vertex w = he2.next().tip();
+                            if(w.onBoundary()) continue;
+                            Scalar value = Math::dot(Vec3{mesh.gradient[he2]}, gradChi)*face.area();
+                            triplets.emplace_back(v.idx, w.idx, value);
+                        }
+                    }
+
+                    for(Vertex v : face.vertices()) {
+                        if(!v.onBoundary()) {
+                            Scalar value = lambda*face.area()/3.*(-chi.grad(parameters[v.idx]));
+                            triplets.emplace_back(v.idx, v.idx, value);
+                        }
+                    }
+                }
+            }
+
+            Eigen::SparseMatrix<Scalar> Ap(n,n);
+            Ap.setFromTriplets(triplets.begin(), triplets.end());
+
+            //Eigen::SparseMatrix<Scalar> Ap = chiPrime.asDiagonal()*mesh.fem->stiffness - lambda*chiPrime.asDiagonal()*mesh.fem->mass;
             Eigen::Map<VecX>{gradP.data(), long(gradP.size())} -= l.asDiagonal()*(Ap*x - bp);
+            Debug{} << "Gradient norm : " << (l.asDiagonal()*(Ap*x-bp)).norm();
+            Debug{} << "l norm : " << l.norm();
+            Debug{} << "Ap*x - bp norm : " << (Ap*x - bp).norm();
+            Debug{} << "Ap - Ap norm : " << (Ap - A).norm();
+            Debug{} << "bp - b norm : " << (bp - b).norm();
+            Debug{} << "grad x norm" << gradX.norm();
+            Debug{} << "x norm" << x.norm();
         }
     }
 }
@@ -263,19 +403,21 @@ void DiffuseYamabe::operator()(
 size_t DiffuseYamabe::numParameters() const { return mesh.vertexCount(); }
 
 void DiffuseYamabe::drawImGuiOptions(VisualizationProxy& proxy) {
+    bool redraw = false;
     if(ImGui::Checkbox("Draw Solution", &drawSolution)) {
         if(drawSolution) {
             proxy.setCallbacks(
                     [this, &proxy](Node node) {
                         Eigen::SparseMatrix<double> A;
                         Eigen::VectorXd b,x;
+                        double lambda = lambdaWeight*(lambdaScaling ? *lambdaScaling : 1.);
                         assembleAndSolve<double>(mesh, lambda, node.phasefield(), node.temporary(), A, x, b);
                         ArrayView<double> solution {x.data(), size_t(x.size())};
                         proxy.drawValuesNormalized(solution);
                     },
                     [this]{ drawSolution = false; });
         } else proxy.setDefaultCallback();
-        proxy.redraw();
+        redraw = true;
     }
 
     ImGui::SameLine();
@@ -285,47 +427,45 @@ void DiffuseYamabe::drawImGuiOptions(VisualizationProxy& proxy) {
             proxy.setCallbacks(
                     [this, &proxy](Node node) {
                         auto phasefield = node.phasefield();
-                        Array<Face> facesInPhase;
-                        Array<Vertex> verticesInPhase;
-                        VertexData<size_t> vertexIndices{DirectInit, phasefield.size(), Invalid};
+                        size_t n = phasefield.size();
 
-                        for(Face f : mesh.faces()) {
-                            double average = 0;
-                            for(Vertex v : f.vertices()) {
-                                average += phasefield[v];
+                        VertexData<bool> inInterior{DirectInit, n, 1};
+                        for(Edge e : mesh.edges()) {
+                            Vertex v1 = e.vertex1();
+                            Vertex v2 = e.vertex2();
+                            if(Math::sign(phasefield[v1]) != Math::sign(phasefield[v2])) {
+                                inInterior[v1] = false;
+                                inInterior[v2] = false;
                             }
-                            if(average > 0) {
-                                arrayAppend(facesInPhase, f);
-                                for(Vertex v : f.vertices()) {
-                                    if(vertexIndices[v] == Invalid) {
-                                        arrayAppend(verticesInPhase, v);
-                                        vertexIndices[v] = verticesInPhase.size() - 1;
-                                    }
-                                }
+                            for(Vertex v : {v1, v2}) {
+                                if(inInterior[v] && v.onBoundary())
+                                    inInterior[v1] = false;
                             }
-                        }
-
-                        size_t n = verticesInPhase.size();
-
-                        Eigen::SparseMatrix<double> A(n,n);
-                        Eigen::VectorXd b(n);
-
-                        for(size_t i = 0; i < n; ++i) {
-                            Vertex v = verticesInPhase[i];
-                            b[i] = mesh.gaussianCurvature[v]*mesh.integral[v]; //not really true of the boundary ..
                         }
 
                         Array<Eigen::Triplet<double>> triplets;
+                        Eigen::SparseMatrix<double> A(n,n);
+                        Eigen::VectorXd b(n);
 
-                        for(Face face : facesInPhase) {
+                        for(Vertex v : mesh.vertices()) {
+                            if(inInterior[v])
+                                b[v.idx] = mesh.gaussianCurvature[v]*mesh.integral[v]; //not really true of the boundary ..
+                            else {
+                                b[v.idx] = 0;
+                                arrayAppend(triplets, InPlaceInit, v.idx, v.idx, 1.);
+                            }
+                        }
+
+
+                        for(Face face : mesh.faces()) {
                             for(HalfEdge he1 : face.halfEdges()) {
                                 Vertex v = he1.next().tip();
-                                size_t vIdx = vertexIndices[v];
+                                if(!inInterior[v]) continue;
                                 for(HalfEdge he2 : face.halfEdges()) {
                                     Vertex w = he2.next().tip();
+                                    if(!inInterior[v]) continue;
                                     double value = Math::dot(mesh.gradient[he2], mesh.gradient[he1])*face.area();
-                                    size_t wIdx = vertexIndices[w];
-                                    arrayAppend(triplets, InPlaceInit, vIdx, wIdx, value);
+                                    arrayAppend(triplets, InPlaceInit, v.idx, w.idx, value);
                                 }
                             }
                         }
@@ -336,23 +476,13 @@ void DiffuseYamabe::drawImGuiOptions(VisualizationProxy& proxy) {
                         handleSolverInfo(solver.info());
                         Eigen::VectorXd x = solver.solve(b);
 
-                        double min = x.minCoeff();
-                        double max = x.maxCoeff();
+                        Debug{} << "Solution norm" << x.norm();
 
-                        for(size_t i = 0; i < n; ++i) {
-                            x[i] = (x[i] - min)/(max - min);
-                        }
-
-                        VertexData<double> solution{phasefield.size()};
-                        for(Vertex v : verticesInPhase) {
-                            size_t i = vertexIndices[v];
-                            solution[v] = x[i];
-                        }
-                        proxy.drawValues(solution);
+                        proxy.drawValuesNormalized({x.data(), size_t(x.size())});
                     },
                     [this]{ drawSolutionThresholded = false; });
         } else proxy.setDefaultCallback();
-        proxy.redraw();
+        redraw = true;
     }
 
     if(ImGui::Checkbox("Draw Solution Gradient", &drawSolutionGradient)) {
@@ -361,7 +491,8 @@ void DiffuseYamabe::drawImGuiOptions(VisualizationProxy& proxy) {
                     [this, &proxy](Node node) {
                         Eigen::SparseMatrix<double> A;
                         Eigen::VectorXd b,x;
-                        assembleAndSolve<double>(mesh, lambda, node.phasefield(), node.temporary(), A, x, b);
+                        double lambda = lambdaWeight*(lambdaScaling ? *lambdaScaling : 1.);
+                        assembleAndSolve<double>(mesh, lambda , node.phasefield(), node.temporary(), A, x, b);
 
                         VertexData<double> gradSolution{node.phasefield().size()};
 
@@ -387,12 +518,50 @@ void DiffuseYamabe::drawImGuiOptions(VisualizationProxy& proxy) {
                     },
                     [this]{ drawSolutionGradient = false; });
         } else proxy.setDefaultCallback();
-        proxy.redraw();
+        redraw = true;
     }
 
     static const double minWeight = 0.0001;
     static const double maxWeight = 100;
-    ImGui::DragScalar("lambda", ImGuiDataType_Double, &lambda, 1.f, &minWeight, &maxWeight, "%f", 1);
+    if(ImGui::DragScalar("lambda", ImGuiDataType_Double, &lambdaWeight, 1.f, &minWeight, &maxWeight, "%f", 1)) {
+        redraw |= drawSolutionThresholded || drawSolution || drawSolutionGradient;
+    }
+
+
+    if(ImGui::BeginCombo("##energie", EnergyType::to_string(energy))) {
+        for(auto type : EnergyType::range) {
+            bool isSelected = type == energy;
+            if(ImGui::Selectable(EnergyType::to_string(type), isSelected))
+                energy = type;
+            if(isSelected)
+                ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+
+    if(ImGui::Checkbox("Curvature Rescaling", &curvatureRescaling)) {
+        redraw |= drawSolutionThresholded || drawSolution || drawSolutionGradient;
+    }
+
+    if(redraw) proxy.redraw();
+}
+
+double DiffuseYamabe::getRescalingFactor(Face f) const {
+    double c = 0;
+    constexpr double eps = 1e-7;
+    for(Vertex v : f.vertices()) {
+        c += mesh.gaussianCurvature[v];
+    }
+    c /= 3.;
+    double r = 1./(sqrt(c) + eps);
+    return r*r*r;
+}
+
+double DiffuseYamabe::getRescalingFactor(Vertex v) const {
+    double c = 0;
+    constexpr double eps = 1e-7;
+    double r = 1./(sqrt(mesh.gaussianCurvature[v]) + eps);
+    return r*r*r;
 }
 
 DEFINE_FUNCTIONAL_CONSTRUCTOR(DiffuseYamabe)

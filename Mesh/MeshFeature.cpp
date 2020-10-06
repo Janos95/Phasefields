@@ -87,9 +87,10 @@ void GaussianCurvatureFeature::update() {
         for(Corner corner : vertex.corners()) {
             angleSum += corner.angle();
         }
-        m.gaussianCurvature[vertex] = 2.*Mg::Math::Constants<double>::pi() - double(angleSum);
+        m.gaussianCurvature[vertex] = (vertex.onBoundary() ? 1 : 2.)*Mg::Math::Constants<double>::pi() - double(angleSum);
     }
 }
+
 }
 
 

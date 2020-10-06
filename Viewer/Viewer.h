@@ -81,6 +81,8 @@ struct Viewer : public Mg::Platform::Application {
 
     void drawIO();
 
+    void setAreaConstraint(Node node);
+
     Functional makeFunctional(FunctionalType::Value);
 
     bool drawFunctionals(Array<Functional>&, size_t& id);
@@ -127,9 +129,12 @@ struct Viewer : public Mg::Platform::Application {
     //Mg::GL::Texture2D faceTexture{Mg::NoCreate};
     //Mg::GL::Texture2D* texture = nullptr;
 
-    double epsilon = 0.065;
-    SharedRessource<double> dirichletScaling;
-    SharedRessource<double> connectednessScaling;
+    double epsilon = 0.023;
+    double dirichletScaling;
+    double connectednessScaling;
+    double areaPenaltyScaling;
+    double doubleWellScaling;
+    double yamabeLambdaScaling;
 
     Double phase = 1.;
     Double targetDist = 0.;

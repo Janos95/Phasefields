@@ -81,6 +81,8 @@ struct Vertex {
 
     [[nodiscard]] VertexOutgoingHalfEdgeRange outgoingHalfEdges() const;
 
+    [[nodiscard]] bool onBoundary() const;
+
     [[nodiscard]] explicit operator bool() const { return idx != Invalid; }
 
     //IncidentEdgeRange incidentEdges() const;

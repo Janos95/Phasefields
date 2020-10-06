@@ -165,6 +165,18 @@ void Functional::operator()(ArrayView<const double> parameters,
         //    double progress = double(counter++)/double(n);
         //}
     }
+
+#ifndef NDEBUG
+    if(!check({&out, 1})) {
+        Debug{} << "NaN in cost of functional" << FunctionalType::to_string(functionalType);
+    }
+    if(gradP) {
+        if(!check(gradP)) {
+            Debug{} << "NaN in derivative of functional" << FunctionalType::to_string(functionalType);
+        }
+    }
+#endif
+
 }
 #pragma clang diagnostic pop
 
@@ -323,9 +335,9 @@ void Functional::swap(Functional& other) {
     std::swap(functionalType, other.functionalType);
     std::swap(tag, other.tag);
     std::swap(ad, other.ad);
+    std::swap(scaling, other.scaling);
 
     loss.swap(other.loss);
-    scaling.swap(other.scaling);
 }
 
 Functional::Functional(Functional&& other) noexcept {
@@ -347,5 +359,12 @@ Functional& Functional::operator=(Functional&& other) noexcept {
 //    if(off)
 //        off(erased);
 //}
+
+bool Functional::check(ArrayView<const double> data) const {
+    for(double x : data) {
+        if(std::isnan(x)) return false;
+    }
+    return true;
+}
 
 }

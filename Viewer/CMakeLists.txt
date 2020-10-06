@@ -1,6 +1,3 @@
-
-#find_package(MagnumPlugins REQUIRED PrimitiveImporter)
-
 corrade_add_resource(Viewer_RESOURCES resources.conf)
 
 add_library(Viewer STATIC
@@ -33,9 +30,10 @@ target_link_libraries(Viewer
             Magnum::DebugTools
             MagnumIntegration::ImGui
             MagnumPlugins::PrimitiveImporter
-            MagnumPlugins::AssimpImporter
-
-            ImGui::SourcesMiscCpp
         )
 
 add_library(Phasefield::Viewer ALIAS Viewer)
+
+if (NOT CORRADE_TARGET_EMSCRIPTEN)
+    target_link_libraries(Viewer PUBLIC MagnumPlugins::AssimpImporter)
+endif ()

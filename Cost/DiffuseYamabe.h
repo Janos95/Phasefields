@@ -12,6 +12,8 @@ class adouble;
 
 namespace Phasefield {
 
+SMART_ENUM(EnergyType, size_t, Dirichlet, Hencky);
+
 struct DiffuseYamabe {
 
     explicit DiffuseYamabe(Mesh& m);
@@ -31,9 +33,17 @@ struct DiffuseYamabe {
     bool drawSolution = false;
     bool drawSolutionThresholded = false;
     bool drawSolutionGradient = false;
-    double lambda = 1;
+    bool curvatureRescaling = false;
+    double* lambdaScaling = nullptr;
+    double lambdaWeight = 1;
 
     Mesh& mesh;
+
+
+    double getRescalingFactor(Face f) const;
+    double getRescalingFactor(Vertex v) const;
+
+    EnergyType::Value energy = EnergyType::Hencky;
 };
 
 DECLARE_FUNCTIONAL_CONSTRUCTOR(DiffuseYamabe)

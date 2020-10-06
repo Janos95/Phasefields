@@ -9,6 +9,7 @@
 #include "ModicaMortola.h"
 #include "ConnectednessConstraint.h"
 #include "DiffuseYamabe.h"
+#include "C1Functions.h"
 
 #include <ScopedTimer/ScopedTimer.h>
 
@@ -137,7 +138,6 @@ Viewer::Viewer(int argc, char** argv) :
         tree{mesh},
         kdtree{mesh},
         proxy(*this),
-        dirichletScaling(1.), connectednessScaling(1.),
         problem(tree)
         //problem(tree),
         //proxy(*this),
@@ -147,6 +147,7 @@ Viewer::Viewer(int argc, char** argv) :
     {
         //arrayAppend(options.callbacks, InPlaceInit, optimizationCallback);
         currentNode = Node{0, &tree};
+        setScalingFactors();
     }
 
     /* Setup window */
@@ -218,7 +219,7 @@ Viewer::Viewer(int argc, char** argv) :
         //primitiveImporter = manager.instantiate("PrimitiveImporter");
 
         ScopedTimer t{"Loading scene from disk", true};
-        loadScene("/home/janos/meshes/testing", "spiky_cube");
+        loadScene("/home/janos/meshes/testing", "hill");
 
     }
 
@@ -307,10 +308,8 @@ void Viewer::loadScene(const char* path, const char* postfix) {
 
     } else { /* try a primitive */
         Cr::Utility::Configuration conf{"/home/janos/Phasefield/primitives.conf"};
-        auto* group = conf.group(postfix);
-        auto* importerGroup = primitiveImporter->configuration().group(postfix);
+        primitiveImporter->configuration() = *conf.group("configuration");
 
-        //primitiveImporter->configuration() = *conf.group("configuration");
         md = primitiveImporter->mesh(postfix);
     }
 
@@ -555,11 +554,9 @@ void Viewer::drawOptimizationOptions() {
             proxy.redraw();
         }
 
-        if(dirichletScaling.refCount() > 1 || connectednessScaling.refCount() > 1) {
-            constexpr Double minEps = 0.f, maxEps = 0.1;
-            if(ImGui::DragScalar("epsilon", ImGuiDataType_Double, &epsilon, .0001f, &minEps, &maxEps, "%f", 1))
-                setScalingFactors();
-        }
+        constexpr Double minEps = 0.f, maxEps = 0.1;
+        if(ImGui::DragScalar("epsilon", ImGuiDataType_Double, &epsilon, .0001f, &minEps, &maxEps, "%f", 1))
+            setScalingFactors();
 
         static size_t iterations = 100;
         ImGui::InputScalar("iterations", ImGuiDataType_U64, &options.max_num_iterations, &step, nullptr, "%u");
@@ -640,22 +637,15 @@ void Viewer::runOptimization(UniqueFunction<bool()>&& cb){
     if(hierarchicalOptimization) {
         tree.root().initializePhasefieldFromParent();
 
-        double largeScaleEpsilon = 0.1;
         for(size_t d = 0; d <= maximumDepth; ++d) {
             tree.computeWeightsOfAncestorsOfLevel(d);
 
             for(Node node : tree.nodesOnLevel(d)) {
-                double area = currentNode.integrateWeight(mesh);
-                for(Functional& f : problem.objectives) {
-                    if(f.functionalType == FunctionalType::AreaRegularizer)
-                        reinterpret_cast<AreaRegularizer*>(f.erased)->totalArea = area;
-                }
-
+                setAreaConstraint(node);
                 problem.nodeToOptimize = node;
                 Solver::solve(options, problem, node.phasefield(), nullptr);
             }
 
-            largeScaleEpsilon *= 0.5;
             if(d != maximumDepth) {
                 for(Node node : tree.nodesOnLevel(d))
                     node.splitAndInitialize(&currentNode);
@@ -663,13 +653,7 @@ void Viewer::runOptimization(UniqueFunction<bool()>&& cb){
         }
     } else {
         tree.computeWeightsOfAncestorsOfLevel(currentNode.depth());
-        double area = currentNode.integrateWeight(mesh);
-        Debug{} << "Target area" << area;
-        for(Functional& f : problem.objectives) {
-            if(f.functionalType == FunctionalType::AreaRegularizer) {
-                reinterpret_cast<AreaRegularizer*>(f.erased)->totalArea = area;
-            }
-        }
+        setAreaConstraint(currentNode);
         problem.nodeToOptimize = currentNode;
         Solver::solve(options, problem, currentNode.phasefield(), nullptr);
     }
@@ -682,24 +666,29 @@ Functional Viewer::makeFunctional(FunctionalType::Value type) {
         case FunctionalType::AreaRegularizer: {
             Functional f = AreaRegularizer{mesh};
             f.loss = QuadraticLoss{};
+            f.scaling = &areaPenaltyScaling;
             return f;
         }
         case FunctionalType::DirichletEnergy: {
             Functional f = DirichletEnergy{mesh};
-            f.scaling = dirichletScaling;
+            f.scaling = &dirichletScaling;
             return f;
         }
         case FunctionalType::DoubleWellPotential : {
-            return DoubleWellPotential{mesh};
+            Functional f = DoubleWellPotential{mesh};
+            f.scaling = &doubleWellScaling;
+            return f;
         }
         case FunctionalType::ConnectednessConstraint : {
             Functional f = ConnectednessConstraint{mesh};
-            f.scaling = connectednessScaling;
+            f.scaling = &connectednessScaling;
             return f;
         }
-        case FunctionalType::DiffuseYamabe : return DiffuseYamabe{mesh};
-
-        default: return Functional{};
+        case FunctionalType::DiffuseYamabe : {
+            DiffuseYamabe yamabe{mesh};
+            yamabe.lambdaScaling = &yamabeLambdaScaling;
+            return yamabe;
+        }
     }
 }
 
@@ -723,8 +712,11 @@ void Viewer::brush() {
 }
 
 void Viewer::setScalingFactors() {
-    *dirichletScaling = epsilon*epsilon/2.;
-    *connectednessScaling = 1./(epsilon*epsilon);
+    dirichletScaling = epsilon*epsilon/2.;
+    connectednessScaling = 1./(epsilon*epsilon);
+    areaPenaltyScaling = 1.;
+    doubleWellScaling = 1.;
+    yamabeLambdaScaling = 1./epsilon;
 }
 
 Vector3 Viewer::unproject(Vector2i const& windowPosition) {
@@ -826,12 +818,59 @@ void Viewer::drawVisualizationOptions() {
             proxy.redraw();
         }
 
+        if(ImGui::Button("Print Information")) {
+            SmootherStep chi;
+            Array<double> patchAreas;
+            tree.computeLeafWeights();
+            for(Node leaf : tree.leafs()) {
+                auto phasefield = leaf.phasefield();
+                auto weights = leaf.temporary();
+                double posArea = 0;
+                double negArea = 0;
+                for(Face f : mesh.faces()) {
+                    double x = 0;
+                    double y = 0;
+                    for(Vertex v : f.vertices()) {
+                        x += chi.eval(phasefield[v])*weights[v];
+                        y += chi.eval(-phasefield[v])*weights[v];
+                    }
+                    posArea += f.area()*x/3;
+                    negArea += f.area()*y/3;
+                }
+                arrayAppend(patchAreas, {posArea, negArea});
+            }
+
+            CORRADE_ASSERT(patchAreas.size() == tree.numLeafs*2, "weird number of patches",);
+            double targetArea = 0;
+            for(double x : patchAreas) targetArea += x;
+            targetArea /= double(patchAreas.size());
+            printf("Target Area %f\n", targetArea);
+            double totalError = 0;
+            for(double patchArea : patchAreas) {
+                double error = Math::abs(targetArea - patchArea);
+                totalError += error;
+                printf("Patch Error %f, (area = %f)\n", error, patchArea);
+            }
+            printf("Total error %f\n", totalError);
+        }
+
         static bool drawCurvature = false;
         if(ImGui::Checkbox("Gaussian Curvature", &drawCurvature)) {
             if(drawCurvature) {
                 proxy.setCallbacks(
                         [this](Node node) {
-                            proxy.drawValuesNormalized(mesh.gaussianCurvature);
+                            mesh.requireGaussianCurvature();
+                            double min = std::numeric_limits<double>::max();
+                            double max = std::numeric_limits<double>::min();
+                            for(Vertex v : mesh.vertices()) {
+                                if(!v.onBoundary()) {
+                                    min = Math::min(min, mesh.gaussianCurvature[v]);
+                                    max = Math::max(max, mesh.gaussianCurvature[v]);
+                                }
+                            }
+                            Debug{} << min;
+                            Debug{} << max;
+                            proxy.drawValues(mesh.gaussianCurvature, [=](double x) { return (x-min)/(max-min); });
                         },
                         [this]{ drawCurvature = false; });
             } else proxy.setDefaultCallback();
@@ -1191,6 +1230,18 @@ void Viewer::drawEvent() {
 
     swapBuffers();
     redraw();
+}
+
+void Viewer::setAreaConstraint(Node node) {
+    double area = node.integrateWeight(mesh);
+    for(Functional& f : problem.objectives) {
+        if(f.functionalType == FunctionalType::AreaRegularizer)
+            reinterpret_cast<AreaRegularizer*>(f.erased)->totalArea = area;
+    }
+    for(Functional& f : problem.constraints) {
+        if(f.functionalType == FunctionalType::AreaRegularizer)
+            reinterpret_cast<AreaRegularizer*>(f.erased)->totalArea = area;
+    }
 }
 
 

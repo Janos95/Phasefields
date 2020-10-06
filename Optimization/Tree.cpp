@@ -117,7 +117,7 @@ void Node::initializePhasefieldFromParent() {
         for(Face face : mesh->faces()) {
             if(thresholded[face] > 0.) {
                 for(Vertex v : face.vertices()) {
-                   phase[v] = bfs.visited(face) ? 1. : -1.;
+                    phase[v] = bfs.visited(face) ? 1. : -1.;
                 }
             }
         }
@@ -154,7 +154,9 @@ Debug& operator<<(Debug& debug, Node const& n) {
     std::string leftChild = n.leftChild().isValid() ? std::to_string(n.leftChild().idx) : "Invalid";
     std::string rightChild = n.rightChild().isValid() ? std::to_string(n.rightChild().idx) : "Invalid";
     std::string parent = n.parent().isValid() ? std::to_string(n.parent().idx) : "Invalid";
-    std::string formatted = Cr::Utility::formatString("Node (idx = {}, depth = {}, left child = {}, right child = {}, parent  = {})", n.idx, n.depth(), leftChild, rightChild, parent);
+    std::string formatted = Cr::Utility::formatString(
+            "Node (idx = {}, depth = {}, left child = {}, right child = {}, parent  = {})", n.idx, n.depth(), leftChild,
+            rightChild, parent);
     debug << formatted.c_str();
     return debug;
 }
@@ -287,10 +289,10 @@ ArrayView<double> Tree::level(size_t d) {
 
 void Tree::serialize(Array<char>& data) const {
     size_t dataSize = phasefieldData.size();
-    arrayAppend(data, {(char*)&dataSize, sizeof(size_t)});
+    arrayAppend(data, {(char*) &dataSize, sizeof(size_t)});
     arrayAppend(data, arrayCast<char>(phasefieldData));
     size_t nodesSize = nodeData.size();
-    arrayAppend(data, {(char*)&nodesSize, sizeof(size_t)});
+    arrayAppend(data, {(char*) &nodesSize, sizeof(size_t)});
     arrayAppend(data, arrayCast<char>(nodeData));
 }
 
@@ -335,12 +337,17 @@ Range<LeafIterator> Tree::leafs() {
 Range<HorizontalNodeIterator> Tree::nodesOnLevel(size_t l) {
     size_t b = levelStartIndex(l);
     size_t e = levelStartIndex(l + 1);
-    return {{b, this}, {e, this}};
+    return {{b, this},
+            {e, this}};
 }
 
-Range<HorizontalNodeIterator> Tree::nodesBelowLevel(size_t l) { return {{0, this}, {levelStartIndex(l + 1), this}}; }
+Range<HorizontalNodeIterator> Tree::nodesBelowLevel(size_t l) { return {{0,                      this},
+                                                                        {levelStartIndex(l + 1), this}};
+}
 
-Range<HorizontalNodeIterator> Tree::nodes() { return {{0, this}, {nodeCount(), this}}; }
+Range<HorizontalNodeIterator> Tree::nodes() { return {{0,           this},
+                                                      {nodeCount(), this}};
+}
 
 Range<InternalNodeIterator> Tree::internalNodes() {
     InternalNodeIterator b{0, this};
@@ -393,6 +400,29 @@ void Tree::reset() {
     numLeafs = 1;
     nodeData[0].rightChild = Invalid;
     nodeData[0].leftChild = Invalid;
+}
+
+void Tree::computeLeafWeights() {
+    size_t n = vertexCount();
+    SmootherStep smoothStep;
+
+    for(double& w : root().temporary()) w = 1.;
+
+    for(Node node : nodes()) {
+        if(node.isLeaf()) continue;
+
+        auto weights = node.temporary();
+        for(size_t i = 0; i < n; ++i) {
+            if(node.hasLeftChild()) {
+                Node leftChild = node.leftChild();
+                leftChild.temporary()[i] = smoothStep.eval(node.phasefield()[i])*weights[i];
+            }
+            if(node.hasRightChild()) {
+                Node rightChild = node.rightChild();
+                rightChild.temporary()[i] = smoothStep.eval(-node.phasefield()[i])*weights[i];
+            }
+        }
+    }
 }
 
 }

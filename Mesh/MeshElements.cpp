@@ -73,6 +73,13 @@ VertexFaceRange Vertex::faces() const { return {{.he = halfEdge()}, {.he = halfE
 
 VertexEdgeRange Vertex::edges() const { return {{.he = halfEdge()}, {.he = halfEdge()}}; }
 
+bool Vertex::onBoundary() const {
+    for(HalfEdge he : outgoingHalfEdges()) {
+        if(he.onBoundaryLoop()) return true;
+    }
+    return false;
+}
+
 Debug& operator<<(Debug& debug, Vertex const& v) {
     char buffer[100];
     sprintf(buffer, "Vertex %zu", v.idx);

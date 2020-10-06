@@ -358,7 +358,7 @@ void solve(Solver::Options& options, Solver::RecursiveProblem& problem, ArrayVie
         Ipopt::SmartPtr<Ipopt::TNLP> mynlp = new IpoptWrapper(problem, options, params);
         Ipopt::SmartPtr<Ipopt::IpoptApplication> app = IpoptApplicationFactory();
         app->Options()->SetNumericValue("tol", 1e-7);
-        app->Options()->SetIntegerValue("print_level", 0);
+        app->Options()->SetIntegerValue("print_level", 5);
         app->Options()->SetStringValue("hessian_approximation", "limited-memory");
         if(options.line_search_direction == Solver::LineSearchDirection::LBFGS)
             app->Options()->SetStringValue("limited_memory_update_type", "bfgs");

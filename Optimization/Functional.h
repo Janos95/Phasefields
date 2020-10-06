@@ -8,7 +8,6 @@
 #include "Types.h"
 #include "LossFunctions.h"
 #include "Visualization.h"
-#include "SharedRessource.h"
 
 class adouble;
 
@@ -94,6 +93,8 @@ struct Functional {
 
     void (* ad)(void*, ArrayView<const adouble>, ArrayView<const adouble>, adouble&) = nullptr;
 
+    bool check(ArrayView<const double>) const;
+
     //int tag = -1;
     //mutable bool isFirstEvaluation = false;
 
@@ -101,7 +102,7 @@ struct Functional {
     FunctionalType::Value functionalType = FunctionalType::Unknown;
 
     LossFunction loss = TrivialLoss{};
-    SharedRessource<double> scaling = nullptr;
+    double* scaling = nullptr;
 
     size_t tag = Invalid;
     bool drawGradient = false;

@@ -1,3 +1,9 @@
 [submodule "toolchains"]
 	path = toolchains
 	url = git://github.com/mosra/toolchains
+[submodule "contrib/magnum-integration"]
+	path = contrib/magnum-integration
+	url = https://github.com/mosra/magnum-integration.git
+[submodule "contrib/magnum-integration/src/MagnumExternal"]
+	path = contrib/magnum-integration/src/MagnumExternal
+	url = https://github.com/ocornut/imgui.git

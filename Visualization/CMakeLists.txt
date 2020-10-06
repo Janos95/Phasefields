@@ -13,12 +13,9 @@ target_include_directories(Visualization PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(Visualization
         PUBLIC
             Magnum::GL
-            Magnum::SceneGraph
             Magnum::Magnum
             Magnum::MeshTools
-            Magnum::SceneGraph
             MagnumIntegration::ImGui
-            ImGui::SourcesMiscCpp
             Phasefield::Utilities
         )
 set_property(TARGET Visualization PROPERTY POSITION_INDEPENDENT_CODE ON)

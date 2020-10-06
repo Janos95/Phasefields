@@ -151,3 +151,33 @@ struct WeightExitPenalty {
     }
 };
 
+struct Quadratic {
+
+    template<class T>
+    constexpr T eval(const T x) const {
+        return x*x;
+    }
+
+    template<class T>
+    constexpr T grad(const T x) const {
+        return 2*x;
+    }
+};
+
+struct Quartic {
+
+    template<class T>
+    constexpr T eval(const T x) const {
+        if(x < -1) return 1;
+        if(x < 1) return x*x*(2-x*x);
+        return 1;
+    }
+
+    template<class T>
+    constexpr T grad(const T x) const {
+        if(x < -1) return 0;
+        if(x < 1) return 2*x*(1-2*x*x);
+        return 0;
+    }
+};
+

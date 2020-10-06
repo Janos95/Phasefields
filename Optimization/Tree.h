@@ -130,6 +130,8 @@ struct Tree {
 
     void computeWeightsOfAncestorsOfLevel(size_t l);
 
+    void computeLeafWeights();
+
     void serialize(Array<char>& data) const;
 
     static Tree deserialize(Array<char> const& data, Mesh& m);

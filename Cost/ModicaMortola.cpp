@@ -95,13 +95,13 @@ void AreaRegularizer::operator()(ArrayView<const Scalar> parameters,
         size_t idx = vertex.idx;
         integral += f.eval(parameters[idx])*weights[idx]*mesh.integral[vertex];
         if(gradP) {
-            gradP[idx] += f.grad(parameters[idx])*weights[idx]*mesh.integral[vertex];
+            gradP[idx] += f.grad(parameters[idx])*weights[idx]*mesh.integral[vertex]*invTotalArea;
         }
         if(gradW) {
             gradW[idx] += f.eval(parameters[idx])*mesh.integral[vertex];
         }
     }
-    out += (integral - 0.5*totalArea);
+    out += (integral - 0.5*totalArea)*invTotalArea;
 }
 
 DoubleWellPotential::DoubleWellPotential(Mesh& m) : mesh(m) {
