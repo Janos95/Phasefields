@@ -34,7 +34,9 @@ struct LossFunction {
 
     void operator()(double const& in, double out[3]) const;
 
+#ifdef PHASEFIELD_WITH_ADOLC
     void operator()(adouble const& x, adouble& y) const;
+#endif
 
     void drawSettings();
 

@@ -21,9 +21,8 @@ target_include_directories(Optimization PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
 target_link_libraries(Optimization PRIVATE
-        Ceres::ceres
+        LBFGS::lib
         ScopedTimer::ScopedTimer
-        ImGui::ImGui
         Phasefield::Viewer
         )
 
@@ -35,16 +34,20 @@ target_link_libraries(Optimization PUBLIC
 
 add_library(Phasefield::Optimization ALIAS Optimization)
 
-if (NOT CORRADE_TARGET_EMSCRIPTEN)
-    target_link_libraries(Optimization PRIVATE
-            TBB::tbb
-            OpenMP::OpenMP_CXX
-            )
+if (PHASEFIELD_WITH_CERES)
+    target_link_libraries(Optimization PRIVATE Ceres::ceres)
+    target_compile_definitions(Optimization PUBLIC PHASEFIELD_WITH_CERES)
+endif()
 
-    target_link_libraries(Optimization PUBLIC
-            PkgConfig::Ipopt
-            PkgConfig::Adolc
-            )
-endif ()
+if (PHASEFIELD_WITH_IPOPT)
+    target_link_libraries(Optimization PRIVATE PkgConfig::Ipopt)
+    target_compile_definitions(Optimization PUBLIC PHASEFIELD_WITH_IPOPT)
+endif()
+
+if (PHASEFIELD_WITH_ADOLC)
+    target_link_libraries(Optimization PRIVATE PkgConfig::Adolc)
+    target_compile_definitions(Optimization PUBLIC PHASEFIELD_WITH_ADOLC)
+endif()
+
 
 

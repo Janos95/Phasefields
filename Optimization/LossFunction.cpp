@@ -3,31 +3,37 @@
 
 #include "LossFunctions.h"
 #include "SmartEnum.h"
+#include "Allocate.h"
 
 #include <Corrade/Utility/StlMath.h>
 #include <Corrade/Utility/Assert.h>
 
+#ifdef PHASEFIELD_WITH_ADOLC
 #include <adolc/adouble.h>
+#endif
 
 #include <imgui.h>
 #include <utility>
-#include <new>
 
 namespace Phasefield {
 
 template<class T>
 LossFunction::LossFunction(T f) {
-    erased = ::operator new(sizeof(T), std::align_val_t(alignof(T)));
+    erased = allocate_buffer(sizeof(T), alignof(T));
     ::new(erased) T(std::move(f));
+
+#ifdef PHASEFIELD_WITH_ADOLC
     ad = +[](void* e, adouble const& x, adouble& y) {
         (*static_cast<T*>(e))(x, y);
     };
+#endif
+
     loss = +[](void* e, double x, double ys[3]) {
         (*static_cast<T*>(e))(x, ys);
     };
     destroy = +[](void* e) {
         static_cast<T*>(e)->~T();
-        ::operator delete(e, sizeof(T), std::align_val_t(alignof(T)));
+        deallocate_buffer(e, sizeof(T), alignof(T));
     };
 
     if constexpr ( requires {T::type(); })
@@ -102,10 +108,12 @@ void LossFunction::operator()(double const& in, double out[3]) const {
     for(size_t i = 0; i < 3; ++i) out[i] *= weight;
 }
 
+#ifdef PHASEFIELD_WITH_ADOLC
 void LossFunction::operator()(adouble const& x, adouble& y) const {
     ad(erased, x, y);
     y *= weight;
 }
+#endif
 
 void TrivialLoss::operator()(double const& in, double out[3]) const {
     out[0] = in;

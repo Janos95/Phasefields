@@ -15,6 +15,7 @@ using Magnum::UnsignedInt;
 using Magnum::Float;
 using Magnum::Double;
 using Magnum::Int;
+using Magnum::UnsignedByte;
 
 using Magnum::Vector3;
 using Magnum::Vector2;
@@ -23,6 +24,7 @@ using Magnum::Vector2ui;
 using Magnum::Vector3ub;
 using Magnum::Vector3ui;
 using Magnum::Vector3d;
+using Magnum::Vector4;
 using Magnum::Matrix3;
 using Magnum::Matrix3d;
 using Magnum::Matrix4;
@@ -32,6 +34,7 @@ using Magnum::Color4;
 using Magnum::Color4ub;
 using Magnum::Range2D;
 using Magnum::Range2Di;
+using Magnum::Range3D;
 
 using Magnum::Rad;
 using Magnum::Radd;

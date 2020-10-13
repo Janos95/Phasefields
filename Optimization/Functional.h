@@ -13,16 +13,6 @@ class adouble;
 
 namespace Phasefield {
 
-//enum class OptionsResult : Mg::UnsignedInt {
-//    EvaluateProblem = 1,
-//    MakeUniqueVisualizer = 2,
-//    UnmakeUniqueVisualizer = 3,
-//};
-
-//using OptionsResultSet = Cr::Containers::EnumSet<OptionsResult>;
-//
-//CORRADE_ENUMSET_OPERATORS(OptionsResultSet)
-
 struct Functional {
 
     //enum class Traits {

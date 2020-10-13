@@ -119,6 +119,10 @@ struct Face {
 
     [[nodiscard]] double diameter() const;
 
+    [[nodiscard]] StaticArray<3, Vector3> positions() const;
+
+    [[nodiscard]] Range3D bb() const;
+
     [[nodiscard]] explicit operator bool() const { return idx != Invalid; }
 };
 

@@ -18,7 +18,8 @@ namespace Phasefield::Solver {
 
 SMART_ENUM(Backend, size_t,
            IPOPT,
-           CERES)
+           CERES,
+           LBFGSLIB)
 
 SMART_ENUM(Status, size_t,
            CONTINUE,

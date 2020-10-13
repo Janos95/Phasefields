@@ -5,8 +5,6 @@ add_library(Utilities
         detail/pointer_like_type_traits.h
         SharedRessource.h
         FunctionRef.h
-        normalizeInto.cpp
-        normalizeInto.hpp
         SmartEnum.h
         StlAlgorithm.h
         YCombinator.h
@@ -19,7 +17,7 @@ add_library(Utilities
         )
 
 target_include_directories(Utilities PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(Utilities PUBLIC Corrade::Containers)
+target_link_libraries(Utilities PUBLIC Corrade::Containers Magnum::Magnum)
 add_library(Phasefield::Utilities ALIAS Utilities)
 
 #add_executable(bench hash_map_bench.cpp)

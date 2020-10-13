@@ -35,20 +35,24 @@ struct DiffuseYamabe {
     bool drawSolutionGradient = false;
     bool curvatureRescaling = false;
     double* lambdaScaling = nullptr;
-    double lambdaWeight = 1;
+    double lambdaWeight = 100;
 
     Mesh& mesh;
-
 
     double getRescalingFactor(Face f) const;
     double getRescalingFactor(Vertex v) const;
 
     EnergyType::Value energy = EnergyType::Hencky;
+    bool positivePhase = true;
+    bool negativePhase = true;
 };
 
 DECLARE_FUNCTIONAL_CONSTRUCTOR(DiffuseYamabe)
 DECLARE_FUNCTIONAL_OPERATOR(DiffuseYamabe, double)
+
+#ifdef PHASEFIELD_WITH_ADOLC
 DECLARE_FUNCTIONAL_OPERATOR(DiffuseYamabe, adouble)
+#endif
 
 }
 

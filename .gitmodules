@@ -4,6 +4,24 @@
 [submodule "contrib/magnum-integration"]
 	path = contrib/magnum-integration
 	url = https://github.com/mosra/magnum-integration.git
-[submodule "contrib/magnum-integration/src/MagnumExternal"]
-	path = contrib/magnum-integration/src/MagnumExternal
+[submodule "contrib/liblbfgs"]
+	path = contrib/liblbfgs
+	url = https://github.com/chokkan/liblbfgs.git
+[submodule "contrib/magnum"]
+	path = contrib/magnum
+	url = https://github.com/mosra/magnum.git
+[submodule "contrib/corrade"]
+	path = contrib/corrade
+	url = https://github.com/mosra/corrade.git
+[submodule "contrib/magnum-plugins"]
+	path = contrib/magnum-plugins
+	url = https://github.com/mosra/magnum-plugins.git
+[submodule "contrib/Fast-BVH"]
+	path = contrib/Fast-BVH
+	url = https://github.com/brandonpelfrey/Fast-BVH.git
+[submodule "contrib/implot"]
+	path = contrib/implot
+	url = https://github.com/epezent/implot.git
+[submodule "contrib/imgui"]
+	path = contrib/imgui
 	url = https://github.com/ocornut/imgui.git

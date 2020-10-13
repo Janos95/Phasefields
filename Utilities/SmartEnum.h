@@ -6,7 +6,7 @@
 #define CONCATENATE1(arg1, arg2)  CONCATENATE2(arg1, arg2)
 #define CONCATENATE2(arg1, arg2)  arg1##arg2
 
-#define FOR_EACH_1(what, x, ...) what(x)
+#define FOR_EACH_1(what, x) what(x)
 #define FOR_EACH_2(what, x, ...)\
   what(x);\
   FOR_EACH_1(what,  __VA_ARGS__);

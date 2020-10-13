@@ -17,8 +17,10 @@
 
 #include <imgui.h>
 #include "StlAlgorithm.h"
-#include <execution>
+
+#ifdef PHASEFIELD_WITH_ADOLC
 #include <adolc/adouble.h>
+#endif
 
 namespace Phasefield {
 
@@ -98,8 +100,8 @@ void ConnectednessConstraint::operator()(ArrayView<const Scalar> parameters,
             components[face] = Invalid;
     }
 
-    std::sort(std::execution::par, roots.begin(), roots.end());
-    size_t numComponents = std::unique(std::execution::par, roots.begin(), roots.end()) - roots.begin();
+    std::sort(roots.begin(), roots.end());
+    size_t numComponents = std::unique(roots.begin(), roots.end()) - roots.begin();
     arrayResize(roots, numComponents);
 
     for(Face r : roots) {
@@ -373,6 +375,9 @@ void ConnectednessConstraint::draw(Node& node) {
 
 DEFINE_FUNCTIONAL_CONSTRUCTOR(ConnectednessConstraint)
 DEFINE_FUNCTIONAL_OPERATOR(ConnectednessConstraint, double)
+
+#ifdef PHASEFIELD_WITH_ADOLC
 DEFINE_FUNCTIONAL_OPERATOR(ConnectednessConstraint, adouble)
+#endif
 
 }

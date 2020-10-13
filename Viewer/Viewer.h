@@ -4,8 +4,6 @@
 
 #pragma once
 
-
-
 #include "ArcBall.h"
 #include "Solver.h"
 #include "Functional.h"
@@ -16,15 +14,31 @@
 #include "KDTree.h"
 #include "Mesh.h"
 #include "Types.h"
-#include "VideoSaver.h"
+#include "PlotCallback.h"
+#include "DepthReinterpretShader.h"
+#include "Bvh.h"
 
-#include <Magnum/Platform/Sdl2Application.h>
 #include <Magnum/ImGuiIntegration/Context.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Trade/MeshData.h>
 #include <Magnum/Shaders/Phong.h>
 #include <MagnumPlugins/PrimitiveImporter/PrimitiveImporter.h>
+#include <Corrade/Containers/Optional.h>
+
+#ifdef MAGNUM_TARGET_WEBGL
+#include <Magnum/Platform/EmscriptenApplication.h>
+#else
+#include <Magnum/Platform/Sdl2Application.h>
+#endif
+
+#ifdef PHASEFIELD_WITH_FFMPEG
+#include "VideoSaver.h"
+#endif
+
+#ifdef PHASEFIELD_WITH_ASSIMP
 #include <MagnumPlugins/AssimpImporter/AssimpImporter.h>
+#endif
+
 
 namespace Phasefield {
 
@@ -35,17 +49,42 @@ namespace Cr = Corrade;
 
 struct Viewer;
 
-//struct OptimizationCallback {
-//
-//    bool optimize = true;
-//
-//    Solver::Status::Value operator()(Solver::IterationSummary const&);
-//};
+// utility structure for realtime plot
+struct ScrollingBuffer {
+    size_t maxSize;
+    size_t offset;
+    Array<Vector2> data;
 
+    ScrollingBuffer() {
+        maxSize = 2000;
+        offset  = 0;
+        arrayReserve(data, maxSize);
+    }
+
+    void add(float x, float y) {
+        if (data.size() < maxSize)
+            arrayAppend(data, InPlaceInit, x, y);
+        else {
+            data[offset] = Vector2(x,y);
+            offset =  (offset + 1) % maxSize;
+        }
+    }
+    void clear() {
+        if (data.size() > 0) {
+            arrayShrink(data);
+            offset  = 0;
+        }
+    }
+
+    size_t size() const { return data.size(); }
+
+};
 
 struct Viewer : public Mg::Platform::Application {
 
-    explicit Viewer(int argc, char** argv);
+    explicit Viewer(Arguments const&);
+
+    ~Viewer();
 
     void drawEvent() override;
 
@@ -87,13 +126,15 @@ struct Viewer : public Mg::Platform::Application {
 
     bool drawFunctionals(Array<Functional>&, size_t& id);
 
-    void startBrushing(Vector3 const&);
+    void startBrushing(Vector3 const&, Vector3 const&);
 
     void brush();
 
     void setScalingFactors();
 
-    Vector3 unproject(Vector2i const&);
+    Vector3 unproject(Vector2i const&, Float depth);
+
+    void drawErrorPlot();
 
     Mg::ImGuiIntegration::Context imgui{Mg::NoCreate};
     bool trackingMouse = false;
@@ -145,6 +186,7 @@ struct Viewer : public Mg::Platform::Application {
     bool brushing = false;
     Array<std::pair<double, Vertex>> distances;
     Vector3 point;
+    Float lastDepth = 1;
 
     //Mg::GL::Mesh axisMesh{Mg::NoCreate};
     //bool drawAxis = false;
@@ -158,18 +200,29 @@ struct Viewer : public Mg::Platform::Application {
 
     bool animate = false;
     bool recording = false;
+
+#ifdef PHASEFIELD_WITH_FFMPEG
     VideoSaver videoSaver;
+#endif
+#ifdef PHASEFIELD_WITH_ASSIMP
+    Mg::Trade::AssimpImporter assimpImporter;
+#endif
 
     //Cr::PluginManager::Manager<Mg::Trade::AbstractImporter> manager;
     //Mg::Trade::PrimitiveImporter primitiveImporter;
 
-    KDTree kdtree;
+    BVHAdapter bvh;
+    size_t lastIntersectionIdx = 0;
     FastMarchingMethod fastMarchingMethod;
-
 
     Pointer<Mg::Trade::AbstractImporter> primitiveImporter1;
     Mg::Trade::PrimitiveImporter* primitiveImporter;
-    Mg::Trade::AssimpImporter assimpImporter;
+
+
+    bool paused = false;
+    Array<ScrollingBuffer> data;
+    Array<bool> show;
+    size_t t = 0;
 };
 
 }

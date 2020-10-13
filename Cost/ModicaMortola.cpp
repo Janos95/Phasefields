@@ -9,9 +9,9 @@
 #include <Magnum/Magnum.h>
 #include <Magnum/Math/Vector3.h>
 
-#include <Eigen/SparseCore>
-#include <igl/cotmatrix.h>
+#ifdef PHASEFIELD_WITH_ADOLC
 #include <adolc/adouble.h>
+#endif
 
 namespace Phasefield {
 
@@ -144,8 +144,10 @@ DEFINE_FUNCTIONAL_OPERATOR(DirichletEnergy, double)
 DEFINE_FUNCTIONAL_OPERATOR(AreaRegularizer, double)
 DEFINE_FUNCTIONAL_OPERATOR(DoubleWellPotential, double)
 
+#ifdef PHASEFIELD_WITH_ADOLC
 DEFINE_FUNCTIONAL_OPERATOR(DirichletEnergy, adouble)
 DEFINE_FUNCTIONAL_OPERATOR(AreaRegularizer, adouble)
 DEFINE_FUNCTIONAL_OPERATOR(DoubleWellPotential, adouble)
+#endif
 
 }

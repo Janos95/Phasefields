@@ -181,8 +181,6 @@ public:
 
     void uploadVertexBuffer(Mg::GL::Buffer& vertexBuffer) const;
 
-    void uploadScalars(Mg::GL::Buffer& vertexBuffer) const;
-
     void uploadIndexBuffer(Mg::GL::Buffer& indexBuffer) const;
 
     [[nodiscard]] StridedArrayView1D<const Vector3> positions() const;

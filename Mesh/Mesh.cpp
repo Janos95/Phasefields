@@ -266,13 +266,6 @@ void Mesh::uploadVertexBuffer(Mg::GL::Buffer& buffer) const { buffer.setData(m_a
 
 void Mesh::uploadIndexBuffer(Mg::GL::Buffer& buffer) const { buffer.setData(m_indices); }
 
-void Mesh::uploadScalars(GL::Buffer& vertexBuffer) const {
-    auto mapped = arrayCast<Implementation::Attributes>(vertexBuffer.map(0, vertexBuffer.size(), GL::Buffer::MapFlag::Write));
-    CORRADE_CONSTEXPR_ASSERT(mapped, "could not map vertex data");
-    Cr::Utility::copy(scalars(), sliceScalars(mapped));
-    vertexBuffer.unmap();
-}
-
 size_t Mesh::faceCount() const { return m_faceCount; }
 
 size_t Mesh::vertexCount() const { return m_vertexCount; }

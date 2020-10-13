@@ -6,6 +6,7 @@
 
 #include "Tag.h"
 #include "Functional.h"
+#include "Allocate.h"
 
 #include <Corrade/Containers/ArrayView.h>
 #include <new>
@@ -55,6 +56,7 @@ Functional::Functional(F f): tag(getTag()) {
         return (*static_cast<F*>(e))(p, w, r, gradP, gradW);
     };
 
+#ifdef PHASEFIELD_WITH_ADOLC
     ad = +[](
             void* e,
             ArrayView<const adouble> p,
@@ -62,15 +64,16 @@ Functional::Functional(F f): tag(getTag()) {
             adouble& r) {
         return (*static_cast<F*>(e)).template operator()<adouble>(p, w, r, nullptr, nullptr);
     };
+#endif
 
     /* mandatory */
-    erased = ::operator new(sizeof(F), std::align_val_t(alignof(F)));
+    erased = ::allocate_buffer(sizeof(F), alignof(F));
     ::new(erased) F(std::move(f));
 
 
     destroy = +[](void* e) {
         static_cast<F*>(e)->~F();
-        ::operator delete(e, sizeof(F), std::align_val_t(alignof(F)));
+        deallocate_buffer(e, sizeof(F), alignof(F));
     };
 
     params = +[](void* e) { return static_cast<F*>(e)->numParameters(); };

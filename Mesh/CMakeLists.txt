@@ -26,6 +26,7 @@ target_link_libraries(Mesh PRIVATE
         ScopedTimer::ScopedTimer
         Corrade::Containers
         Magnum::GL
+        Magnum::MeshTools
         #Phasefield::Optimization
         )
 

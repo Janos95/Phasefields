@@ -16,7 +16,7 @@ using Cr::Utility::formatString;
 StoppingCriteria::StoppingCriteria(Face source, size_t numComponents, FaceData<size_t>& components) :
         m_startComponent(components[source]),
         m_components(&components),
-        m_found(DirectInit, numComponents, 0),
+        m_found(DirectInit, numComponents, false),
         m_componentsFound(components[source] + 1),
         m_targetVertices(DirectInit, numComponents, Invalid)
 {

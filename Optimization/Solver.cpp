@@ -2,15 +2,23 @@
 // Created by janos on 20.04.20.
 //
 
+
+
 #include "Solver.h"
 #include "RecursiveProblem.h"
 #include "SparseMatrix.h"
 #include "FunctionRef.h"
 
+#ifdef PHASEFIELD_WITH_CERES
+
 #include <ceres/iteration_callback.h>
 #include <ceres/gradient_problem_solver.h>
 #include <ceres/gradient_problem.h>
 #include <ceres/first_order_function.h>
+
+#endif
+
+#ifdef PHASEFIELD_WITH_IPOPT
 
 #include <IpTNLP.hpp>
 #include <IpIpoptCalculatedQuantities.hpp>
@@ -19,16 +27,24 @@
 #include <IpOrigIpoptNLP.hpp>
 #include <IpIpoptApplication.hpp>
 
+#endif
+
+#include <lbfgs.h>
+
 #include <Corrade/Utility/Debug.h>
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Containers/Array.h>
 #include <Corrade/Containers/Pointer.h>
+
+#include <stdio.h>
 
 namespace Phasefield::Solver {
 
 using Cr::Utility::copy;
 
 namespace {
+
+#ifdef PHASEFIELD_WITH_IPOPT
 
 struct IpoptWrapper : Ipopt::TNLP {
     const double Infinity = +2e19;
@@ -265,6 +281,10 @@ struct IpoptWrapper : Ipopt::TNLP {
     }
 };
 
+#endif
+
+#ifdef PHASEFIELD_WITH_CERES
+
 struct FirstOrderWrapper : ceres::FirstOrderFunction {
 
     Solver::RecursiveProblem& problem;
@@ -316,6 +336,7 @@ struct CeresCallbackWrapper : ceres::IterationCallback {
     }
 };
 
+
 ceres::LineSearchDirectionType mapLineSearchType(Solver::LineSearchDirection::Value type) {
     switch(type) {
         case Solver::LineSearchDirection::NONLINEAR_CONJUGATE_GRADIENT :
@@ -331,10 +352,60 @@ ceres::LineSearchDirectionType mapLineSearchType(Solver::LineSearchDirection::Va
     }
 }
 
+#endif
+
+struct lbfgs_data {
+    Solver::RecursiveProblem& problem;
+    Solver::Options& options;
+};
+
+static lbfgsfloatval_t evaluate(
+        void *instance,
+        const lbfgsfloatval_t *x,
+        lbfgsfloatval_t *g,
+        const int n,
+        const lbfgsfloatval_t step
+)
+{
+    size_t N = n;
+    auto& problem = reinterpret_cast<lbfgs_data*>(instance)->problem;
+    double fx = 0;
+    problem({x, N}, fx, {g, N});
+    return fx;
+}
+
+static int progress(
+        void *instance,
+        const lbfgsfloatval_t *x,
+        const lbfgsfloatval_t *g,
+        const lbfgsfloatval_t fx,
+        const lbfgsfloatval_t xnorm,
+        const lbfgsfloatval_t gnorm,
+        const lbfgsfloatval_t step,
+        int n,
+        int k,
+        int ls
+)
+{
+    auto& options = reinterpret_cast<lbfgs_data*>(instance)->options;
+    Solver::IterationSummary solverSummary; /* dummy variable */
+    for(auto& cb : options.callbacks){
+        switch(cb(solverSummary)) {
+            case Solver::Status::CONTINUE :
+                return 0;
+            case Solver::Status::USER_ABORTED :
+            case Solver::Status::FINISHED :
+                return 1;
+        }
+    }
+    return 0;
+}
+
 }
 
 void solve(Solver::Options& options, Solver::RecursiveProblem& problem, ArrayView<double> params, Solver::Summary* summary) {
     if(options.solver == Solver::Backend::CERES) {
+#ifdef PHASEFIELD_WITH_CERES
         ceres::GradientProblemSolver::Summary ceresSummary;
         ceres::GradientProblem ceresProblem(new FirstOrderWrapper(problem));
         ceres::GradientProblemSolver::Options ceresOptions{
@@ -353,8 +424,9 @@ void solve(Solver::Options& options, Solver::RecursiveProblem& problem, ArrayVie
         /* solve the problem and print the report */
         ceres::Solve(ceresOptions, ceresProblem, params.data(), &ceresSummary);
         Debug{} << ceresSummary.BriefReport().c_str();
-
+#endif
     } else if(options.solver == Solver::Backend::IPOPT) {
+#ifdef CORRADE_WITH_IPOPT
         Ipopt::SmartPtr<Ipopt::TNLP> mynlp = new IpoptWrapper(problem, options, params);
         Ipopt::SmartPtr<Ipopt::IpoptApplication> app = IpoptApplicationFactory();
         app->Options()->SetNumericValue("tol", 1e-7);
@@ -376,9 +448,30 @@ void solve(Solver::Options& options, Solver::RecursiveProblem& problem, ArrayVie
         if(status < 0) {
             Debug{} << "Ipopt : Error solving problem";
         }
+#endif
+    } else if(options.solver == Solver::Backend::LBFGSLIB) {
+        size_t n = problem.numParameters();
+        int i, ret = 0;
+        lbfgsfloatval_t fx;
+        lbfgs_parameter_t param;
 
-    } else
-        CORRADE_ASSERT(false, "Unkown solver type",);
+        /* Initialize the parameters for the L-BFGS optimization. */
+        lbfgs_parameter_init(&param);
+        param.epsilon = 1e-10;
+        param.ftol = 1e-12;
+        param.max_iterations = options.max_num_iterations;
+
+        /*
+            Start the L-BFGS optimization; this will invoke the callback functions
+            evaluate() and progress() when necessary.
+         */
+        lbfgs_data instance{problem, options};
+        ret = lbfgs(n, problem.nodeToOptimize.phasefield().data(), &fx, evaluate, progress, &instance, &param);
+
+        /* Report the result, on user failure this report tolerance reached ??. */
+        printf("L-BFGS optimization terminated with status %s\n", lbfgs_strerror(ret));
+
+    } else CORRADE_ASSERT(false, "Unkown solver type",);
 }
 
 }

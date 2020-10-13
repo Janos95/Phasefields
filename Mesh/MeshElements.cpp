@@ -6,7 +6,11 @@
 #include "Mesh.h"
 
 #include <Corrade/Containers/StridedArrayView.h>
+#include <Corrade/Containers/StaticArray.h>
+
 #include <Magnum/Math/Vector3.h>
+#include <Magnum/Math/Range.h>
+#include <Magnum/Math/FunctionsBatch.h>
 
 #include <cstdio>
 
@@ -110,6 +114,19 @@ FaceDualEdgeRange Face::dualEdges() const {
 }
 
 double Face::diameter() const { return mesh->faceDiameter[*this]; }
+
+Range3D Face::bb() const {
+    auto pos = positions();
+    return Math::minmax({pos[0], pos[1], pos[2]});
+}
+
+StaticArray<3, Vector3> Face::positions() const {
+    StaticArray<3, Vector3> pos;
+    size_t i = 0;
+    for(Vertex v : vertices())
+        pos[i++] = v.position();
+    return pos;
+}
 
 Debug& operator<<(Debug& debug, Face const& f) {
     char buffer[100];

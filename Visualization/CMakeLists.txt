@@ -1,10 +1,4 @@
 add_library(Visualization STATIC
-        Paths.h
-        Paths.cpp
-        Upload.cpp
-        Upload.h
-        primitive_options.hpp
-        primitive_options.cpp
         ImGuiWidgets.h
         ImGuiWidget.cpp
         Visualization.h

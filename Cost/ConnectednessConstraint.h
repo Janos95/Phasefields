@@ -63,7 +63,10 @@ struct ConnectednessConstraint {
 
 DECLARE_FUNCTIONAL_CONSTRUCTOR(ConnectednessConstraint)
 DECLARE_FUNCTIONAL_OPERATOR(ConnectednessConstraint, double)
+
+#ifdef PHASEFIELD_WITH_ADOLC
 DECLARE_FUNCTIONAL_OPERATOR(ConnectednessConstraint, adouble)
+#endif
 
 }
 

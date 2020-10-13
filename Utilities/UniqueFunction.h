@@ -31,35 +31,11 @@
 
 #pragma once
 
+#include "Allocate.h"
 #include "detail/pointer_int_pair.h"
 #include "detail/pointer_union.h"
 #include <utility>
-#include <new>
 #include <cstring>
-
-inline void* allocate_buffer(size_t Size, size_t Alignment) {
-    return ::operator new(Size
-#ifdef __cpp_aligned_new
-            ,
-                          std::align_val_t(Alignment)
-#endif
-    );
-}
-
-
-inline void deallocate_buffer(void* Ptr, size_t Size, size_t Alignment) {
-    ::operator delete(Ptr
-#ifdef __cpp_sized_deallocation
-            ,
-                      Size
-#endif
-#ifdef __cpp_aligned_new
-            ,
-                      std::align_val_t(Alignment)
-#endif
-    );
-}
-
 
 template<typename FunctionT>
 class UniqueFunction;

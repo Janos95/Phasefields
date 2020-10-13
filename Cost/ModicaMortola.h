@@ -75,9 +75,11 @@ DECLARE_FUNCTIONAL_OPERATOR(DirichletEnergy, double)
 DECLARE_FUNCTIONAL_OPERATOR(AreaRegularizer, double)
 DECLARE_FUNCTIONAL_OPERATOR(DoubleWellPotential, double)
 
+#ifdef PHASEFIELD_WITH_ADOLC
 DECLARE_FUNCTIONAL_OPERATOR(DirichletEnergy, adouble)
 DECLARE_FUNCTIONAL_OPERATOR(AreaRegularizer, adouble)
 DECLARE_FUNCTIONAL_OPERATOR(DoubleWellPotential, adouble)
+#endif
 
 
 }

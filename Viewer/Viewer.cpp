@@ -16,6 +16,7 @@
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Configuration.h>
 #include <Corrade/Utility/Resource.h>
+#include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/PluginManager/PluginMetadata.h>
@@ -28,66 +29,33 @@
 #include <Magnum/GL/TextureFormat.h>
 #include <Magnum/GL/Buffer.h>
 #include <Magnum/GL/Mesh.h>
-#include <Magnum/Trade/AbstractSceneConverter.h>
 
 #include <Magnum/Math/Matrix4.h>
 #include <Magnum/Math/FunctionsBatch.h>
 
-#include <Magnum/Shaders/Flat.h>
-#include <Magnum/Shaders/MeshVisualizer.h>
 #include <Magnum/Shaders/Phong.h>
-#include <Magnum/Shaders/VertexColor.h>
 
+#include <Magnum/Trade/AbstractSceneConverter.h>
 #include <Magnum/Trade/MeshData.h>
 #include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Image.h>
-#include <Magnum/Primitives/Axis.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/DebugTools/ColorMap.h>
-#include <Magnum/DebugTools/ObjectRenderer.h>
-#include <Magnum/ImGuiIntegration/Context.hpp>
 
 #include <Magnum/MeshTools/Compile.h>
 #include <Magnum/MeshTools/RemoveDuplicates.h>
 
-#include <Magnum/Primitives/Capsule.h>
-#include <Magnum/Primitives/Cylinder.h>
-#include <Magnum/Primitives/Grid.h>
+#include <Magnum/ImGuiIntegration/Context.hpp>
 #include <MagnumPlugins/PrimitiveImporter/PrimitiveImporter.h>
+
+#include <implot.h>
 
 namespace Phasefield {
 
 using namespace Mg::Math::Literals;
 
 namespace {
-
-bool loadMesh(char const* path, Mg::Trade::MeshData& mesh) {
-    Mg::PluginManager::Manager<Mg::Trade::AbstractImporter> manager;
-    auto importer = manager.loadAndInstantiate("AnySceneImporter");
-    auto name = importer->metadata()->name();
-    Debug{} << "Trying to load mesh using " << name.c_str();
-    if(!importer) std::exit(1);
-
-    Debug{} << "Opening file" << path;
-
-    if(!importer->openFile(path)) {
-        puts("could not open file");
-        std::exit(4);
-    }
-
-    Debug{} << "Imported " << importer->meshCount() << " meshes";
-
-    if(importer->meshCount() && importer->mesh(0)) {
-        mesh = *importer->mesh(0);
-        return true;
-    } else {
-        Debug{} << "Could not load mesh";
-        return false;
-    }
-}
-
-
 
 bool saveMesh(char const* path, Mesh const& mesh) {
     Mg::PluginManager::Manager<Mg::Trade::AbstractSceneConverter> manager;
@@ -117,7 +85,7 @@ Array<std::pair<char const*, Mg::GL::Texture2D>> makeColorMapTextures() {
         texture.setMinificationFilter(Magnum::SamplerFilter::Linear)
                .setMagnificationFilter(Magnum::SamplerFilter::Linear)
                .setWrapping(Magnum::SamplerWrapping::ClampToEdge) // or Repeat
-               .setStorage(1, Mg::GL::TextureFormat::RGB8, size) // or SRGB8
+               .setStorage(1, Mg::GL::TextureFormat::RGBA, size) // or SRGB8
                .setSubImage(0, {}, Mg::ImageView2D{Magnum::PixelFormat::RGB8Srgb, size, colorMap});
         arrayAppend(textures, InPlaceInit, name, std::move(texture));
     }
@@ -132,11 +100,11 @@ Array<std::pair<char const*, Mg::GL::Texture2D>> makeColorMapTextures() {
 //}
 
 
-Viewer::Viewer(int argc, char** argv) :
-        Mg::Platform::Application{{argc, argv}, Mg::NoCreate},
+Viewer::Viewer(Arguments const& arguments) :
+        Mg::Platform::Application{arguments, Mg::NoCreate},
         fastMarchingMethod(mesh),
         tree{mesh},
-        kdtree{mesh},
+        bvh{mesh},
         proxy(*this),
         problem(tree)
         //problem(tree),
@@ -150,19 +118,26 @@ Viewer::Viewer(int argc, char** argv) :
         setScalingFactors();
     }
 
-    /* Setup window */
+    /* Try 8x MSAA, fall back to zero samples if not possible. Enable only 2x
+   MSAA if we have enough DPI. */
     {
-        ScopedTimer t{"Creating OpenGL Context", true};
         const Vector2 dpiScaling = this->dpiScaling({});
         Configuration conf;
-        conf.setTitle("Viewer")
-            .setSize({1200, 1200}, dpiScaling)
-            .setWindowFlags(Configuration::WindowFlag::Resizable);
+        conf.setTitle("Phasefield Viewer")
+            .setWindowFlags(Configuration::WindowFlag::Resizable)
+            .setSize(conf.size(), dpiScaling);
         GLConfiguration glConf;
         glConf.setSampleCount(dpiScaling.max() < 2.0f ? 8 : 2);
-        if(!tryCreate(conf, glConf)) {
+#ifdef MAGNUM_TARGET_WEBGL
+        /* Needed to ensure the canvas depth buffer is always Depth24Stencil8,
+           stencil size is 0 by default, some browser enable stencil for that
+           (Chrome) and some don't (Firefox) and thus our texture format for
+           blitting might not always match. */
+        glConf.setDepthBufferSize(24)
+            .setStencilBufferSize(8);
+#endif
+        if(!tryCreate(conf, glConf))
             create(conf, glConf.setSampleCount(0));
-        }
     }
 
     /* setup shaders, color map textures and mesh*/
@@ -196,6 +171,36 @@ Viewer::Viewer(int argc, char** argv) :
         phongColorMap = Phong{Phong::Flag::DiffuseTexture, 2};
         phongVertexColors = Phong{Phong::Flag::VertexColor, 2};
 
+        /* On WebGL we can't just read depth. The only possibility to read depth is
+        to use a depth texture and read it from a shader, then reinterpret as
+        color and write to a RGBA texture which can finally be read back using
+        glReadPixels(). However, with a depth texture we can't use multisampling
+        so I'm instead blitting the depth from the default framebuffer to
+        another framebuffer with an attached depth texture and then processing
+        that texture with a custom shader to reinterpret the depth as RGBA
+        values, packing 8 bit of the depth into each channel. That's finally
+        read back to the client. */
+#ifdef MAGNUM_TARGET_WEBGL
+        depth = GL::Texture2D{};
+        depth.setMinificationFilter(GL::SamplerFilter::Nearest)
+            .setMagnificationFilter(GL::SamplerFilter::Nearest)
+            .setWrapping(GL::SamplerWrapping::ClampToEdge)
+            /* The format is set to combined depth/stencil in hope it will match
+               the browser depth/stencil format, requested in the GLConfiguration
+               above. If it won't, the blit() won't work properly. */
+            .setStorage(1, GL::TextureFormat::Depth24Stencil8, framebufferSize());
+        depthFramebuffer = GL::Framebuffer{{{}, framebufferSize()}};
+        depthFramebuffer.attachTexture(GL::Framebuffer::BufferAttachment::Depth, depth, 0);
+
+        reinterpretDepth = GL::Renderbuffer{};
+        reinterpretDepth.setStorage(GL::RenderbufferFormat::RGBA8, framebufferSize());
+        reinterpretFramebuffer = GL::Framebuffer{{{}, framebufferSize()}};
+        reinterpretFramebuffer.attachRenderbuffer(GL::Framebuffer::ColorAttachment{0}, reinterpretDepth);
+        reinterpretShader = DepthReinterpretShader{};
+        fullscreenTriangle = GL::Mesh{};
+        fullscreenTriangle.setCount(3);
+#endif
+
         colorMapTextures = makeColorMapTextures();
 
     }
@@ -204,9 +209,13 @@ Viewer::Viewer(int argc, char** argv) :
     {
         arrayAppend(problem.objectives, makeFunctional(FunctionalType::DoubleWellPotential));
         arrayAppend(problem.objectives, makeFunctional(FunctionalType::DirichletEnergy));
-        arrayAppend(problem.objectives, makeFunctional(FunctionalType::DiffuseYamabe));
+        //arrayAppend(problem.objectives, makeFunctional(FunctionalType::DiffuseYamabe));
         //arrayAppend(problem.objectives, makeFunctional(FunctionalType::AreaRegularizer));
         //arrayAppend(problem.objectives, makeFunctional(FunctionalType::ConnectednessConstraint));
+
+        size_t objectiveCount = problem.objectives.size();
+        arrayResize(show, DirectInit, objectiveCount, true);
+        arrayResize(data, objectiveCount);
     }
 
     /* try to load tree from disk, otherwise fallback to empty tree with three nodes */
@@ -223,7 +232,7 @@ Viewer::Viewer(int argc, char** argv) :
 
     }
 
-    /* Setup ImGui, load a better font */
+    /* Setup ImGui, ImPlot, load a better font */
     {
         ImGui::CreateContext();
         ImGui::StyleColorsDark();
@@ -238,6 +247,8 @@ Viewer::Viewer(int argc, char** argv) :
 
         imgui = Mg::ImGuiIntegration::Context(*ImGui::GetCurrentContext(),
                                                   Vector2{windowSize()}/dpiScaling(), windowSize(), framebufferSize());
+
+        ImPlot::CreateContext(); /* init implot context */
 
         /* Setup proper blending to be used by ImGui */
         GL::Renderer::setBlendEquation(
@@ -262,11 +273,15 @@ Viewer::Viewer(int argc, char** argv) :
     GL::Renderer::enable(Mg::GL::Renderer::Feature::FaceCulling);
 
     /* Start the timer, loop at 60 Hz max */
+#ifndef CORRADE_TARGET_EMSCRIPTEN
     setSwapInterval(1);
     setMinimalLoopPeriod(16);
+#endif
+
 }
 
 void Viewer::loadScene(const char* path, const char* postfix) {
+#ifdef PHASEFIELD_WITH_ASSIMP
     bool loadedTree = false;
     Optional<Mg::Trade::MeshData> md;
 
@@ -291,7 +306,7 @@ void Viewer::loadScene(const char* path, const char* postfix) {
 
         if(Cr::Utility::Directory::exists(meshPath)) {
 
-            Debug{} << "Opening file" << meshPath;
+            Debug{} << "Opening file" << meshPath.c_str();
 
             if(assimpImporter.openFile(meshPath)) {
                 Debug{} << "Imported " << assimpImporter.meshCount() << " meshes";
@@ -336,109 +351,19 @@ void Viewer::loadScene(const char* path, const char* postfix) {
     if(md || loadedTree) {
         proxy.redraw();
     }
+#endif
 }
-
-//template<class T>
-//Array<Vector3d> positionsAsArray(Mg::Trade::MeshData const& meshData) {
-//    auto view = meshData.attribute<Vector3>(Mg::Trade::MeshAttribute::Position);
-//    Array<Vector3d> positions(NoInit, view.size());
-//    for(int i = 0; i < view.size(); ++i) {
-//        positions[i] = Vector3d{view[i]};
-//    }
-//    return positions;
-//}
-
-//void Viewer::drawSubdivisionOptions() {
-//    if(ImGui::TreeNode("Subdivisions")) {
-//        ImGui::Text("Currently we have %d vertices and %d faces", (int) vertices.size(), (int) indices.size()/3);
-//        constexpr int step = 1;
-//        auto old = numSubdivisions;
-//        if(ImGui::InputScalar("Number of Sibdivision (wrt. orignal mesh)", ImGuiDataType_U32, &numSubdivisions, &step,
-//                              nullptr, "%d")) {
-//            if(numSubdivisions > old) {
-//                tree.subdivide(indices, vertices);
-//            } else {
-//                indices = original.indicesAsArray();
-//                vertices = positionsAsArray<Double>(original);
-//                tree.resize(vertices.size());
-//                auto copy = numSubdivisions;
-//                while(copy--)
-//                    tree.subdivide(indices, vertices);
-//            }
-//
-//            updateInternalDataStructures();
-//            upload(mesh, vertexBuffer, indexBuffer, meshData);
-//        }
-//
-//        ImGui::TreePop();
-//    }
-//}
-
-//void normalizeMesh(Array<Vector3d>& vertices, Array<UnsignedInt>& indices) {
-//    Vector3d min{Math::Constants<Double>::inf()}, max{-Math::Constants<Double>::inf()};
-//    for(auto const& p : vertices) {
-//        for(int i = 0; i < 3; ++i) {
-//            min[i] = Math::min(min[i], p[i]);
-//            max[i] = Math::max(max[i], p[i]);
-//        }
-//    }
-//    auto scale = (max - min).lengthInverted();
-//    for(auto& v : vertices) {
-//        v = (v - min)*scale;
-//    }
-//
-//    ArrayView<Vector3d> view{vertices, vertices.size()};
-//    auto afterRemoving = MeshTools::removeDuplicatesFuzzyIndexedInPlace(indices,
-//                                                                        arrayCast<2, double>(view));
-//    arrayResize(vertices, afterRemoving);
-//}
-
-//void normalizeMesh(Trade::MeshData& meshData) {
-//    Array<char> is(NoInit, sizeof(UnsignedInt)*meshData.indexCount()),
-//            vs(NoInit, sizeof(Vector3)*meshData.vertexCount());
-//    auto indices = arrayCast<UnsignedInt>(is);
-//    Utility::copy(meshData.indices<UnsignedInt>(), indices);
-//
-//    auto vertices = arrayCast<Vector3>(vs);
-//    auto points = meshData.attribute<Vector3>(Trade::MeshAttribute::Position);
-//
-//    Vector3 min{Math::Constants<Float>::inf()}, max{-Math::Constants<Float>::inf()};
-//    for(auto const& p : points) {
-//        for(int i = 0; i < 3; ++i) {
-//            min[i] = Math::min(min[i], p[i]);
-//            max[i] = Math::max(max[i], p[i]);
-//        }
-//    }
-//    auto scale = (max - min).lengthInverted();
-//    auto mid = (max - min)*0.5f;
-//    for(int i = 0; i < vertices.size(); ++i) {
-//        vertices[i] = (points[i])*scale;
-//    }
-//
-//    ArrayView<Vector3> view{vertices, vertices.size()};
-//    auto afterRemoving = MeshTools::removeDuplicatesFuzzyIndexedInPlace(indices,
-//                                                                        arrayCast<2, double>(view));
-//
-//    arrayResize(vs, afterRemoving*sizeof(Vector3));
-//    vertices = arrayCast<Vector3>(vs);
-//
-//    Trade::MeshIndexData indexData{indices};
-//    Trade::MeshAttributeData vertexData{Trade::MeshAttribute::Position, vertices};
-//
-//    meshData = Trade::MeshData(MeshPrimitive::Triangles, std::move(is), indexData, std::move(vs), {vertexData});
-//}
 
 void Viewer::drawBrushOptions() {
     if(ImGui::TreeNode("Brush")) {
         constexpr int step = 1;
         constexpr double stepDist = 0.01;
         constexpr double min = 0.f, max = 1.f;
-        ImGui::SliderScalar("Recursive Phase Filter Factor", ImGuiDataType_Double, &recursiveFilterFactor, &min, &max,
-                            "%.3f", 2.0f);
-        ImGui::SliderScalar("Distance Step", ImGuiDataType_Double, &distStep, &min, &max, "%.5f", 2.0f);
+        ImGui::SliderScalar("Recursive Phase Filter Factor", ImGuiDataType_Double, &recursiveFilterFactor, &min, &max, "%.3f", ImGuiSliderFlags_Logarithmic);
+        ImGui::SliderScalar("Distance Step", ImGuiDataType_Double, &distStep, &min, &max, "%.5f", ImGuiSliderFlags_Logarithmic);
         ImGui::InputScalar("Maximal Distance", ImGuiDataType_Double, &maxDist, &stepDist, nullptr, "%.3f");
         constexpr double lower = -1.f, upper = 1.f;
-        ImGui::SliderScalar("Phase", ImGuiDataType_Double, &phase, &lower, &upper, "%.2f", 1.0f);
+        ImGui::SliderScalar("Phase", ImGuiDataType_Double, &phase, &lower, &upper, "%.2f", ImGuiSliderFlags_Logarithmic);
 
         const auto colBrushing = ImVec4(0.56f, 0.83f, 0.26f, 1.0f);
         const auto colNotBrushing = ImVec4(0.85f, 0.85f, 0.85f, 1.0f);
@@ -475,7 +400,9 @@ bool Viewer::drawFunctionals(Array<Functional>& functionals, size_t& id) {
             proxy.redraw();
         }
 
+        ImGui::PushItemWidth(150);
         f.drawImGuiOptions(proxy);
+        ImGui::PopItemWidth();
 
         ImGui::Separator();
         ImGui::PopID();
@@ -627,12 +554,28 @@ void Viewer::drawOptimizationOptions() {
 }
 
 void Viewer::runOptimization(UniqueFunction<bool()>&& cb){
+
+    /* callbacks */
+
     auto abortCb = [this, cb = std::move(cb)] (Solver::IterationSummary const&) mutable -> Solver::Status::Value {
         proxy.redraw();
         return cb() && isOptimizing ? Solver::Status::CONTINUE : Solver::Status::USER_ABORTED;
     };
     auto& callbacks = options.callbacks;
     arrayAppend(callbacks, InPlaceInit, std::move(abortCb));
+
+    for(auto& d : data) d.clear();
+    arrayAppend(callbacks, InPlaceInit, [this](Solver::IterationSummary const& summary){
+        auto& objs = problem.objectives;
+        Node node = problem.nodeToOptimize;
+        for(size_t i = 0; i < objs.size(); ++i) {
+            double cost = 0;
+            objs[i](node.phasefield(), node.temporary(), cost, nullptr, nullptr);
+            data[i].add(t, cost);
+        }
+        ++t;
+        return Solver::Status::CONTINUE;
+    });
 
     if(hierarchicalOptimization) {
         tree.root().initializePhasefieldFromParent();
@@ -658,7 +601,8 @@ void Viewer::runOptimization(UniqueFunction<bool()>&& cb){
         Solver::solve(options, problem, currentNode.phasefield(), nullptr);
     }
 
-    arrayResize(callbacks, callbacks.size() - 1); /* pop the last callback off */
+    arrayResize(callbacks, callbacks.size() - 2); /* pop the last two callbacks off */
+
 }
 
 Functional Viewer::makeFunctional(FunctionalType::Value type) {
@@ -690,6 +634,8 @@ Functional Viewer::makeFunctional(FunctionalType::Value type) {
             return yamabe;
         }
     }
+    assert(false);
+    return Functional{};
 }
 
 void Viewer::brush() {
@@ -719,20 +665,10 @@ void Viewer::setScalingFactors() {
     yamabeLambdaScaling = 1./epsilon;
 }
 
-Vector3 Viewer::unproject(Vector2i const& windowPosition) {
-    auto fbSize = framebufferSize();
-    auto wSize = windowSize();
-
-    const Vector2i position = windowPosition*Vector2{fbSize}/Vector2{wSize};
-    const Vector2i fbPosition{position.x(), Mg::GL::defaultFramebuffer.viewport().sizeY() - position.y() - 1};
-
-    Float depth;
-    Mg::Image2D data = GL::defaultFramebuffer.read(
-            Range2Di::fromSize(fbPosition, Vector2i{1}).padded(Vector2i{2}),
-            {GL::PixelFormat::DepthComponent, Mg::GL::PixelType::Float});
-    depth = Math::min<Float>(arrayCast<const Float>(data.data()));
-
-    const Vector2i viewSize = wSize;
+Vector3 Viewer::unproject(Vector2i const& windowPosition, Float depth) {
+    /* We have to take window size, not framebuffer size, since the position is
+       in window coordinates and the two can be different on HiDPI systems */
+    const Vector2i viewSize = windowSize();
     const Vector2i viewPosition{windowPosition.x(), viewSize.y() - windowPosition.y() - 1};
     const Vector3 in{2*Vector2{viewPosition}/Vector2{viewSize} - Vector2{1.0f}, depth*2.0f - 1.0f};
 
@@ -968,8 +904,10 @@ void Viewer::drawIO() {
         ImGui::PushStyleColor(ImGuiCol{}, recording ? red : green);
         if(ImGui::Button("Start Recording")) {
             if(!recording) {
+#ifdef PHASEFIELD_WITH_FFMPEG
                 videoSaver.startRecording(recordingPath, framebufferSize());
                 recording = true;
+#endif
             }
         }
         ImGui::PopStyleColor();
@@ -977,8 +915,10 @@ void Viewer::drawIO() {
         ImGui::PushStyleColor(ImGuiCol{}, recording ? green : red);
         if(ImGui::Button("Stop Recording")) {
             if(recording) {
+#ifdef PHASEFIELD_WITH_FFMPEG
                 videoSaver.endRecording();
                 recording = false;
+#endif
             }
         }
         ImGui::PopStyleColor();
@@ -993,6 +933,22 @@ void Viewer::viewportEvent(ViewportEvent& event) {
 
     imgui.relayout(Vector2{event.windowSize()}/event.dpiScaling(),
                    event.windowSize(), event.framebufferSize());
+
+    /* Recreate textures and renderbuffers that depend on viewport size */
+#ifdef MAGNUM_TARGET_WEBGL
+    depth = GL::Texture2D{};
+    depth.setMinificationFilter(GL::SamplerFilter::Nearest)
+        .setMagnificationFilter(GL::SamplerFilter::Nearest)
+        .setWrapping(GL::SamplerWrapping::ClampToEdge)
+        .setStorage(1, GL::TextureFormat::Depth24Stencil8, event.framebufferSize());
+    depthFramebuffer.attachTexture(GL::Framebuffer::BufferAttachment::Depth, depth, 0);
+
+    reinterpretDepth = GL::Renderbuffer{};
+    reinterpretDepth.setStorage(GL::RenderbufferFormat::RGBA8, event.framebufferSize());
+    reinterpretFramebuffer.attachRenderbuffer(GL::Framebuffer::ColorAttachment{0}, reinterpretDepth);
+
+    reinterpretFramebuffer.setViewport({{}, event.framebufferSize()});
+#endif
 }
 
 void Viewer::keyPressEvent(KeyEvent& event) {
@@ -1016,7 +972,6 @@ void Viewer::keyPressEvent(KeyEvent& event) {
             break;
         case KeyEvent::Key::LeftCtrl :
             brushingModeEnabled = true;
-            Mg::GL::defaultFramebuffer.mapForRead(Mg::GL::DefaultFramebuffer::ReadAttachment::Front);
             break;
         default:
             return;
@@ -1034,7 +989,7 @@ void Viewer::keyReleaseEvent(KeyEvent& event) {
 
     if(event.key() == Viewer::KeyEvent::Key::LeftCtrl) {
         brushingModeEnabled = false;
-        Mg::GL::defaultFramebuffer.mapForRead(Mg::GL::DefaultFramebuffer::ReadAttachment::None);
+        brushing = false;
         event.setAccepted();
         return;
     }
@@ -1047,11 +1002,13 @@ void Viewer::textInputEvent(TextInputEvent& event) {
     }
 }
 
-void Viewer::startBrushing(Vector3 const& point) {
+void Viewer::startBrushing(Vector3 const& origin, Vector3 const& dir) {
     fastMarchingMethod.update();
 
     arrayResize(distances, 0);
-    auto [idx, _] = kdtree.nearestNeighbor(point);
+    size_t idx = bvh.computeIntersection(origin, dir);
+    if(idx == Invalid) idx = lastIntersectionIdx;
+    else lastIntersectionIdx = idx;
     fastMarchingMethod.setSource(Vertex{size_t(idx), &mesh});
     targetDist = 0.;
     brushing = true;
@@ -1064,7 +1021,9 @@ void Viewer::mousePressEvent(MouseEvent& event) {
     }
 
     if(brushingModeEnabled) {
-        startBrushing(unproject(event.position()));
+        Vector3 o = unproject(event.position(), 0);
+        Vector3 d = unproject(event.position(), 1) - o;
+        startBrushing(o, d);
         event.setAccepted();
         return;
     }
@@ -1073,7 +1032,10 @@ void Viewer::mousePressEvent(MouseEvent& event) {
         trackingMouse = true;
         ///* Enable mouse capture so the mouse can drag outside of the window */
         ///** @todo replace once https://github.com/mosra/magnum/pull/419 is in */
+
+#ifndef CORRADE_TARGET_EMSCRIPTEN
         SDL_CaptureMouse(SDL_TRUE);
+#endif
 
         arcBall->initTransformation(event.position());
 
@@ -1082,8 +1044,12 @@ void Viewer::mousePressEvent(MouseEvent& event) {
     }
 
     if(event.button() == MouseEvent::Button::Right) {
-        Vector3 p = unproject(event.position());
-        auto [idx, _] = kdtree.nearestNeighbor(point);
+        Vector3 o = unproject(event.position(), 0);
+        Vector3 d = unproject(event.position(), 1) - o;
+
+        size_t idx = bvh.computeIntersection(o, d);
+        if(idx == Invalid) idx = lastIntersectionIdx;
+        else lastIntersectionIdx = idx;
         Debug{} << "Phasefield value at mouse location" << currentNode.phasefield()[idx];
     }
 }
@@ -1104,7 +1070,9 @@ void Viewer::mouseReleaseEvent(MouseEvent& event) {
         /* Disable mouse capture again */
         /** @todo replace once https://github.com/mosra/magnum/pull/419 is in */
         if(trackingMouse) {
+#ifndef CORRADE_TARGET_EMSCRIPTEN
             SDL_CaptureMouse(SDL_FALSE);
+#endif
             trackingMouse = false;
             event.setAccepted();
         }
@@ -1118,7 +1086,9 @@ void Viewer::mouseMoveEvent(MouseMoveEvent& event) {
     }
 
     if(brushingModeEnabled && brushing){
-        startBrushing(unproject(event.position()));
+        Vector3 o = unproject(event.position(), 0);
+        Vector3 d = unproject(event.position(), 1) - o;
+        startBrushing(o, d);
         event.setAccepted();
         return;
     }
@@ -1195,8 +1165,10 @@ void Viewer::drawEvent() {
 
 
     if(recording) {
+#ifdef PHASEFIELD_WITH_FFMPEG
         Mg::Image2D image = GL::defaultFramebuffer.read({{},framebufferSize()}, {GL::PixelFormat::RGBA, Mg::GL::PixelType::UnsignedByte});
         videoSaver.appendFrame(std::move(image));
+#endif
     }
     //if(recording) {
     //    Mg::Image2D image = GL::defaultFramebuffer.read({{},framebufferSize()}, {GL::PixelFormat::RGBA, Mg::GL::PixelType::UnsignedByte});
@@ -1209,6 +1181,7 @@ void Viewer::drawEvent() {
     drawOptimizationOptions();
     drawVisualizationOptions();
     drawIO();
+    drawErrorPlot();
 
     imgui.updateApplicationCursor(*this);
 
@@ -1244,5 +1217,41 @@ void Viewer::setAreaConstraint(Node node) {
     }
 }
 
+Viewer::~Viewer() {
+    ImPlot::DestroyContext();
+}
+
+void Viewer::drawErrorPlot() {
+    bool opened;
+    ImGui::Begin("ImPlot Demo", &opened, ImGuiWindowFlags_MenuBar);
+
+    size_t objectiveCount = problem.objectives.size();
+
+    ImGui::SameLine();
+
+    if (ImGui::Button(paused ? "Resume" : "Pause", ImVec2(100,0)))
+        paused = !paused;
+
+
+    ImPlot::SetNextPlotLimitsX((double)t - 10, t, paused ? ImGuiCond_Once : ImGuiCond_Always);
+    if (ImPlot::BeginPlot("##DND", nullptr, nullptr, ImVec2(-1,0), ImPlotFlags_YAxis2 | ImPlotFlags_YAxis3, ImPlotAxisFlags_NoTickLabels)) {
+        for (int i = 0; i < objectiveCount; ++i) {
+            const char* label = FunctionalType::to_string(problem.objectives[i].functionalType);
+            if (show[i] && data[i].size() > 0) {
+                ImPlot::SetPlotYAxis(0);
+                ImPlot::PlotLine(label, &data[i].data[0].x(), &data[i].data[0].y(), data[i].data.size(), data[i].offset, 2 * sizeof(float));
+                // allow legend labels to be dragged and dropped
+                if (ImPlot::BeginLegendDragDropSource(label)) {
+                    ImGui::SetDragDropPayload("DND_PLOT", &i, sizeof(int));
+                    ImGui::TextUnformatted(label);
+                    ImPlot::EndLegendDragDropSource();
+                }
+            }
+        }
+
+        ImPlot::EndPlot();
+    }
+    ImGui::End();
+}
 
 }

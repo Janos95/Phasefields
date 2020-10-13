@@ -5,21 +5,15 @@
 #include "VisualizationProxy.h"
 #include "Viewer.h"
 #include "Enums.h"
-#include "normalizeInto.hpp"
 #include "C1Functions.h"
 
 #include <Magnum/ImageView.h>
-#include <Magnum/PixelFormat.h>
 #include <Magnum/GL/TextureFormat.h>
 #include <Magnum/GL/Sampler.h>
-#include <Magnum/GL/Buffer.h>
-#include <Magnum/GL/Mesh.h>
 #include <Magnum/DebugTools/ColorMap.h>
-#include <Magnum/Trade/MeshData.h>
 #include <Magnum/Math/FunctionsBatch.h>
 
 #include <Corrade/Utility/Algorithms.h>
-#include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Containers/GrowableArray.h>
 
 namespace Phasefield {
@@ -170,6 +164,7 @@ void VisualizationProxy::drawValuesNormalized(VertexDataView<double> const& valu
         w = 1;
     else
         w = max - min;
+    Debug{} << "Min" << min << ", Max" << max;
     drawValues(values, [=](double value){ return (value - min)/w; });
 }
 

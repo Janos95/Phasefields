@@ -1,16 +1,12 @@
 
 high priority
-    * check if scaling is correct by checking if for epsilon -> 0
-        the modica mortola functional goes to 1 for the square example
-    * check why numeric diff is not the same for the dirichlet energy
-    *
-    * shape optimization
-        * finish writing up the approach in latex
+        * fix shape opt
 
 medium prioritiy
-    ** port to emscripten and make a web demo?
-    * use imgui docking branch + nice tree visualization
-    * plasticy mesh vis
+    * check if scaling is correct by checking if for epsilon -> 0
+        the modica mortola functional goes to 1 for the square example
+    * port to emscripten and make a web demo?
+    * mesh vis overlay 
 
 
 

@@ -160,10 +160,6 @@ public:
         else push_minmax_heap(m_data, m_data + m_size, SwapComp<Comp>{m_comp});
     }
 
-    T dummy(T x){
-        return 2*x;
-    }
-
     void clear() {
         destruct();
         m_size = 0;

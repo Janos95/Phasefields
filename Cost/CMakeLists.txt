@@ -35,15 +35,20 @@ target_link_libraries(Cost PUBLIC
 set_property(TARGET Cost PROPERTY POSITION_INDEPENDENT_CODE ON)
 add_library(Phasefield::Cost ALIAS Cost)
 
+if (PHASEFIELD_WITH_ADOLC)
+    target_link_libraries(Cost PRIVATE PkgConfig::Adolc)
+    target_compile_definitions(Cost PRIVATE PHASEFIELD_WITH_ADOLC)
+endif()
 
-if (NOT CORRADE_TARGET_EMSCRIPTEN)
-    target_link_libraries(Cost PRIVATE
-            OpenMP::OpenMP_CXX
-            TBB::tbb
-            PkgConfig::Adolc
-            SuiteSparse::UMFPACK
-            )
+if (PHASEFIELD_WITH_TBB)
+    target_link_libraries(Cost PRIVATE TBB::tbb)
+    target_compile_definitions(Cost PRIVATE PHASEFIELD_WITH_TBB)
+endif()
 
-endif ()
+if (PHASEFIELD_WITH_SUITESPARSE)
+    target_link_libraries(Cost PRIVATE SuiteSparse::UMFPACK)
+    target_compile_definitions(Cost PRIVATE PHASEFIELD_WITH_SUITESPARSE)
+endif()
+
 
 

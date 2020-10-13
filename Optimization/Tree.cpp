@@ -231,7 +231,7 @@ void Tree::update() {
     size_t n = mesh->vertexCount();
     size_t min = Math::min(n, phasefieldData.size()/nodeCount());
 
-    Array<double> data(DirectInit, n*nodeCount(), 0);
+    Array<double> data(DirectInit, n*nodeCount(), 0.);
 
     if(min) {
         StridedArrayView2D<double> view{data, {nodeData.size(), n}};
