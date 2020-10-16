@@ -136,6 +136,9 @@ struct Viewer : public Mg::Platform::Application {
 
     void drawErrorPlot();
 
+    bool saveMesh(const char*);
+    bool dumpMesh(const char*);
+
     Mg::ImGuiIntegration::Context imgui{Mg::NoCreate};
     bool trackingMouse = false;
 
@@ -194,8 +197,9 @@ struct Viewer : public Mg::Platform::Application {
 
     VisualizationProxy proxy;
 
+    struct ColorMap { const char* name; GL::Texture2D texture; StaticArrayView<256, const Vector3ub> colors; };
     UnsignedInt colorMapIndex = 0;
-    Array<std::pair<const char*, Magnum::GL::Texture2D>> colorMapTextures;
+    Array<ColorMap> colorMapData;
 
 
     bool animate = false;

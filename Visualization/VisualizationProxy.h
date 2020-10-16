@@ -54,7 +54,7 @@ struct VisualizationProxy {
 
     void drawSegmentation();
 
-    void drawValues(VertexDataView<double> const& values, UniqueFunction<double(double)> tf = [](double x){ return x; });
+    void drawValues(VertexDataView<double> const& values);
 
     void drawValuesNormalized(VertexDataView<double> const& values);
 
@@ -66,6 +66,10 @@ struct VisualizationProxy {
     UniqueFunction<void()> releaseCb;
 
     VisOption::Value option;
+
+    bool customMapping = false;
+    double scale = 1;
+    double offset = 0;
 };
 
 }

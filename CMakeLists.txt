@@ -26,6 +26,8 @@ find_package(Corrade)
 
 if(PHASEFIELD_WITH_ASSIMP)
     find_package(MagnumPlugins REQUIRED AssimpImporter)
+    find_package(MagnumPlugins REQUIRED StanfordSceneConverter)
+    find_package(VTK REQUIRED CommonCore CommonDataModel IOXML)
 endif()
 
 if(PHASEFIELD_WITH_ADOLC)
@@ -41,7 +43,6 @@ if(PHASEFIELD_WITH_FFMPEG)
     pkg_check_modules(libavcodec REQUIRED IMPORTED_TARGET libavcodec)
     pkg_check_modules(libavutil REQUIRED IMPORTED_TARGET libavutil)
     pkg_check_modules(libswscale REQUIRED IMPORTED_TARGET libswscale)
-
     add_subdirectory(VideoSaver)
 endif()
 

@@ -389,16 +389,17 @@ static int progress(
 {
     auto& options = reinterpret_cast<lbfgs_data*>(instance)->options;
     Solver::IterationSummary solverSummary; /* dummy variable */
+    bool goOn = true;
     for(auto& cb : options.callbacks){
         switch(cb(solverSummary)) {
             case Solver::Status::CONTINUE :
-                return 0;
+                break;
             case Solver::Status::USER_ABORTED :
             case Solver::Status::FINISHED :
-                return 1;
+                goOn = false;
         }
     }
-    return 0;
+    return goOn ? 0 : 1;
 }
 
 }
@@ -426,7 +427,7 @@ void solve(Solver::Options& options, Solver::RecursiveProblem& problem, ArrayVie
         Debug{} << ceresSummary.BriefReport().c_str();
 #endif
     } else if(options.solver == Solver::Backend::IPOPT) {
-#ifdef CORRADE_WITH_IPOPT
+#ifdef PHASEFIELD_WITH_IPOPT
         Ipopt::SmartPtr<Ipopt::TNLP> mynlp = new IpoptWrapper(problem, options, params);
         Ipopt::SmartPtr<Ipopt::IpoptApplication> app = IpoptApplicationFactory();
         app->Options()->SetNumericValue("tol", 1e-7);

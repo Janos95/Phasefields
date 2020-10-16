@@ -134,10 +134,14 @@ void VisualizationProxy::setDefaultCallback() {
             drawCb = [this](Node) { drawSegmentation(); };
             break;
         case VisOption::Phasefield :
-            drawCb = [this](Node node) { drawValues(node.phasefield(), [](double x){ return 0.5*(x + 1); }); };
+            scale = 0.5;
+            offset = 1;
+            drawCb = [this](Node node) { drawValues(node.phasefield()); };
             break;
         case VisOption::Weight :
-            drawCb = [this](Node node) { drawValues(node.temporary(), [](double x){ return x; }); };
+            scale = 1;
+            offset = 0;
+            drawCb = [this](Node node) { drawValues(node.temporary()); };
             break;
     }
     releaseCb = []{};
@@ -149,23 +153,27 @@ void VisualizationProxy::setCallbacks(UniqueFunction<void(Node)> draw, UniqueFun
     releaseCb = std::move(release);
 }
 
-void VisualizationProxy::drawValues(VertexDataView<double> const& values, UniqueFunction<double(double)> tf) {
+void VisualizationProxy::drawValues(VertexDataView<double> const& values) {
     CORRADE_INTERNAL_ASSERT(values.size() == viewer.mesh.vertexCount());
     for(Vertex v : viewer.mesh.vertices()) {
-        viewer.mesh.scalar(v) = tf(values[v]);
+        viewer.mesh.scalar(v) = scale*(values[v] + offset);
     }
     shaderConfig = ShaderConfig::ColorMaps;
 }
 
 void VisualizationProxy::drawValuesNormalized(VertexDataView<double> const& values) {
-    double min, max, w;
-    std::tie(min, max) = Math::minmax(ArrayView<double>(values));
-    if(max - min < 1e-10)
-        w = 1;
-    else
-        w = max - min;
-    Debug{} << "Min" << min << ", Max" << max;
-    drawValues(values, [=](double value){ return (value - min)/w; });
+    if(!customMapping) {
+        double min, max, w;
+        std::tie(min, max) = Math::minmax(ArrayView<double>(values));
+        if(max - min < 1e-10)
+            w = 1;
+        else
+            w = max - min;
+        Debug{} << "Min" << min << ", Max" << max;
+        scale = 1/w;
+        offset = -min;
+    }
+    drawValues(values);
 }
 
 }

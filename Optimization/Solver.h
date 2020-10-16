@@ -43,7 +43,7 @@ struct Options {
     bool minimizer_progress_to_stdout = true;
     bool update_state_every_iteration = true;
     LineSearchDirection::Value line_search_direction = LineSearchDirection::LBFGS;
-    Backend::Value solver = Backend::CERES;
+    Backend::Value solver = Backend::LBFGSLIB;
     Array<IterationCallbackType> callbacks;
 };
 

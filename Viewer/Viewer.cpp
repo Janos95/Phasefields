@@ -45,33 +45,114 @@
 
 #include <Magnum/MeshTools/Compile.h>
 #include <Magnum/MeshTools/RemoveDuplicates.h>
+#include <Magnum/MeshTools/Interleave.h>
 
 #include <Magnum/ImGuiIntegration/Context.hpp>
 #include <MagnumPlugins/PrimitiveImporter/PrimitiveImporter.h>
+#include <MagnumPlugins/StanfordSceneConverter/StanfordSceneConverter.h>
 
 #include <implot.h>
+
+#include <vtkCellArray.h>
+#include <vtkPoints.h>
+#include <vtkXMLPolyDataWriter.h>
+#include <vtkPolyData.h>
+#include <vtkSmartPointer.h>
+#include <vtkDoubleArray.h>
+#include <vtkPointData.h>
+#include <vtkTriangle.h>
+#include <vtkCellData.h>
 
 namespace Phasefield {
 
 using namespace Mg::Math::Literals;
 
-namespace {
-
-bool saveMesh(char const* path, Mesh const& mesh) {
+bool Viewer::saveMesh(char const* path) {
     Mg::PluginManager::Manager<Mg::Trade::AbstractSceneConverter> manager;
-    auto exporter = manager.loadAndInstantiate("AnySceneConverter");
+    Mg::Trade::StanfordSceneConverter exporter{manager, "StanfordSceneConverter"};
 
     Mg::Trade::MeshData md = mesh.meshDataView();
-    if(!exporter->convertToFile(path, md)) {
+
+    if(!exporter.convertToFile(path, md)) {
         Mg::Error{} << "Cannot save file to " << path;
         return false;
     }
     return true;
 }
 
-Array<std::pair<char const*, Mg::GL::Texture2D>> makeColorMapTextures() {
+bool Viewer::dumpMesh(char const* path) {
+    mesh.requireGaussianCurvature();
+    size_t n = mesh.vertexCount();
+    size_t m = mesh.faceCount();
 
-    Array<std::pair<char const*, Mg::GL::Texture2D>> textures;
+    auto points = vtkSmartPointer<vtkPoints>::New();
+    for (Vertex v : mesh.vertices()) {
+        auto& p = v.position();
+        points->InsertNextPoint(p.x(), p.y(), p.z());
+    }
+
+    auto triangles = vtkSmartPointer<vtkCellArray>::New();
+    for (Face f : mesh.faces()) {
+        auto triangle = vtkSmartPointer<vtkTriangle>::New();
+        size_t i = 0;
+        for(Vertex v : f.vertices()) {
+            triangle->GetPointIds()->SetId(i++,v.idx);
+        }
+        triangles->InsertNextCell(triangle);
+    }
+
+    auto produceArray = [](const char* name, size_t size) {
+        vtkSmartPointer<vtkDoubleArray> array = vtkSmartPointer<vtkDoubleArray>::New();
+        array->SetNumberOfValues(size);
+        array->SetName(name);
+        return array;
+    };
+
+    auto curvature = produceArray("Curvature", n);
+    auto phasefield = produceArray("Phasefield", n);
+    auto scalar = produceArray("Scalar", n);
+    auto nodalAreas = produceArray("Nodal Area", n);
+
+    auto faceCurvature = produceArray("Face Curvature", m);
+
+    for(Vertex v : mesh.vertices()) {
+        curvature->SetValue(v.idx, mesh.gaussianCurvature[v]);
+        phasefield->SetValue(v.idx, currentNode.phasefield()[v]);
+        scalar->SetValue(v.idx, mesh.scalar(v));
+        nodalAreas->SetValue(v.idx, mesh.integral[v]);
+    }
+
+    for(Face f : mesh.faces()) {
+        faceCurvature->SetValue(f.idx, mesh.faceCurvature[f]);
+    }
+
+    // Create a polydata object and add the points to it.
+    auto polyData = vtkSmartPointer<vtkPolyData>::New();
+    polyData->SetPoints(points);
+    polyData->SetPolys(triangles);
+
+    auto pointData = polyData->GetPointData();
+    pointData->AddArray(curvature);
+    pointData->AddArray(scalar);
+    pointData->AddArray(nodalAreas);
+    pointData->AddArray(phasefield);
+
+    auto cellData = polyData->GetCellData();
+    cellData->AddArray(faceCurvature);
+
+    // Write the file
+    vtkSmartPointer<vtkXMLPolyDataWriter> writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
+    writer->SetFileName(path);
+    writer->SetInputData(polyData);
+
+    writer->Write();
+}
+
+namespace {
+
+Array<Viewer::ColorMap> makeColorMapTextures() {
+
+    Array<Viewer::ColorMap> textures;
     using L = std::initializer_list<std::pair<char const*, StaticArrayView<256, const Vector3ub>>>;
     for(auto&& [name, colorMap] : L{
             {"Turbo",   Magnum::DebugTools::ColorMap::turbo()},
@@ -85,9 +166,9 @@ Array<std::pair<char const*, Mg::GL::Texture2D>> makeColorMapTextures() {
         texture.setMinificationFilter(Magnum::SamplerFilter::Linear)
                .setMagnificationFilter(Magnum::SamplerFilter::Linear)
                .setWrapping(Magnum::SamplerWrapping::ClampToEdge) // or Repeat
-               .setStorage(1, Mg::GL::TextureFormat::RGBA, size) // or SRGB8
+               .setStorage(1, Mg::GL::TextureFormat::RGB8, size) // or SRGB8
                .setSubImage(0, {}, Mg::ImageView2D{Magnum::PixelFormat::RGB8Srgb, size, colorMap});
-        arrayAppend(textures, InPlaceInit, name, std::move(texture));
+        arrayAppend(textures, InPlaceInit, name, std::move(texture), colorMap);
     }
     return textures;
 }
@@ -125,24 +206,16 @@ Viewer::Viewer(Arguments const& arguments) :
         Configuration conf;
         conf.setTitle("Phasefield Viewer")
             .setWindowFlags(Configuration::WindowFlag::Resizable)
-            .setSize(conf.size(), dpiScaling);
+            .setSize({1200, 1200}, dpiScaling);
         GLConfiguration glConf;
         glConf.setSampleCount(dpiScaling.max() < 2.0f ? 8 : 2);
-#ifdef MAGNUM_TARGET_WEBGL
-        /* Needed to ensure the canvas depth buffer is always Depth24Stencil8,
-           stencil size is 0 by default, some browser enable stencil for that
-           (Chrome) and some don't (Firefox) and thus our texture format for
-           blitting might not always match. */
-        glConf.setDepthBufferSize(24)
-            .setStencilBufferSize(8);
-#endif
         if(!tryCreate(conf, glConf))
             create(conf, glConf.setSampleCount(0));
     }
 
     /* setup shaders, color map textures and mesh*/
     {
-        ScopedTimer t{"Setting up opengl stuff (textures etc)", true};
+        ScopedTimer t{"Setting up opengl stuff (shaders, textures etc)", true};
         //loadMesh("/home/janos/meshes/spot.ply", original);
         //original = Mg::Primitives::grid3DSolid({300,300});
         //original = Mg::Primitives::grid3DSolid({2,2});
@@ -171,37 +244,7 @@ Viewer::Viewer(Arguments const& arguments) :
         phongColorMap = Phong{Phong::Flag::DiffuseTexture, 2};
         phongVertexColors = Phong{Phong::Flag::VertexColor, 2};
 
-        /* On WebGL we can't just read depth. The only possibility to read depth is
-        to use a depth texture and read it from a shader, then reinterpret as
-        color and write to a RGBA texture which can finally be read back using
-        glReadPixels(). However, with a depth texture we can't use multisampling
-        so I'm instead blitting the depth from the default framebuffer to
-        another framebuffer with an attached depth texture and then processing
-        that texture with a custom shader to reinterpret the depth as RGBA
-        values, packing 8 bit of the depth into each channel. That's finally
-        read back to the client. */
-#ifdef MAGNUM_TARGET_WEBGL
-        depth = GL::Texture2D{};
-        depth.setMinificationFilter(GL::SamplerFilter::Nearest)
-            .setMagnificationFilter(GL::SamplerFilter::Nearest)
-            .setWrapping(GL::SamplerWrapping::ClampToEdge)
-            /* The format is set to combined depth/stencil in hope it will match
-               the browser depth/stencil format, requested in the GLConfiguration
-               above. If it won't, the blit() won't work properly. */
-            .setStorage(1, GL::TextureFormat::Depth24Stencil8, framebufferSize());
-        depthFramebuffer = GL::Framebuffer{{{}, framebufferSize()}};
-        depthFramebuffer.attachTexture(GL::Framebuffer::BufferAttachment::Depth, depth, 0);
-
-        reinterpretDepth = GL::Renderbuffer{};
-        reinterpretDepth.setStorage(GL::RenderbufferFormat::RGBA8, framebufferSize());
-        reinterpretFramebuffer = GL::Framebuffer{{{}, framebufferSize()}};
-        reinterpretFramebuffer.attachRenderbuffer(GL::Framebuffer::ColorAttachment{0}, reinterpretDepth);
-        reinterpretShader = DepthReinterpretShader{};
-        fullscreenTriangle = GL::Mesh{};
-        fullscreenTriangle.setCount(3);
-#endif
-
-        colorMapTextures = makeColorMapTextures();
+        colorMapData = makeColorMapTextures();
 
     }
 
@@ -209,7 +252,7 @@ Viewer::Viewer(Arguments const& arguments) :
     {
         arrayAppend(problem.objectives, makeFunctional(FunctionalType::DoubleWellPotential));
         arrayAppend(problem.objectives, makeFunctional(FunctionalType::DirichletEnergy));
-        //arrayAppend(problem.objectives, makeFunctional(FunctionalType::DiffuseYamabe));
+        arrayAppend(problem.objectives, makeFunctional(FunctionalType::DiffuseYamabe));
         //arrayAppend(problem.objectives, makeFunctional(FunctionalType::AreaRegularizer));
         //arrayAppend(problem.objectives, makeFunctional(FunctionalType::ConnectednessConstraint));
 
@@ -228,7 +271,7 @@ Viewer::Viewer(Arguments const& arguments) :
         //primitiveImporter = manager.instantiate("PrimitiveImporter");
 
         ScopedTimer t{"Loading scene from disk", true};
-        loadScene("/home/janos/meshes/testing", "hill");
+        loadScene("/home/janos/", "sphere");
 
     }
 
@@ -400,9 +443,7 @@ bool Viewer::drawFunctionals(Array<Functional>& functionals, size_t& id) {
             proxy.redraw();
         }
 
-        ImGui::PushItemWidth(150);
         f.drawImGuiOptions(proxy);
-        ImGui::PopItemWidth();
 
         ImGui::Separator();
         ImGui::PopID();
@@ -431,8 +472,6 @@ void Viewer::drawOptimizationOptions() {
 
         if(ImGui::Button("Add Functional As Objective"))
             arrayAppend(problem.objectives, makeFunctional(currentType));
-
-        ImGui::SameLine();
 
         if(ImGui::Button("Add Functional As Constraint"))
             arrayAppend(problem.constraints, makeFunctional(currentType));
@@ -630,7 +669,6 @@ Functional Viewer::makeFunctional(FunctionalType::Value type) {
         }
         case FunctionalType::DiffuseYamabe : {
             DiffuseYamabe yamabe{mesh};
-            yamabe.lambdaScaling = &yamabeLambdaScaling;
             return yamabe;
         }
     }
@@ -788,6 +826,7 @@ void Viewer::drawVisualizationOptions() {
                 printf("Patch Error %f, (area = %f)\n", error, patchArea);
             }
             printf("Total error %f\n", totalError);
+
         }
 
         static bool drawCurvature = false;
@@ -796,21 +835,50 @@ void Viewer::drawVisualizationOptions() {
                 proxy.setCallbacks(
                         [this](Node node) {
                             mesh.requireGaussianCurvature();
-                            double min = std::numeric_limits<double>::max();
-                            double max = std::numeric_limits<double>::min();
-                            for(Vertex v : mesh.vertices()) {
-                                if(!v.onBoundary()) {
-                                    min = Math::min(min, mesh.gaussianCurvature[v]);
-                                    max = Math::max(max, mesh.gaussianCurvature[v]);
-                                }
-                            }
-                            Debug{} << min;
-                            Debug{} << max;
-                            proxy.drawValues(mesh.gaussianCurvature, [=](double x) { return (x-min)/(max-min); });
+                            proxy.drawValuesNormalized(mesh.gaussianCurvature);
                         },
                         [this]{ drawCurvature = false; });
             } else proxy.setDefaultCallback();
             proxy.redraw();
+        }
+
+        if(ImGui::Checkbox("Custom Mapping", &proxy.customMapping)) {
+            proxy.redraw();
+        }
+
+        static const double minScaling = 0.00001, maxScaling = 10;
+        static const double minOffset = -1, maxOffset = 1;
+
+        if(ImGui::DragScalar("Scaling", ImGuiDataType_Double, &proxy.scale, .001f, &minScaling, &maxScaling, "%f"))
+            proxy.redraw();
+
+        ImGui::SameLine();
+
+        if(ImGui::DragScalar("Offset", ImGuiDataType_Double, &proxy.offset, .001f, &minOffset, &maxOffset, "%f"))
+            proxy.redraw();
+
+
+        if(ImGui::BeginCombo("Color Map", colorMapData[colorMapIndex].name)) {
+            for(size_t i = 0; i < colorMapData.size(); ++i) {
+                bool isSelected = i == colorMapIndex;
+                if(ImGui::Selectable(colorMapData[i].name, isSelected)) {
+                    colorMapIndex = i;
+                    if(proxy.shaderConfig == VisualizationProxy::ShaderConfig::ColorMaps)
+                        redraw();
+                }
+                if(isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
+
+        if(ImGui::Button("Bake To Vertex Color")) {
+            for(Vertex v : mesh.vertices()) {
+                float coord = mesh.scalar(v);
+                auto idx = size_t(coord*255);
+                mesh.color(v) = Math::unpack<Color3>(colorMapData[colorMapIndex].colors[idx]);
+            }
         }
 
         ImGui::TreePop();
@@ -848,8 +916,6 @@ void Viewer::drawIO() {
         static char path[50] = "/home/janos/meshes/experiments";
         static char postfix[25] = "spot";
 
-        ImGui::PushItemWidth(150);
-
         ImGui::BeginGroup();
         ImGui::Text("Import/Export to");
         ImGui::InputText("##Export to", path, sizeof(path));
@@ -862,7 +928,6 @@ void Viewer::drawIO() {
         ImGui::InputText("##Mesh Name", postfix, sizeof(postfix));
         ImGui::EndGroup();
 
-        ImGui::PopItemWidth();
         ImGui::Dummy(ImVec2(0.0f, 20.0f));
 
         if(ImGui::Button("Export Scene")) {
@@ -879,7 +944,7 @@ void Viewer::drawIO() {
                 fclose(fp);
 
                 std::string meshPath = Cr::Utility::Directory::join(path, std::string{postfix} + ".ply");
-                saveMesh(meshPath.c_str(), mesh);
+                saveMesh(meshPath.c_str());
             }
         }
 
@@ -891,6 +956,15 @@ void Viewer::drawIO() {
         ImGui::SameLine();
         if(ImGui::Button("Load Primitive")) {
             loadScene("deadbeef", currentPrimitive);
+        }
+
+
+        if(ImGui::Button("Export to VTK")) {
+            if(!Cr::Utility::Directory::exists(path))
+                Cr::Utility::Directory::mkpath(path);
+
+            std::string meshPath = Cr::Utility::Directory::join(path,"dump.vts");
+            dumpMesh(meshPath.c_str());
         }
 
         ImGui::Checkbox("Animate", &animate);
@@ -933,22 +1007,6 @@ void Viewer::viewportEvent(ViewportEvent& event) {
 
     imgui.relayout(Vector2{event.windowSize()}/event.dpiScaling(),
                    event.windowSize(), event.framebufferSize());
-
-    /* Recreate textures and renderbuffers that depend on viewport size */
-#ifdef MAGNUM_TARGET_WEBGL
-    depth = GL::Texture2D{};
-    depth.setMinificationFilter(GL::SamplerFilter::Nearest)
-        .setMagnificationFilter(GL::SamplerFilter::Nearest)
-        .setWrapping(GL::SamplerWrapping::ClampToEdge)
-        .setStorage(1, GL::TextureFormat::Depth24Stencil8, event.framebufferSize());
-    depthFramebuffer.attachTexture(GL::Framebuffer::BufferAttachment::Depth, depth, 0);
-
-    reinterpretDepth = GL::Renderbuffer{};
-    reinterpretDepth.setStorage(GL::RenderbufferFormat::RGBA8, event.framebufferSize());
-    reinterpretFramebuffer.attachRenderbuffer(GL::Framebuffer::ColorAttachment{0}, reinterpretDepth);
-
-    reinterpretFramebuffer.setViewport({{}, event.framebufferSize()});
-#endif
 }
 
 void Viewer::keyPressEvent(KeyEvent& event) {
@@ -1150,7 +1208,7 @@ void Viewer::drawEvent() {
         phongColorMap.setProjectionMatrix(projection)
                      .setTransformationMatrix(viewTf)
                      .setNormalMatrix(viewTf.normalMatrix())
-                     .bindDiffuseTexture(colorMapTextures[colorMapIndex].second)
+                     .bindDiffuseTexture(colorMapData[colorMapIndex].texture)
 
                      .draw(glMesh);
     } else if (proxy.shaderConfig == VisualizationProxy::ShaderConfig::VertexColors) {
@@ -1176,12 +1234,14 @@ void Viewer::drawEvent() {
     //}
 
     /* draw ImGui stuff */
+    ImGui::PushItemWidth(150);
     //drawSubdivisionOptions();
     drawBrushOptions();
     drawOptimizationOptions();
     drawVisualizationOptions();
     drawIO();
     drawErrorPlot();
+    ImGui::PopItemWidth();
 
     imgui.updateApplicationCursor(*this);
 
@@ -1229,11 +1289,13 @@ void Viewer::drawErrorPlot() {
 
     ImGui::SameLine();
 
-    if (ImGui::Button(paused ? "Resume" : "Pause", ImVec2(100,0)))
-        paused = !paused;
+    if (ImGui::Button("Clear", ImVec2(100,0))) {
+        t = 0;
+        for(auto& buffer : data) buffer.clear();
+    }
 
 
-    ImPlot::SetNextPlotLimitsX((double)t - 10, t, paused ? ImGuiCond_Once : ImGuiCond_Always);
+    ImPlot::SetNextPlotLimitsX(0, t, paused ? ImGuiCond_Once : ImGuiCond_Always);
     if (ImPlot::BeginPlot("##DND", nullptr, nullptr, ImVec2(-1,0), ImPlotFlags_YAxis2 | ImPlotFlags_YAxis3, ImPlotAxisFlags_NoTickLabels)) {
         for (int i = 0; i < objectiveCount; ++i) {
             const char* label = FunctionalType::to_string(problem.objectives[i].functionalType);

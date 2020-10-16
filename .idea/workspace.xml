@@ -25,12 +25,14 @@
       <config projectName="Phasefield" targetName="CorradeInterconnect" />
       <config projectName="Phasefield" targetName="MagnumTextObjects" />
       <config projectName="Phasefield" targetName="VideoSaver" />
+      <config projectName="Phasefield" targetName="StanfordSceneConverter-dependencies" />
       <config projectName="Phasefield" targetName="MagnumFlextGLObjects" />
       <config projectName="Phasefield" targetName="CorradeUtilityObjects" />
+      <config projectName="Phasefield" targetName="AssimpImporter" />
       <config projectName="Phasefield" targetName="MagnumTextureTools_RCS-dependencies" />
       <config projectName="Phasefield" targetName="MagnumText" />
-      <config projectName="Phasefield" targetName="AssimpImporter" />
       <config projectName="Phasefield" targetName="MagnumMathAlgorithms" />
+      <config projectName="Phasefield" targetName="StanfordSceneConverter" />
       <config projectName="Phasefield" targetName="MagnumSdl2Application" />
       <config projectName="Phasefield" targetName="MagnumGlxContextObjects" />
       <config projectName="Phasefield" targetName="MagnumMathObjects" />
@@ -59,100 +61,39 @@
       <config projectName="Phasefield" targetName="Utilities" />
       <config projectName="Phasefield" targetName="Magnum" />
       <config projectName="Phasefield" targetName="MagnumObjects" />
-      <config projectName="Phasefield" targetName="CorradePluginManager" />
       <config projectName="Phasefield" targetName="MagnumPlatformObjects" />
+      <config projectName="Phasefield" targetName="CorradePluginManager" />
     </generated>
   </component>
   <component name="CMakeSettings">
     <configurations>
-      <configuration PROFILE_NAME="Debug" CONFIG_NAME="Debug" />
+      <configuration PROFILE_NAME="Release" CONFIG_NAME="Release" />
     </configurations>
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bd8fd83c-0dbd-43c4-895d-0b5ef02c9565" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/Utilities/Allocate.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Viewer/Bvh.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Viewer/Bvh.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Viewer/DepthReinterpretShader.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Viewer/DepthReinterpretShader.frag" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Viewer/DepthReinterpretShader.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Viewer/DepthReinterpretShader.vert" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Viewer/PlotCallback.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Viewer/PlotCallback.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/contrib/corrade" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/contrib/liblbfgs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/contrib/magnum" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/contrib/magnum-plugins" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitmodules" beforeDir="false" afterPath="$PROJECT_DIR$/.gitmodules" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/ConnectednessConstraint.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/ConnectednessConstraint.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/ConnectednessConstraint.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/ConnectednessConstraint.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cost/DiffuseYamabe.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/DiffuseYamabe.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cost/DiffuseYamabe.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/DiffuseYamabe.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/ModicaMortola.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/ModicaMortola.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/ModicaMortola.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/ModicaMortola.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/StoppingCriteria.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/StoppingCriteria.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Mesh/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Mesh/Mesh.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/Mesh.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Mesh/Mesh.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/Mesh.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Mesh/MeshElements.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/MeshElements.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Mesh/MeshElements.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/MeshElements.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/Functional.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Functional.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/Functional.h" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Functional.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/Functional.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Functional.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/LossFunction.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/LossFunction.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/LossFunctions.h" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/LossFunctions.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/MeshFeature.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/MeshFeature.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Optimization/Solver.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Solver.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Optimization/Solver.h" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Solver.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/Tree.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Tree.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/Heap.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/Heap.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/SmartEnum.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/SmartEnum.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/StlAlgorithm.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/StlAlgorithm.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/Types.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/Types.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/UniqueFunction.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/UniqueFunction.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/normalizeInto.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/normalizeInto.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/VideoSaver/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/VideoSaver/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Viewer/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Viewer/Viewer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Viewer.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Viewer/Viewer.h" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Viewer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Viewer/resources.conf" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/resources.conf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Visualization/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Visualization/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Visualization/VisualizationProxy.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Visualization/VisualizationProxy.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Visualization/VisualizationProxy.h" beforeDir="false" afterPath="$PROJECT_DIR$/Visualization/VisualizationProxy.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/contrib/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/contrib/imgui" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/imgui" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/contrib/imgui/imconfig.h" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/imgui/imconfig.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/contrib/magnum" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/magnum" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/contrib/magnum/src/Magnum/GL/TextureFormat.h" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/magnum/src/Magnum/GL/TextureFormat.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/contrib/magnum/src/Magnum/Platform/EmscriptenApplication.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/magnum/src/Magnum/Platform/EmscriptenApplication.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/contrib/magnum/src/Magnum/Platform/EmscriptenApplication.h" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/magnum/src/Magnum/Platform/EmscriptenApplication.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/main.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/math/CMakeLists.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/math/abstract_expression.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/math/conanfile.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/math/decomposition.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/math/detail.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/math/matrix.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/math/matrix_expressions.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/math/openblas_module/OpenBLASConfig.cmake" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/math/openblas_module/OpenBLASConfigVersion.cmake" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/math/openblas_module/OpenBLASTarget-release.cmake" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/math/openblas_module/OpenBLASTargets.cmake" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/math/openblas_module/conan.lock" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/math/openblas_module/conanbuildinfo.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/math/openblas_module/conaninfo.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/math/openblas_module/graph_info.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/math/sparse_matrix.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/math/tensor.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/math/tensor.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/math/tensor_expressions.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/FindImGui.cmake" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/modules/FindSuiteSparse.cmake" beforeDir="false" afterPath="$PROJECT_DIR$/modules/FindSuiteSparse.cmake" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/todos.txt" beforeDir="false" afterPath="$PROJECT_DIR$/todos.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -162,7 +103,7 @@
   <component name="ClangdSettings">
     <option name="formatViaClangd" value="false" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Debug" />
+  <component name="ExecutionTargetManager" SELECTED_TARGET="CMakeBuildProfile:Release" />
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
@@ -181,282 +122,292 @@
     <property name="settings.editor.selected.configurable" value="CMakeSettings" />
   </component>
   <component name="RunManager" selected="CMake Application.Phasefield">
-    <configuration name="AnyImageImporter-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="AnyImageImporter-dependencies" CONFIG_NAME="Debug">
+    <configuration name="AnyImageImporter-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="AnyImageImporter-dependencies" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="AnyImageImporter" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="AnyImageImporter" CONFIG_NAME="Debug">
+    <configuration name="AnyImageImporter" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="AnyImageImporter" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="AssimpImporter-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="AssimpImporter-dependencies" CONFIG_NAME="Debug">
+    <configuration name="AssimpImporter-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="AssimpImporter-dependencies" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="AssimpImporter" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="AssimpImporter" CONFIG_NAME="Debug">
+    <configuration name="AssimpImporter" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="AssimpImporter" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Corrade" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Corrade" CONFIG_NAME="Debug">
+    <configuration name="Corrade" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Corrade" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="CorradeContainers-headers" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="CorradeContainers-headers" CONFIG_NAME="Debug">
+    <configuration name="CorradeContainers-headers" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="CorradeContainers-headers" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="CorradeInterconnect" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="CorradeInterconnect" CONFIG_NAME="Debug">
+    <configuration name="CorradeInterconnect" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="CorradeInterconnect" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="CorradePluginManager" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="CorradePluginManager" CONFIG_NAME="Debug">
+    <configuration name="CorradePluginManager" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="CorradePluginManager" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="CorradePluginManagerObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="CorradePluginManagerObjects" CONFIG_NAME="Debug">
+    <configuration name="CorradePluginManagerObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="CorradePluginManagerObjects" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="CorradeTestSuite" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="CorradeTestSuite" CONFIG_NAME="Debug">
+    <configuration name="CorradeTestSuite" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="CorradeTestSuite" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="CorradeTestSuiteCompare" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="CorradeTestSuiteCompare" CONFIG_NAME="Debug">
+    <configuration name="CorradeTestSuiteCompare" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="CorradeTestSuiteCompare" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="CorradeUtility" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="CorradeUtility" CONFIG_NAME="Debug">
+    <configuration name="CorradeUtility" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="CorradeUtility" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="CorradeUtilityObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="CorradeUtilityObjects" CONFIG_NAME="Debug">
+    <configuration name="CorradeUtilityObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="CorradeUtilityObjects" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Cost" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Cost" CONFIG_NAME="Debug">
+    <configuration name="Cost" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Cost" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Magnum" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Magnum" CONFIG_NAME="Debug">
+    <configuration name="Magnum" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Magnum" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumAnimation" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumAnimation" CONFIG_NAME="Debug">
+    <configuration name="MagnumAnimation" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumAnimation" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumDebugTools" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumDebugTools" CONFIG_NAME="Debug">
+    <configuration name="MagnumDebugTools" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumDebugTools" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumDebugToolsObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumDebugToolsObjects" CONFIG_NAME="Debug">
+    <configuration name="MagnumDebugToolsObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumDebugToolsObjects" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumFlextGLObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumFlextGLObjects" CONFIG_NAME="Debug">
+    <configuration name="MagnumFlextGLObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumFlextGLObjects" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumGL" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumGL" CONFIG_NAME="Debug">
+    <configuration name="MagnumGL" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumGL" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumGLObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumGLObjects" CONFIG_NAME="Debug">
+    <configuration name="MagnumGLObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumGLObjects" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumGlxContextObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumGlxContextObjects" CONFIG_NAME="Debug">
+    <configuration name="MagnumGlxContextObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumGlxContextObjects" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumImGuiIntegration" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumImGuiIntegration" CONFIG_NAME="Debug">
+    <configuration name="MagnumImGuiIntegration" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumImGuiIntegration" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumMath" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumMath" CONFIG_NAME="Debug">
+    <configuration name="MagnumMath" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumMath" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumMathAlgorithms" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumMathAlgorithms" CONFIG_NAME="Debug">
+    <configuration name="MagnumMathAlgorithms" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumMathAlgorithms" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumMathObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumMathObjects" CONFIG_NAME="Debug">
+    <configuration name="MagnumMathObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumMathObjects" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumMeshTools" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumMeshTools" CONFIG_NAME="Debug">
+    <configuration name="MagnumMeshTools" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumMeshTools" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumMeshToolsObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumMeshToolsObjects" CONFIG_NAME="Debug">
+    <configuration name="MagnumMeshToolsObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumMeshToolsObjects" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumObjects" CONFIG_NAME="Debug">
+    <configuration name="MagnumObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumObjects" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumPlatform" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumPlatform" CONFIG_NAME="Debug">
+    <configuration name="MagnumPlatform" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumPlatform" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumPlatformObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumPlatformObjects" CONFIG_NAME="Debug">
+    <configuration name="MagnumPlatformObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumPlatformObjects" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumPrimitives" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumPrimitives" CONFIG_NAME="Debug">
+    <configuration name="MagnumPrimitives" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumPrimitives" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumSceneGraph" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumSceneGraph" CONFIG_NAME="Debug">
+    <configuration name="MagnumSceneGraph" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumSceneGraph" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumSceneGraphObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumSceneGraphObjects" CONFIG_NAME="Debug">
+    <configuration name="MagnumSceneGraphObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumSceneGraphObjects" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumSdl2Application" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumSdl2Application" CONFIG_NAME="Debug">
+    <configuration name="MagnumSdl2Application" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumSdl2Application" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumShaders" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumShaders" CONFIG_NAME="Debug">
+    <configuration name="MagnumShaders" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumShaders" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumShadersObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumShadersObjects" CONFIG_NAME="Debug">
+    <configuration name="MagnumShadersObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumShadersObjects" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumShaders_RCS-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumShaders_RCS-dependencies" CONFIG_NAME="Debug">
+    <configuration name="MagnumShaders_RCS-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumShaders_RCS-dependencies" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumText" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumText" CONFIG_NAME="Debug">
+    <configuration name="MagnumText" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumText" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumTextObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumTextObjects" CONFIG_NAME="Debug">
+    <configuration name="MagnumTextObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumTextObjects" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumTextureTools" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumTextureTools" CONFIG_NAME="Debug">
+    <configuration name="MagnumTextureTools" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumTextureTools" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumTextureTools_RCS-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumTextureTools_RCS-dependencies" CONFIG_NAME="Debug">
+    <configuration name="MagnumTextureTools_RCS-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumTextureTools_RCS-dependencies" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumTrade" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumTrade" CONFIG_NAME="Debug">
+    <configuration name="MagnumTrade" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumTrade" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="MagnumTradeObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumTradeObjects" CONFIG_NAME="Debug">
+    <configuration name="MagnumTradeObjects" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="MagnumTradeObjects" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Mesh" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Mesh" CONFIG_NAME="Debug">
+    <configuration name="Mesh" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Mesh" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Optimization" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Optimization" CONFIG_NAME="Debug">
+    <configuration name="Optimization" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Optimization" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Phasefield" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Phasefield" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Phasefield" RUN_TARGET_NAME="Phasefield">
+    <configuration name="Phasefield" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Phasefield" CONFIG_NAME="Release" RUN_TARGET_PROJECT_NAME="Phasefield" RUN_TARGET_NAME="Phasefield">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="PrimitiveImporter-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="PrimitiveImporter-dependencies" CONFIG_NAME="Debug">
+    <configuration name="PrimitiveImporter-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="PrimitiveImporter-dependencies" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="PrimitiveImporter" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="PrimitiveImporter" CONFIG_NAME="Debug">
+    <configuration name="PrimitiveImporter" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="PrimitiveImporter" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="ScopedTimer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="ScopedTimer" CONFIG_NAME="Debug">
+    <configuration name="ScopedTimer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="ScopedTimer" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Utilities" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Utilities" CONFIG_NAME="Debug">
+    <configuration name="StanfordSceneConverter-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="StanfordSceneConverter-dependencies" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="VideoSaver" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="VideoSaver" CONFIG_NAME="Debug">
+    <configuration name="StanfordSceneConverter" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="StanfordSceneConverter" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Viewer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Viewer" CONFIG_NAME="Debug">
+    <configuration name="Utilities" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Utilities" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Viewer_RESOURCES-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Viewer_RESOURCES-dependencies" CONFIG_NAME="Debug">
+    <configuration name="VideoSaver" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="VideoSaver" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Visualization" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Visualization" CONFIG_NAME="Debug">
+    <configuration name="Viewer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Viewer" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="VisualizationProxy" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="VisualizationProxy" CONFIG_NAME="Debug">
+    <configuration name="Viewer_RESOURCES-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Viewer_RESOURCES-dependencies" CONFIG_NAME="Release">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Visualization" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Visualization" CONFIG_NAME="Release">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="VisualizationProxy" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="VisualizationProxy" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -466,17 +417,17 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="corrade-rc" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="corrade-rc" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="Phasefield" RUN_TARGET_NAME="corrade-rc">
+    <configuration name="corrade-rc" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="corrade-rc" CONFIG_NAME="Release" RUN_TARGET_PROJECT_NAME="Phasefield" RUN_TARGET_NAME="corrade-rc">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="implot" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="implot" CONFIG_NAME="Debug">
+    <configuration name="implot" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="implot" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="lbfgs_lib" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="lbfgs_lib" CONFIG_NAME="Debug">
+    <configuration name="lbfgs_lib" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="lbfgs_lib" CONFIG_NAME="Release">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -505,6 +456,8 @@
       <item itemvalue="CMake Application.AssimpImporter-dependencies" />
       <item itemvalue="CMake Application.PrimitiveImporter" />
       <item itemvalue="CMake Application.PrimitiveImporter-dependencies" />
+      <item itemvalue="CMake Application.StanfordSceneConverter" />
+      <item itemvalue="CMake Application.StanfordSceneConverter-dependencies" />
       <item itemvalue="CMake Application.Magnum" />
       <item itemvalue="CMake Application.MagnumMathObjects" />
       <item itemvalue="CMake Application.MagnumObjects" />
@@ -566,7 +519,13 @@
       <workItem from="1602319670921" duration="10600000" />
       <workItem from="1602415284302" duration="8664000" />
       <workItem from="1602526076277" duration="666000" />
-      <workItem from="1602532306932" duration="4782000" />
+      <workItem from="1602532306932" duration="5603000" />
+      <workItem from="1602581715396" duration="757000" />
+      <workItem from="1602591332775" duration="3178000" />
+      <workItem from="1602594951607" duration="21411000" />
+      <workItem from="1602684883753" duration="4534000" />
+      <workItem from="1602758733450" duration="15309000" />
+      <workItem from="1602838865426" duration="7640000" />
     </task>
     <servers />
   </component>

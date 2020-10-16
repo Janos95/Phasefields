@@ -104,7 +104,7 @@ DiffuseYamabe::DiffuseYamabe(Mesh& m) : mesh(m) {
     mesh.requireMassMatrix();
 }
 
-constexpr LinearChi chi1;
+constexpr SmootherStep chi1;
 
 
 template<class Scalar>
@@ -411,11 +411,10 @@ void DiffuseYamabe::operator()(
 
     size_t n = mesh.vertexCount();
     size_t m = mesh.faceCount();
-    double lambda = lambdaWeight*(lambdaScaling ? *lambdaScaling : 1.);
 
     Eigen::SparseMatrix<Scalar> A1, A2;
     VecX b1, b2, x1, x2;
-    assembleAndSolve<Scalar>(*this, lambda, parameters, weights, A1, A2, x1, x2, b1, b2);
+    assembleAndSolve<Scalar>(*this, lambdaWeight, parameters, weights, A1, A2, x1, x2, b1, b2);
 
     VecX gradX1{gradP ? n : 0};
     VecX gradX2{gradP ? n : 0};
@@ -428,7 +427,7 @@ void DiffuseYamabe::operator()(
 
     if(gradP) {
         if constexpr (std::is_same_v<double, Scalar>) {
-            shapeDerivative(*this, parameters, lambda, A1, A2, x1, x2, gradX1, gradX2, gradP);
+            shapeDerivative(*this, parameters, lambdaWeight, A1, A2, x1, x2, gradX1, gradX2, gradP);
         }
     }
 }
@@ -454,8 +453,7 @@ void DiffuseYamabe::drawImGuiOptions(VisualizationProxy& proxy) {
                     [this, &proxy](Node node) {
                         Eigen::SparseMatrix<double> A1, A2;
                         Eigen::VectorXd b1,b2,x1,x2;
-                        double lambda = lambdaWeight*(lambdaScaling ? *lambdaScaling : 1.);
-                        assembleAndSolve<double>(*this, lambda, node.phasefield(), node.temporary(), A1, A2, x1, x2, b1, b2);
+                        assembleAndSolve<double>(*this, lambdaWeight, node.phasefield(), node.temporary(), A1, A2, x1, x2, b1, b2);
                         Eigen::VectorXd x{mesh.vertexCount()};
                         x.setZero();
                         if(positivePhase) x += x1;
@@ -473,20 +471,17 @@ void DiffuseYamabe::drawImGuiOptions(VisualizationProxy& proxy) {
         if(drawSolutionThresholded) {
             proxy.setCallbacks(
                     [this, &proxy](Node node) {
+                        constexpr double delta = 0.1;
                         auto phasefield = node.phasefield();
-                        size_t n = phasefield.size();
 
-                        VertexData<bool> inInterior{DirectInit, n, true};
-                        for(Edge e : mesh.edges()) {
-                            Vertex v1 = e.vertex1();
-                            Vertex v2 = e.vertex2();
-                            if(Math::sign(phasefield[v1]) != Math::sign(phasefield[v2])) {
-                                inInterior[v1] = false;
-                                inInterior[v2] = false;
-                            }
-                            for(Vertex v : {v1, v2}) {
-                                if(inInterior[v] && v.onBoundary())
-                                    inInterior[v1] = false;
+                        VertexData<size_t> map{DirectInit, phasefield.size(), Invalid};
+                        VertexData<bool> inInterior{DirectInit, phasefield.size(), false};
+
+                        size_t n = 0;
+                        for(Vertex v : mesh.vertices()) {
+                            if((positivePhase && phasefield[v] > 0) || (negativePhase && phasefield[v] < 0)) {
+                                inInterior[v] = true;
+                                map[v] = n++;
                             }
                         }
 
@@ -495,11 +490,22 @@ void DiffuseYamabe::drawImGuiOptions(VisualizationProxy& proxy) {
                         Eigen::VectorXd b(n);
 
                         for(Vertex v : mesh.vertices()) {
-                            if(inInterior[v])
-                                b[v.idx] = mesh.gaussianCurvature[v]*mesh.integral[v]; //not really true of the boundary ..
-                            else {
-                                b[v.idx] = 0;
-                                arrayAppend(triplets, InPlaceInit, v.idx, v.idx, 1.);
+                            size_t idx = map[v];
+
+                            if(idx == Invalid) continue;
+                            bool onBoundary = v.onBoundary();
+                            if(!onBoundary) {
+                                for(Vertex w : v.adjacentVertices()) {
+                                    onBoundary |= map[w] == Invalid; /* if adjacent vertex is not in phase, the vertex is a boundary vertex */
+                                }
+                            }
+                            inInterior[v] = !onBoundary;
+
+                            if(!onBoundary) {
+                                b[idx] = mesh.gaussianCurvature[v]*mesh.integral[v];
+                            } else {
+                                b[idx] = 0;
+                                arrayAppend(triplets, InPlaceInit, idx, idx, 1.);
                             }
                         }
 
@@ -510,9 +516,10 @@ void DiffuseYamabe::drawImGuiOptions(VisualizationProxy& proxy) {
                                 if(!inInterior[v]) continue;
                                 for(HalfEdge he2 : face.halfEdges()) {
                                     Vertex w = he2.next().tip();
-                                    if(!inInterior[v]) continue;
+                                    if(!inInterior[w]) continue;
                                     double value = Math::dot(mesh.gradient[he2], mesh.gradient[he1])*face.area();
-                                    arrayAppend(triplets, InPlaceInit, v.idx, w.idx, value);
+                                    //CORRADE_ASSERT(map[v] < n && map[w] < n, "Indices out of bound",);
+                                    arrayAppend(triplets, InPlaceInit, map[v], map[w], value);
                                 }
                             }
                         }
@@ -524,13 +531,25 @@ void DiffuseYamabe::drawImGuiOptions(VisualizationProxy& proxy) {
 #else
                         Eigen::SparseLU<Eigen::SparseMatrix<double>> solver;
 #endif
+
                         solver.compute(A);
                         handleSolverInfo(solver.info());
                         Eigen::VectorXd x = solver.solve(b);
 
                         Debug{} << "Solution norm" << x.norm();
 
-                        proxy.drawValuesNormalized({x.data(), size_t(x.size())});
+                        Array<double> solution{NoInit, phasefield.size()};
+                        for(size_t i = 0; i < phasefield.size(); ++i) {
+                            size_t idx = map[i];
+                            if(idx != Invalid) {
+                                solution[i] = x[idx];
+                            } else {
+                                solution[i] = 0;
+                            }
+                        }
+
+                        proxy.drawValuesNormalized(solution);
+
                     },
                     [this]{ drawSolutionThresholded = false; });
         } else proxy.setDefaultCallback();

@@ -134,6 +134,7 @@ public:
     void requireAngles() { checkAndAddFeature<AngleFeature>(); }
     void requireGaussianCurvature() {
         requireAngles();
+        requireIntegralOperator();
         checkAndAddFeature<GaussianCurvatureFeature>();
     }
     void requireGradientOperator() {
@@ -223,6 +224,7 @@ public:
     double surfaceArea;
 
     VertexData<double> gaussianCurvature;
+    FaceData<double> faceCurvature;
     VertexData<size_t> degree;
 
     /* Fem operators */

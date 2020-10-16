@@ -34,8 +34,7 @@ struct DiffuseYamabe {
     bool drawSolutionThresholded = false;
     bool drawSolutionGradient = false;
     bool curvatureRescaling = false;
-    double* lambdaScaling = nullptr;
-    double lambdaWeight = 100;
+    double lambdaWeight = 1;
 
     Mesh& mesh;
 

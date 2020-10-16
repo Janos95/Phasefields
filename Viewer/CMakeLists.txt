@@ -37,9 +37,12 @@ add_library(Phasefield::Viewer ALIAS Viewer)
 
 if (PHASEFIELD_WITH_ASSIMP)
     target_link_libraries(Viewer PUBLIC  MagnumPlugins::AssimpImporter)
+    target_link_libraries(Viewer PUBLIC  MagnumPlugins::StanfordSceneConverter)
+    target_link_libraries(Viewer PRIVATE VTK::CommonCore VTK::CommonDataModel VTK::IOXML)
     target_compile_definitions(Viewer PUBLIC PHASEFIELD_WITH_ASSIMP)
 endif ()
 
 if (PHASEFIELD_WITH_FFMPEG)
     target_link_libraries(Viewer PUBLIC Phasefield::VideoSaver)
+    target_compile_definitions(Viewer PUBLIC PHASEFIELD_WITH_FFMPEG)
 endif()

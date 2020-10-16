@@ -6,6 +6,8 @@
 #include "Mesh.h"
 #include "MeshElements.h"
 
+#include "Bfs.h"
+
 #include <Magnum/Math/FunctionsBatch.h>
 #include <Corrade/Containers/GrowableArray.h>
 
@@ -82,13 +84,57 @@ void GaussianCurvatureFeature::update() {
     Mesh& m = mesh();
     m.requireAngles();
     m.gaussianCurvature = VertexData<double>{m.vertexCount()};
+    m.faceCurvature = FaceData<double>{m.faceCount()};
+    CornerData<double> augmentedAngles{m.halfEdgeCount()};
+    VertexData<double> angleSums{m.vertexCount()};
+
     for(Vertex vertex : m.vertices()) {
-        Radd angleSum{0};
+        double angleSum{0};
         for(Corner corner : vertex.corners()) {
-            angleSum += corner.angle();
+            angleSum += double(corner.angle());
         }
-        m.gaussianCurvature[vertex] = (vertex.onBoundary() ? 1 : 2.)*Mg::Math::Constants<double>::pi() - double(angleSum);
+        angleSums[vertex] = angleSum;
+
+        if(!vertex.onBoundary()) {
+            m.gaussianCurvature[vertex] = (2.*Mg::Math::Constants<double>::pi() - double(angleSum))/m.integral[vertex];
+
+            for(Corner corner : vertex.corners()) {
+                augmentedAngles[corner] = 2*Mg::Math::Constants<double>::pi()*double(corner.angle())/double(angleSum);
+            }
+        }
     }
+
+    for(Vertex vertex : m.vertices()) {
+        if(vertex.onBoundary()) {
+            double angleSumAverage = 0;
+            size_t count = 0;
+            for(Vertex v : vertex.adjacentVertices()) {
+                if(!v.onBoundary()) {
+                    angleSumAverage += angleSums[v];
+                    ++count;
+                }
+            }
+
+            angleSumAverage /= double(count);
+            m.gaussianCurvature[vertex] = (2.*Mg::Math::Constants<double>::pi() - double(angleSumAverage))/m.integral[vertex];
+
+            for(Corner corner : vertex.corners()) {
+                augmentedAngles[corner] = 2*Mg::Math::Constants<double>::pi()*double(corner.angle())/double(angleSumAverage);
+            }
+
+        }
+    }
+
+    double max= 0;
+    for(Face f : m.faces()) {
+        double deficit = Math::Constants<double>::pi();
+        for(Corner c : f.corners()) {
+            deficit -= augmentedAngles[c];
+        }
+        max = Math::max(deficit, max);
+        m.faceCurvature[f] = deficit / f.area();
+    }
+    Debug{} << "Max deficit" << max;
 }
 
 }

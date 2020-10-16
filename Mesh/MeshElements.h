@@ -235,6 +235,9 @@ struct VertexCirculationIterator {
 
     VertexCirculationIterator& operator++() {
         he = he.nextIncomingHalfEdge();
+        if constexpr (std::is_same_v<E, Corner>) {
+            if(he.onBoundaryLoop()) he = he.nextIncomingHalfEdge();
+        }
         justStarted= false;
         return *this;
     }

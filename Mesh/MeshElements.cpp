@@ -63,7 +63,11 @@ Float Vertex::scalar() const { return mesh->scalars()[idx]; }
 
 HalfEdge Vertex::halfEdge() const { return HalfEdge{mesh->m_vertexHalfEdge[idx], mesh}; }
 
-VertexCornerRange Vertex::corners() const { return {{.he = halfEdge().twin()}, {.he = halfEdge().twin()}}; }
+VertexCornerRange Vertex::corners() const {
+    HalfEdge he = halfEdge().twin();
+    if(he.onBoundaryLoop()) he = he.nextIncomingHalfEdge();
+    return {{.he = he}, {.he = he}};
+}
 
 VertexVertexRange Vertex::adjacentVertices() const { return {{.he = halfEdge()}, {.he = halfEdge()}}; }
 
