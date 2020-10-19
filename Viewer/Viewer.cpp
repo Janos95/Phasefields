@@ -10,6 +10,7 @@
 #include "ConnectednessConstraint.h"
 #include "DiffuseYamabe.h"
 #include "C1Functions.h"
+#include "CoolWarm.h"
 
 #include <ScopedTimer/ScopedTimer.h>
 
@@ -150,6 +151,8 @@ bool Viewer::dumpMesh(char const* path) {
 
 namespace {
 
+
+
 Array<Viewer::ColorMap> makeColorMapTextures() {
 
     Array<Viewer::ColorMap> textures;
@@ -159,7 +162,8 @@ Array<Viewer::ColorMap> makeColorMapTextures() {
             {"Magma",   Magnum::DebugTools::ColorMap::magma()},
             {"Plasma",  Magnum::DebugTools::ColorMap::plasma()},
             {"Inferno", Magnum::DebugTools::ColorMap::inferno()},
-            {"Viridis", Magnum::DebugTools::ColorMap::viridis()}
+            {"Viridis", Magnum::DebugTools::ColorMap::viridis()},
+            {"CoolWarm", coolWarm()}
     }) {
         const Magnum::Vector2i size{Magnum::Int(colorMap.size()), 1};
         Mg::GL::Texture2D texture;
@@ -270,8 +274,8 @@ Viewer::Viewer(Arguments const& arguments) :
 
         //primitiveImporter = manager.instantiate("PrimitiveImporter");
 
-        ScopedTimer t{"Loading scene from disk", true};
-        loadScene("/home/janos/", "sphere");
+        ScopedTimer loadingTimer{"Loading scene from disk", true};
+        loadScene("/home/janos/", "torus");
 
     }
 

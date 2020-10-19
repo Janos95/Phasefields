@@ -132,9 +132,11 @@ public:
     void requireEdgeLengths() { checkAndAddFeature<EdgeLengthFeature>(); }
     void requireFaceInformation() { checkAndAddFeature<FaceInformationFeature>(); }
     void requireAngles() { checkAndAddFeature<AngleFeature>(); }
+    void requireBoundaryInformation() { checkAndAddFeature<BoundaryInformation>(); }
     void requireGaussianCurvature() {
         requireAngles();
         requireIntegralOperator();
+        requireBoundaryInformation();
         checkAndAddFeature<GaussianCurvatureFeature>();
     }
     void requireGradientOperator() {
@@ -146,7 +148,9 @@ public:
         checkAndAddFeature<MassMatrixFeature>();
     }
     void requireStiffnessMatrix() {
+        requireBoundaryInformation();
         requireFaceInformation();
+        requireIntegralOperator();
         checkAndAddFeature<StiffnessMatrixFeature>();
     }
     void requireIntegralOperator() {
@@ -226,6 +230,9 @@ public:
     VertexData<double> gaussianCurvature;
     FaceData<double> faceCurvature;
     VertexData<size_t> degree;
+
+    VertexData<bool> isOnBoundary;
+    HalfEdgeData<double> stiffnessElements;
 
     /* Fem operators */
     VertexData<double> integral;

@@ -6,8 +6,6 @@
 #include "Mesh.h"
 #include "MeshElements.h"
 
-#include "Bfs.h"
-
 #include <Magnum/Math/FunctionsBatch.h>
 #include <Corrade/Containers/GrowableArray.h>
 
@@ -17,7 +15,7 @@ MeshFeature::MeshFeature(Mesh& mesh, bool ownedByMesh): m_mesh(&mesh), m_ownedBy
     arrayAppend(mesh.m_features, this);
 }
 
-Mesh& MeshFeature::mesh() { return *m_mesh; }
+Mesh& MeshFeature::getMesh() { return *m_mesh; }
 
 MeshFeature::~MeshFeature() {
     if(!m_ownedByMesh) { /* if the mesh is now owning the feature we deregister the feature */
@@ -37,24 +35,24 @@ MeshFeature::~MeshFeature() {
 }
 
 void AngleFeature::update() {
-    Mesh& m = mesh();
-    m.angle = CornerData<Radd>{m.halfEdgeCount()};
-    for(Corner corner : m.corners()) {
+    Mesh& mesh = getMesh();
+    mesh.angle = CornerData<Radd>{mesh.halfEdgeCount()};
+    for(Corner corner : mesh.corners()) {
         HalfEdge side1 = corner.side1();
         HalfEdge side2 = corner.side2();
-        m.angle[corner] = Radd{Mg::Math::angle(side1.direction().normalized(), side2.direction().normalized())};
+        mesh.angle[corner] = Radd{Mg::Math::angle(side1.direction().normalized(), side2.direction().normalized())};
     }
 }
 
 void FaceInformationFeature::update() {
-    Mesh& m = mesh();
+    Mesh& mesh = getMesh();
 
-    m.faceArea = FaceData<double>{m.faceCount()};
-    m.faceNormal = FaceData<Vector3d>{m.faceCount()};
-    m.faceDiameter = FaceData<double>{m.faceCount()};
-    m.surfaceArea = 0;
+    mesh.faceArea = FaceData<double>{mesh.faceCount()};
+    mesh.faceNormal = FaceData<Vector3d>{mesh.faceCount()};
+    mesh.faceDiameter = FaceData<double>{mesh.faceCount()};
+    mesh.surfaceArea = 0;
 
-    for(Face face : m.faces()) {
+    for(Face face : mesh.faces()) {
         size_t i = 0;
         Vector3 vertices[3];
         for(Vertex v : face.vertices()) vertices[i++] = v.position();
@@ -66,29 +64,29 @@ void FaceInformationFeature::update() {
         Vector3d normal = Vector3d{Math::cross(side1, side2)};
 
         double area = normal.length()*0.5;
-        m.surfaceArea += area;
-        m.faceArea[face] = area;
-        m.faceNormal[face] = normal.normalized();
-        m.faceDiameter[face] = double(Math::max({side1.length(), side2.length(), side3.length()}));
+        mesh.surfaceArea += area;
+        mesh.faceArea[face] = area;
+        mesh.faceNormal[face] = normal.normalized();
+        mesh.faceDiameter[face] = double(Math::max({side1.length(), side2.length(), side3.length()}));
     }
 }
 
 void EdgeLengthFeature::update() {
-    Mesh& m = mesh();
-    m.edgeLength = EdgeData<double>{m.edgeCount()};
-    for(Edge edge : m.edges())
-        m.edgeLength[edge] = double((edge.vertex1().position() - edge.vertex2().position()).length());
+    Mesh& mesh = getMesh();
+    mesh.edgeLength = EdgeData<double>{mesh.edgeCount()};
+    for(Edge edge : mesh.edges())
+        mesh.edgeLength[edge] = double((edge.vertex1().position() - edge.vertex2().position()).length());
 }
 
 void GaussianCurvatureFeature::update() {
-    Mesh& m = mesh();
-    m.requireAngles();
-    m.gaussianCurvature = VertexData<double>{m.vertexCount()};
-    m.faceCurvature = FaceData<double>{m.faceCount()};
-    CornerData<double> augmentedAngles{m.halfEdgeCount()};
-    VertexData<double> angleSums{m.vertexCount()};
+    Mesh& mesh= getMesh();
+    mesh.requireAngles();
+    mesh.gaussianCurvature = VertexData<double>{mesh.vertexCount()};
+    mesh.faceCurvature = FaceData<double>{mesh.faceCount()};
+    CornerData<double> augmentedAngles{mesh.halfEdgeCount()};
+    VertexData<double> angleSums{mesh.vertexCount()};
 
-    for(Vertex vertex : m.vertices()) {
+    for(Vertex vertex : mesh.vertices()) {
         double angleSum{0};
         for(Corner corner : vertex.corners()) {
             angleSum += double(corner.angle());
@@ -96,7 +94,7 @@ void GaussianCurvatureFeature::update() {
         angleSums[vertex] = angleSum;
 
         if(!vertex.onBoundary()) {
-            m.gaussianCurvature[vertex] = (2.*Mg::Math::Constants<double>::pi() - double(angleSum))/m.integral[vertex];
+            mesh.gaussianCurvature[vertex] = (2.*Mg::Math::Constants<double>::pi() - double(angleSum))/mesh.integral[vertex];
 
             for(Corner corner : vertex.corners()) {
                 augmentedAngles[corner] = 2*Mg::Math::Constants<double>::pi()*double(corner.angle())/double(angleSum);
@@ -104,7 +102,7 @@ void GaussianCurvatureFeature::update() {
         }
     }
 
-    for(Vertex vertex : m.vertices()) {
+    for(Vertex vertex : mesh.vertices()) {
         if(vertex.onBoundary()) {
             double angleSumAverage = 0;
             size_t count = 0;
@@ -116,7 +114,7 @@ void GaussianCurvatureFeature::update() {
             }
 
             angleSumAverage /= double(count);
-            m.gaussianCurvature[vertex] = (2.*Mg::Math::Constants<double>::pi() - double(angleSumAverage))/m.integral[vertex];
+            mesh.gaussianCurvature[vertex] = (2.*Mg::Math::Constants<double>::pi() - double(angleSumAverage))/mesh.integral[vertex];
 
             for(Corner corner : vertex.corners()) {
                 augmentedAngles[corner] = 2*Mg::Math::Constants<double>::pi()*double(corner.angle())/double(angleSumAverage);
@@ -126,15 +124,44 @@ void GaussianCurvatureFeature::update() {
     }
 
     double max= 0;
-    for(Face f : m.faces()) {
+    for(Face f : mesh.faces()) {
         double deficit = Math::Constants<double>::pi();
         for(Corner c : f.corners()) {
             deficit -= augmentedAngles[c];
         }
         max = Math::max(deficit, max);
-        m.faceCurvature[f] = deficit / f.area();
+        mesh.faceCurvature[f] = deficit / f.area();
     }
     Debug{} << "Max deficit" << max;
+
+    //Debug{} << "SETTING GAUSIAN CURVATURE --- ONLY FOR BLENDER TORUS SUITABLE";
+    //for(Vertex v : mesh.vertices()) {
+    //    auto& p = v.position();
+    //    double x = p.x();
+    //    double y = p.y();
+    //    double z = p.z();
+
+    //    double xy2 = 1.-Math::sqrt(x*x + y*y);
+    //    double cosTheta = xy2/Math::sqrt(z*z + xy2*xy2);
+    //    mesh.gaussianCurvature[v] = 2.*cosTheta/(1. + cosTheta*0.25);
+    //}
+}
+
+void BoundaryInformation::update() {
+    Mesh& mesh = getMesh();
+
+    arrayResize(mesh.isOnBoundary, NoInit, mesh.vertexCount());
+
+    auto onBoundary = [](Vertex v) {
+        for(HalfEdge he : v.outgoingHalfEdges())
+            if(he.onBoundaryLoop()) return true;
+        return false;
+    };
+
+    for(Vertex v : mesh.vertices()) {
+        bool isOnBoundary = onBoundary(v);
+        mesh.isOnBoundary[v] = isOnBoundary;
+    }
 }
 
 }

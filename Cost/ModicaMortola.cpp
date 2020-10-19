@@ -31,19 +31,6 @@ void DirichletEnergy::operator()(ArrayView<const Scalar> parameters,
                                  ArrayView<Scalar> gradP,
                                  ArrayView<Scalar> gradW) {
 
-    //mesh.requireStiffnessMatrix();
-
-    //std::vector<Eigen::Triplet<double>> triplets;
-    //for(auto [a,b,w] : mesh.stiffnessMatrix) {
-    //    triplets.emplace_back(a, b, w);
-    //}
-
-    //Eigen::SparseMatrix<double> SM(mesh.vertexCount(), mesh.vertexCount());
-    //SM.setFromTriplets(triplets.begin(), triplets.end());
-
-    //Eigen::Map<const Eigen::VectorXd> map(parameters.data(), parameters.size());
-    //double result = map.transpose()*SM*map;
-
     for(Face face : mesh.faces()) {
         Math::Vector3<Scalar> grad{0};
         Scalar weight{0};

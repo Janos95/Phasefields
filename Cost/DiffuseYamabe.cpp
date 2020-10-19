@@ -95,13 +95,21 @@ void handleSolverInfo(Eigen::ComputationInfo info) {
     }
 }
 
+void getFaceData(Face face, Vertex* vs, HalfEdge* hs) {
+    HalfEdge he = face.halfEdge();
+    for(size_t i = 0; i < 3; ++i, he = he.next()) {
+        hs[i] = he;
+        vs[(i+1)%3] = he.tail();
+    }
+}
+
 DiffuseYamabe::DiffuseYamabe(Mesh& m) : mesh(m) {
     mesh.requireIntegralOperator();
     mesh.requireGradientOperator();
     mesh.requireGaussianCurvature();
     mesh.requireFaceInformation();
     mesh.requireStiffnessMatrix();
-    mesh.requireMassMatrix();
+    mesh.requireBoundaryInformation();
 }
 
 constexpr SmootherStep chi1;
@@ -138,58 +146,76 @@ void assembleAndSolve(
     triplets1.reserve(12*m);
     triplets2.reserve(12*m);
 
-    {
-        for(Face face : mesh.faces()) {
-
-            for(HalfEdge he1 : face.halfEdges()) {
-                Vertex v = he1.next().tip();
-                if(v.onBoundary()) continue;
-                Vec3 gradChi1 = chi1.eval(parameters[v.idx])*Vec3{mesh.gradient[he1]};
-                Vec3 gradChi2 = (1. - chi1.eval(parameters[v.idx]))*Vec3{mesh.gradient[he1]};
-                for(HalfEdge he2 : face.halfEdges()) {
-                    Vertex w = he2.next().tip();
-                    if(w.onBoundary()) continue;
-                    Scalar value1 = lambdaInv*Math::dot(Vec3{mesh.gradient[he2]}, gradChi1)*face.area();
-                    Scalar value2 = lambdaInv*Math::dot(Vec3{mesh.gradient[he2]}, gradChi2)*face.area();
-                    triplets1.emplace_back(v.idx, w.idx, value1);
-                    triplets2.emplace_back(v.idx, w.idx, value2);
-                }
-            }
-
-            for(Vertex v : face.vertices()) {
-                if(!v.onBoundary()) {
-                    Scalar value1 = face.area()/3.*(1. - chi1.eval(parameters[v.idx]));
-                    Scalar value2 = face.area()/3.*chi1.eval(parameters[v.idx]);
-                    triplets1.emplace_back(v.idx, v.idx, value1);
-                    triplets2.emplace_back(v.idx, v.idx, value2);
-                }
-            }
-        }
-    }
-
     b1.resize(n);
     b2.resize(n);
 
-    for(Vertex v : mesh.vertices()) {
-        if(!v.onBoundary()) {
-            b1[v.idx] = mesh.gaussianCurvature[v]*chi1.eval(parameters[v])*mesh.integral[v];
-            b2[v.idx] = mesh.gaussianCurvature[v]*(1-chi1.eval(parameters[v]))*mesh.integral[v];
+    {
+        auto& stiffnessElements = mesh.stiffnessElements;
+
+        for(Face face : mesh.faces()) {
+
+            HalfEdge hs[3];
+            Vertex vs[3];
+            getFaceData(face, vs, hs);
+
+            Scalar uT = 0;
+
+            for(Vertex v : vs) {
+                uT += parameters[v.idx];
+            }
+
+            uT /= 3.;
+            Scalar chi = chi1.eval(uT);
+
+            for(size_t i = 0; i < 3; ++i) {
+                Vertex u = vs[i];
+                Vertex v = vs[(i+1)%3];
+                Vertex w = vs[(i+2)%3];
+                if(!v.onBoundary() && !w.onBoundary()) {
+                    triplets1.emplace_back(v.idx, w.idx, stiffnessElements[hs[i]]*chi);
+                    triplets1.emplace_back(w.idx, v.idx, stiffnessElements[hs[i]]*chi);
+
+                    triplets2.emplace_back(v.idx, w.idx, stiffnessElements[hs[i]]*(1.-chi));
+                    triplets2.emplace_back(w.idx, v.idx, stiffnessElements[hs[i]]*(1.-chi));
+                }
+
+                if(!u.onBoundary()) {
+                    double gradientSquared = hs[i].gradient().dot();
+                    triplets1.emplace_back(u.idx, u.idx, gradientSquared*chi*face.area());
+                    triplets2.emplace_back(u.idx, u.idx, gradientSquared*(1.-chi)*face.area());
+                }
+            }
         }
-        else {
-            b1[v.idx] = 0;
-            b2[v.idx] = 0;
-            triplets1.emplace_back(v.idx, v.idx, 1);
-            triplets2.emplace_back(v.idx, v.idx, 1);
+
+        for(Vertex v : mesh.vertices()) {
+            if(!v.onBoundary()) {
+                Scalar K = mesh.gaussianCurvature[v];
+                Scalar chi = chi1.eval(parameters[v.idx]);
+
+                b1[v.idx] = chi*mesh.integral[v]*K;
+                b2[v.idx] = (1-chi)*mesh.integral[v]*K;
+
+                triplets1.emplace_back(v.idx, v.idx, (1-chi)*mesh.integral[v]);
+                triplets2.emplace_back(v.idx, v.idx, chi*mesh.integral[v]);
+            } else {
+                b1[v.idx] = 0;
+                b2[v.idx] = 0;
+                triplets1.emplace_back(v.idx, v.idx, 1);
+                triplets2.emplace_back(v.idx, v.idx, 1);
+            }
         }
     }
 
     A1.resize(n, n);
     A2.resize(n, n);
 
-    if(doPositive)
+
+    if(doPositive) {
         A1.setFromTriplets(triplets1.begin(), triplets1.end());
-    if(doNegative)
+    }
+    if(doNegative) {
         A2.setFromTriplets(triplets2.begin(), triplets2.end());
+    }
 
     //A = chiOfU.asDiagonal()*mesh.fem->stiffness.cast<Scalar>() + lambda*negChiOfU.asDiagonal()*mesh.fem->mass.cast<Scalar>();
 
@@ -271,60 +297,103 @@ void shapeDerivative(
     triplets2.reserve(12*mesh.faceCount());
 
     {
+        auto& stiffnessElements = mesh.stiffnessElements;
+
         for(Face face : mesh.faces()) {
 
-            for(HalfEdge he1 : face.halfEdges()) {
-                Vertex v = he1.next().tip();
-                if(v.onBoundary()) continue;
-                Vector3d gradChi1 = chi1.grad(parameters[v.idx])*mesh.gradient[he1];
-                Vector3d gradChi2 = -chi1.grad(parameters[v.idx])*mesh.gradient[he1];
-                for(HalfEdge he2 : face.halfEdges()) {
-                    Vertex w = he2.next().tip();
-                    if(w.onBoundary()) continue;
-                    double value1 = lambdaInv*Math::dot(mesh.gradient[he2], gradChi1)*face.area();
-                    double value2 = lambdaInv*Math::dot(mesh.gradient[he2], gradChi2)*face.area();
-                    triplets1.emplace_back(v.idx, w.idx, value1);
-                    triplets2.emplace_back(v.idx, w.idx, value2);
-                }
+            HalfEdge hs[3];
+            Vertex vs[3];
+            getFaceData(face, vs, hs);
+
+            double uT = 0;
+            double s1T = 0;
+            double s2T = 0;
+
+            for(Vertex v : vs) {
+                uT += parameters[v.idx];
+                if(doPositive)
+                    s1T += x1[v.idx];
+                if(doNegative)
+                    s2T += x2[v.idx];
             }
 
-            for(Vertex v : face.vertices()) {
-                if(!v.onBoundary()) {
-                    double value1 = face.area()/3.*(-chi1.grad(parameters[v.idx]));
-                    double value2 = face.area()/3.*chi1.grad(parameters[v.idx]);
-                    triplets1.emplace_back(v.idx, v.idx, value1);
-                    triplets2.emplace_back(v.idx, v.idx, value2);
+            uT /= 3.;
+            s1T /= 3.;
+            s2T /= 3.;
+
+            double chiGrad = chi1.grad(uT)/3.;
+
+            for(size_t i = 0; i < 3; ++i) {
+                Vertex u = vs[i];
+                Vertex v = vs[(i+1)%3];
+                Vertex w = vs[(i+2)%3];
+                if(!v.onBoundary() && !w.onBoundary()) {
+                    if(doPositive) {
+                        triplets1.emplace_back(v.idx, w.idx, stiffnessElements[hs[i]]*chiGrad*x1[w.idx]);
+                        triplets1.emplace_back(v.idx, u.idx, stiffnessElements[hs[i]]*chiGrad*x1[w.idx]);
+                        triplets1.emplace_back(v.idx, v.idx, stiffnessElements[hs[i]]*chiGrad*x1[w.idx]);
+
+                        triplets1.emplace_back(w.idx, v.idx, stiffnessElements[hs[i]]*chiGrad*x1[v.idx]);
+                        triplets1.emplace_back(w.idx, u.idx, stiffnessElements[hs[i]]*chiGrad*x1[v.idx]);
+                        triplets1.emplace_back(w.idx, w.idx, stiffnessElements[hs[i]]*chiGrad*x1[v.idx]);
+                    }
+
+                    if(doNegative) {
+                        triplets2.emplace_back(v.idx, u.idx, stiffnessElements[hs[i]]*(-chiGrad)*x2[w.idx]);
+                        triplets2.emplace_back(v.idx, w.idx, stiffnessElements[hs[i]]*(-chiGrad)*x2[w.idx]);
+                        triplets2.emplace_back(v.idx, v.idx, stiffnessElements[hs[i]]*(-chiGrad)*x2[w.idx]);
+
+                        triplets2.emplace_back(w.idx, v.idx, stiffnessElements[hs[i]]*(-chiGrad)*x2[v.idx]);
+                        triplets2.emplace_back(w.idx, u.idx, stiffnessElements[hs[i]]*(-chiGrad)*x2[v.idx]);
+                        triplets2.emplace_back(w.idx, w.idx, stiffnessElements[hs[i]]*(-chiGrad)*x2[v.idx]);
+                    }
+                }
+
+                if(!u.onBoundary()) {
+                    double gradientSquared = hs[i].gradient().dot();
+                    if(doPositive) {
+                        triplets1.emplace_back(u.idx, u.idx, gradientSquared*chiGrad*face.area()*x1[u.idx]);
+                        triplets1.emplace_back(u.idx, v.idx, gradientSquared*chiGrad*face.area()*x1[u.idx]);
+                        triplets1.emplace_back(u.idx, w.idx, gradientSquared*chiGrad*face.area()*x1[u.idx]);
+                    }
+                    if(doNegative) {
+                        triplets2.emplace_back(u.idx, u.idx, gradientSquared*(-chiGrad)*face.area()*x2[u.idx]);
+                        triplets2.emplace_back(u.idx, v.idx, gradientSquared*(-chiGrad)*face.area()*x2[u.idx]);
+                        triplets2.emplace_back(u.idx, w.idx, gradientSquared*(-chiGrad)*face.area()*x2[u.idx]);
+                    }
+                }
+            }
+        }
+
+        for(Vertex v : mesh.vertices()) {
+            if(!v.onBoundary()) {
+                double K = mesh.gaussianCurvature[v];
+                double chiGradIntegrated = chi1.grad(parameters[v.idx])*mesh.integral[v];
+
+                if(doPositive) {
+                    double vv1 = (-x1[v.idx] - K)*chiGradIntegrated;
+                    triplets1.emplace_back(v.idx, v.idx, vv1);
+                }
+
+                if(doNegative) {
+                    double vv2 = (x2[v.idx] + K)*chiGradIntegrated;
+                    triplets2.emplace_back(v.idx, v.idx, vv2);
                 }
             }
         }
     }
 
-    Eigen::VectorXd b1p{n}, b2p{n};
-
-    for(Vertex v : mesh.vertices()) {
-        if(!v.onBoundary()) {
-            b1p[v.idx] = mesh.gaussianCurvature[v]*chi1.grad(parameters[v.idx])*mesh.integral[v];
-            b2p[v.idx] = mesh.gaussianCurvature[v]*(-chi1.grad(parameters[v.idx]))*mesh.integral[v];
-        }
-        else {
-            b1p[v.idx] = 0;
-            b2p[v.idx] = 0;
-            triplets1.emplace_back(v.idx, v.idx, 1);
-            triplets2.emplace_back(v.idx, v.idx, 1);
-        }
-    }
-
-    Eigen::SparseMatrix<double> A1p(n,n);
-    Eigen::SparseMatrix<double> A2p(n,n);
+    Eigen::SparseMatrix<double> sensitivity1(n,n);
+    Eigen::SparseMatrix<double> sensitivity2(n,n);
 
     Eigen::Map<Eigen::VectorXd> map{grad.data(), long(grad.size())};
     if(doPositive) {
-        A1p.setFromTriplets(triplets1.begin(), triplets1.end());
-        map -= l1.asDiagonal()*(A1p*x1 - b1p);
+        sensitivity1.setFromTriplets(triplets1.begin(), triplets1.end());
+        map -= l1.transpose()*sensitivity1;
     }
     if(doNegative) {
-        A2p.setFromTriplets(triplets2.begin(), triplets2.end());
-        map -= l2.asDiagonal()*(A2p*x2 - b2p);
+        sensitivity2.setFromTriplets(triplets2.begin(), triplets2.end());
+        map -= l2.transpose()*sensitivity2;
     }
 
     Debug{} << "Gradient norm : " << map.norm();
@@ -381,8 +450,8 @@ void computeEnergy(
             Scalar grad1NormSquared = grad1.dot()*rescaling;
             Scalar grad2NormSquared = grad2.dot()*rescaling;
 
-            out1 += mesh.faceArea[face]*grad1NormSquared;
-            out2 += mesh.faceArea[face]*grad2NormSquared;
+            out1 += face.area()*grad1NormSquared;
+            out2 += face.area()*grad2NormSquared;
         }
     } else if(yamabe.energy == EnergyType::Hencky) {
         for(Vertex v : mesh.vertices()) {
@@ -604,6 +673,7 @@ double DiffuseYamabe::getRescalingFactor(Vertex v) const {
     assert(!std::isnan(a));
     return a;
 }
+
 
 DEFINE_FUNCTIONAL_CONSTRUCTOR(DiffuseYamabe)
 DEFINE_FUNCTIONAL_OPERATOR(DiffuseYamabe, double)

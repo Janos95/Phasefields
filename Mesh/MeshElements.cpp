@@ -44,6 +44,8 @@ bool HalfEdge::onBoundaryLoop() const { return !face(); }
 
 Vector3d HalfEdge::asVector() const { return Vector3d(tip().position() - tail().position()); }
 
+Vector3d const& HalfEdge::gradient() const { return mesh->gradient[*this]; }
+
 Debug& operator<<(Debug& debug, HalfEdge const& he) {
     char buffer[100];
     sprintf(buffer, "Half-Edge (%zu, %zu)", he.tail().idx, he.tip().idx);
@@ -81,12 +83,7 @@ VertexFaceRange Vertex::faces() const { return {{.he = halfEdge()}, {.he = halfE
 
 VertexEdgeRange Vertex::edges() const { return {{.he = halfEdge()}, {.he = halfEdge()}}; }
 
-bool Vertex::onBoundary() const {
-    for(HalfEdge he : outgoingHalfEdges()) {
-        if(he.onBoundaryLoop()) return true;
-    }
-    return false;
-}
+bool Vertex::onBoundary() const { return mesh->isOnBoundary[*this]; }
 
 Debug& operator<<(Debug& debug, Vertex const& v) {
     char buffer[100];
@@ -131,6 +128,8 @@ StaticArray<3, Vector3> Face::positions() const {
         pos[i++] = v.position();
     return pos;
 }
+
+
 
 Debug& operator<<(Debug& debug, Face const& f) {
     char buffer[100];

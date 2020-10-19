@@ -16,6 +16,7 @@ SMART_ENUM(EnergyType, size_t, Dirichlet, Hencky);
 
 struct DiffuseYamabe {
 
+
     explicit DiffuseYamabe(Mesh& m);
 
     template<class Scalar>

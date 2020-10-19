@@ -143,49 +143,6 @@ void Mesh::setFromData(const Mg::Trade::MeshData& meshData) {
     update();
     CORRADE_ASSERT(isTriangularMesh(), "Mesh is not triangular", );
     CORRADE_ASSERT(checkDualGraph(), "Dual Graph is not correct", );
-
-    //for(Vertex v : vertices()) {
-    //    HalfEdge he = v.halfEdge();
-    //    printf("vertex %zu with half edge (%zu, %zu)\n", v.idx, he.tail().idx, he.tip().idx);
-    //}
-
-
-    //for(Vertex v : vertices()) {
-    //    printf("Half-Edges outgoing from %zu : ", v.idx);
-    //    for(HalfEdge he : v.incomingHalfedges()) {
-    //        printf(" (%zu, %zu) ", he.tail().idx, he.tip().idx);
-    //    }
-    //    printf("\n");
-    //}
-
-    //for(Vertex v : vertices()) {
-    //    printf("Half-Edges incoming from %zu : ", v.idx);
-    //    for(HalfEdge he : v.incomingHalfedges()) {
-    //        printf(" (%zu, %zu) ", he.tail().idx, he.tip().idx);
-    //    }
-    //    printf("\n");
-    //}
-
-    //for(HalfEdge he : halfEdges()) {
-    //    printf("half edge (%zu, %zu), face %zu\n", he.tail().idx, he.tip().idx, he.face().idx);
-    //}
-
-    //arrayResize(m_edgeHalfEdge, NoInit, m_edgeCount); /* shrink to correct size */
-    //m_prefixSums[0] = 0;
-    //for(size_t i = 1; i < m_prefixSums.size(); ++i)
-    //    m_prefixSums[i] += degree[i - 1];
-
-    //Array<size_t> currentPosition(NoInit, m_vertexCount);
-    //Cr::Utility::copy({m_prefixSums.data(), m_prefixSums.size() - 1}, currentPosition);
-
-    //for(size_t faceIdx = 0; faceIdx < m_faceCount; ++faceIdx) {
-    //    for(size_t i = 0; i < 3; ++i) {
-    //        size_t idx = 3*faceIdx + i;
-    //        size_t next = 3*faceIdx + (i + 1)%3;
-    //        m_incidentHalfEdges[currentPosition[m_indices[idx]]++].out = idx;
-    //        m_incidentHalfEdges[currentPosition[m_indices[next]]++].in = idx;
-    //    }
-    //}
 }
 
 Mesh::Mesh(Mg::Trade::MeshData const& meshData) { setFromData(meshData); }

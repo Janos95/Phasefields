@@ -15,7 +15,7 @@ public:
     explicit MeshFeature(Mesh& mesh, bool ownedByMesh = true);
     virtual ~MeshFeature();
 
-    Mesh& mesh();
+    Mesh& getMesh();
 
     virtual void update() = 0;
 
@@ -54,6 +54,12 @@ struct GaussianCurvatureFeature : public MeshFeature {
     using MeshFeature::MeshFeature;
     void update() override;
     FEATURE_NAME("GaussianCurvature")
+};
+
+struct BoundaryInformation : public MeshFeature {
+    using MeshFeature::MeshFeature;
+    void update() override;
+    FEATURE_NAME("BoundaryInformation")
 };
 
 }

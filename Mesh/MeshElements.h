@@ -42,6 +42,8 @@ struct HalfEdge {
 
     [[nodiscard]] Vector3d asVector() const;
 
+    [[nodiscard]] Vector3d const& gradient() const;
+
     [[nodiscard]] bool isInterior() const;
 
     [[nodiscard]] bool onBoundaryLoop() const;
@@ -124,6 +126,7 @@ struct Face {
     [[nodiscard]] Range3D bb() const;
 
     [[nodiscard]] explicit operator bool() const { return idx != Invalid; }
+
 };
 
 struct Edge {
