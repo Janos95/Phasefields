@@ -5,6 +5,7 @@ shaders/
 Cost/external/
 conan_modules/*
 math/openblas_modules/*
+Viewer/data
 docs/
 log.md
 .vscode

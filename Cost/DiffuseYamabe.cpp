@@ -3,6 +3,7 @@
 //
 
 #include "DiffuseYamabe.h"
+#include "EigenHelper.h"
 #include "Mesh.h"
 #include "C1Functions.h"
 #include "Tree.h"
@@ -14,86 +15,9 @@
 #include <Corrade/Containers/Array.h>
 #include <Magnum/Math/Matrix3.h>
 
-#ifdef PHASEFIELD_WITH_ADOLC
-#include <adolc/adouble.h>
-#endif
-
-#include <Eigen/SparseCore>
-#include <Eigen/SparseLU>
-
-#ifdef PHASEFIELD_WITH_SUITESPARSE
-#include <Eigen/UmfPackSupport>
-#endif
-
 #include <imgui.h>
 
-#ifdef PHASEFIELD_WITH_ADOLC
-namespace Eigen {
-
-template<> struct NumTraits<adouble>
-        : NumTraits<double> // permits to get the epsilon, dummy_precision, lowest, highest functions
-{
-    typedef adouble Real;
-    typedef adouble NonInteger;
-    typedef adouble Nested;
-
-    enum {
-        IsComplex = 0,
-        IsInteger = 0,
-        IsSigned = 1,
-        RequireInitialization = 1,
-        ReadCost = 1,
-        AddCost = 3,
-        MulCost = 3
-    };
-};
-
-template<> struct NumTraits<adub>
-        : NumTraits<double> // permits to get the epsilon, dummy_precision, lowest, highest functions
-{
-    typedef adouble Real;
-    typedef adouble NonInteger;
-    typedef adouble Nested;
-
-    enum {
-        IsComplex = 0,
-        IsInteger = 0,
-        IsSigned = 1,
-        RequireInitialization = 1,
-        ReadCost = 1,
-        AddCost = 3,
-        MulCost = 3
-    };
-};
-
-}
-
-inline const adouble& conj(const adouble& x)  { return x; }
-inline const adouble& real(const adouble& x)  { return x; }
-inline adouble imag(const adouble&)    { return 0.; }
-inline adouble abs(const adouble&  x)  { return fabs(x); }
-inline adouble abs2(const adouble& x)  { return x*x; }
-
-#endif
-
 namespace Phasefield {
-
-void handleSolverInfo(Eigen::ComputationInfo info) {
-    switch(info) {
-        case Eigen::NumericalIssue:
-            Debug{} << "Numerical Issue";
-            break;
-        case Eigen::NoConvergence:
-            Debug{} << "No Convergence";
-            break;
-        case Eigen::InvalidInput:
-            Debug{} << "Invalid Input";
-            break;
-        case Eigen::Success:
-            Debug{} << "Solver Successfull";
-            break;
-    }
-}
 
 void getFaceData(Face face, Vertex* vs, HalfEdge* hs) {
     HalfEdge he = face.halfEdge();
@@ -112,17 +36,19 @@ DiffuseYamabe::DiffuseYamabe(Mesh& m) : mesh(m) {
     mesh.requireBoundaryInformation();
 }
 
-constexpr SmootherStep chi1;
-
+constexpr QuadraticChi chi1;
+constexpr QuadraticChiMirrored chi2;
 
 template<class Scalar>
 void assembleAndSolve(
         DiffuseYamabe& yamabe,
         Scalar lambda,
         VertexDataView<const Scalar> parameters,
-        VertexDataView<const Scalar> weights,
+        [[maybe_unused]] VertexDataView<const Scalar> weights,
         Eigen::SparseMatrix<Scalar>& A1,
+        SolverType<Scalar>& solver1,
         Eigen::SparseMatrix<Scalar>& A2,
+        SolverType<Scalar>& solver2,
         Eigen::Matrix<Scalar, Eigen::Dynamic, 1>& x1,
         Eigen::Matrix<Scalar, Eigen::Dynamic, 1>& x2,
         Eigen::Matrix<Scalar, Eigen::Dynamic, 1>& b1,
@@ -131,7 +57,6 @@ void assembleAndSolve(
     using Vec3 = Math::Vector3<Scalar>;
     using VecX = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
 
-    Scalar lambdaInv = 1./lambda;
     Mesh& mesh = yamabe.mesh;
 
     size_t n = mesh.vertexCount();
@@ -195,8 +120,8 @@ void assembleAndSolve(
                 b1[v.idx] = chi*mesh.integral[v]*K;
                 b2[v.idx] = (1-chi)*mesh.integral[v]*K;
 
-                triplets1.emplace_back(v.idx, v.idx, (1-chi)*mesh.integral[v]);
-                triplets2.emplace_back(v.idx, v.idx, chi*mesh.integral[v]);
+                triplets1.emplace_back(v.idx, v.idx, lambda*(1-chi)*mesh.integral[v]);
+                triplets2.emplace_back(v.idx, v.idx, lambda*chi*mesh.integral[v]);
             } else {
                 b1[v.idx] = 0;
                 b2[v.idx] = 0;
@@ -217,41 +142,16 @@ void assembleAndSolve(
         A2.setFromTriplets(triplets2.begin(), triplets2.end());
     }
 
-    //A = chiOfU.asDiagonal()*mesh.fem->stiffness.cast<Scalar>() + lambda*negChiOfU.asDiagonal()*mesh.fem->mass.cast<Scalar>();
+    if(doPositive) {
+        solver1.compute(A1);
+        handleSolverInfo(solver1.info());
+        x1 = solver1.solve(b1);
+    }
 
-    //if constexpr (std::is_same_v<Scalar, double>)
-    //    Debug{} << (Atest - A).norm();
-
-    if constexpr(!std::is_same_v<Scalar, adouble>) {
-#ifdef PHASEFIELD_WITH_SUITESPARSE
-        Eigen::UmfPackLU<Eigen::SparseMatrix<Scalar>> solver;
-#else
-        Eigen::SparseLU<Eigen::SparseMatrix<Scalar>> solver;
-#endif
-        if(doPositive) {
-            solver.compute(A1);
-            handleSolverInfo(solver.info());
-            x1 = solver.solve(b1);
-        }
-
-        if(doNegative) {
-            solver.compute(A2);
-            handleSolverInfo(solver.info());
-            x2 = solver.solve(b2);
-        }
-    } else {
-        Eigen::SparseLU<Eigen::SparseMatrix<Scalar>> solver;
-        if(doPositive) {
-            solver.compute(A1);
-            handleSolverInfo(solver.info());
-            x1 = solver.solve(b1);
-        }
-
-        if(doNegative) {
-            solver.compute(A2);
-            handleSolverInfo(solver.info());
-            x2 = solver.solve(b2);
-        }
+    if(doNegative) {
+        solver2.compute(A2);
+        handleSolverInfo(solver2.info());
+        x2 = solver2.solve(b2);
     }
 }
 
@@ -260,7 +160,9 @@ void shapeDerivative(
         VertexDataView<const double> parameters,
         double lambda,
         Eigen::SparseMatrix<double> const& A1,
+        SolverType<double>& solver1,
         Eigen::SparseMatrix<double> const& A2,
+        SolverType<double>& solver2,
         Eigen::VectorXd const& x1,
         Eigen::VectorXd const& x2,
         Eigen::VectorXd const& gradX1,
@@ -273,21 +175,13 @@ void shapeDerivative(
     bool doPositive = yamabe.positivePhase;
     bool doNegative = yamabe.negativePhase;
 
-    double lambdaInv = 1./lambda;
     Eigen::VectorXd l1, l2;
 
-#ifdef PHASEFIELD_WITH_SUITESPARSE
-    Eigen::UmfPackLU<Eigen::SparseMatrix<double>> solver;
-#else
-    Eigen::SparseLU<Eigen::SparseMatrix<double>> solver;
-#endif
     if(doPositive) {
-        solver.compute(A1.transpose());
-        l1 = solver.solve(gradX1);
+        l1 = solver1.solve(gradX1);
     }
     if(doNegative) {
-        solver.compute(A2.transpose());
-        l2 = solver.solve(gradX2);
+        l2 = solver2.solve(gradX2);
     }
 
     std::vector<Eigen::Triplet<double>> triplets1;
@@ -371,12 +265,12 @@ void shapeDerivative(
                 double chiGradIntegrated = chi1.grad(parameters[v.idx])*mesh.integral[v];
 
                 if(doPositive) {
-                    double vv1 = (-x1[v.idx] - K)*chiGradIntegrated;
+                    double vv1 = (-x1[v.idx]*lambda - K)*chiGradIntegrated;
                     triplets1.emplace_back(v.idx, v.idx, vv1);
                 }
 
                 if(doNegative) {
-                    double vv2 = (x2[v.idx] + K)*chiGradIntegrated;
+                    double vv2 = (x2[v.idx]*lambda + K)*chiGradIntegrated;
                     triplets2.emplace_back(v.idx, v.idx, vv2);
                 }
             }
@@ -479,11 +373,12 @@ void DiffuseYamabe::operator()(
     using VecX = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
 
     size_t n = mesh.vertexCount();
-    size_t m = mesh.faceCount();
 
     Eigen::SparseMatrix<Scalar> A1, A2;
+    SolverType<Scalar> solver1, solver2;
     VecX b1, b2, x1, x2;
-    assembleAndSolve<Scalar>(*this, lambdaWeight, parameters, weights, A1, A2, x1, x2, b1, b2);
+    Scalar lambda = lambdaWeight*(*scaling);
+    assembleAndSolve<Scalar>(*this, lambda, parameters, weights, A1, solver1, A2, solver2, x1, x2, b1, b2);
 
     VecX gradX1{gradP ? n : 0};
     VecX gradX2{gradP ? n : 0};
@@ -496,7 +391,7 @@ void DiffuseYamabe::operator()(
 
     if(gradP) {
         if constexpr (std::is_same_v<double, Scalar>) {
-            shapeDerivative(*this, parameters, lambdaWeight, A1, A2, x1, x2, gradX1, gradX2, gradP);
+            shapeDerivative(*this, parameters, lambda, A1, solver1, A2, solver2, x1, x2, gradX1, gradX2, gradP);
         }
     }
 }
@@ -522,7 +417,9 @@ void DiffuseYamabe::drawImGuiOptions(VisualizationProxy& proxy) {
                     [this, &proxy](Node node) {
                         Eigen::SparseMatrix<double> A1, A2;
                         Eigen::VectorXd b1,b2,x1,x2;
-                        assembleAndSolve<double>(*this, lambdaWeight, node.phasefield(), node.temporary(), A1, A2, x1, x2, b1, b2);
+                        SolverType<double> solver1, solver2;
+                        double lambda = (*scaling)*lambdaWeight;
+                        assembleAndSolve<double>(*this, lambda, node.phasefield(), node.temporary(), A1, solver1, A2, solver2, x1, x2, b1, b2);
                         Eigen::VectorXd x{mesh.vertexCount()};
                         x.setZero();
                         if(positivePhase) x += x1;
@@ -574,7 +471,7 @@ void DiffuseYamabe::drawImGuiOptions(VisualizationProxy& proxy) {
                                 b[idx] = mesh.gaussianCurvature[v]*mesh.integral[v];
                             } else {
                                 b[idx] = 0;
-                                arrayAppend(triplets, InPlaceInit, idx, idx, 1.);
+                                arrayAppend(triplets, InPlaceInit, int(idx), int(idx), 1.);
                             }
                         }
 

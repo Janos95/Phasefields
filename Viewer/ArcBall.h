@@ -1,7 +1,3 @@
-//
-// Created by janos on 2/16/20.
-//
-
 #pragma once
 
 #include <Magnum/Math/Quaternion.h>

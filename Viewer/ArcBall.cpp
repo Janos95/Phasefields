@@ -1,7 +1,3 @@
-//
-// Created by janos on 2/16/20.
-//
-
 #include "ArcBall.h"
 
 #include <Magnum/Math/Quaternion.h>

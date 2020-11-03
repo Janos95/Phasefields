@@ -10,13 +10,12 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/modules)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 #set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 
-option(PHASEFIELD_WITH_ASSIMP "Enable Importing Meshes" ON)
 option(PHASEFIELD_WITH_ADOLC "Enable automatica gradient testing" ON)
 option(PHASEFIELD_WITH_CERES "Enables ceres for optimization" ON)
 option(PHASEFIELD_WITH_IPOPT "Enable ipopt for consrained optimization" ON)
-option(PHASEFIELD_WITH_FFMPEG "Enable exporting videos" ON)
 option(PHASEFIELD_WITH_TBB "Enable threading using intel tbb" ON)
 option(PHASEFIELD_WITH_SUITESPARSE "Use umfpack from suite sparse for faster decompositions" ON)
+option(PHASEFIELD_WITH_IO "Import with assimp, export with vtk to vts (paraview), ply and videos using ffmpeg" ON)
 
 add_subdirectory(contrib)
 
@@ -24,10 +23,15 @@ find_package(PkgConfig REQUIRED)
 find_package(Eigen3)
 find_package(Corrade)
 
-if(PHASEFIELD_WITH_ASSIMP)
+if(PHASEFIELD_WITH_IO)
     find_package(MagnumPlugins REQUIRED AssimpImporter)
     find_package(MagnumPlugins REQUIRED StanfordSceneConverter)
     find_package(VTK REQUIRED CommonCore CommonDataModel IOXML)
+
+    pkg_check_modules(libavcodec REQUIRED IMPORTED_TARGET libavcodec)
+    pkg_check_modules(libavutil REQUIRED IMPORTED_TARGET libavutil)
+    pkg_check_modules(libswscale REQUIRED IMPORTED_TARGET libswscale)
+    add_subdirectory(VideoSaver)
 endif()
 
 if(PHASEFIELD_WITH_ADOLC)
@@ -39,18 +43,11 @@ if(PHASEFIELD_WITH_IPOPT)
     pkg_check_modules(Ipopt REQUIRED IMPORTED_TARGET ipopt)
 endif()
 
-if(PHASEFIELD_WITH_FFMPEG)
-    pkg_check_modules(libavcodec REQUIRED IMPORTED_TARGET libavcodec)
-    pkg_check_modules(libavutil REQUIRED IMPORTED_TARGET libavutil)
-    pkg_check_modules(libswscale REQUIRED IMPORTED_TARGET libswscale)
-    add_subdirectory(VideoSaver)
-endif()
-
 if(PHASEFIELD_WITH_CERES)
     find_package(Ceres)
 endif()
 
-if(PHASEFIELD_WITH_CERES)
+if(PHASEFIELD_WITH_TBB)
     find_package(TBB)
 endif()
 

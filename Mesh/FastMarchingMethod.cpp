@@ -1,6 +1,6 @@
 //
 // Created by janos on 8/17/20.
-//
+// taken from geometry central
 
 #include "FastMarchingMethod.h"
 #include "Types.h"
@@ -10,7 +10,6 @@
 
 #include <Magnum/Math/Functions.h>
 #include <Magnum/Math/FunctionsBatch.h>
-#include <Magnum/Math/Angle.h>
 #include <Magnum/Math/Constants.h>
 
 #include <cstring>

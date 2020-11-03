@@ -15,15 +15,16 @@
 #include "Mesh.h"
 #include "Types.h"
 #include "PlotCallback.h"
-#include "DepthReinterpretShader.h"
 #include "Bvh.h"
 
 #include <Magnum/ImGuiIntegration/Context.h>
 #include <Magnum/Math/Color.h>
 #include <Magnum/Trade/MeshData.h>
 #include <Magnum/Shaders/Phong.h>
-#include <MagnumPlugins/PrimitiveImporter/PrimitiveImporter.h>
+#include <Magnum/Shaders/MeshVisualizer.h>
+
 #include <Corrade/Containers/Optional.h>
+#include <Corrade/Utility/Resource.h>
 
 #ifdef MAGNUM_TARGET_WEBGL
 #include <Magnum/Platform/EmscriptenApplication.h>
@@ -31,14 +32,13 @@
 #include <Magnum/Platform/Sdl2Application.h>
 #endif
 
-#ifdef PHASEFIELD_WITH_FFMPEG
+#ifdef PHASEFIELD_WITH_IO
 #include "VideoSaver.h"
-#endif
-
-#ifdef PHASEFIELD_WITH_ASSIMP
 #include <MagnumPlugins/AssimpImporter/AssimpImporter.h>
 #endif
 
+#include <MagnumPlugins/StanfordImporter/StanfordImporter.h>
+#include <MagnumPlugins/StanfordSceneConverter/StanfordSceneConverter.h>
 
 namespace Phasefield {
 
@@ -108,9 +108,15 @@ struct Viewer : public Mg::Platform::Application {
 
     void loadScene(const char*, const char*);
 
+    void loadExperiment(const char*);
+
     //bool saveMesh(std::string const&);
 
     void runOptimization(UniqueFunction<bool()>&& cb);
+
+    void refineLeafNodes(UniqueFunction<bool()>&& cb);
+
+    void setCallbacks(UniqueFunction<bool()>&& cb);
 
     void drawBrushOptions();
 
@@ -119,6 +125,8 @@ struct Viewer : public Mg::Platform::Application {
     void drawVisualizationOptions();
 
     void drawIO();
+
+    void drawMeshEdit();
 
     void setAreaConstraint(Node node);
 
@@ -133,6 +141,8 @@ struct Viewer : public Mg::Platform::Application {
     void setScalingFactors();
 
     Vector3 unproject(Vector2i const&, Float depth);
+
+    Vertex intersectWithPcd(Vector3 const& p, Vector3 const& dir);
 
     void drawErrorPlot();
 
@@ -157,6 +167,9 @@ struct Viewer : public Mg::Platform::Application {
 
     Phong phongVertexColors{Mg::NoCreate};
     Phong phongColorMap{Mg::NoCreate};
+
+    MeshVisualizer3D meshVis{Mg::NoCreate};
+    bool drawWireFrame = false;
 
     Color4 clearColor = 0x72909aff_rgbaf;
 
@@ -205,28 +218,23 @@ struct Viewer : public Mg::Platform::Application {
     bool animate = false;
     bool recording = false;
 
-#ifdef PHASEFIELD_WITH_FFMPEG
+#ifdef PHASEFIELD_WITH_IO
     VideoSaver videoSaver;
-#endif
-#ifdef PHASEFIELD_WITH_ASSIMP
     Mg::Trade::AssimpImporter assimpImporter;
 #endif
 
-    //Cr::PluginManager::Manager<Mg::Trade::AbstractImporter> manager;
-    //Mg::Trade::PrimitiveImporter primitiveImporter;
+    Mg::Trade::StanfordImporter stanfordImporter;
+    //Cr::Utility::Resource experiments;
 
     BVHAdapter bvh;
     size_t lastIntersectionIdx = 0;
     FastMarchingMethod fastMarchingMethod;
 
-    Pointer<Mg::Trade::AbstractImporter> primitiveImporter1;
-    Mg::Trade::PrimitiveImporter* primitiveImporter;
-
-
     bool paused = false;
     Array<ScrollingBuffer> data;
     Array<bool> show;
     size_t t = 0;
+    bool showPlot = false;
 };
 
 }

@@ -3,7 +3,6 @@
 //
 
 #include "Viewer.h"
-#include "ImGuiWidgets.h"
 #include "Enums.h"
 #include "Tag.h"
 #include "ModicaMortola.h"
@@ -16,12 +15,11 @@
 
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Configuration.h>
-#include <Corrade/Utility/Resource.h>
-#include <Corrade/Containers/StaticArray.h>
 #include <Corrade/Utility/Directory.h>
 #include <Corrade/PluginManager/Manager.h>
 #include <Corrade/PluginManager/PluginMetadata.h>
 #include <Corrade/Containers/GrowableArray.h>
+#include <Corrade/Containers/StringView.h>
 #include <Corrade/Utility/ConfigurationGroup.h>
 
 #include <Magnum/GL/DefaultFramebuffer.h>
@@ -36,23 +34,20 @@
 
 #include <Magnum/Shaders/Phong.h>
 
-#include <Magnum/Trade/AbstractSceneConverter.h>
 #include <Magnum/Trade/MeshData.h>
-#include <Magnum/Trade/AbstractImporter.h>
 #include <Magnum/Image.h>
+#include <Magnum/MeshTools/Duplicate.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/DebugTools/ColorMap.h>
-
 #include <Magnum/MeshTools/Compile.h>
 #include <Magnum/MeshTools/RemoveDuplicates.h>
-#include <Magnum/MeshTools/Interleave.h>
-
 #include <Magnum/ImGuiIntegration/Context.hpp>
-#include <MagnumPlugins/PrimitiveImporter/PrimitiveImporter.h>
-#include <MagnumPlugins/StanfordSceneConverter/StanfordSceneConverter.h>
 
 #include <implot.h>
+
+#ifdef PHASEFIELD_WITH_IO
+#include <MagnumPlugins/StanfordSceneConverter/StanfordSceneConverter.h>
 
 #include <vtkCellArray.h>
 #include <vtkPoints.h>
@@ -63,12 +58,21 @@
 #include <vtkPointData.h>
 #include <vtkTriangle.h>
 #include <vtkCellData.h>
+#endif
+
+static void initializeRessources() {
+    CORRADE_RESOURCE_INITIALIZE(Viewer_Rsc)
+    CORRADE_RESOURCE_INITIALIZE(Experiments_Rsc)
+}
+
 
 namespace Phasefield {
 
 using namespace Mg::Math::Literals;
+using namespace Cr::Containers::Literals;
 
 bool Viewer::saveMesh(char const* path) {
+#ifdef PHASEFIELD_WITH_IO
     Mg::PluginManager::Manager<Mg::Trade::AbstractSceneConverter> manager;
     Mg::Trade::StanfordSceneConverter exporter{manager, "StanfordSceneConverter"};
 
@@ -79,9 +83,11 @@ bool Viewer::saveMesh(char const* path) {
         return false;
     }
     return true;
+#endif
 }
 
 bool Viewer::dumpMesh(char const* path) {
+#ifdef PHASEFIELD_WITH_IO
     mesh.requireGaussianCurvature();
     size_t n = mesh.vertexCount();
     size_t m = mesh.faceCount();
@@ -147,11 +153,12 @@ bool Viewer::dumpMesh(char const* path) {
     writer->SetInputData(polyData);
 
     writer->Write();
+#else
+    return false;
+#endif
 }
 
 namespace {
-
-
 
 Array<Viewer::ColorMap> makeColorMapTextures() {
 
@@ -166,11 +173,18 @@ Array<Viewer::ColorMap> makeColorMapTextures() {
             {"CoolWarm", coolWarm()}
     }) {
         const Magnum::Vector2i size{Magnum::Int(colorMap.size()), 1};
+        const GL::TextureFormat format =
+#ifdef MAGNUM_TARGET_WEBGL
+        GL::TextureFormat::RGB;
+#else
+        GL::TextureFormat::RGB8;
+#endif
+
         Mg::GL::Texture2D texture;
         texture.setMinificationFilter(Magnum::SamplerFilter::Linear)
                .setMagnificationFilter(Magnum::SamplerFilter::Linear)
-               .setWrapping(Magnum::SamplerWrapping::ClampToEdge) // or Repeat
-               .setStorage(1, Mg::GL::TextureFormat::RGB8, size) // or SRGB8
+               .setWrapping(Magnum::SamplerWrapping::ClampToEdge)
+               .setStorage(1, format, size)
                .setSubImage(0, {}, Mg::ImageView2D{Magnum::PixelFormat::RGB8Srgb, size, colorMap});
         arrayAppend(textures, InPlaceInit, name, std::move(texture), colorMap);
     }
@@ -192,11 +206,10 @@ Viewer::Viewer(Arguments const& arguments) :
         bvh{mesh},
         proxy(*this),
         problem(tree)
-        //problem(tree),
-        //proxy(*this),
-        //segmentationTag(getTag()),
-        //phasefieldTag(getTag())
+        //experiments("experiments-data")
 {
+    initializeRessources();
+
     {
         //arrayAppend(options.callbacks, InPlaceInit, optimizationCallback);
         currentNode = Node{0, &tree};
@@ -234,29 +247,25 @@ Viewer::Viewer(Arguments const& arguments) :
         //    c = Color4::red();
 
         glMesh = Mg::GL::Mesh{};
-        vertexBuffer = Mg::GL::Buffer{};
-        indexBuffer = Mg::GL::Buffer{};
-
-        mesh.uploadVertexBuffer(vertexBuffer);
-        mesh.uploadIndexBuffer(indexBuffer);
+        vertexBuffer = Mg::GL::Buffer{GL::Buffer::TargetHint::Array};
+        indexBuffer = Mg::GL::Buffer{GL::Buffer::TargetHint::ElementArray};
 
         glMesh.setPrimitive(Mg::MeshPrimitive::Triangles)
-              .setCount(mesh.indexCount())
               .setIndexBuffer(indexBuffer, 0, Mg::MeshIndexType::UnsignedInt)
               .addVertexBuffer(vertexBuffer, 0, Phong::Position{}, Phong::Normal{}, Phong::TextureCoordinates{}, Phong::Color4{});
 
         phongColorMap = Phong{Phong::Flag::DiffuseTexture, 2};
         phongVertexColors = Phong{Phong::Flag::VertexColor, 2};
+        meshVis = Mg::Shaders::MeshVisualizer3D{Mg::Shaders::MeshVisualizer3D::Flag::Wireframe | Mg::Shaders::MeshVisualizer3D::Flag::NoGeometryShader};
 
         colorMapData = makeColorMapTextures();
-
     }
 
     /* setup the problem */
     {
         arrayAppend(problem.objectives, makeFunctional(FunctionalType::DoubleWellPotential));
         arrayAppend(problem.objectives, makeFunctional(FunctionalType::DirichletEnergy));
-        arrayAppend(problem.objectives, makeFunctional(FunctionalType::DiffuseYamabe));
+        //arrayAppend(problem.objectives, makeFunctional(FunctionalType::DiffuseYamabe));
         //arrayAppend(problem.objectives, makeFunctional(FunctionalType::AreaRegularizer));
         //arrayAppend(problem.objectives, makeFunctional(FunctionalType::ConnectednessConstraint));
 
@@ -265,29 +274,22 @@ Viewer::Viewer(Arguments const& arguments) :
         arrayResize(data, objectiveCount);
     }
 
-    /* try to load tree from disk, otherwise fallback to empty tree with three nodes */
+    /* Load experiment from resource*/
     {
-
-        Mg::PluginManager::Manager<Mg::Trade::AbstractImporter> manager;
-        primitiveImporter = new Mg::Trade::PrimitiveImporter{manager, "PrimitiveImporter"};
-        primitiveImporter->openData("deadbeef");
-
-        //primitiveImporter = manager.instantiate("PrimitiveImporter");
-
-        ScopedTimer loadingTimer{"Loading scene from disk", true};
-        loadScene("/home/janos/", "torus");
-
+        ScopedTimer loadingTimer{"Loading experiment", true};
+        loadExperiment("spot");
     }
 
     /* Setup ImGui, ImPlot, load a better font */
     {
+        Debug{} << "Creating ImGui context";
         ImGui::CreateContext();
         ImGui::StyleColorsDark();
 
         //ImFontConfig fontConfig;
         //fontConfig.FontDataOwnedByAtlas = false;
         //const Vector2 size = Vector2{windowSize()}/dpiScaling();
-        //Cr::Utility::Resource rs{"data"};
+        //Cr::Utility::Resource rs{"viewer-data"};
         //ArrayView<const char> font = rs.getRaw("SourceSansPro-Regular.ttf");
         //ImGui::GetIO().Fonts->AddFontFromMemoryTTF(
         //        const_cast<char*>(font.data()), Int(font.size()), 16.0f*framebufferSize().x()/size.x(), &fontConfig);
@@ -328,15 +330,16 @@ Viewer::Viewer(Arguments const& arguments) :
 }
 
 void Viewer::loadScene(const char* path, const char* postfix) {
-#ifdef PHASEFIELD_WITH_ASSIMP
+#ifdef PHASEFIELD_WITH_IO
     bool loadedTree = false;
     Optional<Mg::Trade::MeshData> md;
 
     if(Cr::Utility::Directory::exists(path)) {
 
-        std::string meshPath = Cr::Utility::Directory::join(path, std::string{postfix} + ".ply");
-        std::string treePath = Cr::Utility::Directory::join(path, std::string{postfix} + ".bin");
-
+        std::string postfixStr{postfix};
+        std::string meshPath = Cr::Utility::Directory::join(path, postfixStr + ".ply");
+        std::string treePath = Cr::Utility::Directory::join(path ,postfixStr + ".bin");
+        std::string confPath = Cr::Utility::Directory::join(path ,postfixStr + ".conf");
 
         if(Cr::Utility::Directory::exists(treePath)) {
             FILE* fp = std::fopen(treePath.c_str(), "r");
@@ -368,11 +371,30 @@ void Viewer::loadScene(const char* path, const char* postfix) {
             }
         }
 
-    } else { /* try a primitive */
-        Cr::Utility::Configuration conf{"/home/janos/Phasefield/primitives.conf"};
-        primitiveImporter->configuration() = *conf.group("configuration");
+        if(Cr::Utility::Directory::exists(confPath)) {
+            //Cr::Utility::Configuration conf{confPath};
 
-        md = primitiveImporter->mesh(postfix);
+            //epsilon = conf.value<double>("epsilon");
+            //options.solver = Solver::Backend::Value(conf.value<int>("solver"));
+            //hierarchicalOptimization = conf.value<bool>("hierarchicalOptimization");
+            //maximumDepth = conf.value<size_t>("maximumDepth");
+
+            //for(auto& f : problem.objectives) {
+            //    auto* group = conf.addGroup(FunctionalType::to_string(f.functionalType));
+            //    f.saveSettings(*group);
+            //    group->setValue("isObjective", true);
+            //}
+
+            //for(auto& f : problem.objectives) {
+            //    auto* group = conf.addGroup(FunctionalType::to_string(f.functionalType));
+            //    f.saveSettings(*group);
+            //    group->setValue("isObjective", false);
+            //}
+
+            //std::string confPath = Cr::Utility::Directory::join(path, postfixStr + ".conf");
+            //conf.save(confPath);
+        }
+
     }
 
     if(md) {
@@ -399,6 +421,27 @@ void Viewer::loadScene(const char* path, const char* postfix) {
         proxy.redraw();
     }
 #endif
+}
+
+void Viewer::loadExperiment(const char* name) {
+    std::string nameStr{name};
+    std::string meshFile = nameStr + ".ply";
+    std::string treeFile = nameStr + ".bin";
+    std::string confFile = nameStr + ".conf";
+    Cr::Utility::Resource experiments{"experiments-data"};
+    stanfordImporter.openData(experiments.getRaw(meshFile));
+    auto md = stanfordImporter.mesh(0);
+    Debug{} << "Loading mesh";
+    mesh.setFromData(*md);
+    Debug{} << "Loading Tree";
+    //tree = Tree::deserialize(experiments.getRaw(treeFile), mesh);
+    tree.update();
+
+    Debug{} << "Loaded resources, uploading to gl";
+    mesh.uploadVertexBuffer(vertexBuffer);
+    mesh.uploadIndexBuffer(indexBuffer);
+    glMesh.setCount(mesh.indexCount());
+    proxy.redraw();
 }
 
 void Viewer::drawBrushOptions() {
@@ -596,10 +639,7 @@ void Viewer::drawOptimizationOptions() {
     }
 }
 
-void Viewer::runOptimization(UniqueFunction<bool()>&& cb){
-
-    /* callbacks */
-
+void Viewer::setCallbacks(UniqueFunction<bool()>&& cb) {
     auto abortCb = [this, cb = std::move(cb)] (Solver::IterationSummary const&) mutable -> Solver::Status::Value {
         proxy.redraw();
         return cb() && isOptimizing ? Solver::Status::CONTINUE : Solver::Status::USER_ABORTED;
@@ -608,6 +648,8 @@ void Viewer::runOptimization(UniqueFunction<bool()>&& cb){
     arrayAppend(callbacks, InPlaceInit, std::move(abortCb));
 
     for(auto& d : data) d.clear();
+    t = 0;
+    arrayResize(data, problem.objectives.size());
     arrayAppend(callbacks, InPlaceInit, [this](Solver::IterationSummary const& summary){
         auto& objs = problem.objectives;
         Node node = problem.nodeToOptimize;
@@ -619,7 +661,10 @@ void Viewer::runOptimization(UniqueFunction<bool()>&& cb){
         ++t;
         return Solver::Status::CONTINUE;
     });
+}
 
+void Viewer::runOptimization(UniqueFunction<bool()>&& cb){
+    setCallbacks(MOVE(cb));
     if(hierarchicalOptimization) {
         tree.root().initializePhasefieldFromParent();
 
@@ -644,8 +689,26 @@ void Viewer::runOptimization(UniqueFunction<bool()>&& cb){
         Solver::solve(options, problem, currentNode.phasefield(), nullptr);
     }
 
-    arrayResize(callbacks, callbacks.size() - 2); /* pop the last two callbacks off */
+    arrayResize(options.callbacks, options.callbacks.size() - 2); /* pop the last two callbacks off */
 
+}
+
+void Viewer::refineLeafNodes(UniqueFunction<bool()>&& cb) {
+    setCallbacks(MOVE(cb));
+
+    for(Node leaf : tree.leafs()) {
+        leaf.splitAndInitialize(&currentNode);
+    }
+
+    tree.computeLeafWeights();
+
+    for(Node leaf : tree.leafs()) {
+        setAreaConstraint(leaf);
+        problem.nodeToOptimize = leaf;
+        Solver::solve(options, problem, leaf.phasefield(), nullptr);
+    }
+
+    arrayResize(options.callbacks, options.callbacks.size() - 2); /* pop the last two callbacks off */
 }
 
 Functional Viewer::makeFunctional(FunctionalType::Value type) {
@@ -673,6 +736,7 @@ Functional Viewer::makeFunctional(FunctionalType::Value type) {
         }
         case FunctionalType::DiffuseYamabe : {
             DiffuseYamabe yamabe{mesh};
+            yamabe.scaling = &yamabeLambdaScaling;
             return yamabe;
         }
     }
@@ -700,10 +764,10 @@ void Viewer::brush() {
 }
 
 void Viewer::setScalingFactors() {
-    dirichletScaling = epsilon*epsilon/2.;
-    connectednessScaling = 1./(epsilon*epsilon);
+    dirichletScaling = epsilon/2.;
+    connectednessScaling = 1./(epsilon*epsilon*epsilon);
     areaPenaltyScaling = 1.;
-    doubleWellScaling = 1.;
+    doubleWellScaling = 1./epsilon;
     yamabeLambdaScaling = 1./epsilon;
 }
 
@@ -716,6 +780,24 @@ Vector3 Viewer::unproject(Vector2i const& windowPosition, Float depth) {
 
     //get global coordinates
     return (arcBall->transformationMatrix()*projection.inverted()).transformPoint(in);
+}
+
+Vertex Viewer::intersectWithPcd(Vector3 const& origin, Vector3 const& dir) {
+    BVHAdapter::Intersection intersection;
+    size_t idx;
+    if(bvh.computeIntersection(origin, dir, intersection)) {
+        float u = intersection.u;
+        float v = intersection.v;
+        size_t vIdx = 0;
+        if(u < 0.5 && v > 0.5) {
+            vIdx = 1;
+        } else {
+            vIdx = 2;
+        }
+        idx =  mesh.triangels()[intersection.idx][vIdx];
+        lastIntersectionIdx = idx;
+    } else { idx = lastIntersectionIdx; }
+    return {idx, &mesh};
 }
 
 void Viewer::drawVisualizationOptions() {
@@ -760,11 +842,8 @@ void Viewer::drawVisualizationOptions() {
 
         if(ImGui::Button("Split Leaf nodes")) {
             for(Node node : tree.leafs()) {
-                node.addRightChild(&currentNode);
-                node.addLeftChild(&currentNode);
+                node.splitAndInitialize(&currentNode);
             }
-            for(Node node : tree.leafs())
-                node.initializePhasefieldFromParent();
             proxy.redraw();
         }
 
@@ -772,8 +851,6 @@ void Viewer::drawVisualizationOptions() {
             currentNode.initializePhasefieldFromParent();
             proxy.redraw();
         }
-
-        ImGui::SameLine();
 
         if(ImGui::Button("Split Current Node")) {
             /* the node handle (potentially) gets invalidated after we add the other child */
@@ -797,8 +874,11 @@ void Viewer::drawVisualizationOptions() {
         }
 
         if(ImGui::Button("Print Information")) {
+            DirichletEnergy de(mesh);
+            DoubleWellPotential dw(mesh);
+
             SmootherStep chi;
-            Array<double> patchAreas;
+            Array<Pair<double, double>> patchInformation;
             tree.computeLeafWeights();
             for(Node leaf : tree.leafs()) {
                 auto phasefield = leaf.phasefield();
@@ -815,19 +895,31 @@ void Viewer::drawVisualizationOptions() {
                     posArea += f.area()*x/3;
                     negArea += f.area()*y/3;
                 }
-                arrayAppend(patchAreas, {posArea, negArea});
+
+                double deResult = 0, dwResult = 0;
+                de.operator()<double>(phasefield, weights, deResult, nullptr, nullptr);
+                dw.operator()<double>(phasefield, weights, dwResult, nullptr, nullptr);
+
+                double boundary = doubleWellScaling*dwResult+dirichletScaling*deResult;
+                arrayAppend(patchInformation, {{posArea, boundary}, {negArea, boundary}});
             }
 
-            CORRADE_ASSERT(patchAreas.size() == tree.numLeafs*2, "weird number of patches",);
+            CORRADE_ASSERT(patchInformation.size() == tree.numLeafs*2, "weird number of patches",);
             double targetArea = 0;
-            for(double x : patchAreas) targetArea += x;
-            targetArea /= double(patchAreas.size());
+            for(auto [x,_] : patchInformation) targetArea += x;
+            targetArea /= double(patchInformation.size());
             printf("Target Area %f\n", targetArea);
             double totalError = 0;
-            for(double patchArea : patchAreas) {
+
+            auto& colors = getColors(tree.numLeafs*2);
+            CORRADE_ASSERT(colors.size() == patchInformation.size(), "Patch areas not same length as colors",);
+
+            for(size_t i = 0; i < colors.size(); ++i) {
+                auto [patchArea, patchBoundary] = patchInformation[i];
                 double error = Math::abs(targetArea - patchArea);
                 totalError += error;
-                printf("Patch Error %f, (area = %f)\n", error, patchArea);
+                printf("Patch Area Error %f (area = %f), Boundary Length %f\n", error, patchArea, patchBoundary);
+                Debug{} << "Patch Color" << colors[i];
             }
             printf("Total error %f\n", totalError);
 
@@ -876,6 +968,10 @@ void Viewer::drawVisualizationOptions() {
             ImGui::EndCombo();
         }
 
+        if(ImGui::Checkbox("Draw Wireframe", &drawWireFrame)) {
+
+        }
+
 
         if(ImGui::Button("Bake To Vertex Color")) {
             for(Vertex v : mesh.vertices()) {
@@ -885,37 +981,16 @@ void Viewer::drawVisualizationOptions() {
             }
         }
 
+        if(ImGui::Button("Show Error Plot")) {
+            showPlot = true;
+        }
+
         ImGui::TreePop();
     }
 }
 
 void Viewer::drawIO() {
     if(ImGui::TreeNode("IO")) {
-
-        const char* primitives[] = {
-            "capsule3DSolid",
-            "circle3DSolid",
-            "coneSolid",
-            "cylinderSolid",
-            "grid3DSolid",
-            "icosphereSolid",
-            "planeSolid",
-            "squareSolid",
-            "uvSphereSolid"
-        };
-
-        static const char* currentPrimitive = primitives[5];
-        if(ImGui::BeginCombo("##primitive", currentPrimitive)) {
-            for(const char* prim : primitives) {
-                bool isSelected = prim == currentPrimitive;
-                if(ImGui::Selectable(prim, isSelected)) {
-                    currentPrimitive = prim;
-                }
-                if(isSelected)
-                    ImGui::SetItemDefaultFocus();
-            }
-            ImGui::EndCombo();
-        }
 
         static char path[50] = "/home/janos/meshes/experiments";
         static char postfix[25] = "spot";
@@ -942,26 +1017,44 @@ void Viewer::drawIO() {
             tree.serialize(data);
 
             if(strlen(postfix)) {
-                std::string treePath = Cr::Utility::Directory::join(path, std::string{postfix} + ".bin");
+                std::string postfixStr{postfix};
+                std::string treePath = Cr::Utility::Directory::join(path, postfixStr + ".bin");
                 FILE* fp = fopen(treePath.c_str(), "w");
                 fwrite(data.data(), sizeof(char), data.size(), fp);
                 fclose(fp);
 
-                std::string meshPath = Cr::Utility::Directory::join(path, std::string{postfix} + ".ply");
+                std::string meshPath = Cr::Utility::Directory::join(path, postfixStr + ".ply");
                 saveMesh(meshPath.c_str());
+
+                //Cr::Utility::Configuration conf;
+
+                //conf.setValue("epsilon", epsilon);
+                //conf.setValue("solver", int(options.solver));
+                //conf.setValue("hierarchicalOptimization", hierarchicalOptimization);
+                //conf.setValue("maximumDepth", maximumDepth);
+
+                //for(auto& f : problem.objectives) {
+                //    auto* group = conf.addGroup(FunctionalType::to_string(f.functionalType));
+                //    f.saveSettings(*group);
+                //    group->setValue("isObjective", true);
+                //}
+
+                //for(auto& f : problem.objectives) {
+                //    auto* group = conf.addGroup(FunctionalType::to_string(f.functionalType));
+                //    f.saveSettings(*group);
+                //    group->setValue("isObjective", false);
+                //}
+
+                //std::string confPath = Cr::Utility::Directory::join(path, postfixStr + ".conf");
+                //conf.save(confPath);
             }
         }
 
         ImGui::SameLine();
+
         if(ImGui::Button("Load Scene")) {
             loadScene(path, postfix);
         }
-
-        ImGui::SameLine();
-        if(ImGui::Button("Load Primitive")) {
-            loadScene("deadbeef", currentPrimitive);
-        }
-
 
         if(ImGui::Button("Export to VTK")) {
             if(!Cr::Utility::Directory::exists(path))
@@ -982,7 +1075,7 @@ void Viewer::drawIO() {
         ImGui::PushStyleColor(ImGuiCol{}, recording ? red : green);
         if(ImGui::Button("Start Recording")) {
             if(!recording) {
-#ifdef PHASEFIELD_WITH_FFMPEG
+#ifdef PHASEFIELD_WITH_IO
                 videoSaver.startRecording(recordingPath, framebufferSize());
                 recording = true;
 #endif
@@ -993,7 +1086,7 @@ void Viewer::drawIO() {
         ImGui::PushStyleColor(ImGuiCol{}, recording ? green : red);
         if(ImGui::Button("Stop Recording")) {
             if(recording) {
-#ifdef PHASEFIELD_WITH_FFMPEG
+#ifdef PHASEFIELD_WITH_IO
                 videoSaver.endRecording();
                 recording = false;
 #endif
@@ -1068,10 +1161,8 @@ void Viewer::startBrushing(Vector3 const& origin, Vector3 const& dir) {
     fastMarchingMethod.update();
 
     arrayResize(distances, 0);
-    size_t idx = bvh.computeIntersection(origin, dir);
-    if(idx == Invalid) idx = lastIntersectionIdx;
-    else lastIntersectionIdx = idx;
-    fastMarchingMethod.setSource(Vertex{size_t(idx), &mesh});
+    Vertex v = intersectWithPcd(origin, dir);
+    fastMarchingMethod.setSource(v);
     targetDist = 0.;
     brushing = true;
 }
@@ -1109,10 +1200,8 @@ void Viewer::mousePressEvent(MouseEvent& event) {
         Vector3 o = unproject(event.position(), 0);
         Vector3 d = unproject(event.position(), 1) - o;
 
-        size_t idx = bvh.computeIntersection(o, d);
-        if(idx == Invalid) idx = lastIntersectionIdx;
-        else lastIntersectionIdx = idx;
-        Debug{} << "Phasefield value at mouse location" << currentNode.phasefield()[idx];
+        Vertex v = intersectWithPcd(o, d);
+        Debug{} << "Phasefield value at mouse location" << currentNode.phasefield()[v];
     }
 }
 
@@ -1225,9 +1314,36 @@ void Viewer::drawEvent() {
                          .draw(glMesh);
     }
 
+    if(drawWireFrame) {
+        GL::Renderer::setDepthFunction(GL::Renderer::DepthFunction::LessOrEqual);
+        GL::Renderer::enable(GL::Renderer::Feature::Blending);
+        //GL::Renderer::setBlendFunction(
+        //        GL::Renderer::BlendFunction::One, /* or SourceAlpha for non-premultiplied */
+        //        GL::Renderer::BlendFunction::OneMinusSourceAlpha);
+
+        StridedArrayView1D<const UnsignedInt> indices = mesh.indices();
+        StridedArrayView1D<const Vector3> indexedPositions = mesh.positions();
+
+        /* De-indexing the position array */
+        GL::Buffer vertices{Mg::MeshTools::duplicate(indices, indexedPositions)};
+
+        GL::Mesh wireframeMesh;
+        wireframeMesh.addVertexBuffer(std::move(vertices), 0, Mg::Shaders::MeshVisualizer3D::Position{})
+                     .setCount(indices.size());
+
+        meshVis.setColor(Color4{0,0,0,0})
+               .setWireframeColor(0xdcdcdc_rgbf)
+               .setTransformationMatrix(viewTf)
+               .setProjectionMatrix(projection)
+               .draw(wireframeMesh);
+
+        GL::Renderer::disable(GL::Renderer::Feature::Blending);
+        GL::Renderer::setDepthFunction(GL::Renderer::DepthFunction::Less);
+    }
+
 
     if(recording) {
-#ifdef PHASEFIELD_WITH_FFMPEG
+#ifdef PHASEFIELD_WITH_IO
         Mg::Image2D image = GL::defaultFramebuffer.read({{},framebufferSize()}, {GL::PixelFormat::RGBA, Mg::GL::PixelType::UnsignedByte});
         videoSaver.appendFrame(std::move(image));
 #endif
@@ -1239,12 +1355,14 @@ void Viewer::drawEvent() {
 
     /* draw ImGui stuff */
     ImGui::PushItemWidth(150);
-    //drawSubdivisionOptions();
+
     drawBrushOptions();
     drawOptimizationOptions();
     drawVisualizationOptions();
     drawIO();
-    drawErrorPlot();
+    if(showPlot)
+        drawErrorPlot();
+
     ImGui::PopItemWidth();
 
     imgui.updateApplicationCursor(*this);
@@ -1286,8 +1404,7 @@ Viewer::~Viewer() {
 }
 
 void Viewer::drawErrorPlot() {
-    bool opened;
-    ImGui::Begin("ImPlot Demo", &opened, ImGuiWindowFlags_MenuBar);
+    ImGui::Begin("Optimization Error", &showPlot, ImGuiWindowFlags_MenuBar);
 
     size_t objectiveCount = problem.objectives.size();
 
@@ -1296,6 +1413,40 @@ void Viewer::drawErrorPlot() {
     if (ImGui::Button("Clear", ImVec2(100,0))) {
         t = 0;
         for(auto& buffer : data) buffer.clear();
+    }
+
+    ImGui::SameLine();
+
+    if(ImGui::Button("Save Tex plot", ImVec2(100, 0))) {
+        if(data.size() != problem.objectives.size()) {
+
+            std::string plot = "\\begin{tikzpicture}\n"
+                               "\\begin{axis}[\n"
+                               "height=9cm,\n"
+                               "width=9cm,\n"
+                               "grid=major,\n"
+                               "]\n";
+
+            size_t sampleCouunt = data.front().size();
+            size_t step = Math::max(sampleCouunt/50, 1ul);
+            for(size_t k = 0; k < data.size(); ++k) {
+                plot += "\n\\addplot coordinates {\n";
+                for(size_t j = 0; j < data[k].size(); j += step) {
+                    plot += Cr::Utility::formatString("({},{})\n", j, data[k].data[j].y());
+                }
+                plot += "};\n";
+                plot += Cr::Utility::formatString("\\addlegendentry{{ {} }}",
+                                                  FunctionalType::to_string(problem.objectives[k].functionalType));
+            }
+            plot += "\n\\end{axis}\n"
+                    "\\end{tikzpicture}";
+
+            FILE* fp = fopen("/tmp/plot.tex", "w");
+            if(fp != nullptr) {
+                fputs(plot.data(), fp);
+                fclose(fp);
+            }
+        }
     }
 
 
@@ -1319,5 +1470,16 @@ void Viewer::drawErrorPlot() {
     }
     ImGui::End();
 }
+
+void Viewer::drawMeshEdit() {
+    if(ImGui::TreeNode("Mesh Editor")) {
+
+
+
+
+        ImGui::TreePop();
+    }
+}
+
 
 }

@@ -1,4 +1,5 @@
-corrade_add_resource(Viewer_RESOURCES resources.conf)
+corrade_add_resource(Viewer_Rsc resources.conf)
+corrade_add_resource(Experiments_Rsc data/resources.conf)
 add_library(Viewer STATIC
         Viewer.cpp
         Viewer.h
@@ -6,9 +7,11 @@ add_library(Viewer STATIC
         ArcBall.h
         KDTree.h
         KDTree.cpp
-        DepthReinterpretShader.cpp
-        DepthReinterpretShader.h
-        ${viewer_RESOURCES})
+        Bvh.cpp
+        Bvh.h
+        ${Viewer_Rsc}
+        ${Experiments_Rsc}
+        )
 
 target_include_directories(Viewer PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
@@ -27,22 +30,22 @@ target_link_libraries(Viewer
             Magnum::Application
             Magnum::Shaders
             Magnum::DebugTools
-            MagnumPlugins::PrimitiveImporter
             MagnumIntegration::ImGui
+            MagnumPlugins::StanfordImporter
             ImPlot::ImPlot
-            FastBVH::FastBVH
+            bvh
         )
 
 add_library(Phasefield::Viewer ALIAS Viewer)
 
-if (PHASEFIELD_WITH_ASSIMP)
-    target_link_libraries(Viewer PUBLIC  MagnumPlugins::AssimpImporter)
-    target_link_libraries(Viewer PUBLIC  MagnumPlugins::StanfordSceneConverter)
-    target_link_libraries(Viewer PRIVATE VTK::CommonCore VTK::CommonDataModel VTK::IOXML)
-    target_compile_definitions(Viewer PUBLIC PHASEFIELD_WITH_ASSIMP)
+if (PHASEFIELD_WITH_IO)
+    target_link_libraries(Viewer PUBLIC
+            MagnumPlugins::AssimpImporter
+            MagnumPlugins::StanfordSceneConverter
+            VTK::CommonCore
+            VTK::CommonDataModel
+            VTK::IOXML
+            Phasefield::VideoSaver)
+    target_compile_definitions(Viewer PUBLIC PHASEFIELD_WITH_IO)
 endif ()
 
-if (PHASEFIELD_WITH_FFMPEG)
-    target_link_libraries(Viewer PUBLIC Phasefield::VideoSaver)
-    target_compile_definitions(Viewer PUBLIC PHASEFIELD_WITH_FFMPEG)
-endif()

@@ -69,6 +69,8 @@ struct Vertex {
 
     [[nodiscard]] size_t degree() const;
 
+    [[nodiscard]] size_t computeDegree() const;
+
     [[nodiscard]] HalfEdge halfEdge() const;
 
     [[nodiscard]] VertexCornerRange corners() const;
@@ -119,7 +121,11 @@ struct Face {
 
     [[nodiscard]] Vector3d normal() const;
 
+    [[nodiscard]] Vector3 computeNormal() const;
+
     [[nodiscard]] double diameter() const;
+
+    [[nodiscard]] bool isTriangle() const;
 
     [[nodiscard]] StaticArray<3, Vector3> positions() const;
 
@@ -150,6 +156,10 @@ struct Edge {
 
     [[nodiscard]] DualEdge dualEdge() const;
 
+    [[nodiscard]] double length() const;
+
+    [[nodiscard]] bool onBoundaryLoop() const;
+
     [[nodiscard]] explicit operator bool() const { return idx != Invalid; }
 };
 
@@ -170,6 +180,8 @@ struct Corner {
     [[nodiscard]] Face face() const;
 
     [[nodiscard]] Radd angle() const;
+
+    [[nodiscard]] Rad computeAngle() const;
 
     [[nodiscard]] HalfEdge halfEdge() const;
 

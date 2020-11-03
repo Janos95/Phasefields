@@ -2,8 +2,7 @@
 // Created by janos on 9/9/20.
 //
 
-#ifndef PHASEFIELD_SERIALIZE_H
-#define PHASEFIELD_SERIALIZE_H
+#pragma once
 
 #include "Types.h"
 #include <Corrade/Containers/GrowableArray.h>
@@ -22,4 +21,3 @@ T deserializeTrivial(const char*& pc) {
     return t;
 }
 
-#endif //PHASEFIELD_SERIALIZE_H

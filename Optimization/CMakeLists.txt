@@ -15,6 +15,8 @@ add_library(Optimization STATIC
         RecursiveProblem.cpp
         Tree.h
         Tree.cpp
+        LbfgsSolver.cpp
+        LbfgsSolver.h
         )
 
 target_include_directories(Optimization PUBLIC

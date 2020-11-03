@@ -19,6 +19,7 @@ using Magnum::UnsignedByte;
 
 using Magnum::Vector3;
 using Magnum::Vector2;
+using Magnum::Vector2d;
 using Magnum::Vector2i;
 using Magnum::Vector2ui;
 using Magnum::Vector3ub;

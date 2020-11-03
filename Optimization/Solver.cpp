@@ -8,6 +8,7 @@
 #include "RecursiveProblem.h"
 #include "SparseMatrix.h"
 #include "FunctionRef.h"
+#include "LbfgsSolver.h"
 
 #ifdef PHASEFIELD_WITH_CERES
 
@@ -357,6 +358,9 @@ ceres::LineSearchDirectionType mapLineSearchType(Solver::LineSearchDirection::Va
 struct lbfgs_data {
     Solver::RecursiveProblem& problem;
     Solver::Options& options;
+
+    LbfgsSolver& solver;
+    ArrayView<double> copy;
 };
 
 static lbfgsfloatval_t evaluate(
@@ -387,6 +391,23 @@ static int progress(
         int ls
 )
 {
+    auto& pollingSolver = reinterpret_cast<lbfgs_data*>(instance)->solver;
+    auto copy = reinterpret_cast<lbfgs_data*>(instance)->copy;
+
+    pollingSolver.runOneIteration();
+    double normSq = 0;
+    double copySq = 0;
+    double solutionSq = 0;
+    for(int i = 0; i < n; ++i) {
+        normSq += (x[i] - copy[i])*(x[i] - copy[i]);
+        copySq += copy[i]*copy[i];
+        solutionSq += x[i]*x[i];
+    }
+
+    Debug{} << "Diff. bet. polling and callback-optimizer" << normSq;
+    Debug{} << "Polling solution norm sq" << copySq;
+    Debug{} << "solution norm sq" << solutionSq;
+
     auto& options = reinterpret_cast<lbfgs_data*>(instance)->options;
     Solver::IterationSummary solverSummary; /* dummy variable */
     bool goOn = true;
@@ -459,14 +480,20 @@ void solve(Solver::Options& options, Solver::RecursiveProblem& problem, ArrayVie
         /* Initialize the parameters for the L-BFGS optimization. */
         lbfgs_parameter_init(&param);
         param.epsilon = 1e-10;
-        param.ftol = 1e-12;
+        param.ftol = 1e-10;
         param.max_iterations = options.max_num_iterations;
+        param.xtol = std::numeric_limits<double>::epsilon();
+        param.delta = 1e-10;
 
         /*
             Start the L-BFGS optimization; this will invoke the callback functions
             evaluate() and progress() when necessary.
          */
-        lbfgs_data instance{problem, options};
+        Array<double> copy(NoInit, n);
+        Cr::Utility::copy(params, copy);
+        LbfgsSolver solver(options, problem, copy);
+        lbfgs_data instance{problem, options, solver, copy};
+
         ret = lbfgs(n, problem.nodeToOptimize.phasefield().data(), &fx, evaluate, progress, &instance, &param);
 
         /* Report the result, on user failure this report tolerance reached ??. */

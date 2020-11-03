@@ -65,7 +65,7 @@ struct VisualizationProxy {
     UniqueFunction<void(Node)> drawCb;
     UniqueFunction<void()> releaseCb;
 
-    VisOption::Value option;
+    VisOption::Value option = VisOption::Phasefield;
 
     bool customMapping = false;
     double scale = 1;

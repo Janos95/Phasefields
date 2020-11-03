@@ -107,6 +107,7 @@ struct Tree {
     //void subdivide(Containers::Array<Mg::UnsignedInt>& indices, Containers::Array<Vector3d>& vertices);
 
     //void remove(Node node);
+    StridedArrayView2D<double> phasefields();
 
     Node insertNodeAtIndex(size_t idx);
 
@@ -134,7 +135,7 @@ struct Tree {
 
     void serialize(Array<char>& data) const;
 
-    static Tree deserialize(Array<char> const& data, Mesh& m);
+    static Tree deserialize(ArrayView<const char> const& data, Mesh& m);
 };
 
 template<int IteratorType>

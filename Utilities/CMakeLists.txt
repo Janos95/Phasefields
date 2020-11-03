@@ -1,9 +1,6 @@
 add_library(Utilities
         UniqueFunction.h
-        detail/pointer_union.h
-        detail/pointer_int_pair.h
-        detail/pointer_like_type_traits.h
-        SharedRessource.h
+        SharedPointer.h
         FunctionRef.h
         SmartEnum.h
         StlAlgorithm.h
@@ -14,6 +11,9 @@ add_library(Utilities
         CircularBuffer.h
         SparseMatrix.cpp
         SparseMatrix.h
+        Utility.h
+        Traits.h
+        Algorithms.h
         )
 
 target_include_directories(Utilities PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

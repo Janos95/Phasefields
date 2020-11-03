@@ -85,6 +85,13 @@ VertexEdgeRange Vertex::edges() const { return {{.he = halfEdge()}, {.he = halfE
 
 bool Vertex::onBoundary() const { return mesh->isOnBoundary[*this]; }
 
+size_t Vertex::computeDegree() const {
+    size_t count = 0;
+    for(Vertex v : adjacentVertices())
+        count++;
+    return count;
+}
+
 Debug& operator<<(Debug& debug, Vertex const& v) {
     char buffer[100];
     sprintf(buffer, "Vertex %zu", v.idx);
@@ -129,6 +136,25 @@ StaticArray<3, Vector3> Face::positions() const {
     return pos;
 }
 
+Vector3 Face::computeNormal() const {
+    size_t i = 0;
+    Vector3 positions[3];
+    for(Vertex v : vertices()) positions[i++] = v.position();
+
+    Vector3 side1 = positions[2] - positions[0];
+    Vector3 side2 = positions[1] - positions[0];
+    Vector3 normal = Math::cross(side1, side2);
+
+    return normal;
+}
+
+bool Face::isTriangle() const {
+    HalfEdge he = halfEdge();
+    HalfEdge it = he;
+    for(size_t i = 0; i < 3; ++i)
+        it = it.next();
+    return it == he;
+}
 
 
 Debug& operator<<(Debug& debug, Face const& f) {
@@ -164,6 +190,10 @@ Vertex Edge::otherVertex(Vertex v) const {
     return vertex1();
 }
 
+double Edge::length() const { return halfEdge().asVector().length(); }
+
+bool Edge::onBoundaryLoop() const { return halfEdge().onBoundaryLoop(); }
+
 Debug& operator<<(Debug& debug, Edge const& e) {
     char buffer[100];
     sprintf(buffer, "Edge {%zu, %zu}", e.vertex1().idx, e.vertex2().idx);
@@ -184,6 +214,8 @@ Face Corner::face() const { return halfEdge().face(); }
 Radd Corner::angle() const { return mesh->angle[*this]; }
 
 HalfEdge Corner::halfEdge() const { return HalfEdge{idx, mesh}; }
+
+Rad Corner::computeAngle() const { return Mg::Math::angle(side1().direction().normalized(), side2().direction().normalized()); }
 
 Debug& operator<<(Debug& debug, Corner const& c) {
     char buffer[100];

@@ -5,6 +5,7 @@
     <mapping directory="$PROJECT_DIR$/contrib/Fast-BVH" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/contrib/L" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/contrib/LBFGSpp" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/contrib/bvh" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/contrib/corrade" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/contrib/imgui" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/contrib/implot" vcs="Git" />

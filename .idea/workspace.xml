@@ -5,6 +5,7 @@
       <config projectName="Phasefield" targetName="MagnumGLObjects" />
       <config projectName="Phasefield" targetName="Phasefield" />
       <config projectName="Phasefield" targetName="AssimpImporter-dependencies" />
+      <config projectName="Phasefield" targetName="Experiments_Rsc-dependencies" />
       <config projectName="Phasefield" targetName="MagnumAnimation" />
       <config projectName="Phasefield" targetName="MagnumSceneGraph" />
       <config projectName="Phasefield" targetName="MagnumImGuiIntegration" />
@@ -14,12 +15,11 @@
       <config projectName="Phasefield" targetName="VisualizationProxy" />
       <config projectName="Phasefield" targetName="MagnumMeshToolsObjects" />
       <config projectName="Phasefield" targetName="Cost" />
-      <config projectName="Phasefield" targetName="lbfgs_lib" />
       <config projectName="Phasefield" targetName="ScopedTimer" />
+      <config projectName="Phasefield" targetName="lbfgs_lib" />
       <config projectName="Phasefield" targetName="MagnumDebugToolsObjects" />
       <config projectName="Phasefield" targetName="corrade-rc" />
-      <config projectName="Phasefield" targetName="PrimitiveImporter" />
-      <config projectName="Phasefield" targetName="PrimitiveImporter-dependencies" />
+      <config projectName="Phasefield" targetName="StanfordImporter-dependencies" />
       <config projectName="Phasefield" targetName="MagnumTrade" />
       <config projectName="Phasefield" targetName="MagnumDebugTools" />
       <config projectName="Phasefield" targetName="CorradeInterconnect" />
@@ -31,8 +31,8 @@
       <config projectName="Phasefield" targetName="AssimpImporter" />
       <config projectName="Phasefield" targetName="MagnumTextureTools_RCS-dependencies" />
       <config projectName="Phasefield" targetName="MagnumText" />
-      <config projectName="Phasefield" targetName="MagnumMathAlgorithms" />
       <config projectName="Phasefield" targetName="StanfordSceneConverter" />
+      <config projectName="Phasefield" targetName="MagnumMathAlgorithms" />
       <config projectName="Phasefield" targetName="MagnumSdl2Application" />
       <config projectName="Phasefield" targetName="MagnumGlxContextObjects" />
       <config projectName="Phasefield" targetName="MagnumMathObjects" />
@@ -42,7 +42,6 @@
       <config projectName="Phasefield" targetName="MagnumGL" />
       <config projectName="Phasefield" targetName="CorradeUtility" />
       <config projectName="Phasefield" targetName="AnyImageImporter" />
-      <config projectName="Phasefield" targetName="Viewer_RESOURCES-dependencies" />
       <config projectName="Phasefield" targetName="MagnumPrimitives" />
       <config projectName="Phasefield" targetName="MagnumShaders" />
       <config projectName="Phasefield" targetName="Corrade" />
@@ -50,8 +49,10 @@
       <config projectName="Phasefield" targetName="MagnumSceneGraphObjects" />
       <config projectName="Phasefield" targetName="MagnumTextureTools" />
       <config projectName="Phasefield" targetName="MagnumMeshTools" />
+      <config projectName="Phasefield" targetName="StanfordImporter" />
       <config projectName="Phasefield" targetName="Viewer" />
       <config projectName="Phasefield" targetName="Visualization" />
+      <config projectName="Phasefield" targetName="Viewer_Rsc-dependencies" />
       <config projectName="Phasefield" targetName="MagnumMath" />
       <config projectName="Phasefield" targetName="CorradeContainers-headers" />
       <config projectName="Phasefield" targetName="MagnumTradeObjects" />
@@ -61,8 +62,8 @@
       <config projectName="Phasefield" targetName="Utilities" />
       <config projectName="Phasefield" targetName="Magnum" />
       <config projectName="Phasefield" targetName="MagnumObjects" />
-      <config projectName="Phasefield" targetName="MagnumPlatformObjects" />
       <config projectName="Phasefield" targetName="CorradePluginManager" />
+      <config projectName="Phasefield" targetName="MagnumPlatformObjects" />
     </generated>
   </component>
   <component name="CMakeSettings">
@@ -72,19 +73,60 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bd8fd83c-0dbd-43c4-895d-0b5ef02c9565" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/Viewer/CoolWarm.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Cost/EigenHelper.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Optimization/LbfgsSolver.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Optimization/LbfgsSolver.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Utilities/Algorithms.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Utilities/Traits.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Utilities/Utility.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/contrib/bvh" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cost/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cost/DiffuseYamabe.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/DiffuseYamabe.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cost/DiffuseYamabe.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/DiffuseYamabe.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/ModicaMortola.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/ModicaMortola.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Mesh/FEM.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/FEM.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/CatmullClark.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/CatmullClark.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Mesh/FastMarchingMethod.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/FastMarchingMethod.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Mesh/Mesh.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/Mesh.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Mesh/Mesh.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/Mesh.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Mesh/MeshElements.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/MeshElements.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Mesh/MeshElements.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/MeshElements.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Mesh/MeshFeature.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/MeshFeature.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Mesh/MeshFeature.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/MeshFeature.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/Functional.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Functional.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/Functional.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Functional.hpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/Solver.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Solver.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/Tree.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Tree.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/Tree.h" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Tree.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utilities/Allocate.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/Allocate.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utilities/C1Functions.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/C1Functions.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utilities/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utilities/FunctionRef.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/FunctionRef.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utilities/Serialize.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/Serialize.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utilities/SharedRessource.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/SharedPointer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utilities/Types.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/Types.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utilities/UniqueFunction.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/UniqueFunction.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utilities/detail/pointer_int_pair.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utilities/detail/pointer_like_type_traits.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Utilities/detail/pointer_union.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/ArcBall.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/ArcBall.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/ArcBall.h" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/ArcBall.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/Bvh.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Bvh.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/Bvh.h" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Bvh.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/DepthReinterpretShader.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/DepthReinterpretShader.frag" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/DepthReinterpretShader.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/DepthReinterpretShader.vert" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Viewer/Viewer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Viewer.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/Viewer.h" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Viewer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/resources.conf" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/resources.conf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Visualization/VisualizationProxy.h" beforeDir="false" afterPath="$PROJECT_DIR$/Visualization/VisualizationProxy.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/contrib/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/contrib/Fast-BVH" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/contrib/imgui" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/imgui" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/contrib/imgui/imconfig.h" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/imgui/imconfig.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/contrib/magnum" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/magnum" afterDir="false" />
@@ -116,7 +158,7 @@
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="cf.advertisement.text.has.clang-format" value="true" />
     <property name="cf.first.check.clang-format" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../wonderland-engine" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="settings.editor.selected.configurable" value="CMakeSettings" />
   </component>
   <component name="RunManager" selected="CMake Application.Phasefield">
@@ -186,6 +228,11 @@
       </method>
     </configuration>
     <configuration name="Cost" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Cost" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Experiments_Rsc-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Experiments_Rsc-dependencies" CONFIG_NAME="Debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -355,17 +402,17 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="PrimitiveImporter-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="PrimitiveImporter-dependencies" CONFIG_NAME="Debug">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="PrimitiveImporter" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="PrimitiveImporter" CONFIG_NAME="Debug">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="ScopedTimer" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="ScopedTimer" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="StanfordImporter-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="StanfordImporter-dependencies" CONFIG_NAME="Debug">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="StanfordImporter" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="StanfordImporter" CONFIG_NAME="Debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -395,7 +442,7 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="Viewer_RESOURCES-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Viewer_RESOURCES-dependencies" CONFIG_NAME="Debug">
+    <configuration name="Viewer_Rsc-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Viewer_Rsc-dependencies" CONFIG_NAME="Debug">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -445,6 +492,7 @@
       <item itemvalue="CMake Application.CorradeUtility" />
       <item itemvalue="CMake Application.Corrade" />
       <item itemvalue="CMake Application.Cost" />
+      <item itemvalue="CMake Application.Experiments_Rsc-dependencies" />
       <item itemvalue="CMake Application.MagnumAnimation" />
       <item itemvalue="CMake Application.MagnumDebugToolsObjects" />
       <item itemvalue="CMake Application.MagnumDebugTools" />
@@ -478,15 +526,15 @@
       <item itemvalue="CMake Application.Mesh" />
       <item itemvalue="CMake Application.Optimization" />
       <item itemvalue="CMake Application.Phasefield" />
-      <item itemvalue="CMake Application.PrimitiveImporter-dependencies" />
-      <item itemvalue="CMake Application.PrimitiveImporter" />
       <item itemvalue="CMake Application.ScopedTimer" />
+      <item itemvalue="CMake Application.StanfordImporter-dependencies" />
+      <item itemvalue="CMake Application.StanfordImporter" />
       <item itemvalue="CMake Application.StanfordSceneConverter-dependencies" />
       <item itemvalue="CMake Application.StanfordSceneConverter" />
       <item itemvalue="CMake Application.Utilities" />
       <item itemvalue="CMake Application.VideoSaver" />
       <item itemvalue="CMake Application.Viewer" />
-      <item itemvalue="CMake Application.Viewer_RESOURCES-dependencies" />
+      <item itemvalue="CMake Application.Viewer_Rsc-dependencies" />
       <item itemvalue="CMake Application.VisualizationProxy" />
       <item itemvalue="CMake Application.Visualization" />
       <item itemvalue="CMake Application.corrade-rc" />
@@ -522,7 +570,29 @@
       <workItem from="1602938959720" duration="11937000" />
       <workItem from="1603017036977" duration="2125000" />
       <workItem from="1603020041404" duration="34231000" />
+      <workItem from="1603101787327" duration="10253000" />
+      <workItem from="1603295573921" duration="15869000" />
+      <workItem from="1603356723826" duration="8246000" />
+      <workItem from="1603450239292" duration="19111000" />
+      <workItem from="1603569985954" duration="1204000" />
+      <workItem from="1603625473768" duration="19096000" />
+      <workItem from="1603702429948" duration="21541000" />
+      <workItem from="1603888728618" duration="39000" />
+      <workItem from="1603888782854" duration="16000" />
+      <workItem from="1603888805630" duration="284000" />
+      <workItem from="1604240658745" duration="3243000" />
+      <workItem from="1604245614636" duration="5213000" />
+      <workItem from="1604320984321" duration="8272000" />
+      <workItem from="1604358004774" duration="6317000" />
+      <workItem from="1604404542829" duration="11907000" />
     </task>
     <servers />
+  </component>
+  <component name="XDebuggerManager">
+    <watches-manager>
+      <configuration name="CMakeRunConfiguration">
+        <watch expression="x" />
+      </configuration>
+    </watches-manager>
   </component>
 </project>

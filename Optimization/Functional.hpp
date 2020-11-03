@@ -67,7 +67,7 @@ Functional::Functional(F f): tag(getTag()) {
 #endif
 
     /* mandatory */
-    erased = ::allocate_buffer(sizeof(F), alignof(F));
+    erased = allocate_buffer(sizeof(F), alignof(F));
     ::new(erased) F(std::move(f));
 
 

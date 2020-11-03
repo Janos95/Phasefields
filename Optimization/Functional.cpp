@@ -33,8 +33,6 @@ Functional::~Functional() {
     }
 }
 
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "openmp-use-default-none"
 void Functional::operator()(ArrayView<const double> parameters,
                             ArrayView<const double> weights,
                             double& out,
@@ -126,7 +124,6 @@ void Functional::operator()(ArrayView<const double> parameters,
 #endif
 
 }
-#pragma clang diagnostic pop
 
 void Functional::drawImGuiOptions(VisualizationProxy& proxy) {
 

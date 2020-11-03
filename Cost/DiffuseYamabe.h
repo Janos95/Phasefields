@@ -16,15 +16,14 @@ SMART_ENUM(EnergyType, size_t, Dirichlet, Hencky);
 
 struct DiffuseYamabe {
 
-
-    explicit DiffuseYamabe(Mesh& m);
+    explicit DiffuseYamabe(Mesh& mesh);
 
     template<class Scalar>
     void operator()(ArrayView<const Scalar> parameters,
-                    ArrayView<const Scalar> weights,
+                    [[maybe_unused]] ArrayView<const Scalar> weights,
                     Scalar& out,
                     ArrayView<Scalar> gradP,
-                    ArrayView<Scalar> gradW);
+                    [[maybe_unused]] ArrayView<Scalar> gradW);
 
     [[nodiscard]] size_t numParameters() const;
 
@@ -36,6 +35,7 @@ struct DiffuseYamabe {
     bool drawSolutionGradient = false;
     bool curvatureRescaling = false;
     double lambdaWeight = 1;
+    double* scaling = nullptr;
 
     Mesh& mesh;
 

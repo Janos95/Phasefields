@@ -6,6 +6,7 @@
 #include "Mesh.h"
 #include "C1Functions.h"
 #include "Bfs.h"
+#include "Bvh.h"
 
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Containers/GrowableArray.h>
@@ -50,7 +51,6 @@ Node Node::addChild(bool left, Node* n) {
             break;
         i++;
     }
-
 
     Node child = tree->insertNodeAtIndex(i);
 
@@ -163,70 +163,6 @@ Debug& operator<<(Debug& debug, Node const& n) {
 
 Tree::Tree(Mesh& m) : mesh(&m), nodeData(1), numLeafs(1) { mesh->requireFaceInformation(); }
 
-//void Tree::subdivide(Containers::Array<UnsignedInt>& indices, Containers::Array<Vector3d>& vertices) {
-//
-//    std::unordered_map<Edge, int, EdgeHash> edgeMap(indices.size());
-//
-//    const auto pfs = phasefields();
-//    Containers::Array<Containers::Array<double>> interpolated(phasefieldCount());
-//
-//    const auto vertexOffset = vertices.size();
-//    int edgeCount = 0;
-//
-//    const std::size_t indexCount = indices.size();
-//
-//    for(std::size_t i = 0; i < indexCount; i += 3) {
-//        UnsignedInt newVertices[3];
-//        for(int j = 0; j < 3; ++j) {
-//            const auto v1 = indices[i + j], v2 = indices[i + (j + 1)%3];
-//            const auto[it, inserted] = edgeMap.try_emplace(Edge{v1, v2}, vertexOffset + edgeCount);
-//            newVertices[j] = it->second;
-//            if(inserted) {
-//                Containers::arrayAppend(vertices, 0.5*(vertices[v1] + vertices[v2]));
-//                for(std::size_t k = 0; k < phasefieldCount(); ++k) {
-//                    Containers::arrayAppend(interpolated[k], 0.5*(pfs[j][v1] + pfs[j][v2]));
-//                }
-//                ++edgeCount;
-//            }
-//        }
-//
-//        /*
-//            Add three new faces (0, 1, 3) and update original (2)
-//
-//                          orig 0
-//                          /   \
-//                         /  0  \
-//                        /       \
-//                    new 0 ----- new 2
-//                    /   \       /  \
-//                   /  1  \  2  / 3  \
-//                  /       \   /      \
-//             orig 1 ----- new 1 ---- orig 2
-//        */
-//        Containers::arrayAppend(indices, {
-//                indices[i], newVertices[0], newVertices[2],
-//                newVertices[0], indices[i + 1], newVertices[1],
-//                newVertices[2], newVertices[1], indices[i + 2]});
-//
-//        for(std::size_t j = 0; j != 3; ++j)
-//            indices[i + j] = newVertices[j];
-//    }
-//
-//    /* flatten everything */
-//    Containers::Array<double> data(phasefieldCount()*vertices.size());
-//    Containers::StridedArrayView2D<double> phasefieldsNew(phasefieldData, {phasefieldCount(), vertices.size()});
-//    for(std::size_t i = 0; i < phasefieldCount(); ++i) {
-//        Utility::copy(pfs[i], phasefieldsNew[i].prefix(phasefieldSize));
-//        Utility::copy(interpolated[i], phasefieldsNew[i].slice(phasefieldSize, vertices.size()));
-//    }
-//
-//    /* mutate tree structure */
-//    phasefieldData = std::move(data);
-//    Containers::arrayResize(tempsData, phasefieldData.size());
-//    phasefieldSize = vertices.size();
-//}
-
-
 void Tree::update() {
     size_t n = mesh->vertexCount();
     size_t min = Math::min(n, phasefieldData.size()/nodeCount());
@@ -243,6 +179,7 @@ void Tree::update() {
 
     arrayResize(tempsData, data.size());
     phasefieldData = std::move(data);
+
 }
 
 Node Tree::insertNodeAtIndex(size_t idx) {
@@ -296,7 +233,7 @@ void Tree::serialize(Array<char>& data) const {
     arrayAppend(data, arrayCast<char>(nodeData));
 }
 
-Tree Tree::deserialize(Array<char> const& data, Mesh& m) {
+Tree Tree::deserialize(ArrayView<const char> const& data, Mesh& m) {
     Tree t{m};
     char const* pc = data;
     auto dataSize = deserializeTrivial<size_t>(pc);
@@ -424,5 +361,7 @@ void Tree::computeLeafWeights() {
         }
     }
 }
+
+StridedArrayView2D<double> Tree::phasefields() { return {phasefieldData, {nodeCount(), vertexCount()}}; }
 
 }

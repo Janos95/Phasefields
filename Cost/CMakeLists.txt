@@ -13,6 +13,8 @@ add_library(Cost STATIC
         UnionFind.h
         DiffuseYamabe.cpp
         DiffuseYamabe.h
+        LinearizedElasticity.cpp
+        LinearizedElasticity.h
         )
 
 target_include_directories(Cost PUBLIC

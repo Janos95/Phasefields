@@ -13,7 +13,7 @@
 #include <cassert>
 
 template<class T>
-struct SharedRessource {
+struct SharedPointer {
 
     static_assert(std::is_trivial_v<T>, "Shared Ressource : T needs to be trivial");
     struct Block {
@@ -22,28 +22,28 @@ struct SharedRessource {
     };
     Block* data = nullptr;
 
-    SharedRessource(std::nullptr_t) : data(nullptr) {}
+    SharedPointer(std::nullptr_t) : data(nullptr) {}
 
-    explicit SharedRessource(T const& x) {
+    explicit SharedPointer(T const& x) {
         data = (Block*) std::malloc(sizeof(Block));
         std::memcpy(&data->x, &x, sizeof(T));
         data->refCount = 1;
     }
 
-    SharedRessource& operator=(SharedRessource other) noexcept {
+    SharedPointer& operator=(SharedPointer other) noexcept {
         other.swap(*this);
         return *this;
     }
 
-    SharedRessource(SharedRessource const& other) noexcept: data(other.data) {
+    SharedPointer(SharedPointer const& other) noexcept: data(other.data) {
         ++(data->refCount);
     }
 
-    SharedRessource(SharedRessource&& other) noexcept: data(other.data) {
+    SharedPointer(SharedPointer&& other) noexcept: data(other.data) {
         other.data = nullptr;
     }
 
-    void swap(SharedRessource& other) {
+    void swap(SharedPointer& other) {
         auto temp = other.data;
         other.data = data;
         data = temp;
@@ -61,7 +61,7 @@ struct SharedRessource {
 
     int refCount() { return data->refCount; }
 
-    ~SharedRessource() {
+    ~SharedPointer() {
         if(!data) return;
         assert(data->refCount);
         if(!(--(data->refCount)))

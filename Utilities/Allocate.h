@@ -6,6 +6,8 @@
 
 #include <new>
 
+namespace Phasefield {
+
 inline void* allocate_buffer(size_t Size, size_t Alignment) {
     return ::operator new(Size
 #ifdef __cpp_aligned_new
@@ -28,3 +30,8 @@ inline void deallocate_buffer(void* Ptr, size_t Size, size_t Alignment) {
 #endif
     );
 }
+
+
+
+}
+

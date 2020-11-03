@@ -107,6 +107,18 @@ struct QuadraticChi {
     }
 };
 
+struct QuadraticChiMirrored {
+    template<class T>
+    constexpr T eval(T x) const {
+        return 0.25*(x-1)*(x-1);
+    }
+
+    template<class T>
+    constexpr T grad(T x) const {
+        return 0.5*(x - 1);
+    }
+};
+
 struct DoubleWell {
     template<typename T>
     auto eval(const T x) const {

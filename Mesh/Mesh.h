@@ -95,10 +95,23 @@ public:
     }
 
     using Array<T>::Array;
+
     operator MeshDataView<E, T>() {
         auto* p = reinterpret_cast<Array<T>*>(this);
         ArrayView<T> view = *p;
         return view;
+    }
+
+    static constexpr bool HasConst = std::is_const_v<T>;
+
+    operator ArrayView<T>() {
+        auto* p = reinterpret_cast<Array<T>*>(this);
+        return *p;
+    }
+
+    operator ArrayView<const T>() requires (!HasConst) {
+        auto* p = reinterpret_cast<Array<T>*>(this);
+        return *p;
     }
 };
 
@@ -115,6 +128,16 @@ public:
      ~Mesh();
 
     explicit Mesh(Mg::Trade::MeshData const& meshData);
+
+    /**
+     * Copying is not allowed. Use the clone method instead to be more
+     * explicit.
+     */
+    Mesh(Mesh const&) = delete;
+    Mesh& operator=(Mesh const&) = delete;
+
+    Mesh(Mesh&&) noexcept = default;
+    Mesh& operator=(Mesh&&) noexcept = default;
 
     void setFromData(Mg::Trade::MeshData const& meshData);
 
@@ -184,6 +207,46 @@ public:
 
     DualEdgeSet dualEdges();
 
+    /**
+     * Flips the edge, if the edge is not on the boundary loop.
+     * The Edge is NOT invalidated, so it can be safely reused.
+     */
+    void flip(Edge);
+
+    /**
+     * Splits an edge. This does not invalidate the edge, but
+     * the edge now references one of edges resulting from the split.
+     */
+    HalfEdge split(Edge);
+
+    HalfEdge insertVertexAlongEdge(Edge);
+
+    void connectVertices(HalfEdge, HalfEdge);
+
+    void collapse(Edge);
+
+    void loopSubdivide();
+
+    void catmullClark();
+
+    void isotropicRemeshing();
+
+    void triangulate();
+
+    void triangulate(Face f);
+
+    void generateFaceList();
+
+    void computeVertexNormals();
+
+    //Mesh clone();
+
+    Vertex makeVertex();
+
+    Face makeFace();
+
+    void compress();
+
     void uploadVertexBuffer(Mg::GL::Buffer& vertexBuffer) const;
 
     void uploadIndexBuffer(Mg::GL::Buffer& indexBuffer) const;
@@ -204,17 +267,21 @@ public:
 
     [[nodiscard]] StridedArrayView1D<Color4> colors();
 
-    [[nodiscard]] Color4 const& color(Vertex const&) const;
-
     [[nodiscard]] Color4& color(Vertex const&);
 
     [[nodiscard]] Float& scalar(Vertex const&);
+
+    [[nodiscard]] Vector3& position(Vertex const&);
+
+    [[nodiscard]] Vector3& normal(Vertex const&);
 
     [[nodiscard]] StridedArrayView1D<const Vector2> textureCoordinates() const;
 
     [[nodiscard]] StridedArrayView1D<Vector2> textureCoordinates();
 
     [[nodiscard]] ArrayView<const Vector3ui> triangels() const;
+
+    [[nodiscard]] ArrayView<const UnsignedInt> indices() const;
 
     void update();
 
@@ -250,15 +317,14 @@ protected:
     Array<Implementation::Attributes> m_attributes;
     Array<UnsignedInt> m_indices;
 
-    Array<Implementation::HalfEdge> m_halfEdges;
-    Array<UnsignedInt> m_faceHalfEdge;
-    Array<UnsignedInt> m_vertexHalfEdge;
+    HalfEdgeData<Implementation::HalfEdge> m_halfEdges;
+    FaceData<UnsignedInt> m_faceHalfEdge;
+    VertexData<UnsignedInt> m_vertexHalfEdge;
 
+    size_t m_halfEdgeCount = 0;
     size_t m_faceCount = 0;
     size_t m_vertexCount = 0;
-    size_t m_edgeCount = 0;
-    size_t m_halfEdgeCount = 0;
-    size_t m_cornerCount = 0;
+
     size_t m_dualEdgeCount = 0;
 
     Array<MeshFeature*> m_features;
