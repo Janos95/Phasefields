@@ -73,66 +73,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bd8fd83c-0dbd-43c4-895d-0b5ef02c9565" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/Cost/EigenHelper.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Optimization/LbfgsSolver.cpp" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Optimization/LbfgsSolver.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Utilities/Algorithms.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Utilities/Traits.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Utilities/Utility.h" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/contrib/bvh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/DiffuseYamabe.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/DiffuseYamabe.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/DiffuseYamabe.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/DiffuseYamabe.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Mesh/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Mesh/CatmullClark.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Mesh/CatmullClark.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Mesh/FastMarchingMethod.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/FastMarchingMethod.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Mesh/Mesh.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/Mesh.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Mesh/Mesh.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/Mesh.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Mesh/MeshElements.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/MeshElements.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Mesh/MeshElements.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/MeshElements.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/Functional.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Functional.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/Functional.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Functional.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/Solver.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Solver.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/Tree.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Tree.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/Tree.h" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Tree.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/Allocate.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/Allocate.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/C1Functions.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/C1Functions.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/FunctionRef.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/FunctionRef.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/Serialize.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/Serialize.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/SharedRessource.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/SharedPointer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/Types.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/Types.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/UniqueFunction.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/UniqueFunction.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/detail/pointer_int_pair.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/detail/pointer_like_type_traits.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/detail/pointer_union.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Viewer/ArcBall.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/ArcBall.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Viewer/ArcBall.h" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/ArcBall.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Viewer/Bvh.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Bvh.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Viewer/Bvh.h" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Bvh.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Viewer/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Viewer/DepthReinterpretShader.cpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Viewer/DepthReinterpretShader.frag" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Viewer/DepthReinterpretShader.h" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Viewer/DepthReinterpretShader.vert" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/LbfgsSolver.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/LbfgsSolver.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/LbfgsSolver.h" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/LbfgsSolver.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Viewer/Viewer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Viewer.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Viewer/Viewer.h" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Viewer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Viewer/resources.conf" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/resources.conf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Visualization/VisualizationProxy.h" beforeDir="false" afterPath="$PROJECT_DIR$/Visualization/VisualizationProxy.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/contrib/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/contrib/Fast-BVH" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/contrib/imgui" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/imgui" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/contrib/imgui/imconfig.h" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/imgui/imconfig.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/contrib/magnum" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/magnum" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/contrib/magnum/src/Magnum/GL/TextureFormat.h" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/magnum/src/Magnum/GL/TextureFormat.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/contrib/magnum/src/Magnum/Platform/EmscriptenApplication.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/magnum/src/Magnum/Platform/EmscriptenApplication.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/contrib/magnum/src/Magnum/Platform/EmscriptenApplication.h" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/magnum/src/Magnum/Platform/EmscriptenApplication.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/main.cpp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -584,11 +536,20 @@
       <workItem from="1604245614636" duration="5213000" />
       <workItem from="1604320984321" duration="8272000" />
       <workItem from="1604358004774" duration="6317000" />
-      <workItem from="1604404542829" duration="11907000" />
+      <workItem from="1604404542829" duration="17088000" />
     </task>
     <servers />
   </component>
   <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/Optimization/LbfgsSolver.cpp</url>
+          <line>315</line>
+          <option name="timeStamp" value="13" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
     <watches-manager>
       <configuration name="CMakeRunConfiguration">
         <watch expression="x" />

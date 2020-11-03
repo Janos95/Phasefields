@@ -41,7 +41,7 @@ private:
     void* m_cd;
 
     int ret;
-    int i, j, k, ls, end, bound;
+    int i, j, k, end, bound;
 
     double step;
     double ys, yy;

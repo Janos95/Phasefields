@@ -620,6 +620,10 @@ void Viewer::drawOptimizationOptions() {
         ImGui::Checkbox("Hierarchical Optimization", &hierarchicalOptimization);
 
         if(ImGui::Button("Optimize") && !problem.objectives.empty() && !isOptimizing) {
+            tree.computeWeightsOfAncestorsOfLevel(currentNode.depth());
+            setAreaConstraint(currentNode);
+            problem.nodeToOptimize = currentNode;
+            pollingSolver.emplace(options, problem, currentNode.phasefield());
             isOptimizing = true;
         }
 
@@ -1285,13 +1289,23 @@ void Viewer::drawEvent() {
         proxy.redraw();
     }
 
-    proxy.upload(); /* synchronize with gpu */
-
     if(animate) {
         Vector2i m = windowSize()/2;
         arcBall->initTransformation(m);
         arcBall->rotate(m + Vector2i{5, 0});
     }
+
+
+//#ifdef MAGNUM_TARGET_WEBGL
+    if(isOptimizing) {
+        if(pollingSolver->runOneIteration() < 0)
+            isOptimizing = false;
+        proxy.redraw();
+    }
+//#endif
+
+    proxy.upload(); /* synchronize with gpu */
+
 
     /* draw scene */
     bool camChanged = arcBall->updateTransformation();

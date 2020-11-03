@@ -152,7 +152,6 @@ struct LbfgsSolver::Data {
 
     /* Constant parameters and their default values. */
     lbfgs_parameter_t param;
-    int m;
 
     lbfgsfloatval_t *xp = NULL;
     lbfgsfloatval_t *g = NULL, *gp = NULL, *pg = NULL;
@@ -182,7 +181,9 @@ LbfgsSolver::LbfgsSolver(Solver::Options& options, Solver::RecursiveProblem& pro
     param.xtol = std::numeric_limits<double>::epsilon();
     param.delta = 1e-10;
 
-    size_t m = m_data->m;
+    m_data->param = param;
+
+    size_t m = param.m;
     size_t n = data.size();
 
     /* Allocate working space. */
@@ -289,7 +290,7 @@ LbfgsSolver::~LbfgsSolver() {
     /* Free memory blocks used by this function. */
     if (m_data->lm != NULL) {
         auto lm = m_data->lm;
-        for (int i = 0;i < m_data->m;++i) {
+        for (int i = 0;i < m_data->param.m;++i) {
             vecfree(lm[i].s);
             vecfree(lm[i].y);
         }
@@ -320,13 +321,13 @@ int LbfgsSolver::runOneIteration() {
     const size_t m = param.m;
     const size_t n = m_x.size();
 
-    lbfgsfloatval_t *xp = m_data->xp;
-    lbfgsfloatval_t *g = m_data->g, *gp = m_data->gp, *pg = m_data->pg;
-    lbfgsfloatval_t *d = m_data->d, *w = m_data->w, *pf = m_data->pf;
-    iteration_data_t *lm = m_data->lm, *it = m_data->it;
-
+    lbfgsfloatval_t * const xp = m_data->xp;
+    lbfgsfloatval_t * const g = m_data->g, * const gp = m_data->gp, * const pg = m_data->pg;
+    lbfgsfloatval_t * const d = m_data->d, * const w = m_data->w, * const pf = m_data->pf;
+    iteration_data_t * const lm = m_data->lm;
+    iteration_data_t *& it = m_data->it;
     /* ------------------------------------------------------- */
-
+    int ls;
 
     //for (;;) {
         /* Store the current position and gradient vectors. */

@@ -16,6 +16,7 @@
 #include "Types.h"
 #include "PlotCallback.h"
 #include "Bvh.h"
+#include "LbfgsSolver.h"
 
 #include <Magnum/ImGuiIntegration/Context.h>
 #include <Magnum/Math/Color.h>
@@ -235,6 +236,8 @@ struct Viewer : public Mg::Platform::Application {
     Array<bool> show;
     size_t t = 0;
     bool showPlot = false;
+
+    Optional<LbfgsSolver> pollingSolver;
 };
 
 }
