@@ -74,48 +74,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bd8fd83c-0dbd-43c4-895d-0b5ef02c9565" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitmodules" beforeDir="false" afterPath="$PROJECT_DIR$/.gitmodules" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/ConnectednessConstraint.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/ConnectednessConstraint.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/ConnectednessConstraint.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/ConnectednessConstraint.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/ConnectednessConstraint.hpp" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/DiffuseYamabe.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/DiffuseYamabe.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/DiffuseYamabe.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/DiffuseYamabe.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/EigenHelper.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/EigenHelper.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/ModicaMortola.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/ModicaMortola.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/ModicaMortola.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/ModicaMortola.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Mesh/FEM.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/FEM.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Mesh/Mesh.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/Mesh.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Mesh/MeshElements.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/MeshElements.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/Functional.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Functional.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/Functional.h" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Functional.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/Functional.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Functional.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/LbfgsSolver.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/LbfgsSolver.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/RecursiveProblem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/RecursiveProblem.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/RecursiveProblem.h" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/RecursiveProblem.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/Solver.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Solver.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/Tree.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Tree.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/C1Functions.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/C1Functions.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Utilities/Types.h" beforeDir="false" afterPath="$PROJECT_DIR$/Utilities/Types.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Viewer/Bvh.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Bvh.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Viewer/PlotCallback.h" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/PlotCallback.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Viewer/Viewer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Viewer.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Viewer/Viewer.h" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Viewer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Visualization/VisualizationProxy.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Visualization/VisualizationProxy.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/contrib/corrade" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/corrade" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/contrib/imgui" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/imgui" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/contrib/imgui/imconfig.h" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/imgui/imconfig.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/contrib/magnum" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/magnum" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/contrib/magnum-integration" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/magnum-integration" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/contrib/magnum-plugins" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/magnum-plugins" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/contrib/magnum/src/Magnum/GL/TextureFormat.h" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/magnum/src/Magnum/GL/TextureFormat.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/contrib/magnum/src/Magnum/Platform/EmscriptenApplication.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/magnum/src/Magnum/Platform/EmscriptenApplication.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/contrib/magnum/src/Magnum/Platform/EmscriptenApplication.h" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/magnum/src/Magnum/Platform/EmscriptenApplication.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/main.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/todos.txt" beforeDir="false" afterPath="$PROJECT_DIR$/todos.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -589,7 +551,7 @@
       <workItem from="1604758166208" duration="4143000" />
       <workItem from="1604843829101" duration="3692000" />
       <workItem from="1604923107858" duration="9116000" />
-      <workItem from="1605005600177" duration="5782000" />
+      <workItem from="1605005600177" duration="6131000" />
     </task>
     <servers />
   </component>

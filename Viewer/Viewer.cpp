@@ -1445,7 +1445,6 @@ void Viewer::drawEvent() {
                      .setTransformationMatrix(viewTf)
                      .setNormalMatrix(viewTf.normalMatrix())
                      .bindDiffuseTexture(colorMapData[colorMapIndex].texture)
-
                      .draw(glMesh);
     } else if (proxy.shaderConfig == VisualizationProxy::ShaderConfig::VertexColors) {
         phongVertexColors.setProjectionMatrix(projection)
