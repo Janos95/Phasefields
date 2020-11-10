@@ -13,6 +13,7 @@
 #include <ScopedTimer/ScopedTimer.h>
 
 #include <Corrade/Containers/Array.h>
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <Magnum/Math/Matrix3.h>
 
 #include <imgui.h>
@@ -36,7 +37,7 @@ DiffuseYamabe::DiffuseYamabe(Mesh& m) : mesh(m) {
     mesh.requireBoundaryInformation();
 }
 
-constexpr QuadraticChi chi1;
+constexpr SmootherStep chi1;
 constexpr QuadraticChiMirrored chi2;
 
 template<class Scalar>
@@ -569,6 +570,16 @@ double DiffuseYamabe::getRescalingFactor(Vertex v) const {
     double a = r*r*r;
     assert(!std::isnan(a));
     return a;
+}
+
+void DiffuseYamabe::saveParameters(Cr::Utility::ConfigurationGroup& group) const {
+    group.setValue("lambda", lambdaWeight);
+    group.setValue("energyType", size_t(energy));
+}
+
+void DiffuseYamabe::loadParameters(const Cr::Utility::ConfigurationGroup& group) {
+    lambdaWeight = group.value<double>("lambda");
+    energy = EnergyType::Value(group.value<size_t>("energyType"));
 }
 
 

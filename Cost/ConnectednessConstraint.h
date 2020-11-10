@@ -32,23 +32,22 @@ struct ConnectednessConstraint {
     void drawImGuiOptions(VisualizationProxy&);
 
     void draw(Node&);
+    char const* getFormattedInterval();
+    void recalculateInterval();
+
+    void saveParameters(Cr::Utility::ConfigurationGroup&) const;
+    void loadParameters(Cr::Utility::ConfigurationGroup const&);
 
     Mesh* mesh;
 
-    /* this is called holding our 'global' mutex from the gui thread */
-    //void updateVisualization(VisualizationProxy&);
-
-    //void drawImGuiOptions(bool&, DrawableType&, bool&);
-
-    /* collects data for the updateVisualization callback
-     * Always called after a call to evaluate.
-     */
-    //void collectVisualizationData(Containers::ArrayView<const double*> const& grad);
-
-    double a = -1.1, b = 0;
+    int purePhase = 1;
+    double edge0 = 0, edge1 = 1;
+    double s = 0.5;
     bool drawComponents = false;
     bool drawGradient = false;
     bool ignoreSmallComponents = false;
+    double* epsilon = nullptr;
+
     //double pathThickness = 0.01;
 
     //Cr::Containers::Array<InstanceData> instanceData; //tf from cylinder to path section

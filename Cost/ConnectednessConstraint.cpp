@@ -13,6 +13,7 @@
 #include "ImGuiWidgets.h"
 #include "Viewer.h"
 
+#include <Corrade/Utility/ConfigurationGroup.h>
 #include <ScopedTimer/ScopedTimer.h>
 
 #include <imgui.h>
@@ -38,8 +39,21 @@ void ConnectednessConstraint::operator()(ArrayView<const Scalar> parameters,
 
     ScopedTimer timer("Connectedness", verbose);
 
+    recalculateInterval();
+    double intervalBoundary = 1.1;
+    if(edge0 > edge1) intervalBoundary = -1.1;
+    auto [a,b] = Math::minmax(edge1, intervalBoundary);
+    W bump{a, b};
     F f{a, b};
-    W bump(a, b);
+
+    //if constexpr (std::is_same_v<double, Scalar>) {
+    //    Debug{} << edge0 << " " << edge1;
+    //    Debug{} << bump.eval(edge0);
+    //    Debug{} << bump.eval(edge1);
+    //    Debug{} << f.eval(edge0);
+    //    Debug{} << f.eval(edge1);
+    //}
+
     WeightExitPenalty weightPenalty;
 
     size_t numFaces = mesh->faceCount();
@@ -60,7 +74,7 @@ void ConnectednessConstraint::operator()(ArrayView<const Scalar> parameters,
         uT[face] = 1./3.*sumU;
         facePenalties[face] = weightPenalty.eval<Scalar>(penalty*1./3.);
 
-        inInterface[face] = a<= uT[face] && uT[face] <= b;
+        inInterface[face] = purePhase == 1 ? uT[face] > edge1 : uT[face] < edge1;
         ws[face] = inInterface[face] ? bump.eval(uT[face]) : -1.;
     }
 
@@ -110,7 +124,7 @@ void ConnectednessConstraint::operator()(ArrayView<const Scalar> parameters,
 
     CORRADE_ASSERT(std::all_of(roots.begin(), roots.end(), [](Face f) { return !!f; }), "Connectedness : Invalid root",);
 
-    Debug{} << "Phase [" << a << "," << b << "] has " << numComponents << "connected components";
+    Debug{} << "Phase" << getFormattedInterval() << "has" << numComponents << "connected components";
 
     if(numComponents <= 1)
         return;
@@ -267,9 +281,20 @@ size_t ConnectednessConstraint::numParameters() const { return mesh->vertexCount
 
 
 void ConnectednessConstraint::drawImGuiOptions(VisualizationProxy& proxy) {
-    dragDoubleRange2("##interval", &a, &b, 0.01, -1, 1, "a: %.2f", "b: %.2f", 1);
+    constexpr double minS = 0.0001;
+    constexpr double maxS = 3;
+
+    ImGui::SliderScalar("s", ImGuiDataType_Double, &s, &minS, &maxS, "%.5f", ImGuiSliderFlags_Logarithmic);
+    ImGui::RadioButton("Phase at -1", &purePhase, -1); ImGui::SameLine();
+    ImGui::RadioButton("Phase at 1", &purePhase, 1);
+
+    recalculateInterval(); /* just alwasy recalc, especially on startup */
+
+    ImGui::Text("Enforcing Connected in %s", getFormattedInterval());
+
     if(ImGui::Checkbox("Show Connected Components", &drawComponents)) {
         if(drawComponents) {
+            proxy.shaderConfig = VisualizationProxy::ShaderConfig::VertexColors;
             proxy.setCallbacks(
                     [this](Node node) { draw(node); },
                     [this] { drawComponents = false; });
@@ -290,9 +315,8 @@ void ConnectednessConstraint::draw(Node& node) {
         size_t numComponents;
 
         {
-
-            F f{a, b};
-            W bump(a, b);
+            ParametricSmoothStep bump{edge0, edge1};
+            ParametricSmoothStep f{edge1, edge0};
 
             size_t faceCount = mesh->faceCount();
             FaceData<double> ws(NoInit, faceCount);
@@ -306,7 +330,7 @@ void ConnectednessConstraint::draw(Node& node) {
                     sumU += parameters[v.idx];
 
                 uT[face] = 1./3.*sumU;
-                inInterface[face] = a<= uT[face] && uT[face] <= b;
+                inInterface[face] = purePhase == 1 ? uT[face] > edge1 : uT[face] < edge1;
                 ws[face] = inInterface[face] ? bump.eval(uT[face]) : -1.;
             }
 
@@ -369,6 +393,37 @@ void ConnectednessConstraint::draw(Node& node) {
             color *= 1.f/n;
             mesh->color(v) = color;
         }
+    }
+}
+
+void ConnectednessConstraint::saveParameters(Cr::Utility::ConfigurationGroup& group) const {
+    group.setValue("s", s);
+    group.setValue("ignoreSmallComponents", ignoreSmallComponents);
+}
+
+void ConnectednessConstraint::loadParameters(Cr::Utility::ConfigurationGroup const& group) {
+    s = group.value<double>("s");
+    ignoreSmallComponents = group.value<bool>("ignoreSmallComponents");
+}
+
+const char* ConnectednessConstraint::getFormattedInterval() {
+    static char formatted[100];
+    static_assert(sizeof(formatted) == 100);
+    if(purePhase == -1)
+        snprintf(formatted, sizeof(formatted), "(-infty, %f]", edge1);
+    else
+        snprintf(formatted, sizeof(formatted), "[%f, infty)", edge1);
+    return formatted;
+}
+
+void ConnectednessConstraint::recalculateInterval() {
+    double width = Math::pow(epsilon ? *epsilon : 0.1, s);
+    if(purePhase == -1) {
+        edge1 = -1 + width;
+        edge0 = -1 + 2*width;
+    } else {
+        edge0 = 1 - 2*width;
+        edge1 = 1 - width;
     }
 }
 

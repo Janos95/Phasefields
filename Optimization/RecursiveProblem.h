@@ -7,6 +7,8 @@
 #include "Functional.h"
 #include "Tree.h"
 
+#include <Corrade/Containers/StridedArrayView.h>
+
 namespace Phasefield::Solver {
 
 struct RecursiveProblem {
@@ -34,9 +36,15 @@ struct RecursiveProblem {
     Tree& tree;
     Node nodeToOptimize{Invalid, nullptr};
 
-    Array<Functional>* functionals = &objectives;
+    struct Objective {
+        Functional f{nullptr};
+        Array<Vector2> history;
+        bool show = true;
+    };
 
-    Array<Functional> objectives;
+    bool evaluateObjective = true;
+
+    Array<Objective> objectives;
     Array<Functional> constraints;
 };
 

@@ -23,22 +23,22 @@ void IntegralOperatorFeature::update() {
 }
 
 void MassMatrixFeature::update() {
-    Mesh& mesh = getMesh();
+    //Mesh& mesh = getMesh();
 
-    Eigen::VectorXd integral{mesh.vertexCount()};
-    integral.setZero();
-    for(Face face : mesh.faces()) {
-        double area = face.area();
-        for(Vertex v : face.vertices()) {
-            integral[v.idx] += area/3.;
-        }
-    }
+    //Eigen::VectorXd integral{mesh.vertexCount()};
+    //integral.setZero();
+    //for(Face face : mesh.faces()) {
+    //    double area = face.area();
+    //    for(Vertex v : face.vertices()) {
+    //        integral[v.idx] += area/3.;
+    //    }
+    //}
 
-    if(!mesh.fem) {
-        mesh.fem = pointer<FEM>();
-    }
+    //if(!mesh.fem) {
+    //    mesh.fem = pointer<FEM>();
+    //}
 
-    mesh.fem->mass = integral.asDiagonal();
+    //mesh.fem->mass = integral.asDiagonal();
 }
 
 void GradientFeature::update() {

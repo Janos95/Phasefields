@@ -16,6 +16,7 @@ using Magnum::Float;
 using Magnum::Double;
 using Magnum::Int;
 using Magnum::UnsignedByte;
+using Magnum::UnsignedLong;
 
 using Magnum::Vector3;
 using Magnum::Vector2;

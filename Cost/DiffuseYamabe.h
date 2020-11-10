@@ -29,6 +29,9 @@ struct DiffuseYamabe {
 
     [[nodiscard]] static FunctionalType::Value type() { return FunctionalType::DiffuseYamabe; }
 
+    void saveParameters(Cr::Utility::ConfigurationGroup&) const;
+    void loadParameters(Cr::Utility::ConfigurationGroup const&);
+
     void drawImGuiOptions(VisualizationProxy& proxy);
     bool drawSolution = false;
     bool drawSolutionThresholded = false;

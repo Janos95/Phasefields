@@ -16,12 +16,12 @@
 [submodule "contrib/magnum-plugins"]
 	path = contrib/magnum-plugins
 	url = https://github.com/mosra/magnum-plugins.git
-[submodule "contrib/Fast-BVH"]
-	path = contrib/Fast-BVH
-	url = https://github.com/brandonpelfrey/Fast-BVH.git
 [submodule "contrib/implot"]
 	path = contrib/implot
 	url = https://github.com/epezent/implot.git
 [submodule "contrib/imgui"]
 	path = contrib/imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "contrib/bvh"]
+	path = contrib/bvh
+	url = https://github.com/madmann91/bvh.git

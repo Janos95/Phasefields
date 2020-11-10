@@ -23,6 +23,25 @@
 namespace Phasefield {
 
 
+struct NodeDataFixedSize {
+    UnsignedLong leftChild;
+    UnsignedLong rightChild;
+    UnsignedLong parent;
+    UnsignedLong depth;
+
+    explicit NodeDataFixedSize(NodeData const& data) {
+        leftChild = data.leftChild;
+        rightChild = data.rightChild;
+        parent = data.parent;
+        depth = data.depth;
+    }
+
+    NodeData toNative() {
+        return {size_t(leftChild), size_t(rightChild), size_t(parent), size_t(depth)};
+    }
+};
+
+
 Node Node::parent() const { return {tree->nodeData[idx].parent, tree}; }
 
 Node Node::leftChild() const { return {tree->nodeData[idx].leftChild, tree}; }
@@ -225,28 +244,37 @@ ArrayView<double> Tree::level(size_t d) {
 }
 
 void Tree::serialize(Array<char>& data) const {
-    size_t dataSize = phasefieldData.size();
+    UnsignedLong dataSize = phasefieldData.size();
     arrayAppend(data, {(char*) &dataSize, sizeof(size_t)});
     arrayAppend(data, arrayCast<char>(phasefieldData));
-    size_t nodesSize = nodeData.size();
+    UnsignedLong nodesSize = nodeData.size();
     arrayAppend(data, {(char*) &nodesSize, sizeof(size_t)});
-    arrayAppend(data, arrayCast<char>(nodeData));
+    Array<NodeDataFixedSize> nodeDataFixedSize{NoInit, nodeData.size()};
+    for(size_t i = 0; i < nodeData.size(); ++i)
+        nodeDataFixedSize[i] = NodeDataFixedSize{nodeData[i]};
+
+    arrayAppend(data, arrayCast<const char>(nodeDataFixedSize));
 }
 
 Tree Tree::deserialize(ArrayView<const char> const& data, Mesh& m) {
     Tree t{m};
     char const* pc = data;
-    auto dataSize = deserializeTrivial<size_t>(pc);
+    size_t dataSize = deserializeTrivial<UnsignedLong>(pc);
     arrayResize(t.phasefieldData, NoInit, dataSize);
     arrayResize(t.tempsData, NoInit, dataSize);
     memcpy(t.phasefieldData.data(), pc, sizeof(double)*dataSize);
     pc += sizeof(double)*dataSize;
 
-    auto nodesSize = deserializeTrivial<size_t>(pc);
-    arrayResize(t.nodeData, NoInit, nodesSize);
-    memcpy(t.nodeData.data(), pc, sizeof(NodeData)*nodesSize);
+    size_t nodeCount = deserializeTrivial<UnsignedLong>(pc);
+    arrayResize(t.nodeData, NoInit, nodeCount);
+    Array<NodeDataFixedSize> nodeDataFixedSize{NoInit, nodeCount};
 
-    pc += sizeof(Node)*nodesSize;
+    memcpy(nodeDataFixedSize.data(), pc, sizeof(NodeDataFixedSize)*nodeCount);
+    for(size_t i = 0; i < nodeCount; ++i) {
+        t.nodeData[i] = nodeDataFixedSize[i].toNative();
+    }
+
+    pc += sizeof(NodeDataFixedSize)*nodeCount;
 
     t.numLeafs = 0;
     t.depth = 0;

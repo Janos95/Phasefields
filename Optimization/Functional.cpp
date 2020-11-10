@@ -8,6 +8,9 @@
 #include "Tag.h"
 #include "VisualizationProxy.h"
 #include "Viewer.h"
+#include "ScopedTimer/ScopedTimer.h"
+
+#include <Corrade/Utility/ConfigurationGroup.h>
 
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Utility/Algorithms.h>
@@ -38,6 +41,9 @@ void Functional::operator()(ArrayView<const double> parameters,
                             double& out,
                             ArrayView<double> gradP,
                             ArrayView<double> gradW) const {
+
+    ScopedTimer timer{FunctionalType::to_string(functionalType), false};
+
 
     size_t n = numParameters();
 
@@ -134,6 +140,9 @@ void Functional::drawImGuiOptions(VisualizationProxy& proxy) {
 
     if(ImGui::Checkbox("Draw Derivative", &drawGradient)) {
         if(drawGradient) {
+            if(functionalType == FunctionalType::AreaRegularizer) {
+                proxy.viewer.totalArea = proxy.viewer.currentNode.integrateWeight(proxy.viewer.mesh);
+            }
             proxy.setCallbacks([this, &proxy](Node node) {
                 auto parameters = node.phasefield();
                 auto weights = node.temporary();
@@ -172,6 +181,8 @@ void Functional::swap(Functional& other) {
     std::swap(tag, other.tag);
     std::swap(ad, other.ad);
     std::swap(scaling, other.scaling);
+    std::swap(load, other.load);
+    std::swap(save, other.save);
 
     loss.swap(other.loss);
 }
@@ -190,6 +201,22 @@ bool Functional::check(ArrayView<const double> data) const {
         if(std::isnan(x)) return false;
     }
     return true;
+}
+
+void Functional::loadParameters(Cr::Utility::ConfigurationGroup const& group) {
+    if(group.hasValue("weight")) {
+        loss.weight = group.value<double>("weight");
+    }
+    if(load) {
+        load(erased, group);
+    }
+}
+
+void Functional::saveParameters(Cr::Utility::ConfigurationGroup& group) const {
+    if(save) {
+        group.setValue("weight", loss.weight);
+        save(erased, group);
+    }
 }
 
 }

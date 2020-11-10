@@ -1,12 +1,20 @@
 
 high priority
-        * fix shape opt
+    * finish remaining experiments
+        - hill
+        - sphere
+        - hierarchical
+        - connectedness for spot
 
-medium prioritiy
-    * check if scaling is correct by checking if for epsilon -> 0
-        the modica mortola functional goes to 1 for the square example
-    * port to emscripten and make a web demo?
-    * mesh vis overlay 
+medium prio
+    * use smoother step for W in connectedness constraint
+
+low prioritiy
+    * fix webgl wireframe, also dont generate wireframe on each frame
+    * fix touch input
+    * fix projection matrix
+    * nicer layout
+    * host webpage on Phasefield repo. Move everything to github?
 
 
 

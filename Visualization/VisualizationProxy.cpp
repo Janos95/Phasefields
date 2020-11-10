@@ -97,7 +97,6 @@ void VisualizationProxy::drawSegmentation() {
     //Debug{} << min << " " << max;
 
     for(Node node : tree.internalNodes()) {
-        Debug{} << node;
         auto weights = node.temporary();
         for(size_t i = 0; i < n; ++i) {
             if(node.hasLeftChild()) {

@@ -28,6 +28,34 @@ struct F {
     double a, b;
 };
 
+struct ParametricSmoothStep {
+    double edge0, edge1;
+
+    template<class Scalar>
+    Scalar clamp(Scalar x) {
+        if (x < 0)
+            x = 0;
+        if (x > 1)
+            x = 1;
+        return x;
+    }
+
+    template<class Scalar>
+    Scalar eval(Scalar x) {
+        Scalar xScaled = (x - edge0) / (edge1 - edge0);
+        x = clamp(xScaled);
+        return x * x * (3 - 2 * x);
+    }
+
+    template<class Scalar>
+    Scalar grad(Scalar x) {
+        Scalar scale = 1./(edge1 - edge0);
+        Scalar xScaled = (x - edge0)*scale;
+        x = clamp(xScaled);
+        return -6*(-1 + x)*x*scale;
+    }
+};
+
 class W {
 public:
 

@@ -64,6 +64,7 @@ bool BVHAdapter::Impl::computeIntersection(Vector3 const& p, Vector3 const& dir,
         intersection.t = hit->intersection.t;
         intersection.u = hit->intersection.t;
         intersection.v = hit->intersection.v;
+        intersection.idx = hit->primitive_index;
         return true;
 
     } else return false;

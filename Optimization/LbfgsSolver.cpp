@@ -7,12 +7,12 @@
 
 #include <limits>
 
-namespace Phasefield {
-
 /* yeah this is a bit hacky .. */
-namespace {
 #include "../contrib/liblbfgs/lib/lbfgs.c"
 
+namespace Phasefield {
+
+namespace {
 
 struct lbfgs_data {
     Solver::RecursiveProblem& problem;

@@ -6,7 +6,6 @@
 
 #include "Surface.h"
 #include "Types.h"
-#include "SparseMatrix.h"
 #include "MeshFeature.h"
 #include "FEM.h"
 #include "MeshElements.h"
@@ -304,8 +303,6 @@ public:
     /* Fem operators */
     VertexData<double> integral;
     HalfEdgeData<Vector3d> gradient;
-
-    Pointer<FEM> fem = nullptr;
 
     bool isTriangularMesh();
     bool checkDualGraph();

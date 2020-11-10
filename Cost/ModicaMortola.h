@@ -45,7 +45,7 @@ struct AreaRegularizer {
 
     [[nodiscard]] static FunctionalType::Value type() { return FunctionalType::AreaRegularizer; }
 
-    double totalArea;
+    double* totalArea = nullptr;
     Mesh& mesh;
 };
 

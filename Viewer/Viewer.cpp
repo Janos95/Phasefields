@@ -45,6 +45,8 @@
 #include <Magnum/ImGuiIntegration/Context.hpp>
 
 #include <implot.h>
+#include <sstream>
+
 
 #ifdef PHASEFIELD_WITH_IO
 #include <MagnumPlugins/StanfordSceneConverter/StanfordSceneConverter.h>
@@ -60,6 +62,8 @@
 #include <vtkCellData.h>
 #endif
 
+
+
 static void initializeRessources() {
     CORRADE_RESOURCE_INITIALIZE(Viewer_Rsc)
     CORRADE_RESOURCE_INITIALIZE(Experiments_Rsc)
@@ -67,6 +71,49 @@ static void initializeRessources() {
 
 
 namespace Phasefield {
+
+/* for plotting */
+struct ScrollingBuffer {
+    size_t maxSize;
+    size_t offset;
+    Array<Vector2> data;
+
+    ScrollingBuffer() {
+        maxSize = 2000;
+        offset  = 0;
+        arrayReserve(data, maxSize);
+    }
+
+    void add(float x, float y) {
+        if (data.size() < maxSize)
+            arrayAppend(data, InPlaceInit, x, y);
+        else {
+            data[offset] = Vector2(x,y);
+            offset =  (offset + 1) % maxSize;
+        }
+    }
+    void clear() {
+        if (data.size() > 0) {
+            arrayShrink(data);
+            offset  = 0;
+        }
+    }
+
+    size_t size() const { return data.size(); }
+
+};
+
+struct Experiment {
+    const char* name;
+    const char* meshName;
+    const char* treeName;
+    const char* confName;
+};
+
+static Experiment experiments[] = {
+        {"Connectedness Constraint", "capsule_high_res.ply", "capsule_high_res_split.bin", "connectedness.conf"},
+        {"Hierarchical Segmentation", "spot_high_res.ply", nullptr, "hierarchical.conf"}
+};
 
 using namespace Mg::Math::Literals;
 using namespace Cr::Containers::Literals;
@@ -160,6 +207,7 @@ bool Viewer::dumpMesh(char const* path) {
 
 namespace {
 
+
 Array<Viewer::ColorMap> makeColorMapTextures() {
 
     Array<Viewer::ColorMap> textures;
@@ -210,14 +258,35 @@ Viewer::Viewer(Arguments const& arguments) :
 {
     initializeRessources();
 
+#ifdef MAGNUM_TARGET_WEBGL
+    {
+        constexpr static auto cbStart = [](int, const EmscriptenTouchEvent * event, void* userData) -> Int {
+            return static_cast<Viewer*>(userData)->touchStartEvent(event);
+        };
+        constexpr static auto cbMove = [](int, const EmscriptenTouchEvent * event, void* userData) -> Int {
+            return static_cast<Viewer*>(userData)->touchMoveEvent(event);
+        };
+        constexpr static auto cbEnd = [](int, const EmscriptenTouchEvent * event, void* userData) -> Int {
+            return static_cast<Viewer*>(userData)->touchEndEvent(event);
+        };
+        constexpr static auto cbCancel = [](int, const EmscriptenTouchEvent * event, void* userData) -> Int {
+            return static_cast<Viewer*>(userData)->touchCancelEvent(event);
+        };
+        emscripten_set_touchstart_callback("#canvas", this, false, cbStart);
+        emscripten_set_touchmove_callback("#canvas", this, false, cbMove);
+        emscripten_set_touchend_callback("#canvas", this, false, cbEnd);
+        emscripten_set_touchcancel_callback("#canvas", this, false, cbCancel);
+    }
+#endif
+
     {
         //arrayAppend(options.callbacks, InPlaceInit, optimizationCallback);
         currentNode = Node{0, &tree};
         setScalingFactors();
     }
 
-    /* Try 8x MSAA, fall back to zero samples if not possible. Enable only 2x
-   MSAA if we have enough DPI. */
+/* Try 8x MSAA, fall back to zero samples if not possible. Enable only 2x
+MSAA if we have enough DPI. */
     {
         const Vector2 dpiScaling = this->dpiScaling({});
         Configuration conf;
@@ -261,23 +330,12 @@ Viewer::Viewer(Arguments const& arguments) :
         colorMapData = makeColorMapTextures();
     }
 
-    /* setup the problem */
-    {
-        arrayAppend(problem.objectives, makeFunctional(FunctionalType::DoubleWellPotential));
-        arrayAppend(problem.objectives, makeFunctional(FunctionalType::DirichletEnergy));
-        //arrayAppend(problem.objectives, makeFunctional(FunctionalType::DiffuseYamabe));
-        //arrayAppend(problem.objectives, makeFunctional(FunctionalType::AreaRegularizer));
-        //arrayAppend(problem.objectives, makeFunctional(FunctionalType::ConnectednessConstraint));
-
-        size_t objectiveCount = problem.objectives.size();
-        arrayResize(show, DirectInit, objectiveCount, true);
-        arrayResize(data, objectiveCount);
-    }
-
+    !Debug{} << "Loading experiment from resource";
     /* Load experiment from resource*/
     {
         ScopedTimer loadingTimer{"Loading experiment", true};
-        loadExperiment("spot");
+        auto& exp = experiments[1];
+        loadExperiment(exp.meshName, exp.treeName, exp.confName);
     }
 
     /* Setup ImGui, ImPlot, load a better font */
@@ -286,13 +344,13 @@ Viewer::Viewer(Arguments const& arguments) :
         ImGui::CreateContext();
         ImGui::StyleColorsDark();
 
-        //ImFontConfig fontConfig;
-        //fontConfig.FontDataOwnedByAtlas = false;
-        //const Vector2 size = Vector2{windowSize()}/dpiScaling();
-        //Cr::Utility::Resource rs{"viewer-data"};
-        //ArrayView<const char> font = rs.getRaw("SourceSansPro-Regular.ttf");
-        //ImGui::GetIO().Fonts->AddFontFromMemoryTTF(
-        //        const_cast<char*>(font.data()), Int(font.size()), 16.0f*framebufferSize().x()/size.x(), &fontConfig);
+        ImFontConfig fontConfig;
+        fontConfig.FontDataOwnedByAtlas = false;
+        const Vector2 size = Vector2{windowSize()}/dpiScaling();
+        Cr::Utility::Resource rs{"viewer-data"};
+        ArrayView<const char> font = rs.getRaw("SourceSansPro-Regular.ttf");
+        ImGui::GetIO().Fonts->AddFontFromMemoryTTF(
+                const_cast<char*>(font.data()), Int(font.size()), 16.0f*framebufferSize().x()/size.x(), &fontConfig);
 
         imgui = Mg::ImGuiIntegration::Context(*ImGui::GetCurrentContext(),
                                                   Vector2{windowSize()}/dpiScaling(), windowSize(), framebufferSize());
@@ -307,6 +365,7 @@ Viewer::Viewer(Arguments const& arguments) :
                 GL::Renderer::BlendFunction::OneMinusSourceAlpha);
     }
 
+    !Debug{} << "Setting up arcball and projection";
     /* Setup arcball and projection matrix */
     {
         const Vector3 eye = Vector3::zAxis(5.0f);
@@ -327,6 +386,61 @@ Viewer::Viewer(Arguments const& arguments) :
     setMinimalLoopPeriod(16);
 #endif
 
+}
+
+void Viewer::loadConfig(Cr::Utility::ConfigurationGroup const& conf) {
+    epsilon = conf.value<double>("epsilon");
+    options.solver = Solver::Backend::Value(conf.value<int>("solver"));
+    options.max_num_iterations = conf.value<size_t>("max_num_iterations");
+    hierarchicalOptimization = conf.value<bool>("hierarchicalOptimization");
+    kappa = conf.value<double>("kappa");
+
+    arrayResize(problem.objectives, 0);
+    arrayResize(problem.constraints, 0);
+    size_t functionalCount = 0;
+
+    for(FunctionalType::Value fType : FunctionalType::range) {
+        auto size = conf.groupCount(FunctionalType::to_string(fType));
+        for(size_t i = 0; i < size; ++i) {
+            auto* group = conf.group(FunctionalType::to_string(fType), i);
+            Functional f = makeFunctional(fType);
+            f.loadParameters(*group);
+            if(group->value<bool>("isObjective")) {
+                arrayAppend(problem.objectives, {.f = MOVE(f)});
+            } else {
+                arrayAppend(problem.constraints, MOVE(f));
+            }
+            ++functionalCount;
+        }
+    }
+
+    setScalingFactors();
+}
+
+
+void Viewer::saveCurrentConfig(const char* path) {
+
+    Cr::Utility::Configuration conf;
+
+    conf.setValue("epsilon", epsilon);
+    conf.setValue("solver", int(options.solver));
+    conf.setValue("hierarchicalOptimization", hierarchicalOptimization);
+    conf.setValue("max_num_iterations", options.max_num_iterations);
+    conf.setValue("kappa", kappa);
+
+    for(auto& [f, hist, show] : problem.objectives) {
+        auto* group = conf.addGroup(FunctionalType::to_string(f.functionalType));
+        f.saveParameters(*group);
+        group->setValue("isObjective", true);
+    }
+
+    for(auto& f : problem.constraints) {
+        auto* group = conf.addGroup(FunctionalType::to_string(f.functionalType));
+        f.saveParameters(*group);
+        group->setValue("isObjective", false);
+    }
+
+    conf.save(path);
 }
 
 void Viewer::loadScene(const char* path, const char* postfix) {
@@ -370,31 +484,10 @@ void Viewer::loadScene(const char* path, const char* postfix) {
                 puts("could not open file");
             }
         }
-
         if(Cr::Utility::Directory::exists(confPath)) {
-            //Cr::Utility::Configuration conf{confPath};
-
-            //epsilon = conf.value<double>("epsilon");
-            //options.solver = Solver::Backend::Value(conf.value<int>("solver"));
-            //hierarchicalOptimization = conf.value<bool>("hierarchicalOptimization");
-            //maximumDepth = conf.value<size_t>("maximumDepth");
-
-            //for(auto& f : problem.objectives) {
-            //    auto* group = conf.addGroup(FunctionalType::to_string(f.functionalType));
-            //    f.saveSettings(*group);
-            //    group->setValue("isObjective", true);
-            //}
-
-            //for(auto& f : problem.objectives) {
-            //    auto* group = conf.addGroup(FunctionalType::to_string(f.functionalType));
-            //    f.saveSettings(*group);
-            //    group->setValue("isObjective", false);
-            //}
-
-            //std::string confPath = Cr::Utility::Directory::join(path, postfixStr + ".conf");
-            //conf.save(confPath);
+            Cr::Utility::Configuration conf{confPath};
+            loadConfig(conf);
         }
-
     }
 
     if(md) {
@@ -423,25 +516,33 @@ void Viewer::loadScene(const char* path, const char* postfix) {
 #endif
 }
 
-void Viewer::loadExperiment(const char* name) {
-    std::string nameStr{name};
-    std::string meshFile = nameStr + ".ply";
-    std::string treeFile = nameStr + ".bin";
-    std::string confFile = nameStr + ".conf";
-    Cr::Utility::Resource experiments{"experiments-data"};
-    stanfordImporter.openData(experiments.getRaw(meshFile));
-    auto md = stanfordImporter.mesh(0);
-    Debug{} << "Loading mesh";
-    mesh.setFromData(*md);
-    Debug{} << "Loading Tree";
-    //tree = Tree::deserialize(experiments.getRaw(treeFile), mesh);
-    tree.update();
+void Viewer::loadExperiment(const char* meshName, const char* treeName, const char* confName) {
+    Cr::Utility::Resource expResource{"experiments-data"};
 
+    stanfordImporter.openData(expResource.getRaw(meshName));
+    auto md = stanfordImporter.mesh(0);
+    mesh.setFromData(*md);
+    if(treeName) {
+        tree = Tree::deserialize(expResource.getRaw(treeName), mesh);
+    } else {
+        tree.update();
+    }
+    //tree.update();
+    auto raw = expResource.getRaw(confName);
+    std::string rawString{raw.begin(), raw.end()};
+    std::istringstream is(rawString);
+    Cr::Utility::Configuration conf(is);
+    loadConfig(conf);
+    for(Node node : tree.nodes())
+        Debug{} << node;
     Debug{} << "Loaded resources, uploading to gl";
     mesh.uploadVertexBuffer(vertexBuffer);
     mesh.uploadIndexBuffer(indexBuffer);
     glMesh.setCount(mesh.indexCount());
     proxy.redraw();
+
+    setScalingFactors();
+    tree.computeWeightsOfAncestorsOfLevel(tree.depth);
 }
 
 void Viewer::drawBrushOptions() {
@@ -471,7 +572,8 @@ void Viewer::drawBrushOptions() {
     }
 }
 
-bool Viewer::drawFunctionals(Array<Functional>& functionals, size_t& id) {
+template<class T>
+bool Viewer::drawFunctionals(Array<T>& functionals, size_t& id) {
     bool evaluateProblem = false;
     for(auto& f : functionals) {
         ImGui::PushID(id++);
@@ -486,11 +588,19 @@ bool Viewer::drawFunctionals(Array<Functional>& functionals, size_t& id) {
 
         ImGui::SameLine();
 
-        if(ImGui::Checkbox("Disable", &f.disable)) {
-            proxy.redraw();
-        }
 
-        f.drawImGuiOptions(proxy);
+
+        if constexpr (std::is_same_v<T, Functional>) {
+            if(ImGui::Checkbox("Disable", &f.disable)) {
+                proxy.redraw();
+            }
+            f.drawImGuiOptions(proxy);
+        } else {
+            if(ImGui::Checkbox("Disable", &f.f.disable)) {
+                proxy.redraw();
+            }
+            f.f.drawImGuiOptions(proxy);
+        }
 
         ImGui::Separator();
         ImGui::PopID();
@@ -518,7 +628,7 @@ void Viewer::drawOptimizationOptions() {
         }
 
         if(ImGui::Button("Add Functional As Objective"))
-            arrayAppend(problem.objectives, makeFunctional(currentType));
+            arrayAppend(problem.objectives, {.f = makeFunctional(currentType)});
 
         if(ImGui::Button("Add Functional As Constraint"))
             arrayAppend(problem.constraints, makeFunctional(currentType));
@@ -551,6 +661,7 @@ void Viewer::drawOptimizationOptions() {
                     Array<double> gradP(parameters.size());
                     double cost = 0;
                     problem.nodeToOptimize = currentNode;
+                    totalArea = currentNode.integrateWeight(mesh);
                     problem(parameters, cost, gradP);
 
                     auto [minimum, maximum] = Math::minmax(gradP);
@@ -569,6 +680,10 @@ void Viewer::drawOptimizationOptions() {
 
         constexpr Double minEps = 0.f, maxEps = 0.1;
         if(ImGui::DragScalar("epsilon", ImGuiDataType_Double, &epsilon, .0001f, &minEps, &maxEps, "%f", 1))
+            setScalingFactors();
+
+        constexpr Double sMin = 0, sMax = 5;
+        if(ImGui::DragScalar("Kappa", ImGuiDataType_Double, &kappa, .0001f, &sMin, &sMax, "%f", 1))
             setScalingFactors();
 
         static size_t iterations = 100;
@@ -616,15 +731,15 @@ void Viewer::drawOptimizationOptions() {
             ImGui::EndCombo();
         }
 
-        ImGui::InputScalar("Max Depth", ImGuiDataType_U64, &maximumDepth, &step, nullptr, "%u");
         ImGui::Checkbox("Hierarchical Optimization", &hierarchicalOptimization);
 
         if(ImGui::Button("Optimize") && !problem.objectives.empty() && !isOptimizing) {
             tree.computeWeightsOfAncestorsOfLevel(currentNode.depth());
-            setAreaConstraint(currentNode);
+            totalArea = currentNode.integrateWeight(mesh);
+            isOptimizing = true;
+
             problem.nodeToOptimize = currentNode;
             pollingSolver.emplace(options, problem, currentNode.phasefield());
-            isOptimizing = true;
         }
 
         ImGui::SameLine();
@@ -651,16 +766,14 @@ void Viewer::setCallbacks(UniqueFunction<bool()>&& cb) {
     auto& callbacks = options.callbacks;
     arrayAppend(callbacks, InPlaceInit, std::move(abortCb));
 
-    for(auto& d : data) d.clear();
+    for(auto& o : problem.objectives) arrayResize(o.history, 0);
     t = 0;
-    arrayResize(data, problem.objectives.size());
     arrayAppend(callbacks, InPlaceInit, [this](Solver::IterationSummary const& summary){
-        auto& objs = problem.objectives;
         Node node = problem.nodeToOptimize;
-        for(size_t i = 0; i < objs.size(); ++i) {
+        for(auto& [f, hist, _] : problem.objectives) {
             double cost = 0;
-            objs[i](node.phasefield(), node.temporary(), cost, nullptr, nullptr);
-            data[i].add(t, cost);
+            f(node.phasefield(), node.temporary(), cost, nullptr, nullptr);
+            arrayAppend(hist, InPlaceInit, float(t), float(cost));
         }
         ++t;
         return Solver::Status::CONTINUE;
@@ -670,25 +783,28 @@ void Viewer::setCallbacks(UniqueFunction<bool()>&& cb) {
 void Viewer::runOptimization(UniqueFunction<bool()>&& cb){
     setCallbacks(MOVE(cb));
     if(hierarchicalOptimization) {
-        tree.root().initializePhasefieldFromParent();
+        auto root = tree.root();
+        root.initializePhasefieldFromParent();
 
-        for(size_t d = 0; d <= maximumDepth; ++d) {
-            tree.computeWeightsOfAncestorsOfLevel(d);
-
-            for(Node node : tree.nodesOnLevel(d)) {
-                setAreaConstraint(node);
-                problem.nodeToOptimize = node;
-                Solver::solve(options, problem, node.phasefield(), nullptr);
-            }
-
-            if(d != maximumDepth) {
-                for(Node node : tree.nodesOnLevel(d))
-                    node.splitAndInitialize(&currentNode);
-            }
+        if(tree.depth == 0) {
+            totalArea = root.integrateWeight(mesh);
+            problem.nodeToOptimize = root;
+            Solver::solve(options, problem, root.phasefield(), nullptr);
         }
+
+        for(Node node : tree.leafs())
+            node.splitAndInitialize(&currentNode);
+        tree.computeLeafWeights();
+
+        for(Node node : tree.leafs()) {
+            totalArea = node.integrateWeight(mesh);
+            problem.nodeToOptimize = node;
+            Solver::solve(options, problem, node.phasefield(), nullptr);
+        }
+
     } else {
         tree.computeWeightsOfAncestorsOfLevel(currentNode.depth());
-        setAreaConstraint(currentNode);
+        totalArea = currentNode.integrateWeight(mesh);
         problem.nodeToOptimize = currentNode;
         Solver::solve(options, problem, currentNode.phasefield(), nullptr);
     }
@@ -707,7 +823,7 @@ void Viewer::refineLeafNodes(UniqueFunction<bool()>&& cb) {
     tree.computeLeafWeights();
 
     for(Node leaf : tree.leafs()) {
-        setAreaConstraint(leaf);
+        totalArea = leaf.integrateWeight(mesh);
         problem.nodeToOptimize = leaf;
         Solver::solve(options, problem, leaf.phasefield(), nullptr);
     }
@@ -718,7 +834,9 @@ void Viewer::refineLeafNodes(UniqueFunction<bool()>&& cb) {
 Functional Viewer::makeFunctional(FunctionalType::Value type) {
     switch(type) {
         case FunctionalType::AreaRegularizer: {
-            Functional f = AreaRegularizer{mesh};
+            AreaRegularizer ar{mesh};
+            ar.totalArea = &totalArea;
+            Functional f = MOVE(ar);
             f.loss = QuadraticLoss{};
             f.scaling = &areaPenaltyScaling;
             return f;
@@ -734,7 +852,9 @@ Functional Viewer::makeFunctional(FunctionalType::Value type) {
             return f;
         }
         case FunctionalType::ConnectednessConstraint : {
-            Functional f = ConnectednessConstraint{mesh};
+            ConnectednessConstraint cc{mesh};
+            cc.epsilon = &epsilon;
+            Functional f = MOVE(cc);
             f.scaling = &connectednessScaling;
             return f;
         }
@@ -769,7 +889,7 @@ void Viewer::brush() {
 
 void Viewer::setScalingFactors() {
     dirichletScaling = epsilon/2.;
-    connectednessScaling = 1./(epsilon*epsilon*epsilon);
+    connectednessScaling = Math::pow(epsilon, -kappa);
     areaPenaltyScaling = 1.;
     doubleWellScaling = 1./epsilon;
     yamabeLambdaScaling = 1./epsilon;
@@ -843,7 +963,6 @@ void Viewer::drawVisualizationOptions() {
             ImGui::EndCombo();
         }
 
-
         if(ImGui::Button("Split Leaf nodes")) {
             for(Node node : tree.leafs()) {
                 node.splitAndInitialize(&currentNode);
@@ -878,55 +997,64 @@ void Viewer::drawVisualizationOptions() {
         }
 
         if(ImGui::Button("Print Information")) {
-            DirichletEnergy de(mesh);
-            DoubleWellPotential dw(mesh);
 
-            SmootherStep chi;
-            Array<Pair<double, double>> patchInformation;
-            tree.computeLeafWeights();
-            for(Node leaf : tree.leafs()) {
-                auto phasefield = leaf.phasefield();
-                auto weights = leaf.temporary();
-                double posArea = 0;
-                double negArea = 0;
-                for(Face f : mesh.faces()) {
-                    double x = 0;
-                    double y = 0;
-                    for(Vertex v : f.vertices()) {
-                        x += chi.eval(phasefield[v])*weights[v];
-                        y += chi.eval(-phasefield[v])*weights[v];
-                    }
-                    posArea += f.area()*x/3;
-                    negArea += f.area()*y/3;
-                }
-
-                double deResult = 0, dwResult = 0;
-                de.operator()<double>(phasefield, weights, deResult, nullptr, nullptr);
-                dw.operator()<double>(phasefield, weights, dwResult, nullptr, nullptr);
-
-                double boundary = doubleWellScaling*dwResult+dirichletScaling*deResult;
-                arrayAppend(patchInformation, {{posArea, boundary}, {negArea, boundary}});
+            auto parameters = currentNode.phasefield();
+            Array<double> gradP(parameters.size());
+            double cost = 0;
+            for(size_t i = 0; i < 100; ++i) {
+                problem.nodeToOptimize = currentNode;
+                problem(parameters, cost, gradP);
             }
+            ScopedTimer::printStatistics();
 
-            CORRADE_ASSERT(patchInformation.size() == tree.numLeafs*2, "weird number of patches",);
-            double targetArea = 0;
-            for(auto [x,_] : patchInformation) targetArea += x;
-            targetArea /= double(patchInformation.size());
-            printf("Target Area %f\n", targetArea);
-            double totalError = 0;
+            //DirichletEnergy de(mesh);
+            //DoubleWellPotential dw(mesh);
 
-            auto& colors = getColors(tree.numLeafs*2);
-            CORRADE_ASSERT(colors.size() == patchInformation.size(), "Patch areas not same length as colors",);
+            //SmootherStep chi;
+            //Array<Pair<double, double>> patchInformation;
+            //tree.computeLeafWeights();
+            //for(Node leaf : tree.leafs()) {
+            //    auto phasefield = leaf.phasefield();
+            //    auto weights = leaf.temporary();
+            //    double posArea = 0;
+            //    double negArea = 0;
+            //    for(Face f : mesh.faces()) {
+            //        double x = 0;
+            //        double y = 0;
+            //        for(Vertex v : f.vertices()) {
+            //            x += chi.eval(phasefield[v])*weights[v];
+            //            y += chi.eval(-phasefield[v])*weights[v];
+            //        }
+            //        posArea += f.area()*x/3;
+            //        negArea += f.area()*y/3;
+            //    }
 
-            for(size_t i = 0; i < colors.size(); ++i) {
-                auto [patchArea, patchBoundary] = patchInformation[i];
-                double error = Math::abs(targetArea - patchArea);
-                totalError += error;
-                printf("Patch Area Error %f (area = %f), Boundary Length %f\n", error, patchArea, patchBoundary);
-                Debug{} << "Patch Color" << colors[i];
-            }
-            printf("Total error %f\n", totalError);
+            //    double deResult = 0, dwResult = 0;
+            //    de.operator()<double>(phasefield, weights, deResult, nullptr, nullptr);
+            //    dw.operator()<double>(phasefield, weights, dwResult, nullptr, nullptr);
 
+            //    double boundary = doubleWellScaling*dwResult+dirichletScaling*deResult;
+            //    arrayAppend(patchInformation, {{posArea, boundary}, {negArea, boundary}});
+            //}
+
+            //CORRADE_ASSERT(patchInformation.size() == tree.numLeafs*2, "weird number of patches",);
+            //double targetArea = 0;
+            //for(auto [x,_] : patchInformation) targetArea += x;
+            //targetArea /= double(patchInformation.size());
+            //printf("Target Area %f\n", targetArea);
+            //double totalError = 0;
+
+            //auto& colors = getColors(tree.numLeafs*2);
+            //CORRADE_ASSERT(colors.size() == patchInformation.size(), "Patch areas not same length as colors",);
+
+            //for(size_t i = 0; i < colors.size(); ++i) {
+            //    auto [patchArea, patchBoundary] = patchInformation[i];
+            //    double error = Math::abs(targetArea - patchArea);
+            //    totalError += error;
+            //    printf("Patch Area Error %f (area = %f), Boundary Length %f\n", error, patchArea, patchBoundary);
+            //    Debug{} << "Patch Color" << colors[i];
+            //}
+            //printf("Total error %f\n", totalError);
         }
 
         static bool drawCurvature = false;
@@ -996,6 +1124,27 @@ void Viewer::drawVisualizationOptions() {
 void Viewer::drawIO() {
     if(ImGui::TreeNode("IO")) {
 
+
+        static size_t curExp = 0;
+
+        if(ImGui::BeginCombo("Experiment", experiments[curExp].name)) {
+            for(size_t i = 0; i < IM_ARRAYSIZE(experiments); ++i) {
+                bool isSelected = i == curExp;
+                if(ImGui::Selectable(experiments[i].name, isSelected)) {
+                    curExp = i;
+                }
+                if(isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
+        if(ImGui::Button("Load Experiment")) {
+            auto& exp = experiments[curExp];
+            loadExperiment(exp.meshName, exp.treeName, exp.confName);
+        }
+
+
         static char path[50] = "/home/janos/meshes/experiments";
         static char postfix[25] = "spot";
 
@@ -1029,28 +1178,8 @@ void Viewer::drawIO() {
 
                 std::string meshPath = Cr::Utility::Directory::join(path, postfixStr + ".ply");
                 saveMesh(meshPath.c_str());
-
-                //Cr::Utility::Configuration conf;
-
-                //conf.setValue("epsilon", epsilon);
-                //conf.setValue("solver", int(options.solver));
-                //conf.setValue("hierarchicalOptimization", hierarchicalOptimization);
-                //conf.setValue("maximumDepth", maximumDepth);
-
-                //for(auto& f : problem.objectives) {
-                //    auto* group = conf.addGroup(FunctionalType::to_string(f.functionalType));
-                //    f.saveSettings(*group);
-                //    group->setValue("isObjective", true);
-                //}
-
-                //for(auto& f : problem.objectives) {
-                //    auto* group = conf.addGroup(FunctionalType::to_string(f.functionalType));
-                //    f.saveSettings(*group);
-                //    group->setValue("isObjective", false);
-                //}
-
-                //std::string confPath = Cr::Utility::Directory::join(path, postfixStr + ".conf");
-                //conf.save(confPath);
+                std::string confPath = Cr::Utility::Directory::join(path, postfixStr + ".conf");
+                saveCurrentConfig(confPath.c_str());
             }
         }
 
@@ -1105,9 +1234,11 @@ void Viewer::drawIO() {
 void Viewer::viewportEvent(ViewportEvent& event) {
     Mg::GL::defaultFramebuffer.setViewport({{}, event.framebufferSize()});
     arcBall->reshape(event.windowSize());
+    projection = Matrix4::perspectiveProjection(fov, Vector2{framebufferSize()}.aspectRatio(), 0.01f, 100.0f);
 
     imgui.relayout(Vector2{event.windowSize()}/event.dpiScaling(),
                    event.windowSize(), event.framebufferSize());
+
 }
 
 void Viewer::keyPressEvent(KeyEvent& event) {
@@ -1295,17 +1426,15 @@ void Viewer::drawEvent() {
         arcBall->rotate(m + Vector2i{5, 0});
     }
 
-
-//#ifdef MAGNUM_TARGET_WEBGL
+#ifdef MAGNUM_TARGET_WEBGL
     if(isOptimizing) {
         if(pollingSolver->runOneIteration() < 0)
             isOptimizing = false;
         proxy.redraw();
     }
-//#endif
+#endif
 
     proxy.upload(); /* synchronize with gpu */
-
 
     /* draw scene */
     bool camChanged = arcBall->updateTransformation();
@@ -1362,22 +1491,21 @@ void Viewer::drawEvent() {
         videoSaver.appendFrame(std::move(image));
 #endif
     }
-    //if(recording) {
-    //    Mg::Image2D image = GL::defaultFramebuffer.read({{},framebufferSize()}, {GL::PixelFormat::RGBA, Mg::GL::PixelType::UnsignedByte});
-    //    videoSaver.appendFrame(std::move(image));
-    //}
+
 
     /* draw ImGui stuff */
-    ImGui::PushItemWidth(150);
 
+    ImGui::Begin("Phasefield Options");
+    ImGui::PushItemWidth(150);
     drawBrushOptions();
     drawOptimizationOptions();
     drawVisualizationOptions();
     drawIO();
+    ImGui::PopItemWidth();
+    ImGui::End();
+
     if(showPlot)
         drawErrorPlot();
-
-    ImGui::PopItemWidth();
 
     imgui.updateApplicationCursor(*this);
 
@@ -1401,18 +1529,6 @@ void Viewer::drawEvent() {
     redraw();
 }
 
-void Viewer::setAreaConstraint(Node node) {
-    double area = node.integrateWeight(mesh);
-    for(Functional& f : problem.objectives) {
-        if(f.functionalType == FunctionalType::AreaRegularizer)
-            reinterpret_cast<AreaRegularizer*>(f.erased)->totalArea = area;
-    }
-    for(Functional& f : problem.constraints) {
-        if(f.functionalType == FunctionalType::AreaRegularizer)
-            reinterpret_cast<AreaRegularizer*>(f.erased)->totalArea = area;
-    }
-}
-
 Viewer::~Viewer() {
     ImPlot::DestroyContext();
 }
@@ -1422,67 +1538,158 @@ void Viewer::drawErrorPlot() {
 
     size_t objectiveCount = problem.objectives.size();
 
-    ImGui::SameLine();
-
     if (ImGui::Button("Clear", ImVec2(100,0))) {
         t = 0;
-        for(auto& buffer : data) buffer.clear();
+        for (auto& [f, history, show] : problem.objectives)
+            arrayResize(history, 0);
     }
 
     ImGui::SameLine();
 
     if(ImGui::Button("Save Tex plot", ImVec2(100, 0))) {
-        if(data.size() != problem.objectives.size()) {
+        std::string plot = "\\begin{tikzpicture}\n"
+                           "\\begin{axis}[\n"
+                           "height=9cm,\n"
+                           "width=9cm,\n"
+                           "grid=major,\n"
+                           "]\n";
 
-            std::string plot = "\\begin{tikzpicture}\n"
-                               "\\begin{axis}[\n"
-                               "height=9cm,\n"
-                               "width=9cm,\n"
-                               "grid=major,\n"
-                               "]\n";
-
-            size_t sampleCouunt = data.front().size();
-            size_t step = Math::max(sampleCouunt/50, 1ul);
-            for(size_t k = 0; k < data.size(); ++k) {
-                plot += "\n\\addplot coordinates {\n";
-                for(size_t j = 0; j < data[k].size(); j += step) {
-                    plot += Cr::Utility::formatString("({},{})\n", j, data[k].data[j].y());
-                }
-                plot += "};\n";
-                plot += Cr::Utility::formatString("\\addlegendentry{{ {} }}",
-                                                  FunctionalType::to_string(problem.objectives[k].functionalType));
+        size_t step = Math::max(t/50, 1ul);
+        for(auto& [f,hist,show] : problem.objectives) {
+            plot += "\n\\addplot coordinates {\n";
+            for(size_t j = 0; j < hist.size(); j += step) {
+                plot += Cr::Utility::formatString("({},{})\n", j, hist[j].y());
             }
-            plot += "\n\\end{axis}\n"
-                    "\\end{tikzpicture}";
+            plot += "};\n";
+            plot += Cr::Utility::formatString("\\addlegendentry{{ {} }}",
+                                              FunctionalType::to_string(f.functionalType));
+        }
+        plot += "\n\\end{axis}\n"
+                "\\end{tikzpicture}";
 
-            FILE* fp = fopen("/tmp/plot.tex", "w");
-            if(fp != nullptr) {
-                fputs(plot.data(), fp);
-                fclose(fp);
-            }
+        FILE* fp = fopen("/tmp/plot.tex", "w");
+        if(fp != nullptr) {
+            fputs(plot.data(), fp);
+            fclose(fp);
         }
     }
 
 
     ImPlot::SetNextPlotLimitsX(0, t, paused ? ImGuiCond_Once : ImGuiCond_Always);
     if (ImPlot::BeginPlot("##DND", nullptr, nullptr, ImVec2(-1,0), ImPlotFlags_YAxis2 | ImPlotFlags_YAxis3, ImPlotAxisFlags_NoTickLabels)) {
-        for (int i = 0; i < objectiveCount; ++i) {
-            const char* label = FunctionalType::to_string(problem.objectives[i].functionalType);
-            if (show[i] && data[i].size() > 0) {
+        for (auto& [f, history, show] : problem.objectives) {
+            const char* label = FunctionalType::to_string(f.functionalType);
+            if (show && history.size() > 0) {
                 ImPlot::SetPlotYAxis(0);
-                ImPlot::PlotLine(label, &data[i].data[0].x(), &data[i].data[0].y(), data[i].data.size(), data[i].offset, 2 * sizeof(float));
-                // allow legend labels to be dragged and dropped
-                if (ImPlot::BeginLegendDragDropSource(label)) {
-                    ImGui::SetDragDropPayload("DND_PLOT", &i, sizeof(int));
-                    ImGui::TextUnformatted(label);
-                    ImPlot::EndLegendDragDropSource();
-                }
+                ImPlot::PlotLine(label, &history[0].x(), &history[0].y(), history.size(), 0, 2 * sizeof(float));
             }
         }
 
         ImPlot::EndPlot();
     }
     ImGui::End();
+
+
+}
+
+#ifdef MAGNUM_TARGET_WEBGL
+Int Viewer::touchStartEvent(EmscriptenTouchEvent const* event) {
+    if (event->numTouches == 2) {
+        isPinching = true;
+        EmscriptenTouchPoint p1 = event->touches[0];
+        EmscriptenTouchPoint p2 = event->touches[1];
+        Vector2d p1Client{double(p1.clientX), double(p1.clientY)};
+        Vector2d p2Client{double(p2.clientX), double(p2.clientY)};
+        pinchLength = (p1Client - p2Client).length();
+        return 1;
+    } else if(event->numTouches == 1) {
+        EmscriptenTouchPoint ep = event->touches[0];
+        Vector2i p{Int(ep.targetX), Int(ep.targetY)};
+
+        ImGuiIO& io = ImGui::GetIO();
+        io.MousePos = ImVec2(dpiScaling()*Vector2(p));
+        io.MouseDown[0] = true;
+        if(io.WantCaptureMouse) {
+            trackingForImGui = true;
+            redraw();
+            return true;
+        }
+
+        arcBall->initTransformation(p);
+        trackingFinger = true;
+        return 1;
+    } else if(event->numTouches == 3) {
+        EmscriptenTouchPoint ep = event->touches[0];
+        arcBall->initTransformation({Int(ep.targetX), Int(ep.targetY)});
+        trackingFingers = true;
+        return 1;
+    }
+    return 0;
+}
+
+Int Viewer::touchMoveEvent(EmscriptenTouchEvent const* event) {
+    ImGuiIO& io = ImGui::GetIO();
+
+    if(trackingForImGui && io.WantCaptureMouse) {
+        EmscriptenTouchPoint ep = event->touches[0];
+        Vector2 p{Float(ep.targetX), Float(ep.targetY)};
+        io.MousePos = ImVec2(Vector2(p));
+        return 1;
+    }
+
+    if (isPinching) {
+        EmscriptenTouchPoint p1 = event->touches[0];
+        EmscriptenTouchPoint p2 = event->touches[1];
+        Vector2d p1Client{double(p1.targetX), double(p1.targetY)};
+        Vector2d p2Client{double(p2.targetY), double(p2.targetY)};
+        double length = (p1Client - p2Client).length();
+        double delta = length - pinchLength;
+        arcBall->zoom(2.*delta);
+        pinchLength = length;
+        return 1;
+    } else if (trackingFinger) {
+        EmscriptenTouchPoint ep = event->touches[0];
+        arcBall->rotate({Int(ep.targetX), Int(ep.targetY)});
+        return 1;
+    } else if(trackingFingers) {
+        EmscriptenTouchPoint ep = event->touches[0];
+        arcBall->translate({Int(ep.targetX), Int(ep.targetY)});
+        return 1;
+    }
+    return 0;
+}
+
+Int Viewer::touchEndEvent(EmscriptenTouchEvent const* event) {
+    if(trackingForImGui) {
+        trackingForImGui = false;
+        ImGuiIO& io = ImGui::GetIO();
+        io.MouseDown[0] = false;
+        return 1;
+    }
+    if(isPinching || trackingFinger || trackingFingers) {
+        isPinching = false;
+        trackingFinger = false;
+        trackingFingers = false;
+        return 1;
+    }
+    return 0;
+}
+
+
+Int Viewer::touchCancelEvent(EmscriptenTouchEvent const* event) {
+    if(trackingForImGui) {
+        trackingForImGui = false;
+        ImGuiIO& io = ImGui::GetIO();
+        io.MouseDown[0] = false;
+        return 1;
+    }
+    if(isPinching || trackingFinger || trackingFingers) {
+        isPinching = false;
+        trackingFinger = false;
+        trackingFingers = false;
+        return 1;
+    }
+    return 0;
 }
 
 void Viewer::drawMeshEdit() {
@@ -1494,6 +1701,7 @@ void Viewer::drawMeshEdit() {
         ImGui::TreePop();
     }
 }
+#endif
 
 
 }

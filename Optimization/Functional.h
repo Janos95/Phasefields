@@ -9,6 +9,8 @@
 #include "LossFunctions.h"
 #include "Visualization.h"
 
+#include <Corrade/Utility/Utility.h>
+
 class adouble;
 
 namespace Phasefield {
@@ -25,6 +27,7 @@ struct Functional {
     void swap(Functional& other);
 
     explicit Functional() = default;
+    explicit Functional(std::nullptr_t) {}
 
     template<class F>
     /* implicit */ Functional(F f);
@@ -47,15 +50,9 @@ struct Functional {
                     ArrayView<double> gradP,
                     ArrayView<double> gradW) const;
 
-    //void operator()(Containers::ArrayView<const adouble> const& params, Containers::ArrayView<const adouble> const& weights, adouble& residual) const;
+    void loadParameters(Cr::Utility::ConfigurationGroup const&);
 
-    //void tapeEvaluation(double const* x) const;
-
-    /* this is called from the gui thread so we can update some opengl stuff if we want to */
-
-    //void updateVisualization(VisualizationProxy& proxy);
-
-    //void turnVisualizationOff();
+    void saveParameters(Cr::Utility::ConfigurationGroup&) const;
 
     void drawImGuiOptions(VisualizationProxy&);
 
@@ -67,7 +64,8 @@ struct Functional {
     size_t (* params)(void*);
 
     /* optional */
-    //void (* vis)(void*, VisualizationProxy&) = nullptr;
+    void (* load)(void*, Cr::Utility::ConfigurationGroup const&) = nullptr;
+    void (* save)(void*, Cr::Utility::ConfigurationGroup&) = nullptr;
 
     //void (* off)(void*) = nullptr;
 

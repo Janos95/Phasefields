@@ -29,6 +29,8 @@
 
 #ifdef MAGNUM_TARGET_WEBGL
 #include <Magnum/Platform/EmscriptenApplication.h>
+#include <emscripten/emscripten.h>
+#include <emscripten/html5.h>
 #else
 #include <Magnum/Platform/Sdl2Application.h>
 #endif
@@ -49,37 +51,9 @@ namespace Mg = Magnum;
 namespace Cr = Corrade;
 
 struct Viewer;
+struct MultiGestureEvent;
+struct ScrollingBuffer;
 
-// utility structure for realtime plot
-struct ScrollingBuffer {
-    size_t maxSize;
-    size_t offset;
-    Array<Vector2> data;
-
-    ScrollingBuffer() {
-        maxSize = 2000;
-        offset  = 0;
-        arrayReserve(data, maxSize);
-    }
-
-    void add(float x, float y) {
-        if (data.size() < maxSize)
-            arrayAppend(data, InPlaceInit, x, y);
-        else {
-            data[offset] = Vector2(x,y);
-            offset =  (offset + 1) % maxSize;
-        }
-    }
-    void clear() {
-        if (data.size() > 0) {
-            arrayShrink(data);
-            offset  = 0;
-        }
-    }
-
-    size_t size() const { return data.size(); }
-
-};
 
 struct Viewer : public Mg::Platform::Application {
 
@@ -105,11 +79,18 @@ struct Viewer : public Mg::Platform::Application {
 
     void textInputEvent(TextInputEvent& event) override;
 
+#ifdef MAGNUM_TARGET_WEBGL
+    Int touchStartEvent(EmscriptenTouchEvent const*);
+    Int touchMoveEvent(EmscriptenTouchEvent const*);
+    Int touchEndEvent(EmscriptenTouchEvent const*);
+    Int touchCancelEvent(EmscriptenTouchEvent const*);
+#endif
+
     //void drawSubdivisionOptions();
 
     void loadScene(const char*, const char*);
 
-    void loadExperiment(const char*);
+    void loadExperiment(const char*, const char*, const char*);
 
     //bool saveMesh(std::string const&);
 
@@ -129,11 +110,10 @@ struct Viewer : public Mg::Platform::Application {
 
     void drawMeshEdit();
 
-    void setAreaConstraint(Node node);
-
     Functional makeFunctional(FunctionalType::Value);
 
-    bool drawFunctionals(Array<Functional>&, size_t& id);
+    template<class T>
+    bool drawFunctionals(Array<T>&, size_t& id);
 
     void startBrushing(Vector3 const&, Vector3 const&);
 
@@ -149,6 +129,9 @@ struct Viewer : public Mg::Platform::Application {
 
     bool saveMesh(const char*);
     bool dumpMesh(const char*);
+    void loadConfig(Cr::Utility::ConfigurationGroup const&);
+    void saveCurrentConfig(const char*);
+
 
     Mg::ImGuiIntegration::Context imgui{Mg::NoCreate};
     bool trackingMouse = false;
@@ -180,7 +163,6 @@ struct Viewer : public Mg::Platform::Application {
     bool isOptimizing = false;
     bool hierarchicalOptimization = false;
     bool initializeLevel = false;
-    size_t maximumDepth = 1;
     Node currentNode{0, &tree};
 
     //connectedness vis data
@@ -193,6 +175,9 @@ struct Viewer : public Mg::Platform::Application {
     double areaPenaltyScaling;
     double doubleWellScaling;
     double yamabeLambdaScaling;
+
+    double kappa = 2.;
+    double totalArea = 0; /* I guess better than uninitialized */
 
     Double phase = 1.;
     Double targetDist = 0.;
@@ -232,12 +217,18 @@ struct Viewer : public Mg::Platform::Application {
     FastMarchingMethod fastMarchingMethod;
 
     bool paused = false;
-    Array<ScrollingBuffer> data;
-    Array<bool> show;
     size_t t = 0;
     bool showPlot = false;
 
     Optional<LbfgsSolver> pollingSolver;
+
+    /*for touch */
+    bool isPinching = false;
+    bool trackingFinger = false;
+    bool trackingFingers = false;
+    bool trackingForImGui = false;
+    double pinchLength;
 };
+
 
 }
