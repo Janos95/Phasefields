@@ -9,7 +9,8 @@ and various visualization options.
 **Introduction**
 
 You can try it out in your [broiwser](https://janos95.gitlab.io/wasm-test/), but be aware the 
-webasm build is pretty buggy atm.
+webasm build is pretty buggy atm. Also its using blender style navigation, so dont forget to press
+the middle mouse button when dragging.
 
 Here is a teaser image of the optimization result for varying interface length penalties.
 ![](images/image.png)
