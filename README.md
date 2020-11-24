@@ -11,7 +11,7 @@ and various visualization options.
 You can try it out in your [broiwser](https://janos95.gitlab.io/wasm-test/), but be aware the 
 webasm build is pretty buggy atm.
 
-Here is a teasure of the optimization result for varying interface length penalties.
+Here is a teaser image of the optimization result for varying interface length penalties.
 ![](images/image.png)
 
 **building**
