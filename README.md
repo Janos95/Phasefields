@@ -2,7 +2,7 @@ This repository contains the numerical code for my masterthesis.
 
 **Introduction**
 
-You can try it out [youself](http://phasefields.org/)!
+You can try it out [youself](https://janos95.gitlab.io/wasm-test/)!
 
 The main target is a gui application which can be used to perform phasefield optimizations
 wrt. different objectives. Teaser image 
