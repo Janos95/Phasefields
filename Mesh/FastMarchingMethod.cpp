@@ -97,8 +97,6 @@ void FastMarchingMethod::setSource(Vertex v){
 
 bool FastMarchingMethod::step(Vertex& vertex, Double& distance) {
 
-    size_t nVert = m_mesh.vertexCount();
-
     /* get next non finished item */
     do {
         if(m_frontier.empty()) return false;

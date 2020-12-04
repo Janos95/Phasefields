@@ -16,6 +16,8 @@
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Containers/GrowableArray.h>
 
+#include <random>
+
 namespace Phasefield {
 
 using namespace Mg::Math::Literals;
@@ -43,21 +45,61 @@ const Color4 kelly_colors[] = {
     0xFF232C16_rgbf //Dark Olive Green
 };
 
+static Array<Color4> g_colors;
+
+#define USE_KELLY 0
+
 Array<Color4>& getColors(size_t n) {
-    static Array<Color4> colors;
-    if(n != colors.size()) {
-        arrayResize(colors, n);
-        if(n > 20 || true) {
+    if(n == Invalid) {
+        return g_colors;
+    }
+    if(n != g_colors.size()) {
+        arrayResize(g_colors, n);
+        if(n > 20 || !USE_KELLY) {
             Deg hue = 100.0_degf;
-            for(auto& c : colors) /* generate random colors */
-                c = Color4::fromHsv({hue += 137.5_degf, 0.9f, 0.9f});
+            Deg step = 360._degf/n;
+            for(size_t i = 0; i < n; ++i) {
+                g_colors[i] = Color4::fromHsv({hue += step, 0.9f, 0.9f});
+            }
         } else {
             for(size_t i = 0; i < n; ++i) {
-                colors[i] = kelly_colors[i];
+                g_colors[i] = kelly_colors[i];
             }
         }
     }
-    return colors;
+    return g_colors;
+}
+
+void optimizeColors(Array<size_t> const& neighbors, Array<size_t> const& starts) {
+    size_t segmentCount = starts.size() - 1;
+    auto& colors = getColors(segmentCount);
+
+    std::random_device device;
+    std::mt19937 gen(device());
+    std::uniform_int_distribution<size_t> idxDist(0, segmentCount - 1);
+
+    for(size_t i = 0; i < 1'000'000; ++i) {
+
+        size_t indices[2] = {idxDist(gen), idxDist(gen)};
+        float costOrig = 0;
+        float costSwapped = 0;
+
+        for(size_t l = 0; l < 2; ++l) {
+            size_t idx = indices[l];
+            Color4& colorOrig = colors[indices[l]];
+            Color4& colorSwapped = colors[indices[l^1]];
+            for(size_t j = starts[idx]; j < starts[idx+1]; ++j) {
+                size_t k = neighbors[j];
+                CORRADE_ASSERT(k < colors.size(), "Color Opt: Index out of bounds",);
+                costOrig += (colorOrig - colors[k]).dot();
+                costSwapped += (colorSwapped - colors[k]).dot();
+            }
+        }
+
+        if(costSwapped > costOrig) {
+            std::swap(colors[indices[0]], colors[indices[1]]);
+        }
+    }
 }
 
 VisualizationProxy::VisualizationProxy(Viewer& v) : viewer(v) {
@@ -84,39 +126,23 @@ void VisualizationProxy::drawSegmentation() {
 
     Tree& tree = viewer.tree;
 
-    auto& colors = getColors(tree.numLeafs*2);
+    auto& colors = getColors(tree.nodeCountOnLevel(level)*2);
     auto vertexColors = viewer.mesh.colors();
 
-    for(double& w : tree.root().temporary()) w = 1.;
     for(Color4& c : vertexColors) c = Color4{};
 
     size_t n = tree.vertexCount();
     SmootherStep smoothStep;
 
-    //auto [min,max] = Math::minmax(phasefields[0]);
-    //Debug{} << min << " " << max;
+    tree.computeWeightsOfAncestorsOfLevel(level);
 
-    for(Node node : tree.internalNodes()) {
-        auto weights = node.temporary();
+    size_t idx = 0;
+    for(Node node : tree.nodesOnLevel(level)) {
         for(size_t i = 0; i < n; ++i) {
-            if(node.hasLeftChild()) {
-                Node leftChild = node.leftChild();
-                leftChild.temporary()[i] = smoothStep.eval(node.phasefield()[i])*weights[i];
-            }
-            if(node.hasRightChild()) {
-                Node rightChild = node.rightChild();
-                rightChild.temporary()[i] = smoothStep.eval(-node.phasefield()[i])*weights[i];
-            }
+            vertexColors[i].rgb() += node.temporary()[i]*smoothStep.eval(node.phasefield()[i])*colors[2*idx].rgb();
+            vertexColors[i].rgb() += node.temporary()[i]*smoothStep.eval(-node.phasefield()[i])*colors[2*idx + 1].rgb();
         }
-    }
-
-    size_t leafIdx = 0;
-    for(Node leaf : tree.leafs()) {
-        for(size_t i = 0; i < n; ++i) {
-            vertexColors[i].rgb() += leaf.temporary()[i]*smoothStep.eval(leaf.phasefield()[i])*colors[2*leafIdx].rgb();
-            vertexColors[i].rgb() += leaf.temporary()[i]*smoothStep.eval(-leaf.phasefield()[i])*colors[2*leafIdx + 1].rgb();
-        }
-        ++leafIdx;
+        ++idx;
     }
     shaderConfig = ShaderConfig::VertexColors;
 }

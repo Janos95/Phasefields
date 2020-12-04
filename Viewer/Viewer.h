@@ -228,6 +228,10 @@ struct Viewer : public Mg::Platform::Application {
     bool trackingFingers = false;
     bool trackingForImGui = false;
     double pinchLength;
+
+    bool swapColors= false;
+    size_t colorIndexToSwap[2];
+    size_t swapIndex = 0;
 };
 
 

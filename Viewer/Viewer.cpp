@@ -9,7 +9,6 @@
 #include "ConnectednessConstraint.h"
 #include "DiffuseYamabe.h"
 #include "C1Functions.h"
-#include "CoolWarm.h"
 
 #include <ScopedTimer/ScopedTimer.h>
 
@@ -69,6 +68,7 @@ static void initializeRessources() {
     CORRADE_RESOURCE_INITIALIZE(Experiments_Rsc)
 }
 
+namespace ColorMap = Mg::DebugTools::ColorMap;
 
 namespace Phasefield {
 
@@ -200,6 +200,7 @@ bool Viewer::dumpMesh(char const* path) {
     writer->SetInputData(polyData);
 
     writer->Write();
+    return true;
 #else
     return false;
 #endif
@@ -213,12 +214,12 @@ Array<Viewer::ColorMap> makeColorMapTextures() {
     Array<Viewer::ColorMap> textures;
     using L = std::initializer_list<std::pair<char const*, StaticArrayView<256, const Vector3ub>>>;
     for(auto&& [name, colorMap] : L{
-            {"Turbo",   Magnum::DebugTools::ColorMap::turbo()},
-            {"Magma",   Magnum::DebugTools::ColorMap::magma()},
-            {"Plasma",  Magnum::DebugTools::ColorMap::plasma()},
-            {"Inferno", Magnum::DebugTools::ColorMap::inferno()},
-            {"Viridis", Magnum::DebugTools::ColorMap::viridis()},
-            {"CoolWarm", coolWarm()}
+            {"Turbo",   ColorMap::turbo()},
+            {"Magma",   ColorMap::magma()},
+            {"Plasma",  ColorMap::plasma()},
+            {"Inferno", ColorMap::inferno()},
+            {"Viridis", ColorMap::viridis()},
+            {"CoolWarm", ColorMap::coolWarmSmooth()}
     }) {
         const Magnum::Vector2i size{Magnum::Int(colorMap.size()), 1};
         const GL::TextureFormat format =
@@ -783,14 +784,6 @@ void Viewer::setCallbacks(UniqueFunction<bool()>&& cb) {
 void Viewer::runOptimization(UniqueFunction<bool()>&& cb){
     setCallbacks(MOVE(cb));
     if(hierarchicalOptimization) {
-        auto root = tree.root();
-        root.initializePhasefieldFromParent();
-
-        if(tree.depth == 0) {
-            totalArea = root.integrateWeight(mesh);
-            problem.nodeToOptimize = root;
-            Solver::solve(options, problem, root.phasefield(), nullptr);
-        }
 
         for(Node node : tree.leafs())
             node.splitAndInitialize(&currentNode);
@@ -947,7 +940,7 @@ void Viewer::drawVisualizationOptions() {
 
         char current[100];
         sprintf(current, "%zu", currentNode.idx);
-        if(ImGui::BeginCombo("##currentnode", current)) {
+        if(ImGui::BeginCombo("Current Node", current)) {
             char buffer[100];
             for(Node node : tree.nodes()) {
                 bool isSelected = node == currentNode;
@@ -961,6 +954,29 @@ void Viewer::drawVisualizationOptions() {
                     ImGui::SetItemDefaultFocus();
             }
             ImGui::EndCombo();
+        }
+
+        if(ImGui::Button("Optimize Colors")) {
+            Array<size_t> starts, neighbors;
+            tree.computeAdjacencyGraph(neighbors, starts, proxy.level);
+            Debug{} << getColors();
+            optimizeColors(neighbors, starts);
+            Debug{} << getColors();
+            if(proxy.option == VisOption::Segmentation)
+                proxy.redraw();
+
+        }
+
+        if(ImGui::Checkbox("Swap Colors", &swapColors)) {
+            if(!swapColors) {
+                swapIndex = 0;
+            }
+        }
+
+        if(ImGui::InputInt("Segmentation level", &proxy.level)) {
+            proxy.level = Math::clamp<int>(proxy.level, 0, tree.depth);
+            if(proxy.option == VisOption::Segmentation)
+                proxy.redraw();
         }
 
         if(ImGui::Button("Split Leaf nodes")) {
@@ -998,63 +1014,54 @@ void Viewer::drawVisualizationOptions() {
 
         if(ImGui::Button("Print Information")) {
 
-            auto parameters = currentNode.phasefield();
-            Array<double> gradP(parameters.size());
-            double cost = 0;
-            for(size_t i = 0; i < 100; ++i) {
-                problem.nodeToOptimize = currentNode;
-                problem(parameters, cost, gradP);
+            DirichletEnergy de(mesh);
+            DoubleWellPotential dw(mesh);
+
+            SmootherStep chi;
+            Array<Pair<double, double>> patchInformation;
+            tree.computeLeafWeights();
+            for(Node leaf : tree.leafs()) {
+                auto phasefield = leaf.phasefield();
+                auto weights = leaf.temporary();
+                double posArea = 0;
+                double negArea = 0;
+                for(Face f : mesh.faces()) {
+                    double x = 0;
+                    double y = 0;
+                    for(Vertex v : f.vertices()) {
+                        x += chi.eval(phasefield[v])*weights[v];
+                        y += chi.eval(-phasefield[v])*weights[v];
+                    }
+                    posArea += f.area()*x/3;
+                    negArea += f.area()*y/3;
+                }
+
+                double deResult = 0, dwResult = 0;
+                de.operator()<double>(phasefield, weights, deResult, nullptr, nullptr);
+                dw.operator()<double>(phasefield, weights, dwResult, nullptr, nullptr);
+
+                double boundary = doubleWellScaling*dwResult+dirichletScaling*deResult;
+                arrayAppend(patchInformation, {{posArea, boundary}, {negArea, boundary}});
             }
-            ScopedTimer::printStatistics();
 
-            //DirichletEnergy de(mesh);
-            //DoubleWellPotential dw(mesh);
+            CORRADE_ASSERT(patchInformation.size() == tree.numLeafs*2, "weird number of patches",);
+            double targetArea = 0;
+            for(auto [x,_] : patchInformation) targetArea += x;
+            targetArea /= double(patchInformation.size());
+            printf("Target Area %f\n", targetArea);
+            double totalError = 0;
 
-            //SmootherStep chi;
-            //Array<Pair<double, double>> patchInformation;
-            //tree.computeLeafWeights();
-            //for(Node leaf : tree.leafs()) {
-            //    auto phasefield = leaf.phasefield();
-            //    auto weights = leaf.temporary();
-            //    double posArea = 0;
-            //    double negArea = 0;
-            //    for(Face f : mesh.faces()) {
-            //        double x = 0;
-            //        double y = 0;
-            //        for(Vertex v : f.vertices()) {
-            //            x += chi.eval(phasefield[v])*weights[v];
-            //            y += chi.eval(-phasefield[v])*weights[v];
-            //        }
-            //        posArea += f.area()*x/3;
-            //        negArea += f.area()*y/3;
-            //    }
+            auto& colors = getColors(tree.numLeafs*2);
+            CORRADE_ASSERT(colors.size() == patchInformation.size(), "Patch areas not same length as colors",);
 
-            //    double deResult = 0, dwResult = 0;
-            //    de.operator()<double>(phasefield, weights, deResult, nullptr, nullptr);
-            //    dw.operator()<double>(phasefield, weights, dwResult, nullptr, nullptr);
-
-            //    double boundary = doubleWellScaling*dwResult+dirichletScaling*deResult;
-            //    arrayAppend(patchInformation, {{posArea, boundary}, {negArea, boundary}});
-            //}
-
-            //CORRADE_ASSERT(patchInformation.size() == tree.numLeafs*2, "weird number of patches",);
-            //double targetArea = 0;
-            //for(auto [x,_] : patchInformation) targetArea += x;
-            //targetArea /= double(patchInformation.size());
-            //printf("Target Area %f\n", targetArea);
-            //double totalError = 0;
-
-            //auto& colors = getColors(tree.numLeafs*2);
-            //CORRADE_ASSERT(colors.size() == patchInformation.size(), "Patch areas not same length as colors",);
-
-            //for(size_t i = 0; i < colors.size(); ++i) {
-            //    auto [patchArea, patchBoundary] = patchInformation[i];
-            //    double error = Math::abs(targetArea - patchArea);
-            //    totalError += error;
-            //    printf("Patch Area Error %f (area = %f), Boundary Length %f\n", error, patchArea, patchBoundary);
-            //    Debug{} << "Patch Color" << colors[i];
-            //}
-            //printf("Total error %f\n", totalError);
+            for(size_t i = 0; i < colors.size(); ++i) {
+                auto [patchArea, patchBoundary] = patchInformation[i];
+                double error = Math::abs(targetArea - patchArea);
+                totalError += error;
+                printf("Patch Area Error %f (area = %f), Boundary Length %f\n", error, patchArea, patchBoundary);
+                Debug{} << "Patch Color" << colors[i];
+            }
+            printf("Total error %f\n", totalError);
         }
 
         static bool drawCurvature = false;
@@ -1145,8 +1152,8 @@ void Viewer::drawIO() {
         }
 
 
-        static char path[50] = "/home/janos/meshes/experiments";
-        static char postfix[25] = "spot";
+        static char path[50] = "/home/janos/";
+        static char postfix[25] = "torus_hierarchical_32";
 
         ImGui::BeginGroup();
         ImGui::Text("Import/Export to");
@@ -1248,15 +1255,6 @@ void Viewer::keyPressEvent(KeyEvent& event) {
     }
 
     switch(event.key()) {
-        case KeyEvent::Key::L:
-            if(arcBall->lagging() > 0.0f) {
-                Debug{} << "Lagging disabled";
-                arcBall->setLagging(0.0f);
-            } else {
-                Debug{} << "Lagging enabled";
-                arcBall->setLagging(0.85f);
-            }
-            break;
         case KeyEvent::Key::R:
             arcBall->reset();
             break;
@@ -1314,6 +1312,30 @@ void Viewer::mousePressEvent(MouseEvent& event) {
         startBrushing(o, d);
         event.setAccepted();
         return;
+    }
+
+    if(swapColors) {
+        Vector3 o = unproject(event.position(), 0);
+        Vector3 d = unproject(event.position(), 1) - o;
+        Vertex v = intersectWithPcd(o, d);
+        Color4 target = mesh.color(v);
+        auto& colors = getColors();
+        float min = std::numeric_limits<float>::max();
+        size_t idx = Invalid;
+        for(size_t i = 0; i < colors.size(); ++i) {
+            float dist = (colors[i] - target).dot();
+            if(dist < min) {
+                min = dist;
+                idx = i;
+            }
+        }
+        colorIndexToSwap[swapIndex] = idx;
+        if(swapIndex) {
+            std::swap(colors[colorIndexToSwap[0]], colors[colorIndexToSwap[1]]);
+            proxy.redraw();
+        }
+        swapIndex ^= 1;
+        event.setAccepted();
     }
 
     if(event.button() == MouseEvent::Button::Middle) {
@@ -1450,8 +1472,8 @@ void Viewer::drawEvent() {
         phongVertexColors.setProjectionMatrix(projection)
                          .setTransformationMatrix(viewTf)
                          .setNormalMatrix(viewTf.normalMatrix())
-                         .setLightPositions({{10,10,10}, {-10, -10, 10}})
-                         .setLightColors({Color4{0.5}, Color4{0.5}})
+                         .setLightPositions({{10,10,10, 0}, {-10, -10, 10, 0}})
+                         .setLightColors({Color3{0.5}, Color3{0.5}})
                          .setSpecularColor(Color4{0.1})
                          .draw(glMesh);
     }

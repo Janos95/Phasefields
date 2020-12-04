@@ -43,13 +43,10 @@ if (PHASEFIELD_WITH_ADOLC)
 endif()
 
 if (PHASEFIELD_WITH_TBB)
-    find_package(OpenMP)
-    target_link_libraries(Cost PRIVATE TBB::tbb OpenMP::OpenMP_CXX)
     target_compile_definitions(Cost PRIVATE PHASEFIELD_WITH_TBB)
 endif()
 
 if (PHASEFIELD_WITH_SUITESPARSE)
-    target_link_libraries(Cost PRIVATE mkl::mkl)
     target_link_libraries(Cost PRIVATE SuiteSparse::UMFPACK)
     target_compile_definitions(Cost PRIVATE PHASEFIELD_WITH_SUITESPARSE)
 endif()

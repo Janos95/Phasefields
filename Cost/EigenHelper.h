@@ -90,9 +90,9 @@ void handleSolverInfo(Eigen::ComputationInfo info) {
 template<class Scalar>
 struct SelectSolver {
 #ifdef PHASEFIELD_WITH_SUITESPARSE
-    //using type = Eigen::UmfPackLU<Eigen::SparseMatrix<Scalar>>;
+    using type = Eigen::UmfPackLU<Eigen::SparseMatrix<Scalar>>;
     //using type = Eigen::PardisoLDLT<Eigen::SparseMatrix<Scalar>, Eigen::Upper>;
-    using type = Eigen::CholmodSimplicialLDLT<Eigen::SparseMatrix<Scalar>, Eigen::Lower|Eigen::Upper>;
+    //using type = Eigen::CholmodSupernodalLLT<Eigen::SparseMatrix<Scalar>, Eigen::Lower|Eigen::Upper>;
 #else
     using type = Eigen::SparseLU<Eigen::SparseMatrix<Scalar>>;
 #endif

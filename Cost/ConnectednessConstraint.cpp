@@ -57,7 +57,6 @@ void ConnectednessConstraint::operator()(ArrayView<const Scalar> parameters,
     WeightExitPenalty weightPenalty;
 
     size_t numFaces = mesh->faceCount();
-    size_t numVertices = mesh->vertexCount();
 
     FaceData<Scalar> ws(numFaces);
     FaceData<bool> inInterface(NoInit, numFaces);
@@ -308,7 +307,7 @@ void ConnectednessConstraint::drawImGuiOptions(VisualizationProxy& proxy) {
 
 void ConnectednessConstraint::draw(Node& node) {
     auto parameters = node.phasefield();
-    auto weights = node.temporary();
+    //auto weights = node.temporary();
 
     if(drawComponents) {
         FaceData<size_t> components(mesh->faceCount());

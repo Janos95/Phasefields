@@ -38,7 +38,7 @@ DiffuseYamabe::DiffuseYamabe(Mesh& m) : mesh(m) {
 }
 
 constexpr SmootherStep chi1;
-constexpr QuadraticChiMirrored chi2;
+//constexpr QuadraticChiMirrored chi2;
 
 template<class Scalar>
 void assembleAndSolve(
@@ -168,7 +168,7 @@ void shapeDerivative(
         Eigen::VectorXd const& x2,
         Eigen::VectorXd const& gradX1,
         Eigen::VectorXd const& gradX2,
-        ArrayView<double> grad){
+        ArrayView<double> grad) {
 
     Mesh& mesh = yamabe.mesh;
     size_t n = mesh.vertexCount();

@@ -27,10 +27,11 @@ struct StoppingCriteria {
 
     size_t m_startComponent = 0;
     size_t m_componentsFound = 0;
-    FaceData<size_t>* m_components = nullptr;
 
     Array<bool> m_found;
     Array<Face> m_targetVertices;
+
+    FaceData<size_t>* m_components = nullptr;
 };
 
 }

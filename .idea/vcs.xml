@@ -7,13 +7,17 @@
     <mapping directory="$PROJECT_DIR$/contrib/LBFGSpp" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/contrib/bvh" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/contrib/corrade" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/contrib/corrade/toolchains" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/contrib/imgui" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/contrib/implot" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/contrib/liblbfgs" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/contrib/magnum" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/contrib/magnum-integration" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/contrib/magnum-integration/src/MagnumExternal/ImGui" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/contrib/magnum-integration/toolchains" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/contrib/magnum-plugins" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/contrib/magnum-plugins/toolchains" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/contrib/magnum/toolchains" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/docs/m.css" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/toolchains" vcs="Git" />
   </component>

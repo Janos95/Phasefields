@@ -60,7 +60,7 @@ struct Node {
 
     Node addChild(bool left, Node* n);
 
-    void initializePhasefieldFromParent();
+    void initializePhasefieldFromParent() const;
 
     [[nodiscard]] size_t depth() const;
 
@@ -136,6 +136,8 @@ struct Tree {
     void serialize(Array<char>& data) const;
 
     static Tree deserialize(ArrayView<const char> const& data, Mesh& m);
+
+    void computeAdjacencyGraph(Array<size_t>& neighbors, Array<size_t>& starts, size_t level);
 };
 
 template<int IteratorType>

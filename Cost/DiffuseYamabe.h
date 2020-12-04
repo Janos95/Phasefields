@@ -12,7 +12,7 @@ class adouble;
 
 namespace Phasefield {
 
-SMART_ENUM(EnergyType, size_t, Dirichlet, Hencky);
+SMART_ENUM(EnergyType, size_t, Dirichlet, Hencky)
 
 struct DiffuseYamabe {
 

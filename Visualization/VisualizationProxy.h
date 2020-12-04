@@ -23,7 +23,9 @@ SMART_ENUM(VisOption, size_t,
  * @param n numbers of colors you want
  * @return array of hopefully visually distinct colors
  */
-Array<Color4>& getColors(size_t n);
+Array<Color4>& getColors(size_t n = Invalid);
+
+void optimizeColors(Array<size_t> const& neighbors, Array<size_t> const& starts);
 
 /**
  * The main purpose of this class is to avoid including the whole Viewer.h
@@ -70,6 +72,7 @@ struct VisualizationProxy {
     bool customMapping = false;
     double scale = 1;
     double offset = 0;
+    int level = 0;
 };
 
 }

@@ -19,6 +19,9 @@
 #include <cstdio>
 #include <unordered_map>
 #include <queue>
+#include <random>
+
+#define RANDOM_INIT 1
 
 namespace Phasefield {
 
@@ -98,7 +101,7 @@ Node Node::addRightChild(Node* n) { return addChild(false, n); }
 
 Node Node::addLeftChild(Node* n) { return addChild(true, n); }
 
-void Node::initializePhasefieldFromParent() {
+void Node::initializePhasefieldFromParent() const {
     Mesh* mesh = tree->mesh;
     mesh->requireFaceInformation();
 
@@ -108,40 +111,149 @@ void Node::initializePhasefieldFromParent() {
     auto phase = phasefield();
 
     FaceData<char> thresholded{NoInit, mesh->faceCount()};
+    FaceData<double> faceWeights{NoInit, mesh->faceCount()};
     double totalArea = 0.;
     Face start{Invalid, mesh};
+    bool overrideStart = true;
     for(Face f : mesh->faces()) {
         double v = 0;
         for(Vertex vertex : f.vertices())
             v += weights[vertex];
-        if(v/3. > 1e-2) {
+        v /= 3.;
+        faceWeights[f] = v;
+        if(v > 0.5) {
             totalArea += f.area();
             thresholded[f] = 1;
-            start = f;
+
+            /* this is some weird heuristic for choosing a
+             * good starting point for the bfs */
+            if(overrideStart) {
+                start = f;
+                if(v < 0.9) { /* boundary to other segment, so that's good */
+                    overrideStart = false;
+                } else { /* check for boundary of the original mesh */
+                    for(Edge e : f.edges()) {
+                        if(e.onBoundaryLoop()) {
+                            overrideStart = false;
+                            break;
+                        }
+                    }
+                }
+            }
         } else
             thresholded[f] = 0;
     }
 
-    if(!!start) {
+#if RANDOM_INIT
+    std::mt19937 gen(0);
+    std::bernoulli_distribution dist;
+
+    for(Face face : mesh->faces()) {
+        if(thresholded[face]) {
+            bool positive = dist(gen);
+            for(Vertex v : face.vertices()) {
+                phase[v] = positive ? 1. : -1;
+            }
+        }
+    }
+#else
+    if(start) {
         Bfs<Face> bfs{*mesh};
         bfs.setSource(start);
         double area = 0;
         Face f;
         while(bfs.step(f)) {
-            area += f.area();
+            area += f.area()*faceWeights[f];
             if(area > totalArea*0.5)
                 break;
         }
 
         for(Face face : mesh->faces()) {
-            if(thresholded[face] > 0.) {
+            if(thresholded[face]) {
                 for(Vertex v : face.vertices()) {
                     phase[v] = bfs.visited(face) ? 1. : -1.;
                 }
             }
         }
     } else Debug{} << "Could not find any face for which weights are positive";
+#endif
+}
 
+void Tree::computeAdjacencyGraph(Array<size_t>& neighbors, Array<size_t>& starts, size_t level) {
+    size_t n = vertexCount();
+    size_t segmentCount = 2*nodeCountOnLevel(level);
+
+    Array<Array<char>> adjacency(segmentCount);
+    for(auto& ns : adjacency)
+        arrayResize(ns, segmentCount);
+
+    Array<size_t> inRange(segmentCount);
+    SmoothIndicatorFunction chi;
+
+    auto ls = nodesOnLevel(level);
+    for(size_t i = 0; i < n; ++i) {
+        memset(inRange.data(),0, inRange.size());
+        size_t idx = 0;
+        size_t j = 0;
+        for(auto l : ls) {
+            auto const& weight = l.temporary();
+            auto const& phasefield = l.phasefield();
+            auto v = weight[i]*chi.eval(phasefield[i]);
+            auto w = weight[i]*chi.eval(-phasefield[i]);
+
+            if(v > 0.2){
+                inRange[j++] = 2*idx;
+            }
+            if(w > 0.2) {
+                inRange[j++] = 2*idx + 1;
+            }
+            ++idx;
+        }
+
+        /* generally j should be very small */
+        for(size_t k = 0; k < j; ++k) {
+            for(size_t l = k + 1; l < j; ++l) {
+                size_t tail = inRange[k];
+                size_t tip = inRange[l];
+                adjacency[tail][tip] = 1;
+            }
+        }
+
+    }
+
+    /* make adjacency list symmetric */
+    for(size_t i = 0; i < segmentCount; ++i) {
+        for(size_t j = i + 1; j < segmentCount; ++j) {
+            if(adjacency[i][j] || adjacency[j][i]) {
+                adjacency[i][j] = 1;
+                adjacency[j][i] = 1;
+            }
+        }
+    }
+
+    /* compress graph representation */
+    arrayResize(starts, segmentCount + 1);
+
+    for(size_t i = 0; i < segmentCount; ++i) {
+        size_t neighborCount = 0;
+        for(size_t j = 0; j < segmentCount; ++j) {
+            neighborCount += adjacency[i][j];
+        }
+        starts[i + 1] += starts[i] + neighborCount;
+    }
+
+    arrayResize(neighbors, starts.back());
+    Array<size_t> currentPosition(segmentCount);
+    Cr::Utility::copy(starts.prefix(segmentCount), currentPosition);
+
+    for(size_t i = 0; i < segmentCount; ++i) {
+        for(size_t j = 0; j < segmentCount; ++j) {
+            bool connected = adjacency[i][j];
+            if(connected) {
+                neighbors[currentPosition[i]++] = j;
+            }
+        }
+    }
 }
 
 void Node::splitAndInitialize(Node* n) {

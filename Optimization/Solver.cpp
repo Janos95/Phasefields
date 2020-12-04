@@ -123,11 +123,11 @@ struct IpoptWrapper : Ipopt::TNLP {
             bool init_x,
             Ipopt::Number* x,
             bool init_z,
-            Ipopt::Number* z_L,
-            Ipopt::Number* z_U,
-            Ipopt::Index m,
+            [[maybe_unused]] Ipopt::Number* z_L,
+            [[maybe_unused]] Ipopt::Number* z_U,
+            [[maybe_unused]] Ipopt::Index m,
             bool init_lambda,
-            Ipopt::Number* lambda
+            [[maybe_unused]] Ipopt::Number* lambda
     ) override {
         // Here, we assume we only have starting values for x, if you code
         // your own NLP, you can provide starting values for the dual variables
@@ -165,9 +165,6 @@ struct IpoptWrapper : Ipopt::TNLP {
         return true;
     }
 
-    /**
-     * @brief no constraints for now so just return 1.
-     */
     bool eval_g(
             Ipopt::Index n,
             const Ipopt::Number* x,
@@ -207,49 +204,49 @@ struct IpoptWrapper : Ipopt::TNLP {
 
     /* only first order atm */
     bool eval_h(
-            Ipopt::Index n,
-            const Ipopt::Number* x,
-            bool new_x,
-            Ipopt::Number obj_factor,
-            Ipopt::Index m,
-            const Ipopt::Number* lambda,
-            bool new_lambda,
-            Ipopt::Index nele_hess,
-            Ipopt::Index* iRow,
-            Ipopt::Index* jCol,
-            Ipopt::Number* values
+            [[maybe_unused]] Ipopt::Index n,
+            [[maybe_unused]] const Ipopt::Number* x,
+            [[maybe_unused]] bool new_x,
+            [[maybe_unused]] Ipopt::Number obj_factor,
+            [[maybe_unused]] Ipopt::Index m,
+            [[maybe_unused]] const Ipopt::Number* lambda,
+            [[maybe_unused]] bool new_lambda,
+            [[maybe_unused]] Ipopt::Index nele_hess,
+            [[maybe_unused]] Ipopt::Index* iRow,
+            [[maybe_unused]] Ipopt::Index* jCol,
+            [[maybe_unused]] Ipopt::Number* values
     ) override {
         return false;
     }
 
     void finalize_solution(
-            Ipopt::SolverReturn status,
+            [[maybe_unused]] Ipopt::SolverReturn status,
             Ipopt::Index n,
             const Ipopt::Number* x,
-            const Ipopt::Number* z_L,
-            const Ipopt::Number* z_U,
-            Ipopt::Index m,
-            const Ipopt::Number* g,
-            const Ipopt::Number* lambda,
-            Ipopt::Number obj_value,
-            const Ipopt::IpoptData* ip_data,
-            Ipopt::IpoptCalculatedQuantities* ip_cq
+            [[maybe_unused]] const Ipopt::Number* z_L,
+            [[maybe_unused]] const Ipopt::Number* z_U,
+            [[maybe_unused]] Ipopt::Index m,
+            [[maybe_unused]] const Ipopt::Number* g,
+            [[maybe_unused]] const Ipopt::Number* lambda,
+            [[maybe_unused]] Ipopt::Number obj_value,
+            [[maybe_unused]] const Ipopt::IpoptData* ip_data,
+            [[maybe_unused]] Ipopt::IpoptCalculatedQuantities* ip_cq
     ) override {
         copy({x, size_t(n)}, parameters);
     }
 
     bool intermediate_callback(
-            Ipopt::AlgorithmMode mode,
-            Ipopt::Index iter,
-            Ipopt::Number obj_value,
-            Ipopt::Number inf_pr,
-            Ipopt::Number inf_du,
-            Ipopt::Number mu,
-            Ipopt::Number d_norm,
-            Ipopt::Number regularization_size,
-            Ipopt::Number alpha_du,
-            Ipopt::Number alpha_pr,
-            Ipopt::Index ls_trials,
+            [[maybe_unused]] Ipopt::AlgorithmMode mode,
+            [[maybe_unused]] Ipopt::Index iter,
+            [[maybe_unused]] Ipopt::Number obj_value,
+            [[maybe_unused]] Ipopt::Number inf_pr,
+            [[maybe_unused]] Ipopt::Number inf_du,
+            [[maybe_unused]] Ipopt::Number mu,
+            [[maybe_unused]] Ipopt::Number d_norm,
+            [[maybe_unused]] Ipopt::Number regularization_size,
+            [[maybe_unused]] Ipopt::Number alpha_du,
+            [[maybe_unused]] Ipopt::Number alpha_pr,
+            [[maybe_unused]] Ipopt::Index ls_trials,
             const Ipopt::IpoptData* ip_data,
             Ipopt::IpoptCalculatedQuantities* ip_cq
     ) override {
@@ -375,17 +372,19 @@ static lbfgsfloatval_t evaluate(
 
 static int progress(
         void *instance,
-        const lbfgsfloatval_t *x,
-        const lbfgsfloatval_t *g,
-        const lbfgsfloatval_t fx,
-        const lbfgsfloatval_t xnorm,
-        const lbfgsfloatval_t gnorm,
-        const lbfgsfloatval_t step,
-        int n,
-        int k,
-        int ls
+        [[maybe_unused]] const lbfgsfloatval_t *x,
+        [[maybe_unused]] const lbfgsfloatval_t *g,
+        [[maybe_unused]] const lbfgsfloatval_t fx,
+        [[maybe_unused]] const lbfgsfloatval_t xnorm,
+        [[maybe_unused]] const lbfgsfloatval_t gnorm,
+        [[maybe_unused]] const lbfgsfloatval_t step,
+        [[maybe_unused]] int n,
+        [[maybe_unused]] int k,
+        [[maybe_unused]] int ls
 )
 {
+
+    printf("  fx = %f, xnorm = %f, gnorm = %f, step = %f\n", fx, xnorm, gnorm, step);
     auto& options = reinterpret_cast<lbfgs_data*>(instance)->options;
     Solver::IterationSummary solverSummary; /* dummy variable */
     bool goOn = true;
@@ -451,24 +450,23 @@ void solve(Solver::Options& options, Solver::RecursiveProblem& problem, ArrayVie
 #endif
     } else if(options.solver == Solver::Backend::LBFGSLIB) {
         size_t n = problem.numParameters();
-        int i, ret = 0;
         lbfgsfloatval_t fx;
         lbfgs_parameter_t param;
 
         /* Initialize the parameters for the L-BFGS optimization. */
         lbfgs_parameter_init(&param);
-        param.epsilon = 1e-10;
-        param.ftol = 1e-10;
+        param.epsilon = 1e-7;
+        param.ftol = 1e-4;
         param.max_iterations = options.max_num_iterations;
         param.xtol = std::numeric_limits<double>::epsilon();
-        param.delta = 1e-10;
+        param.delta = 1e-7;
 
         /*
             Start the L-BFGS optimization; this will invoke the callback functions
             evaluate() and progress() when necessary.
          */
         lbfgs_data instance{problem, options};
-        ret = lbfgs(n, problem.nodeToOptimize.phasefield().data(), &fx, evaluate, progress, &instance, &param);
+        auto ret = lbfgs(n, problem.nodeToOptimize.phasefield().data(), &fx, evaluate, progress, &instance, &param);
 
         /* Report the result, on user failure this report tolerance reached ??. */
         printf("L-BFGS optimization terminated with status %s\n", lbfgs_strerror(ret));

@@ -87,7 +87,7 @@ bool Vertex::onBoundary() const { return mesh->isOnBoundary[*this]; }
 
 size_t Vertex::computeDegree() const {
     size_t count = 0;
-    for(Vertex _ : adjacentVertices())
+    for([[maybe_unused]] Vertex _ : adjacentVertices())
         ++count;
     return count;
 }
