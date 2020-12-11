@@ -43,7 +43,7 @@ void ConnectednessConstraint::operator()(ArrayView<const Scalar> parameters,
     double intervalBoundary = 1.1;
     if(edge0 > edge1) intervalBoundary = -1.1;
     auto [a,b] = Math::minmax(edge1, intervalBoundary);
-    W bump{a, b};
+    W bump{a,b};
     F f{a, b};
 
     //if constexpr (std::is_same_v<double, Scalar>) {
@@ -398,11 +398,13 @@ void ConnectednessConstraint::draw(Node& node) {
 void ConnectednessConstraint::saveParameters(Cr::Utility::ConfigurationGroup& group) const {
     group.setValue("s", s);
     group.setValue("ignoreSmallComponents", ignoreSmallComponents);
+    group.setValue("purePhase", purePhase);
 }
 
 void ConnectednessConstraint::loadParameters(Cr::Utility::ConfigurationGroup const& group) {
     s = group.value<double>("s");
     ignoreSmallComponents = group.value<bool>("ignoreSmallComponents");
+    purePhase = group.value<int>("purePhase");
 }
 
 const char* ConnectednessConstraint::getFormattedInterval() {

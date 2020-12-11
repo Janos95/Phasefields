@@ -3,12 +3,11 @@
 //
 
 #include "DiffuseYamabe.h"
-#include "EigenHelper.h"
 #include "Mesh.h"
 #include "C1Functions.h"
 #include "Tree.h"
+#include "EigenHelper.h"
 #include "Functional.hpp"
-#include "FEM.hpp"
 #include "VisualizationProxy.h"
 #include <ScopedTimer/ScopedTimer.h>
 
@@ -38,14 +37,13 @@ DiffuseYamabe::DiffuseYamabe(Mesh& m) : mesh(m) {
 }
 
 constexpr SmootherStep chi1;
-//constexpr QuadraticChiMirrored chi2;
 
 template<class Scalar>
 void assembleAndSolve(
         DiffuseYamabe& yamabe,
         Scalar lambda,
         VertexDataView<const Scalar> parameters,
-        [[maybe_unused]] VertexDataView<const Scalar> weights,
+        VertexDataView<const Scalar> weights,
         Eigen::SparseMatrix<Scalar>& A1,
         SolverType<Scalar>& solver1,
         Eigen::SparseMatrix<Scalar>& A2,
@@ -138,19 +136,19 @@ void assembleAndSolve(
 
     if(doPositive) {
         A1.setFromTriplets(triplets1.begin(), triplets1.end());
-    }
-    if(doNegative) {
-        A2.setFromTriplets(triplets2.begin(), triplets2.end());
-    }
-
-    if(doPositive) {
-        solver1.compute(A1);
+        {
+            ScopedTimer t{"Factoring A1"};
+            solver1.compute(A1);
+        }
         handleSolverInfo(solver1.info());
         x1 = solver1.solve(b1);
     }
-
     if(doNegative) {
-        solver2.compute(A2);
+        A2.setFromTriplets(triplets2.begin(), triplets2.end());
+        {
+            ScopedTimer t{"Factoring A2"};
+            solver2.compute(A2);
+        }
         handleSolverInfo(solver2.info());
         x2 = solver2.solve(b2);
     }
@@ -168,7 +166,7 @@ void shapeDerivative(
         Eigen::VectorXd const& x2,
         Eigen::VectorXd const& gradX1,
         Eigen::VectorXd const& gradX2,
-        ArrayView<double> grad) {
+        ArrayView<double> grad){
 
     Mesh& mesh = yamabe.mesh;
     size_t n = mesh.vertexCount();
@@ -213,8 +211,6 @@ void shapeDerivative(
             }
 
             uT /= 3.;
-            s1T /= 3.;
-            s2T /= 3.;
 
             double chiGrad = chi1.grad(uT)/3.;
 
@@ -374,12 +370,12 @@ void DiffuseYamabe::operator()(
     using VecX = Eigen::Matrix<Scalar, Eigen::Dynamic, 1>;
 
     size_t n = mesh.vertexCount();
+    size_t m = mesh.faceCount();
 
     Eigen::SparseMatrix<Scalar> A1, A2;
     SolverType<Scalar> solver1, solver2;
     VecX b1, b2, x1, x2;
-    Scalar lambda = lambdaWeight*(*scaling);
-    assembleAndSolve<Scalar>(*this, lambda, parameters, weights, A1, solver1, A2, solver2, x1, x2, b1, b2);
+    assembleAndSolve<Scalar>(*this, lambdaWeight, parameters, weights, A1, solver1, A2, solver2, x1, x2, b1, b2);
 
     VecX gradX1{gradP ? n : 0};
     VecX gradX2{gradP ? n : 0};
@@ -392,7 +388,7 @@ void DiffuseYamabe::operator()(
 
     if(gradP) {
         if constexpr (std::is_same_v<double, Scalar>) {
-            shapeDerivative(*this, parameters, lambda, A1, solver1, A2, solver2, x1, x2, gradX1, gradX2, gradP);
+            shapeDerivative(*this, parameters, lambdaWeight, A1, solver1, A2, solver2, x1, x2, gradX1, gradX2, gradP);
         }
     }
 }
@@ -417,10 +413,9 @@ void DiffuseYamabe::drawImGuiOptions(VisualizationProxy& proxy) {
             proxy.setCallbacks(
                     [this, &proxy](Node node) {
                         Eigen::SparseMatrix<double> A1, A2;
-                        Eigen::VectorXd b1,b2,x1,x2;
                         SolverType<double> solver1, solver2;
-                        double lambda = (*scaling)*lambdaWeight;
-                        assembleAndSolve<double>(*this, lambda, node.phasefield(), node.temporary(), A1, solver1, A2, solver2, x1, x2, b1, b2);
+                        Eigen::VectorXd b1,b2,x1,x2;
+                        assembleAndSolve<double>(*this, lambdaWeight, node.phasefield(), node.temporary(), A1, solver1, A2, solver2, x1, x2, b1, b2);
                         Eigen::VectorXd x{mesh.vertexCount()};
                         x.setZero();
                         if(positivePhase) x += x1;
@@ -472,7 +467,7 @@ void DiffuseYamabe::drawImGuiOptions(VisualizationProxy& proxy) {
                                 b[idx] = mesh.gaussianCurvature[v]*mesh.integral[v];
                             } else {
                                 b[idx] = 0;
-                                arrayAppend(triplets, InPlaceInit, int(idx), int(idx), 1.);
+                                arrayAppend(triplets, InPlaceInit, idx, idx, 1.);
                             }
                         }
 
@@ -574,14 +569,13 @@ double DiffuseYamabe::getRescalingFactor(Vertex v) const {
 
 void DiffuseYamabe::saveParameters(Cr::Utility::ConfigurationGroup& group) const {
     group.setValue("lambda", lambdaWeight);
-    group.setValue("energyType", size_t(energy));
+    //group.setValue("energyType", size_t(energy));
 }
 
 void DiffuseYamabe::loadParameters(const Cr::Utility::ConfigurationGroup& group) {
     lambdaWeight = group.value<double>("lambda");
-    energy = EnergyType::Value(group.value<size_t>("energyType"));
+    //energy = EnergyType::Value(group.value<size_t>("energyType"));
 }
-
 
 DEFINE_FUNCTIONAL_CONSTRUCTOR(DiffuseYamabe)
 DEFINE_FUNCTIONAL_OPERATOR(DiffuseYamabe, double)

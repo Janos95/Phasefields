@@ -8,7 +8,7 @@ and various visualization options.
 
 **Introduction**
 
-You can try it out in your [broiwser](https://janos95.gitlab.io/wasm-test/), but be aware the 
+You can try it out in your [browser](https://janos95.gitlab.io/wasm-test/), but be aware the 
 webasm build is pretty buggy atm. Also its using blender style navigation, so dont forget to press
 the middle mouse button when dragging.
 

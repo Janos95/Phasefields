@@ -4,7 +4,9 @@
 
 #pragma once
 
+#include "CudaSolver.h"
 #include "Types.h"
+
 #include <Corrade/Utility/Debug.h>
 
 #include <Eigen/SparseCore>
@@ -90,9 +92,12 @@ void handleSolverInfo(Eigen::ComputationInfo info) {
 template<class Scalar>
 struct SelectSolver {
 #ifdef PHASEFIELD_WITH_SUITESPARSE
-    using type = Eigen::UmfPackLU<Eigen::SparseMatrix<Scalar>>;
+    //using type = Eigen::UmfPackLU<Eigen::SparseMatrix<Scalar>>;
+    //using type = Eigen::CholmodSimplicialLDLT<Eigen::SparseMatrix<Scalar>>;
     //using type = Eigen::PardisoLDLT<Eigen::SparseMatrix<Scalar>, Eigen::Upper>;
-    //using type = Eigen::CholmodSupernodalLLT<Eigen::SparseMatrix<Scalar>, Eigen::Lower|Eigen::Upper>;
+    //using type = CUDASolver;
+    //using type = Eigen::ConjugateGradient<Eigen::SparseMatrix<double>, Eigen::Lower|Eigen::Upper>;
+    using type = Eigen::CholmodSupernodalLLT<Eigen::SparseMatrix<Scalar>>;
 #else
     using type = Eigen::SparseLU<Eigen::SparseMatrix<Scalar>>;
 #endif

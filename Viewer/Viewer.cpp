@@ -112,7 +112,9 @@ struct Experiment {
 
 static Experiment experiments[] = {
         {"Connectedness Constraint", "capsule_high_res.ply", "capsule_high_res_split.bin", "connectedness.conf"},
-        {"Hierarchical Segmentation", "spot_high_res.ply", nullptr, "hierarchical.conf"}
+        {"Hierarchical Segmentation", "spot_high_res.ply", nullptr, "hierarchical.conf"},
+        {"Yamabe Energy Sphere", "sphere.ply", "sphere.bin", "sphere.conf"},
+        {"Yamabe Energy Sphere Connected", "sphere.ply", "sphere.bin", "sphere_connected.conf"}
 };
 
 using namespace Mg::Math::Literals;
@@ -335,7 +337,7 @@ MSAA if we have enough DPI. */
     /* Load experiment from resource*/
     {
         ScopedTimer loadingTimer{"Loading experiment", true};
-        auto& exp = experiments[1];
+        auto& exp = experiments[2];
         loadExperiment(exp.meshName, exp.treeName, exp.confName);
     }
 
@@ -853,7 +855,7 @@ Functional Viewer::makeFunctional(FunctionalType::Value type) {
         }
         case FunctionalType::DiffuseYamabe : {
             DiffuseYamabe yamabe{mesh};
-            yamabe.scaling = &yamabeLambdaScaling;
+            //yamabe.scaling = &yamabeLambdaScaling;
             return yamabe;
         }
     }

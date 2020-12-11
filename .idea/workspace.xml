@@ -2,69 +2,70 @@
 <project version="4">
   <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
     <generated>
-      <config projectName="Phasefield" targetName="MagnumGLObjects" />
-      <config projectName="Phasefield" targetName="Phasefield" />
-      <config projectName="Phasefield" targetName="AssimpImporter-dependencies" />
-      <config projectName="Phasefield" targetName="Experiments_Rsc-dependencies" />
-      <config projectName="Phasefield" targetName="MagnumAnimation" />
-      <config projectName="Phasefield" targetName="MagnumSceneGraph" />
-      <config projectName="Phasefield" targetName="MagnumImGuiIntegration" />
-      <config projectName="Phasefield" targetName="Mesh" />
-      <config projectName="Phasefield" targetName="CorradeTestSuite" />
-      <config projectName="Phasefield" targetName="CorradeTestSuiteCompare" />
-      <config projectName="Phasefield" targetName="VisualizationProxy" />
-      <config projectName="Phasefield" targetName="MagnumMeshToolsObjects" />
-      <config projectName="Phasefield" targetName="Cost" />
-      <config projectName="Phasefield" targetName="ScopedTimer" />
-      <config projectName="Phasefield" targetName="lbfgs_lib" />
       <config projectName="Phasefield" targetName="MagnumDebugToolsObjects" />
-      <config projectName="Phasefield" targetName="corrade-rc" />
-      <config projectName="Phasefield" targetName="StanfordImporter-dependencies" />
-      <config projectName="Phasefield" targetName="MagnumTrade" />
-      <config projectName="Phasefield" targetName="MagnumShaderTools" />
-      <config projectName="Phasefield" targetName="MagnumDebugTools" />
-      <config projectName="Phasefield" targetName="CorradeInterconnect" />
-      <config projectName="Phasefield" targetName="MagnumTextObjects" />
-      <config projectName="Phasefield" targetName="VideoSaver" />
-      <config projectName="Phasefield" targetName="StanfordSceneConverter-dependencies" />
-      <config projectName="Phasefield" targetName="MagnumFlextGLObjects" />
-      <config projectName="Phasefield" targetName="CorradeUtilityObjects" />
-      <config projectName="Phasefield" targetName="AssimpImporter" />
-      <config projectName="Phasefield" targetName="MagnumTextureTools_RCS-dependencies" />
-      <config projectName="Phasefield" targetName="MagnumText" />
-      <config projectName="Phasefield" targetName="StanfordSceneConverter" />
-      <config projectName="Phasefield" targetName="MagnumMathAlgorithms" />
-      <config projectName="Phasefield" targetName="MagnumSdl2Application" />
-      <config projectName="Phasefield" targetName="MagnumGlxContextObjects" />
-      <config projectName="Phasefield" targetName="MagnumMathObjects" />
-      <config projectName="Phasefield" targetName="CorradePluginManagerObjects" />
-      <config projectName="Phasefield" targetName="AnyImageImporter-dependencies" />
-      <config projectName="Phasefield" targetName="MagnumPlatform" />
-      <config projectName="Phasefield" targetName="MagnumGL" />
-      <config projectName="Phasefield" targetName="CorradeUtility" />
-      <config projectName="Phasefield" targetName="AnyImageImporter" />
       <config projectName="Phasefield" targetName="MagnumPrimitives" />
-      <config projectName="Phasefield" targetName="MagnumShaders" />
-      <config projectName="Phasefield" targetName="Corrade" />
-      <config projectName="Phasefield" targetName="MagnumShadersObjects" />
-      <config projectName="Phasefield" targetName="MagnumSceneGraphObjects" />
-      <config projectName="Phasefield" targetName="MagnumTextureTools" />
-      <config projectName="Phasefield" targetName="MagnumMeshTools" />
-      <config projectName="Phasefield" targetName="StanfordImporter" />
-      <config projectName="Phasefield" targetName="Viewer" />
-      <config projectName="Phasefield" targetName="Visualization" />
-      <config projectName="Phasefield" targetName="Viewer_Rsc-dependencies" />
-      <config projectName="Phasefield" targetName="MagnumMath" />
-      <config projectName="Phasefield" targetName="CorradeContainers-headers" />
-      <config projectName="Phasefield" targetName="MagnumTradeObjects" />
-      <config projectName="Phasefield" targetName="Optimization" />
-      <config projectName="Phasefield" targetName="MagnumShaders_RCS-dependencies" />
-      <config projectName="Phasefield" targetName="implot" />
-      <config projectName="Phasefield" targetName="Utilities" />
-      <config projectName="Phasefield" targetName="Magnum" />
-      <config projectName="Phasefield" targetName="MagnumObjects" />
+      <config projectName="Phasefield" targetName="MagnumMathObjects" />
       <config projectName="Phasefield" targetName="CorradePluginManager" />
+      <config projectName="Phasefield" targetName="Experiments_Rsc-dependencies" />
+      <config projectName="Phasefield" targetName="MagnumMeshToolsObjects" />
+      <config projectName="Phasefield" targetName="MagnumShaders" />
+      <config projectName="Phasefield" targetName="Viewer_Rsc-dependencies" />
+      <config projectName="Phasefield" targetName="StanfordSceneConverter-dependencies" />
+      <config projectName="Phasefield" targetName="Phasefield" />
+      <config projectName="Phasefield" targetName="MagnumImGuiIntegration" />
+      <config projectName="Phasefield" targetName="MagnumTextureTools_RCS-dependencies" />
+      <config projectName="Phasefield" targetName="MagnumMath" />
+      <config projectName="Phasefield" targetName="MagnumShaders_RCS-dependencies" />
       <config projectName="Phasefield" targetName="MagnumPlatformObjects" />
+      <config projectName="Phasefield" targetName="MagnumShadersObjects" />
+      <config projectName="Phasefield" targetName="MagnumTradeObjects" />
+      <config projectName="Phasefield" targetName="CorradeUtilityObjects" />
+      <config projectName="Phasefield" targetName="MagnumGL" />
+      <config projectName="Phasefield" targetName="StanfordSceneConverter" />
+      <config projectName="Phasefield" targetName="AssimpImporter" />
+      <config projectName="Phasefield" targetName="AnyImageImporter-dependencies" />
+      <config projectName="Phasefield" targetName="Viewer" />
+      <config projectName="Phasefield" targetName="VisualizationProxy" />
+      <config projectName="Phasefield" targetName="MagnumGlxContextObjects" />
+      <config projectName="Phasefield" targetName="MagnumObjects" />
+      <config projectName="Phasefield" targetName="VideoSaver" />
+      <config projectName="Phasefield" targetName="implot" />
+      <config projectName="Phasefield" targetName="MagnumTrade" />
+      <config projectName="Phasefield" targetName="StanfordImporter" />
+      <config projectName="Phasefield" targetName="MagnumMathAlgorithms" />
+      <config projectName="Phasefield" targetName="MagnumText" />
+      <config projectName="Phasefield" targetName="MagnumShaderTools" />
+      <config projectName="Phasefield" targetName="lbfgs_lib" />
+      <config projectName="Phasefield" targetName="Optimization" />
+      <config projectName="Phasefield" targetName="MagnumGLObjects" />
+      <config projectName="Phasefield" targetName="Cost" />
+      <config projectName="Phasefield" targetName="CorradeInterconnect" />
+      <config projectName="Phasefield" targetName="ScopedTimer" />
+      <config projectName="Phasefield" targetName="MagnumPlatform" />
+      <config projectName="Phasefield" targetName="AnyImageImporter" />
+      <config projectName="Phasefield" targetName="MagnumAnimation" />
+      <config projectName="Phasefield" targetName="Utilities" />
+      <config projectName="Phasefield" targetName="StanfordImporter-dependencies" />
+      <config projectName="Phasefield" targetName="MagnumMeshTools" />
+      <config projectName="Phasefield" targetName="MagnumDebugTools" />
+      <config projectName="Phasefield" targetName="corrade-rc" />
+      <config projectName="Phasefield" targetName="Magnum" />
+      <config projectName="Phasefield" targetName="MagnumTextObjects" />
+      <config projectName="Phasefield" targetName="CudaSolver" />
+      <config projectName="Phasefield" targetName="MagnumTextureTools" />
+      <config projectName="Phasefield" targetName="CorradeTestSuite" />
+      <config projectName="Phasefield" targetName="CorradeContainers-headers" />
+      <config projectName="Phasefield" targetName="MagnumSceneGraphObjects" />
+      <config projectName="Phasefield" targetName="CorradeUtility" />
+      <config projectName="Phasefield" targetName="Visualization" />
+      <config projectName="Phasefield" targetName="MagnumFlextGLObjects" />
+      <config projectName="Phasefield" targetName="AssimpImporter-dependencies" />
+      <config projectName="Phasefield" targetName="CorradePluginManagerObjects" />
+      <config projectName="Phasefield" targetName="CorradeTestSuiteCompare" />
+      <config projectName="Phasefield" targetName="MagnumSceneGraph" />
+      <config projectName="Phasefield" targetName="Corrade" />
+      <config projectName="Phasefield" targetName="Mesh" />
+      <config projectName="Phasefield" targetName="MagnumSdl2Application" />
     </generated>
   </component>
   <component name="CMakeSettings">
@@ -75,33 +76,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bd8fd83c-0dbd-43c4-895d-0b5ef02c9565" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/Phasefield.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Cost/CuSparse/ConjugateGradient.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Cost/CuSparse/ConjugateGradient.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Cost/CudaSolver.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Cost/CudaSolver.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cost/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/CMakeLists.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cost/ConnectednessConstraint.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/ConnectednessConstraint.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cost/DiffuseYamabe.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/DiffuseYamabe.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cost/DiffuseYamabe.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/DiffuseYamabe.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cost/EigenHelper.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/EigenHelper.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/StoppingCriteria.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/StoppingCriteria.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Mesh/FastMarchingMethod.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/FastMarchingMethod.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Mesh/MeshElements.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/MeshElements.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/Solver.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Solver.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/Tree.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Tree.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/Tree.h" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Tree.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Viewer/CoolWarm.h" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Viewer/Viewer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Viewer.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Viewer/Viewer.h" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Viewer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Visualization/VisualizationProxy.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Visualization/VisualizationProxy.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Visualization/VisualizationProxy.h" beforeDir="false" afterPath="$PROJECT_DIR$/Visualization/VisualizationProxy.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/contrib/corrade" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/corrade" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/contrib/corrade/toolchains" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/corrade/toolchains" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/contrib/magnum" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/magnum" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/contrib/magnum-integration" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/magnum-integration" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/contrib/magnum-plugins" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/magnum-plugins" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/contrib/magnum/toolchains" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/magnum/toolchains" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -137,6 +122,11 @@
     <property name="cf.first.check.clang-format" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/../texture_map_optimization" />
     <property name="settings.editor.selected.configurable" value="CMakeSettings" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/Cost/CuSparse" />
+    </key>
   </component>
   <component name="RunManager" selected="CMake Application.Phasefield">
     <configuration name="AnyImageImporter-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="AnyImageImporter-dependencies" CONFIG_NAME="default">
@@ -205,6 +195,11 @@
       </method>
     </configuration>
     <configuration name="Cost" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Cost" CONFIG_NAME="default">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="CudaSolver" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="CudaSolver" CONFIG_NAME="default">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -439,11 +434,6 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="corrade-rc" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="corrade-rc" CONFIG_NAME="default" RUN_TARGET_PROJECT_NAME="Phasefield" RUN_TARGET_NAME="corrade-rc">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -459,75 +449,71 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration default="true" type="GradleAppRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="com.jetbrains.cidr.cpp.gradle.execution.GradleNativeBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
     <list>
-      <item itemvalue="CMake Application.AnyImageImporter-dependencies" />
-      <item itemvalue="CMake Application.AnyImageImporter" />
-      <item itemvalue="CMake Application.AssimpImporter-dependencies" />
-      <item itemvalue="CMake Application.AssimpImporter" />
+      <item itemvalue="CMake Application.Phasefield" />
+      <item itemvalue="CMake Application.implot" />
+      <item itemvalue="CMake Application.Corrade" />
       <item itemvalue="CMake Application.CorradeContainers-headers" />
       <item itemvalue="CMake Application.CorradeInterconnect" />
-      <item itemvalue="CMake Application.CorradePluginManagerObjects" />
       <item itemvalue="CMake Application.CorradePluginManager" />
-      <item itemvalue="CMake Application.CorradeTestSuiteCompare" />
+      <item itemvalue="CMake Application.CorradePluginManagerObjects" />
       <item itemvalue="CMake Application.CorradeTestSuite" />
-      <item itemvalue="CMake Application.CorradeUtilityObjects" />
+      <item itemvalue="CMake Application.CorradeTestSuiteCompare" />
+      <item itemvalue="CMake Application.corrade-rc" />
       <item itemvalue="CMake Application.CorradeUtility" />
-      <item itemvalue="CMake Application.Corrade" />
-      <item itemvalue="CMake Application.Cost" />
-      <item itemvalue="CMake Application.Experiments_Rsc-dependencies" />
-      <item itemvalue="CMake Application.MagnumAnimation" />
-      <item itemvalue="CMake Application.MagnumDebugToolsObjects" />
-      <item itemvalue="CMake Application.MagnumDebugTools" />
-      <item itemvalue="CMake Application.MagnumFlextGLObjects" />
-      <item itemvalue="CMake Application.MagnumGLObjects" />
-      <item itemvalue="CMake Application.MagnumGL" />
-      <item itemvalue="CMake Application.MagnumGlxContextObjects" />
+      <item itemvalue="CMake Application.CorradeUtilityObjects" />
+      <item itemvalue="CMake Application.lbfgs_lib" />
       <item itemvalue="CMake Application.MagnumImGuiIntegration" />
-      <item itemvalue="CMake Application.MagnumMathAlgorithms" />
+      <item itemvalue="CMake Application.AssimpImporter" />
+      <item itemvalue="CMake Application.AssimpImporter-dependencies" />
+      <item itemvalue="CMake Application.StanfordImporter" />
+      <item itemvalue="CMake Application.StanfordImporter-dependencies" />
+      <item itemvalue="CMake Application.StanfordSceneConverter" />
+      <item itemvalue="CMake Application.StanfordSceneConverter-dependencies" />
+      <item itemvalue="CMake Application.Magnum" />
       <item itemvalue="CMake Application.MagnumMathObjects" />
-      <item itemvalue="CMake Application.MagnumMath" />
-      <item itemvalue="CMake Application.MagnumMeshToolsObjects" />
-      <item itemvalue="CMake Application.MagnumMeshTools" />
       <item itemvalue="CMake Application.MagnumObjects" />
-      <item itemvalue="CMake Application.MagnumPlatformObjects" />
+      <item itemvalue="CMake Application.MagnumAnimation" />
+      <item itemvalue="CMake Application.MagnumDebugTools" />
+      <item itemvalue="CMake Application.MagnumDebugToolsObjects" />
+      <item itemvalue="CMake Application.MagnumGL" />
+      <item itemvalue="CMake Application.MagnumGLObjects" />
+      <item itemvalue="CMake Application.MagnumMath" />
+      <item itemvalue="CMake Application.MagnumMathAlgorithms" />
+      <item itemvalue="CMake Application.MagnumMeshTools" />
+      <item itemvalue="CMake Application.MagnumMeshToolsObjects" />
+      <item itemvalue="CMake Application.MagnumGlxContextObjects" />
       <item itemvalue="CMake Application.MagnumPlatform" />
-      <item itemvalue="CMake Application.MagnumPrimitives" />
-      <item itemvalue="CMake Application.MagnumSceneGraphObjects" />
-      <item itemvalue="CMake Application.MagnumSceneGraph" />
+      <item itemvalue="CMake Application.MagnumPlatformObjects" />
       <item itemvalue="CMake Application.MagnumSdl2Application" />
-      <item itemvalue="CMake Application.MagnumShadersObjects" />
-      <item itemvalue="CMake Application.MagnumShaderTools" />
+      <item itemvalue="CMake Application.MagnumPrimitives" />
+      <item itemvalue="CMake Application.MagnumSceneGraph" />
+      <item itemvalue="CMake Application.MagnumSceneGraphObjects" />
       <item itemvalue="CMake Application.MagnumShaders" />
       <item itemvalue="CMake Application.MagnumShaders_RCS-dependencies" />
-      <item itemvalue="CMake Application.MagnumTextObjects" />
+      <item itemvalue="CMake Application.MagnumShadersObjects" />
+      <item itemvalue="CMake Application.MagnumShaderTools" />
       <item itemvalue="CMake Application.MagnumText" />
+      <item itemvalue="CMake Application.MagnumTextObjects" />
       <item itemvalue="CMake Application.MagnumTextureTools" />
       <item itemvalue="CMake Application.MagnumTextureTools_RCS-dependencies" />
-      <item itemvalue="CMake Application.MagnumTradeObjects" />
       <item itemvalue="CMake Application.MagnumTrade" />
-      <item itemvalue="CMake Application.Magnum" />
+      <item itemvalue="CMake Application.MagnumTradeObjects" />
+      <item itemvalue="CMake Application.MagnumFlextGLObjects" />
+      <item itemvalue="CMake Application.AnyImageImporter" />
+      <item itemvalue="CMake Application.AnyImageImporter-dependencies" />
+      <item itemvalue="CMake Application.Cost" />
+      <item itemvalue="CMake Application.CudaSolver" />
       <item itemvalue="CMake Application.Mesh" />
       <item itemvalue="CMake Application.Optimization" />
-      <item itemvalue="CMake Application.Phasefield" />
       <item itemvalue="CMake Application.ScopedTimer" />
-      <item itemvalue="CMake Application.StanfordImporter-dependencies" />
-      <item itemvalue="CMake Application.StanfordImporter" />
-      <item itemvalue="CMake Application.StanfordSceneConverter-dependencies" />
-      <item itemvalue="CMake Application.StanfordSceneConverter" />
       <item itemvalue="CMake Application.Utilities" />
       <item itemvalue="CMake Application.VideoSaver" />
+      <item itemvalue="CMake Application.Experiments_Rsc-dependencies" />
       <item itemvalue="CMake Application.Viewer" />
       <item itemvalue="CMake Application.Viewer_Rsc-dependencies" />
-      <item itemvalue="CMake Application.VisualizationProxy" />
       <item itemvalue="CMake Application.Visualization" />
-      <item itemvalue="CMake Application.corrade-rc" />
-      <item itemvalue="CMake Application.implot" />
-      <item itemvalue="CMake Application.lbfgs_lib" />
+      <item itemvalue="CMake Application.VisualizationProxy" />
     </list>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
@@ -593,6 +579,10 @@
       <workItem from="1606054176459" duration="3867000" />
       <workItem from="1606906212426" duration="17760000" />
       <workItem from="1607000130460" duration="16097000" />
+      <workItem from="1607077893055" duration="19376000" />
+      <workItem from="1607169417969" duration="7136000" />
+      <workItem from="1607354942488" duration="2430000" />
+      <workItem from="1607555346562" duration="2828000" />
     </task>
     <servers />
   </component>
@@ -601,38 +591,38 @@
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="423" y="275" width="424" height="470" key="FileChooserDialogImpl/0.0.2560.1080@0.0.2560.1080" timestamp="1606132225555" />
-    <state width="1234" height="216" key="GridCell.Tab.0.bottom" timestamp="1607027363218">
+    <state width="1234" height="34" key="GridCell.Tab.0.bottom" timestamp="1607569608049">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="1234" height="216" key="GridCell.Tab.0.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1607027363218" />
-    <state width="1234" height="216" key="GridCell.Tab.0.center" timestamp="1607027363217">
+    <state width="1234" height="34" key="GridCell.Tab.0.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1607569608049" />
+    <state width="1234" height="34" key="GridCell.Tab.0.center" timestamp="1607569608049">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="1234" height="216" key="GridCell.Tab.0.center/0.0.2560.1080@0.0.2560.1080" timestamp="1607027363217" />
-    <state width="1234" height="216" key="GridCell.Tab.0.left" timestamp="1607027363217">
+    <state width="1234" height="34" key="GridCell.Tab.0.center/0.0.2560.1080@0.0.2560.1080" timestamp="1607569608049" />
+    <state width="1234" height="34" key="GridCell.Tab.0.left" timestamp="1607569608049">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="1234" height="216" key="GridCell.Tab.0.left/0.0.2560.1080@0.0.2560.1080" timestamp="1607027363217" />
-    <state width="1234" height="216" key="GridCell.Tab.0.right" timestamp="1607027363217">
+    <state width="1234" height="34" key="GridCell.Tab.0.left/0.0.2560.1080@0.0.2560.1080" timestamp="1607569608049" />
+    <state width="1234" height="34" key="GridCell.Tab.0.right" timestamp="1607569608049">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="1234" height="216" key="GridCell.Tab.0.right/0.0.2560.1080@0.0.2560.1080" timestamp="1607027363217" />
-    <state width="1234" height="216" key="GridCell.Tab.1.bottom" timestamp="1607026329465">
+    <state width="1234" height="34" key="GridCell.Tab.0.right/0.0.2560.1080@0.0.2560.1080" timestamp="1607569608049" />
+    <state width="2514" height="85" key="GridCell.Tab.1.bottom" timestamp="1607120672713">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="1234" height="216" key="GridCell.Tab.1.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1607026329465" />
-    <state width="1234" height="216" key="GridCell.Tab.1.center" timestamp="1607026329464">
+    <state width="2514" height="85" key="GridCell.Tab.1.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1607120672713" />
+    <state width="2514" height="85" key="GridCell.Tab.1.center" timestamp="1607120672713">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="1234" height="216" key="GridCell.Tab.1.center/0.0.2560.1080@0.0.2560.1080" timestamp="1607026329464" />
-    <state width="1234" height="216" key="GridCell.Tab.1.left" timestamp="1607026329464">
+    <state width="2514" height="85" key="GridCell.Tab.1.center/0.0.2560.1080@0.0.2560.1080" timestamp="1607120672713" />
+    <state width="2514" height="85" key="GridCell.Tab.1.left" timestamp="1607120672713">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="1234" height="216" key="GridCell.Tab.1.left/0.0.2560.1080@0.0.2560.1080" timestamp="1607026329464" />
-    <state width="1234" height="216" key="GridCell.Tab.1.right" timestamp="1607026329465">
+    <state width="2514" height="85" key="GridCell.Tab.1.left/0.0.2560.1080@0.0.2560.1080" timestamp="1607120672713" />
+    <state width="2514" height="85" key="GridCell.Tab.1.right" timestamp="1607120672713">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="1234" height="216" key="GridCell.Tab.1.right/0.0.2560.1080@0.0.2560.1080" timestamp="1607026329465" />
+    <state width="2514" height="85" key="GridCell.Tab.1.right/0.0.2560.1080@0.0.2560.1080" timestamp="1607120672713" />
     <state width="1234" height="190" key="GridCell.Tab.2.bottom" timestamp="1607024879899">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
@@ -649,14 +639,14 @@
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="1234" height="190" key="GridCell.Tab.2.right/0.0.2560.1080@0.0.2560.1080" timestamp="1607024879898" />
-    <state x="769" y="40" key="SettingsEditor" timestamp="1607025919883">
+    <state x="129" y="104" key="SettingsEditor" timestamp="1607555738650">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="769" y="40" key="SettingsEditor/0.0.2560.1080@0.0.2560.1080" timestamp="1607025919883" />
-    <state x="894" y="188" width="762" height="644" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1607014212365">
+    <state x="129" y="104" key="SettingsEditor/0.0.2560.1080@0.0.2560.1080" timestamp="1607555738650" />
+    <state x="894" y="28" width="762" height="644" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1607303183361">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="894" y="188" width="762" height="644" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.2560.1080@0.0.2560.1080" timestamp="1607014212365" />
+    <state x="894" y="28" width="762" height="644" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.2560.1080@0.0.2560.1080" timestamp="1607303183361" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -695,11 +685,6 @@
           <url>file://$PROJECT_DIR$/Optimization/Solver.cpp</url>
           <line>214</line>
           <option name="timeStamp" value="9" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/Viewer/Viewer.cpp</url>
-          <line>959</line>
-          <option name="timeStamp" value="10" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
