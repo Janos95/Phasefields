@@ -11,7 +11,6 @@
 #include "VisualizationProxy.h"
 #include "Tree.h"
 #include "FastMarchingMethod.h"
-#include "KDTree.h"
 #include "Mesh.h"
 #include "Types.h"
 #include "PlotCallback.h"

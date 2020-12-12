@@ -5,8 +5,6 @@ add_library(Viewer STATIC
         Viewer.h
         ArcBall.cpp
         ArcBall.h
-        KDTree.h
-        KDTree.cpp
         Bvh.cpp
         Bvh.h
         ${Viewer_Rsc}

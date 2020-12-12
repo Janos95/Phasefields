@@ -4,19 +4,19 @@
     <generated>
       <config projectName="Phasefield" targetName="MagnumGLObjects" />
       <config projectName="Phasefield" targetName="Phasefield" />
-      <config projectName="Phasefield" targetName="Experiments_Rsc-dependencies" />
       <config projectName="Phasefield" targetName="AssimpImporter-dependencies" />
+      <config projectName="Phasefield" targetName="Experiments_Rsc-dependencies" />
       <config projectName="Phasefield" targetName="MagnumAnimation" />
-      <config projectName="Phasefield" targetName="MagnumImGuiIntegration" />
       <config projectName="Phasefield" targetName="MagnumSceneGraph" />
+      <config projectName="Phasefield" targetName="MagnumImGuiIntegration" />
       <config projectName="Phasefield" targetName="Mesh" />
       <config projectName="Phasefield" targetName="CorradeTestSuite" />
       <config projectName="Phasefield" targetName="CorradeTestSuiteCompare" />
-      <config projectName="Phasefield" targetName="MagnumMeshToolsObjects" />
       <config projectName="Phasefield" targetName="VisualizationProxy" />
+      <config projectName="Phasefield" targetName="MagnumMeshToolsObjects" />
       <config projectName="Phasefield" targetName="Cost" />
-      <config projectName="Phasefield" targetName="lbfgs_lib" />
       <config projectName="Phasefield" targetName="ScopedTimer" />
+      <config projectName="Phasefield" targetName="lbfgs_lib" />
       <config projectName="Phasefield" targetName="MagnumDebugToolsObjects" />
       <config projectName="Phasefield" targetName="corrade-rc" />
       <config projectName="Phasefield" targetName="StanfordImporter-dependencies" />
@@ -24,13 +24,13 @@
       <config projectName="Phasefield" targetName="MagnumShaderTools" />
       <config projectName="Phasefield" targetName="MagnumDebugTools" />
       <config projectName="Phasefield" targetName="CorradeInterconnect" />
-      <config projectName="Phasefield" targetName="VideoSaver" />
       <config projectName="Phasefield" targetName="MagnumTextObjects" />
+      <config projectName="Phasefield" targetName="VideoSaver" />
       <config projectName="Phasefield" targetName="StanfordSceneConverter-dependencies" />
       <config projectName="Phasefield" targetName="MagnumFlextGLObjects" />
       <config projectName="Phasefield" targetName="CorradeUtilityObjects" />
-      <config projectName="Phasefield" targetName="MagnumTextureTools_RCS-dependencies" />
       <config projectName="Phasefield" targetName="AssimpImporter" />
+      <config projectName="Phasefield" targetName="MagnumTextureTools_RCS-dependencies" />
       <config projectName="Phasefield" targetName="MagnumText" />
       <config projectName="Phasefield" targetName="StanfordSceneConverter" />
       <config projectName="Phasefield" targetName="MagnumMathAlgorithms" />
@@ -41,8 +41,8 @@
       <config projectName="Phasefield" targetName="AnyImageImporter-dependencies" />
       <config projectName="Phasefield" targetName="MagnumPlatform" />
       <config projectName="Phasefield" targetName="MagnumGL" />
-      <config projectName="Phasefield" targetName="AnyImageImporter" />
       <config projectName="Phasefield" targetName="CorradeUtility" />
+      <config projectName="Phasefield" targetName="AnyImageImporter" />
       <config projectName="Phasefield" targetName="MagnumPrimitives" />
       <config projectName="Phasefield" targetName="MagnumShaders" />
       <config projectName="Phasefield" targetName="Corrade" />
@@ -50,8 +50,8 @@
       <config projectName="Phasefield" targetName="MagnumSceneGraphObjects" />
       <config projectName="Phasefield" targetName="MagnumTextureTools" />
       <config projectName="Phasefield" targetName="MagnumMeshTools" />
-      <config projectName="Phasefield" targetName="Viewer" />
       <config projectName="Phasefield" targetName="StanfordImporter" />
+      <config projectName="Phasefield" targetName="Viewer" />
       <config projectName="Phasefield" targetName="Visualization" />
       <config projectName="Phasefield" targetName="Viewer_Rsc-dependencies" />
       <config projectName="Phasefield" targetName="MagnumMath" />
@@ -61,8 +61,8 @@
       <config projectName="Phasefield" targetName="MagnumShaders_RCS-dependencies" />
       <config projectName="Phasefield" targetName="implot" />
       <config projectName="Phasefield" targetName="Utilities" />
-      <config projectName="Phasefield" targetName="MagnumObjects" />
       <config projectName="Phasefield" targetName="Magnum" />
+      <config projectName="Phasefield" targetName="MagnumObjects" />
       <config projectName="Phasefield" targetName="CorradePluginManager" />
       <config projectName="Phasefield" targetName="MagnumPlatformObjects" />
     </generated>
@@ -77,8 +77,11 @@
     <list default="true" id="bd8fd83c-0dbd-43c4-895d-0b5ef02c9565" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cost/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/EigenHelper.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/EigenHelper.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/KDTree.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/KDTree.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/Viewer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Viewer.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/Viewer.h" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Viewer.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -121,11 +124,6 @@
     </key>
   </component>
   <component name="RunManager" selected="CMake Application.Phasefield">
-    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true">
-      <method v="2">
-        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="AnyImageImporter-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="AnyImageImporter-dependencies" CONFIG_NAME="default">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -426,6 +424,11 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
+    <configuration default="true" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="corrade-rc" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="corrade-rc" CONFIG_NAME="default" RUN_TARGET_PROJECT_NAME="Phasefield" RUN_TARGET_NAME="corrade-rc">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -579,7 +582,8 @@
       <workItem from="1607169417969" duration="7136000" />
       <workItem from="1607354942488" duration="2430000" />
       <workItem from="1607555346562" duration="2828000" />
-      <workItem from="1607704158012" duration="1395000" />
+      <workItem from="1607704158012" duration="1981000" />
+      <workItem from="1607771857145" duration="2414000" />
     </task>
     <servers />
   </component>

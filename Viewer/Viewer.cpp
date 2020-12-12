@@ -131,8 +131,8 @@ bool Viewer::saveMesh(char const* path) {
         Mg::Error{} << "Cannot save file to " << path;
         return false;
     }
-    return true;
 #endif
+    return true;
 }
 
 bool Viewer::dumpMesh(char const* path) {
@@ -294,8 +294,10 @@ MSAA if we have enough DPI. */
         const Vector2 dpiScaling = this->dpiScaling({});
         Configuration conf;
         conf.setTitle("Phasefield Viewer")
-            .setWindowFlags(Configuration::WindowFlag::Resizable)
-            .setSize({1200, 1200}, dpiScaling);
+            .setWindowFlags(Configuration::WindowFlag::Resizable);
+#ifdef MAGNUM_TARGET_WEBGL
+        conf.setSize({1200, 1200}, dpiScaling);
+#endif
         GLConfiguration glConf;
         glConf.setSampleCount(dpiScaling.max() < 2.0f ? 8 : 2);
         if(!tryCreate(conf, glConf))
@@ -1666,8 +1668,8 @@ Int Viewer::touchMoveEvent(EmscriptenTouchEvent const* event) {
         Vector2d p1Client{double(p1.targetX), double(p1.targetY)};
         Vector2d p2Client{double(p2.targetY), double(p2.targetY)};
         double length = (p1Client - p2Client).length();
-        double delta = length - pinchLength;
-        arcBall->zoom(2.*delta);
+        double delta = (length - pinchLength)/Float(windowSize().max());
+        arcBall->zoom(delta);
         pinchLength = length;
         return 1;
     } else if (trackingFinger) {

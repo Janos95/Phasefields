@@ -14,7 +14,7 @@ set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 #
 #find_package(OpenMP)
 #find_package(CUDAToolkit)
-#
+
 #target_link_libraries(CudaSolver PUBLIC Eigen3::Eigen CUDA::cusparse CUDA::cusolver CUDA::cudart)
 #add_library(Phasefield::CudaSolver ALIAS CudaSolver)
 
