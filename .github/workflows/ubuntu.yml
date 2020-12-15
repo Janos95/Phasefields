@@ -19,7 +19,7 @@ jobs:
 
     - name: Dependencies
       shell: bash
-      working-directory: ${{runner.workspace}}
+      working-directory: $GITHUB_WORKSPACE
       run: git submodule update --init --recursive
       
     - name: Create Build Environment
