@@ -25,8 +25,6 @@
 #include <cusparse.h>
 #include <cublas_v2.h>
 
-// Utilities and system includes
-#include "helper_functions.h"  // helper for shared functions common to CUDA Samples
 #include "helper_cuda.h"       // helper function CUDA error checking and initialization
 
 const char *sSDKname     = "conjugateGradient";
@@ -71,7 +69,14 @@ void genTridiag(int *I, int *J, float *val, int N, int nz)
     I[N] = nz;
 }
 
-int main(int argc, char **argv)
+/* Generate a random tridiagonal symmetric matrix in CSR format */
+//M = N = 1048576;
+//nz = (N-2)*3 + 4;
+//I = (int *)malloc(sizeof(int)*(N+1));
+//J = (int *)malloc(sizeof(int)*nz);
+//val = (float *)malloc(sizeof(float)*nz);
+//genTridiag(I, J, val, N, nz);
+int cuda_cg()
 {
     int M = 0, N = 0, nz = 0, *I = NULL, *J = NULL;
     float *val = NULL;
@@ -88,7 +93,7 @@ int main(int argc, char **argv)
 
     // This will pick the best possible CUDA capable device
     cudaDeviceProp deviceProp;
-    int devID = findCudaDevice(argc, (const char **)argv);
+    int devID = findCudaDevice();
 
     if (devID < 0)
     {

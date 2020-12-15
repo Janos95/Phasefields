@@ -27,7 +27,6 @@ add_subdirectory(contrib)
 
 find_package(MKL)
 find_package(PkgConfig REQUIRED)
-find_package(Eigen3)
 find_package(Corrade)
 
 if(PHASEFIELD_WITH_IO)

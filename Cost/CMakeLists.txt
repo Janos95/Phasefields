@@ -4,6 +4,7 @@ set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 #set(CMAKE_CUDA_COMPILER /opt/cuda/bin/nvcc)
 #enable_language(CUDA)
 #add_library(CudaSolver
+#        CuSparse/cg.cpp
 #        CudaSolver.cpp
 #        CudaSolver.h
 #        CuSparse/cusparse_cholesky_solver.cpp
@@ -14,10 +15,16 @@ set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 #
 #find_package(OpenMP)
 #find_package(CUDAToolkit)
-
+#
 #target_link_libraries(CudaSolver PUBLIC Eigen3::Eigen CUDA::cusparse CUDA::cusolver CUDA::cudart)
 #add_library(Phasefield::CudaSolver ALIAS CudaSolver)
 
+#add_library(SparseMatrix
+#        SparseMatrix.cpp
+#        SparseMatrix.h
+#        )
+#
+#add_library(Phasefield::SparseMatrix ALIAS SparseMatrix)
 
 add_library(Cost STATIC
         Cost.h

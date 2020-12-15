@@ -42,5 +42,5 @@ add_subdirectory(liblbfgs)
 
 add_subdirectory(bvh)
 
-
+add_subdirectory(eigen)
 

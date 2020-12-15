@@ -295,9 +295,11 @@ MSAA if we have enough DPI. */
         Configuration conf;
         conf.setTitle("Phasefield Viewer")
             .setWindowFlags(Configuration::WindowFlag::Resizable);
-#ifdef MAGNUM_TARGET_WEBGL
+
+#ifndef MAGNUM_TARGET_WEBGL
         conf.setSize({1200, 1200}, dpiScaling);
 #endif
+
         GLConfiguration glConf;
         glConf.setSampleCount(dpiScaling.max() < 2.0f ? 8 : 2);
         if(!tryCreate(conf, glConf))
@@ -1340,21 +1342,7 @@ void Viewer::mousePressEvent(MouseEvent& event) {
         }
         swapIndex ^= 1;
         event.setAccepted();
-    }
-
-    if(event.button() == MouseEvent::Button::Middle) {
-        trackingMouse = true;
-        ///* Enable mouse capture so the mouse can drag outside of the window */
-        ///** @todo replace once https://github.com/mosra/magnum/pull/419 is in */
-
-#ifndef CORRADE_TARGET_EMSCRIPTEN
-        SDL_CaptureMouse(SDL_TRUE);
-#endif
-
-        arcBall->initTransformation(event.position());
-
-        event.setAccepted();
-        redraw(); /* camera has changed, redraw! */
+        return;
     }
 
     if(event.button() == MouseEvent::Button::Right) {
@@ -1363,7 +1351,22 @@ void Viewer::mousePressEvent(MouseEvent& event) {
 
         Vertex v = intersectWithPcd(o, d);
         Debug{} << "Phasefield value at mouse location" << currentNode.phasefield()[v];
+        event.setAccepted();
+        return;
     }
+
+    trackingMouse = true;
+    ///* Enable mouse capture so the mouse can drag outside of the window */
+    ///** @todo replace once https://github.com/mosra/magnum/pull/419 is in */
+
+#ifndef CORRADE_TARGET_EMSCRIPTEN
+    SDL_CaptureMouse(SDL_TRUE);
+#endif
+
+    arcBall->initTransformation(event.position());
+
+    event.setAccepted();
+    redraw(); /* camera has changed, redraw! */
 }
 
 void Viewer::mouseReleaseEvent(MouseEvent& event) {
@@ -1378,16 +1381,14 @@ void Viewer::mouseReleaseEvent(MouseEvent& event) {
         return;
     }
 
-    if(event.button() == MouseEvent::Button::Middle) {
-        /* Disable mouse capture again */
-        /** @todo replace once https://github.com/mosra/magnum/pull/419 is in */
-        if(trackingMouse) {
+    /* Disable mouse capture again */
+    /** @todo replace once https://github.com/mosra/magnum/pull/419 is in */
+    if(trackingMouse) {
 #ifndef CORRADE_TARGET_EMSCRIPTEN
-            SDL_CaptureMouse(SDL_FALSE);
+        SDL_CaptureMouse(SDL_FALSE);
 #endif
-            trackingMouse = false;
-            event.setAccepted();
-        }
+        trackingMouse = false;
+        event.setAccepted();
     }
 }
 
@@ -1613,8 +1614,6 @@ void Viewer::drawErrorPlot() {
         ImPlot::EndPlot();
     }
     ImGui::End();
-
-
 }
 
 #ifdef MAGNUM_TARGET_WEBGL
@@ -1668,7 +1667,7 @@ Int Viewer::touchMoveEvent(EmscriptenTouchEvent const* event) {
         Vector2d p1Client{double(p1.targetX), double(p1.targetY)};
         Vector2d p2Client{double(p2.targetY), double(p2.targetY)};
         double length = (p1Client - p2Client).length();
-        double delta = (length - pinchLength)/Float(windowSize().max());
+        double delta = 5.*(length - pinchLength)/Float(windowSize().max());
         arcBall->zoom(delta);
         pinchLength = length;
         return 1;

@@ -136,19 +136,15 @@ void assembleAndSolve(
 
     if(doPositive) {
         A1.setFromTriplets(triplets1.begin(), triplets1.end());
-        {
-            ScopedTimer t{"Factoring A1"};
-            solver1.compute(A1);
-        }
+        ScopedTimer t{"Factoring A1", true};
+        solver1.compute(A1);
         handleSolverInfo(solver1.info());
         x1 = solver1.solve(b1);
     }
     if(doNegative) {
         A2.setFromTriplets(triplets2.begin(), triplets2.end());
-        {
-            ScopedTimer t{"Factoring A2"};
-            solver2.compute(A2);
-        }
+        ScopedTimer t{"Solving A2", true};
+        solver2.compute(A2);
         handleSolverInfo(solver2.info());
         x2 = solver2.solve(b2);
     }

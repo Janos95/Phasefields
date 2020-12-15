@@ -25,3 +25,6 @@
 [submodule "contrib/bvh"]
 	path = contrib/bvh
 	url = https://github.com/madmann91/bvh.git
+[submodule "contrib/eigen"]
+	path = contrib/eigen
+	url = https://gitlab.com/libeigen/eigen.git
