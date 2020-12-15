@@ -1,8 +1,8 @@
 Phasefields
 =====
 
-.. image:: https://github.com/fmtlib/fmt/workflows/linux/badge.svg
-   :target: https://github.com/fmtlib/fmt/actions?query=workflow%3Alinux
+.. image:: https://github.com/Janos95/Phasefields/workflows/ubuntu/badge.svg
+   :target: https://github.com/Janos95/Phasefields/actions?query=workflow%3Aubuntu
 
 Introduction
 --------
