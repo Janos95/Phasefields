@@ -1,4 +1,11 @@
-***Introduction***
+Phasefields
+=====
+
+.. image:: https://github.com/fmtlib/fmt/workflows/linux/badge.svg
+   :target: https://github.com/fmtlib/fmt/actions?query=workflow%3Alinux
+
+Introduction
+--------
 
 This repository contains the numerical code for my master thesis.
 It provides a GUI application for the hierarchical optimization of phasefields.
@@ -24,7 +31,8 @@ the middle mouse button when dragging.
 Here is a teaser image of the optimization result for varying interface length penalties.
 ![](images/image.png)
 
-***Building***
+Building
+--------
 
 Before building make sure that git submodules are downloaded.
 You can download them via:
@@ -54,7 +62,8 @@ There are some more dependencies which you can enable using the cmake options in
 - A different lBFGS implementation provided by ceres-solver (PHASEFIELD_WITH_CERES).
 - Threading using TBB (PHASEFIELD_WITH_TBB).
 
-***Related Work***
+Related Work
+--------
 
 The diffuse Yamabe energy draws inspiration from the paper 
 'Variational Surface Cutting' for which there is also code 
