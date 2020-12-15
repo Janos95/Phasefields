@@ -1,11 +1,7 @@
 Phasefields
 =====
+[![Build Status](https://github.com/Janos95/Phasefields/workflows/Build/badge.svg)](https://github.com/Janos95/Phasefields/actions?query=workflow%3ABuild)
 
-.. image:: https://github.com/Janos95/Phasefields/workflows/ubuntu/badge.svg
-   :target: https://github.com/Janos95/Phasefields/actions?query=workflow%3Aubuntu
-
-Introduction
---------
 
 This repository contains the numerical code for my master thesis.
 It provides a GUI application for the hierarchical optimization of phasefields.
