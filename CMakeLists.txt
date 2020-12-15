@@ -16,12 +16,12 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/modules)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 #set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 
-option(PHASEFIELD_WITH_ADOLC "Enable automatica gradient testing" ON)
-option(PHASEFIELD_WITH_CERES "Enables ceres for optimization" ON)
-option(PHASEFIELD_WITH_IPOPT "Enable ipopt for consrained optimization" ON)
-option(PHASEFIELD_WITH_TBB "Enable threading using intel tbb" ON)
-option(PHASEFIELD_WITH_SUITESPARSE "Use umfpack from suite sparse for faster decompositions" ON)
-option(PHASEFIELD_WITH_IO "Import with assimp, export with vtk to vts (paraview), ply and videos using ffmpeg" ON)
+option(PHASEFIELD_WITH_ADOLC "Enable automatica gradient testing" OFF)
+option(PHASEFIELD_WITH_CERES "Enables ceres for optimization" OFF)
+option(PHASEFIELD_WITH_IPOPT "Enable ipopt for consrained optimization" OFF)
+option(PHASEFIELD_WITH_TBB "Enable threading using intel tbb" OFF)
+option(PHASEFIELD_WITH_SUITESPARSE "Use umfpack from suite sparse for faster decompositions" OFF)
+option(PHASEFIELD_WITH_IO "Import with assimp, export with vtk to vts (paraview), ply and videos using ffmpeg" OFF)
 
 add_subdirectory(contrib)
 

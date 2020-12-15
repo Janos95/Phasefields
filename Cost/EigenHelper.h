@@ -103,7 +103,7 @@ struct SelectSolver {
     using type = Eigen::SparseLU<Eigen::SparseMatrix<Scalar>>;
 #endif
 #else
-    using type = Eigen::SparseLU<Eigen::SparseMatrix<Scalar>>;
+    using type = Eigen::ConjugateGradient<Eigen::SparseMatrix<double>, Eigen::Lower|Eigen::Upper>;
 #endif
 };
 

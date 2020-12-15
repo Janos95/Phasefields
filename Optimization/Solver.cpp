@@ -37,6 +37,7 @@
 #include <Corrade/Containers/Pointer.h>
 
 #include <stdio.h>
+#include <limits>
 
 namespace Phasefield::Solver {
 
