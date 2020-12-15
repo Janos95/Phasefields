@@ -387,10 +387,9 @@ MSAA if we have enough DPI. */
     GL::Renderer::enable(Mg::GL::Renderer::Feature::DepthTest);
     GL::Renderer::enable(Mg::GL::Renderer::Feature::FaceCulling);
 
-    /* Start the timer, loop at 60 Hz max */
+    /* Start the timer */
 #ifndef CORRADE_TARGET_EMSCRIPTEN
     setSwapInterval(1);
-    setMinimalLoopPeriod(16);
 #endif
 
 }
@@ -1356,12 +1355,6 @@ void Viewer::mousePressEvent(MouseEvent& event) {
     }
 
     trackingMouse = true;
-    ///* Enable mouse capture so the mouse can drag outside of the window */
-    ///** @todo replace once https://github.com/mosra/magnum/pull/419 is in */
-
-#ifndef CORRADE_TARGET_EMSCRIPTEN
-    SDL_CaptureMouse(SDL_TRUE);
-#endif
 
     arcBall->initTransformation(event.position());
 
@@ -1384,9 +1377,7 @@ void Viewer::mouseReleaseEvent(MouseEvent& event) {
     /* Disable mouse capture again */
     /** @todo replace once https://github.com/mosra/magnum/pull/419 is in */
     if(trackingMouse) {
-#ifndef CORRADE_TARGET_EMSCRIPTEN
-        SDL_CaptureMouse(SDL_FALSE);
-#endif
+
         trackingMouse = false;
         event.setAccepted();
     }

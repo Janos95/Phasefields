@@ -28,3 +28,6 @@
 [submodule "contrib/eigen"]
 	path = contrib/eigen
 	url = https://gitlab.com/libeigen/eigen.git
+[submodule "contrib/glfw"]
+	path = contrib/glfw
+	url = https://github.com/glfw/glfw.git

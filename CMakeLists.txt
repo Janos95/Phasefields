@@ -3,9 +3,9 @@ project(Phasefield)
 
 cmake_policy(SET CMP0077 NEW)
 
-set(MKL_ROOT /opt/intel/mkl)
-set(MKL_PARALLEL ON)
-set(MKL_64BIT ON)
+#set(MKL_ROOT /opt/intel/mkl)
+#set(MKL_PARALLEL ON)
+#set(MKL_64BIT ON)
 
 set(CMAKE_CXX_STANDARD 20)
 #set (CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
@@ -25,9 +25,10 @@ option(PHASEFIELD_WITH_IO "Import with assimp, export with vtk to vts (paraview)
 
 add_subdirectory(contrib)
 
-find_package(MKL)
 find_package(PkgConfig REQUIRED)
-find_package(Corrade)
+find_package(Corrade REQUIRED Containers Utility)
+find_package(Magnum REQUIRED GL MeshTools Primitives Shaders Trade DebugTools)
+find_package(MagnumIntegration REQUIRED ImGui)
 
 if(PHASEFIELD_WITH_IO)
     find_package(MagnumPlugins REQUIRED AssimpImporter)
@@ -58,7 +59,7 @@ if(PHASEFIELD_WITH_TBB)
 endif()
 
 if(PHASEFIELD_WITH_SUITESPARSE)
-    find_package(SuiteSparse REQUIRED UMFPACK)
+    find_package(SuiteSparse REQUIRED CHOLMOD)
 endif()
 
 if (CORRADE_TARGET_EMSCRIPTEN)
@@ -69,7 +70,7 @@ if (CORRADE_TARGET_EMSCRIPTEN)
     #    message(FATAL_ERROR "gles2 found")
     #endif()
 else()
-    find_package(Magnum REQUIRED Sdl2Application)
+    find_package(Magnum REQUIRED GlfwApplication)
 endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

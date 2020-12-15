@@ -31,7 +31,7 @@
 #include <emscripten/emscripten.h>
 #include <emscripten/html5.h>
 #else
-#include <Magnum/Platform/Sdl2Application.h>
+#include <Magnum/Platform/GlfwApplication.h>
 #endif
 
 #ifdef PHASEFIELD_WITH_IO
