@@ -6,8 +6,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest]
-        config: [Debug, Release]
+        os: [ubuntu-18.04]
+        config: [Debug]
     steps:
     - uses: actions/checkout@v2
       with:
