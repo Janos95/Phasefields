@@ -21,14 +21,18 @@ using a brush-like tool, mesh IO via Assimp, making and exporting videos
 using ffmpeg, color optimization for segmentations etc. 
 
 You can try it out in your [browser](https://janos95.gitlab.io/wasm-test/), but be aware the 
-webasm build is pretty buggy atm. Also its using blender style navigation, so dont forget to press
-the middle mouse button when dragging.
+webassembly build might have one or two bugs ;). There are four compiled in resources
+which can be loaded by choosing the corresponding resource at 'IO/Experiment' and then 
+pressing the 'Load Experiment' button. Then just need to press the '/Optimization Options/Optimize'
+button and the phasefield should start moving.
 
-Here is a teaser image of the optimization result for varying interface length penalties.
+Here is a teaser image of the optimization of the Yamabe energy for varying interface length penalties
 ![](images/image.png)
 
 Building
 --------
+You will need a C++20 conformant compiler and CMake for 
+project file generation.
 
 Before building make sure that git submodules are downloaded.
 You can download them via:
@@ -36,10 +40,6 @@ You can download them via:
 ```bash
 git submodules update --init --recursive
 ```
-
-Before compiling you also need to make sure you have Eigen 
-and SuiteSparse installed. If not already present I recommend
-installing them using you package manager.
 
 Build files are generated using cmake. 
 If you want to build the project using e.g.
@@ -49,12 +49,12 @@ ninja, you can use the following command:
 mkdir build && cd build && cmake .. -GNinja -DCMAKE_BUILD_TYPE=Release && ninja
 ```
 
-There are some more dependencies which you can enable using the cmake options in paranthesis :
+There are some more dependencies which you can enable using the following cmake options:
 - Loading meshes using Assimp (PHASEFIELD_WITH_IO).
 - Exporting videos via ffmpeg (PHASEFIELD_WITH_IO)
-- Solving constrained optimization problems using  Ipopt (PHASEFIELD_WITH_IPOPT).
+- Solving constrained optimization problems using Ipopt (PHASEFIELD_WITH_IPOPT).
 - Checking derivatives via AD using ADOL-C (PHASEFIELD_WITH_ADOLC).
-- Solving the yamabe equation faster using Suite Sparse (PHASEFIELD_WITH_SUITESPARSE).
+- Solving the Yamabe equation faster using Suite Sparse (PHASEFIELD_WITH_SUITESPARSE).
 - A different lBFGS implementation provided by ceres-solver (PHASEFIELD_WITH_CERES).
 - Threading using TBB (PHASEFIELD_WITH_TBB).
 
