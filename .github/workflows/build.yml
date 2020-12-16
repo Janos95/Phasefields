@@ -21,7 +21,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ matrix.config }} ..
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DCMAKE_C_COMPILER=gcc-10 -DCMAKE_CXX_COMPILER=g++-10 ..
         cd ..
     - name: Build
       run: |
