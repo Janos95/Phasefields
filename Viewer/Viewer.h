@@ -79,6 +79,8 @@ struct Viewer : public Mg::Platform::Application {
     void textInputEvent(TextInputEvent& event) override;
 
 #ifdef MAGNUM_TARGET_WEBGL
+    MouseEvent const& convertToMouseEvent(EmscriptenTouchEvent const&);
+    MouseMoveEvent const& convertToMove(EmscriptenTouchEvent const&);
     Int touchStartEvent(EmscriptenTouchEvent const*);
     Int touchMoveEvent(EmscriptenTouchEvent const*);
     Int touchEndEvent(EmscriptenTouchEvent const*);
@@ -227,8 +229,9 @@ struct Viewer : public Mg::Platform::Application {
     bool trackingFingers = false;
     bool trackingForImGui = false;
     double pinchLength;
+    Vector2i previousMouseMovePosition{-1};
 
-    bool swapColors= false;
+bool swapColors= false;
     size_t colorIndexToSwap[2];
     size_t swapIndex = 0;
 };

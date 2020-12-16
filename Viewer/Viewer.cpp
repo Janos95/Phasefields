@@ -1609,6 +1609,36 @@ void Viewer::drawErrorPlot() {
 }
 
 #ifdef MAGNUM_TARGET_WEBGL
+
+EmscriptenMouseEvent g_mouseEvent = {0};
+
+struct MouseEventHacker { bool dummy; EmscriptenMouseEvent& event; };
+struct MouseMoveHacker { bool dummy; EmscriptenMouseEvent& event; Vector2i relativePosition; };
+
+static_assert(sizeof(MouseEventHacker) == sizeof(Viewer::MouseEvent));
+static_assert(sizeof(MouseMoveHacker) == sizeof(Viewer::MouseMoveEvent));
+
+MouseEventHacker g_mouseHacker{false,g_mouseEvent};
+MouseMoveHacker g_moveHacker{false,g_mouseEvent};
+
+Viewer::MouseEvent const& Viewer::convertToMouseEvent(EmscriptenTouchEvent const& touchEvent) {
+    EmscriptenTouchPoint ep = touchEvent.touches[0];
+    g_mouseHacker.event.targetX = ep.targetX;
+    g_mouseHacker.event.targetY = ep.targetY;
+
+    return *(Viewer::MouseEvent*)&g_mouseHacker;
+}
+
+Viewer::MouseMoveEvent const& Viewer::convertToMove(EmscriptenTouchEvent const& touchEvent) {
+    EmscriptenTouchPoint ep = touchEvent.touches[0];
+    g_moveHacker.event.targetX = ep.targetX;
+    g_moveHacker.event.targetY = ep.targetY;
+    Vector2i position{Int(ep.targetX), Int(ep.targetY)};
+    g_moveHacker.relativePosition = previousMouseMovePosition == Vector2i{-1} ? Vector2i{} : position - previousMouseMovePosition;
+    previousMouseMovePosition = position;
+    return *(Viewer::MouseMoveEvent*)&g_moveHacker;
+}
+
 Int Viewer::touchStartEvent(EmscriptenTouchEvent const* event) {
     if (event->numTouches == 2) {
         isPinching = true;
@@ -1619,17 +1649,14 @@ Int Viewer::touchStartEvent(EmscriptenTouchEvent const* event) {
         pinchLength = (p1Client - p2Client).length();
         return 1;
     } else if(event->numTouches == 1) {
+        auto const& mouseEvent = convertToMouseEvent(*event);
+        if(imgui.handleMousePressEvent(mouseEvent)) {
+            return 1;
+        }
+
+        /* if imgui does not consume the input, rotate scene using arcball */
         EmscriptenTouchPoint ep = event->touches[0];
         Vector2i p{Int(ep.targetX), Int(ep.targetY)};
-
-        ImGuiIO& io = ImGui::GetIO();
-        io.MousePos = ImVec2(dpiScaling()*Vector2(p));
-        io.MouseDown[0] = true;
-        if(io.WantCaptureMouse) {
-            trackingForImGui = true;
-            redraw();
-            return true;
-        }
 
         arcBall->initTransformation(p);
         trackingFinger = true;
@@ -1644,12 +1671,9 @@ Int Viewer::touchStartEvent(EmscriptenTouchEvent const* event) {
 }
 
 Int Viewer::touchMoveEvent(EmscriptenTouchEvent const* event) {
-    ImGuiIO& io = ImGui::GetIO();
 
-    if(trackingForImGui && io.WantCaptureMouse) {
-        EmscriptenTouchPoint ep = event->touches[0];
-        Vector2 p{Float(ep.targetX), Float(ep.targetY)};
-        io.MousePos = ImVec2(Vector2(p));
+    auto const& mouseEvent = convertToMove(*event);
+    if(imgui.handleMouseMoveEvent(mouseEvent)) {
         return 1;
     }
 
@@ -1676,12 +1700,12 @@ Int Viewer::touchMoveEvent(EmscriptenTouchEvent const* event) {
 }
 
 Int Viewer::touchEndEvent(EmscriptenTouchEvent const* event) {
-    if(trackingForImGui) {
-        trackingForImGui = false;
-        ImGuiIO& io = ImGui::GetIO();
-        io.MouseDown[0] = false;
+
+    auto const& mouseEvent = convertToMouseEvent(*event);
+    if(imgui.handleMouseReleaseEvent(mouseEvent)) {
         return 1;
     }
+
     if(isPinching || trackingFinger || trackingFingers) {
         isPinching = false;
         trackingFinger = false;

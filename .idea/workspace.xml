@@ -24,55 +24,44 @@
       <config projectName="Phasefield" targetName="MagnumTrade" />
       <config projectName="Phasefield" targetName="MagnumDebugTools" />
       <config projectName="Phasefield" targetName="MagnumGlfwApplication" />
-      <config projectName="Phasefield" targetName="eigen_blas_static" />
-      <config projectName="Phasefield" targetName="blas" />
       <config projectName="Phasefield" targetName="CorradeInterconnect" />
       <config projectName="Phasefield" targetName="MagnumTextObjects" />
       <config projectName="Phasefield" targetName="VideoSaver" />
       <config projectName="Phasefield" targetName="StanfordSceneConverter-dependencies" />
       <config projectName="Phasefield" targetName="MagnumFlextGLObjects" />
       <config projectName="Phasefield" targetName="CorradeUtilityObjects" />
-      <config projectName="Phasefield" targetName="uninstall" />
       <config projectName="Phasefield" targetName="MagnumText" />
       <config projectName="Phasefield" targetName="MagnumTextureTools_RCS-dependencies" />
       <config projectName="Phasefield" targetName="AssimpImporter" />
       <config projectName="Phasefield" targetName="glfw" />
       <config projectName="Phasefield" targetName="StanfordSceneConverter" />
-      <config projectName="Phasefield" targetName="spsolver" />
       <config projectName="Phasefield" targetName="MagnumMathAlgorithms" />
       <config projectName="Phasefield" targetName="MagnumSdl2Application" />
-      <config projectName="Phasefield" targetName="demos" />
       <config projectName="Phasefield" targetName="MagnumGlxContextObjects" />
       <config projectName="Phasefield" targetName="MagnumMathObjects" />
       <config projectName="Phasefield" targetName="CorradePluginManagerObjects" />
       <config projectName="Phasefield" targetName="AnyImageImporter-dependencies" />
       <config projectName="Phasefield" targetName="MagnumPlatform" />
       <config projectName="Phasefield" targetName="MagnumGL" />
-      <config projectName="Phasefield" targetName="eigen_blas" />
       <config projectName="Phasefield" targetName="AnyImageImporter" />
       <config projectName="Phasefield" targetName="CorradeUtility" />
       <config projectName="Phasefield" targetName="MagnumPrimitives" />
       <config projectName="Phasefield" targetName="MagnumShaders" />
-      <config projectName="Phasefield" targetName="spbenchsolver" />
       <config projectName="Phasefield" targetName="Corrade" />
       <config projectName="Phasefield" targetName="MagnumShadersObjects" />
       <config projectName="Phasefield" targetName="MagnumSceneGraphObjects" />
-      <config projectName="Phasefield" targetName="eigen_lapack" />
       <config projectName="Phasefield" targetName="MagnumTextureTools" />
-      <config projectName="Phasefield" targetName="eigen_lapack_static" />
       <config projectName="Phasefield" targetName="MagnumMeshTools" />
       <config projectName="Phasefield" targetName="StanfordImporter" />
       <config projectName="Phasefield" targetName="Viewer" />
       <config projectName="Phasefield" targetName="Visualization" />
       <config projectName="Phasefield" targetName="Viewer_Rsc-dependencies" />
       <config projectName="Phasefield" targetName="MagnumMath" />
-      <config projectName="Phasefield" targetName="test_sparseLU" />
       <config projectName="Phasefield" targetName="CorradeContainers-headers" />
       <config projectName="Phasefield" targetName="MagnumTradeObjects" />
       <config projectName="Phasefield" targetName="Optimization" />
       <config projectName="Phasefield" targetName="MagnumShaders_RCS-dependencies" />
       <config projectName="Phasefield" targetName="implot" />
-      <config projectName="Phasefield" targetName="lapack" />
       <config projectName="Phasefield" targetName="Utilities" />
       <config projectName="Phasefield" targetName="MagnumObjects" />
       <config projectName="Phasefield" targetName="Magnum" />
@@ -89,11 +78,9 @@
   <component name="ChangeListManager">
     <list default="true" id="bd8fd83c-0dbd-43c4-895d-0b5ef02c9565" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/LbfgsSolver.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/LbfgsSolver.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Optimization/Tree.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Tree.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Viewer/Viewer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Viewer.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Viewer/data/hierarchical.conf" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/data/spot_area.conf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Viewer/data/resources.conf" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/data/resources.conf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/Viewer.h" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Viewer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/contrib/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/CMakeLists.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -449,37 +436,7 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="blas" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="blas" CONFIG_NAME="default">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="corrade-rc" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="corrade-rc" CONFIG_NAME="default" RUN_TARGET_PROJECT_NAME="Phasefield" RUN_TARGET_NAME="corrade-rc">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="demos" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="demos" CONFIG_NAME="default">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="eigen_blas" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="eigen_blas" CONFIG_NAME="default">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="eigen_blas_static" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="eigen_blas_static" CONFIG_NAME="default">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="eigen_lapack" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="eigen_lapack" CONFIG_NAME="default">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="eigen_lapack_static" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="eigen_lapack_static" CONFIG_NAME="default">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -494,32 +451,7 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="lapack" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="lapack" CONFIG_NAME="default">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
     <configuration name="lbfgs_lib" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="lbfgs_lib" CONFIG_NAME="default">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="spbenchsolver" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="spbenchsolver" CONFIG_NAME="default" RUN_TARGET_PROJECT_NAME="Phasefield" RUN_TARGET_NAME="spbenchsolver">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="spsolver" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="spsolver" CONFIG_NAME="default" RUN_TARGET_PROJECT_NAME="Phasefield" RUN_TARGET_NAME="spsolver">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="test_sparseLU" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="test_sparseLU" CONFIG_NAME="default" RUN_TARGET_PROJECT_NAME="Phasefield" RUN_TARGET_NAME="test_sparseLU">
-      <method v="2">
-        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="uninstall" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="uninstall" CONFIG_NAME="default">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -542,17 +474,6 @@
       <item itemvalue="CMake Application.corrade-rc" />
       <item itemvalue="CMake Application.CorradeUtility" />
       <item itemvalue="CMake Application.CorradeUtilityObjects" />
-      <item itemvalue="CMake Application.uninstall" />
-      <item itemvalue="CMake Application.spbenchsolver" />
-      <item itemvalue="CMake Application.spsolver" />
-      <item itemvalue="CMake Application.test_sparseLU" />
-      <item itemvalue="CMake Application.blas" />
-      <item itemvalue="CMake Application.eigen_blas" />
-      <item itemvalue="CMake Application.eigen_blas_static" />
-      <item itemvalue="CMake Application.demos" />
-      <item itemvalue="CMake Application.eigen_lapack" />
-      <item itemvalue="CMake Application.eigen_lapack_static" />
-      <item itemvalue="CMake Application.lapack" />
       <item itemvalue="CMake Application.glfw" />
       <item itemvalue="CMake Application.lbfgs_lib" />
       <item itemvalue="CMake Application.MagnumImGuiIntegration" />
@@ -687,22 +608,22 @@
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="423" y="259" width="424" height="470" key="FileChooserDialogImpl/0.0.2560.1080@0.0.2560.1080" timestamp="1607906345910" />
-    <state width="2514" height="129" key="GridCell.Tab.0.bottom" timestamp="1608080910625">
+    <state width="1234" height="50" key="GridCell.Tab.0.bottom" timestamp="1608086107598">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="129" key="GridCell.Tab.0.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1608080910625" />
-    <state width="2514" height="129" key="GridCell.Tab.0.center" timestamp="1608080910625">
+    <state width="1234" height="50" key="GridCell.Tab.0.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1608086107598" />
+    <state width="1234" height="50" key="GridCell.Tab.0.center" timestamp="1608086107597">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="129" key="GridCell.Tab.0.center/0.0.2560.1080@0.0.2560.1080" timestamp="1608080910625" />
-    <state width="2514" height="129" key="GridCell.Tab.0.left" timestamp="1608080910625">
+    <state width="1234" height="50" key="GridCell.Tab.0.center/0.0.2560.1080@0.0.2560.1080" timestamp="1608086107597" />
+    <state width="1234" height="50" key="GridCell.Tab.0.left" timestamp="1608086107597">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="129" key="GridCell.Tab.0.left/0.0.2560.1080@0.0.2560.1080" timestamp="1608080910625" />
-    <state width="2514" height="129" key="GridCell.Tab.0.right" timestamp="1608080910625">
+    <state width="1234" height="50" key="GridCell.Tab.0.left/0.0.2560.1080@0.0.2560.1080" timestamp="1608086107597" />
+    <state width="1234" height="50" key="GridCell.Tab.0.right" timestamp="1608086107598">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="129" key="GridCell.Tab.0.right/0.0.2560.1080@0.0.2560.1080" timestamp="1608080910625" />
+    <state width="1234" height="50" key="GridCell.Tab.0.right/0.0.2560.1080@0.0.2560.1080" timestamp="1608086107598" />
     <state width="2514" height="85" key="GridCell.Tab.1.bottom" timestamp="1607120672713">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
@@ -747,10 +668,10 @@
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="129" y="56" key="SettingsEditor/0.0.2560.1080@0.0.2560.1080" timestamp="1608079923786" />
-    <state x="894" y="-20" width="762" height="644" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1608077177581">
+    <state x="894" y="-36" width="762" height="644" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1608084222055">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="894" y="-20" width="762" height="644" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.2560.1080@0.0.2560.1080" timestamp="1608077177581" />
+    <state x="894" y="-36" width="762" height="644" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.2560.1080@0.0.2560.1080" timestamp="1608084222055" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
