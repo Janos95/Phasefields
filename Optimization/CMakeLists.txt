@@ -1,4 +1,4 @@
-set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
+#set_directory_properties(PROPERTIES CORRADE_USE_PEDANTIC_FLAGS ON)
 
 add_library(Optimization STATIC
         Functional.h

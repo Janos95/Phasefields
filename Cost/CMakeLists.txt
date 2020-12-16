@@ -48,9 +48,10 @@ add_library(Cost STATIC
 target_include_directories(Cost PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
+target_include_directories(Cost SYSTEM PRIVATE ${Eigen3_INCLUDE_DIRS})
+
 target_link_libraries(Cost PRIVATE
         ScopedTimer::ScopedTimer
-        Eigen3::Eigen
         Phasefield::Viewer
         )
 
