@@ -310,7 +310,6 @@ void Tree::update() {
 
     arrayResize(tempsData, data.size());
     phasefieldData = std::move(data);
-
 }
 
 Node Tree::insertNodeAtIndex(size_t idx) {

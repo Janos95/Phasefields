@@ -112,7 +112,7 @@ struct Experiment {
 
 static Experiment experiments[] = {
         {"Connectedness Constraint", "capsule_high_res.ply", "capsule_high_res_split.bin", "connectedness.conf"},
-        {"Hierarchical Segmentation", "spot_high_res.ply", nullptr, "hierarchical.conf"},
+        {"Spot Area Penalty", "spot_high_res.ply", nullptr, "spot_area.conf"},
         {"Yamabe Energy Sphere", "sphere.ply", "sphere.bin", "sphere.conf"},
         {"Yamabe Energy Sphere Connected", "sphere.ply", "sphere.bin", "sphere_connected.conf"}
 };
@@ -532,6 +532,7 @@ void Viewer::loadExperiment(const char* meshName, const char* treeName, const ch
         tree = Tree::deserialize(expResource.getRaw(treeName), mesh);
     } else {
         tree.update();
+        tree.root().initializePhasefieldFromParent();
     }
     //tree.update();
     auto raw = expResource.getRaw(confName);

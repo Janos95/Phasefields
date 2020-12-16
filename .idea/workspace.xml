@@ -89,9 +89,11 @@
   <component name="ChangeListManager">
     <list default="true" id="bd8fd83c-0dbd-43c4-895d-0b5ef02c9565" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Mesh/MeshElements.h" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/MeshElements.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/LbfgsSolver.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/LbfgsSolver.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Optimization/Tree.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Optimization/Tree.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/Viewer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Viewer.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/data/hierarchical.conf" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/data/spot_area.conf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/data/resources.conf" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/data/resources.conf" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -685,22 +687,22 @@
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state x="423" y="259" width="424" height="470" key="FileChooserDialogImpl/0.0.2560.1080@0.0.2560.1080" timestamp="1607906345910" />
-    <state width="2514" height="2" key="GridCell.Tab.0.bottom" timestamp="1608075354562">
+    <state width="2514" height="129" key="GridCell.Tab.0.bottom" timestamp="1608080910625">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="2" key="GridCell.Tab.0.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1608075354562" />
-    <state width="2514" height="2" key="GridCell.Tab.0.center" timestamp="1608075354561">
+    <state width="2514" height="129" key="GridCell.Tab.0.bottom/0.0.2560.1080@0.0.2560.1080" timestamp="1608080910625" />
+    <state width="2514" height="129" key="GridCell.Tab.0.center" timestamp="1608080910625">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="2" key="GridCell.Tab.0.center/0.0.2560.1080@0.0.2560.1080" timestamp="1608075354561" />
-    <state width="2514" height="2" key="GridCell.Tab.0.left" timestamp="1608075354561">
+    <state width="2514" height="129" key="GridCell.Tab.0.center/0.0.2560.1080@0.0.2560.1080" timestamp="1608080910625" />
+    <state width="2514" height="129" key="GridCell.Tab.0.left" timestamp="1608080910625">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="2" key="GridCell.Tab.0.left/0.0.2560.1080@0.0.2560.1080" timestamp="1608075354561" />
-    <state width="2514" height="2" key="GridCell.Tab.0.right" timestamp="1608075354561">
+    <state width="2514" height="129" key="GridCell.Tab.0.left/0.0.2560.1080@0.0.2560.1080" timestamp="1608080910625" />
+    <state width="2514" height="129" key="GridCell.Tab.0.right" timestamp="1608080910625">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state width="2514" height="2" key="GridCell.Tab.0.right/0.0.2560.1080@0.0.2560.1080" timestamp="1608075354561" />
+    <state width="2514" height="129" key="GridCell.Tab.0.right/0.0.2560.1080@0.0.2560.1080" timestamp="1608080910625" />
     <state width="2514" height="85" key="GridCell.Tab.1.bottom" timestamp="1607120672713">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
@@ -741,10 +743,10 @@
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
     <state width="640" height="476" key="ImportCMakeProjectWizard.topPanel/0.0.2560.1080@0.0.2560.1080" timestamp="1607906360597" />
-    <state x="129" y="72" key="SettingsEditor" timestamp="1608074395171">
+    <state x="129" y="56" key="SettingsEditor" timestamp="1608079923786">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>
-    <state x="129" y="72" key="SettingsEditor/0.0.2560.1080@0.0.2560.1080" timestamp="1608074395170" />
+    <state x="129" y="56" key="SettingsEditor/0.0.2560.1080@0.0.2560.1080" timestamp="1608079923786" />
     <state x="894" y="-20" width="762" height="644" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1608077177581">
       <screen x="0" y="0" width="2560" height="1080" />
     </state>

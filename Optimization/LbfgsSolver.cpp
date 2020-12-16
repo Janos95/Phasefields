@@ -305,7 +305,7 @@ LbfgsSolver::~LbfgsSolver() {
 
     delete m_data;
     auto* cd = (callback_data_t*)m_cd;
-    delete cd->instance;
+    delete (lbfgs_data*)cd->instance;
     delete cd;
 }
 
