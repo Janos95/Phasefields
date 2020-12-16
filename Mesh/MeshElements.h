@@ -8,6 +8,8 @@
 #include "Types.h"
 #include "Range.h"
 
+#include <compare>
+
 namespace Phasefield {
 
 struct HalfEdge {
@@ -15,7 +17,7 @@ struct HalfEdge {
     size_t idx;
     Mesh const* mesh;
 
-    bool operator!=(HalfEdge const& other) const { return idx != other.idx; }
+    auto operator<=>(HalfEdge const& other) const { return idx <=> other.idx; }
     bool operator==(HalfEdge const& other) const = default;
 
     [[nodiscard]] HalfEdge next() const;
@@ -54,7 +56,7 @@ struct Vertex {
     size_t idx;
     Mesh const* mesh;
 
-    bool operator!=(Vertex const& other) const { return idx != other.idx; }
+    auto operator<=>(Vertex const& other) const { return idx <=> other.idx; }
     bool operator==(Vertex const& other) const = default;
 
     [[nodiscard]] double gaussianCurvature() const;
@@ -97,8 +99,7 @@ struct Face {
     size_t idx;
     Mesh const* mesh;
 
-    bool operator!=(Face const& other) const { return idx != other.idx; }
-    bool operator<(Face const& other) const { return idx < other.idx; }
+    auto operator<=>(Face const& other) const { return idx <=> other.idx; }
     bool operator==(Face const& other) const = default;
 
     //FaceIncidentVertexRange vertices();
@@ -139,7 +140,7 @@ struct Edge {
     size_t idx;
     Mesh const* mesh;
 
-    bool operator!=(Edge const& other) const { return idx != other.idx; }
+    auto operator<=>(Edge const& other) const { return idx <=> other.idx; }
     bool operator==(Edge const& other) const = default;
 
     //bool isManifold();
@@ -167,7 +168,7 @@ struct Corner {
     size_t idx;
     Mesh const* mesh;
 
-    bool operator!=(Corner const& other) const { return idx != other.idx; }
+    auto operator<=>(Corner const& other) const { return idx <=> other.idx; }
     bool operator==(Corner const& other) const = default;
 
     [[nodiscard]] HalfEdge side1() const;
@@ -194,7 +195,7 @@ struct DualEdge {
     size_t idx;
     Mesh const* mesh;
 
-    bool operator!=(DualEdge const& other) const { return idx != other.idx; }
+    auto operator<=>(DualEdge const& other) const { return idx <=> other.idx; }
     bool operator==(DualEdge const& other) const = default;
 
     [[nodiscard]] Face face1() const;
