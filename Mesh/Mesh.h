@@ -72,7 +72,7 @@ public:
 
     using ArrayView<T>::ArrayView;
     operator ArrayView<T>() {
-        auto* p = reinterpret_cast<Array<T>*>(this);
+        auto* p = reinterpret_cast<ArrayView<T>*>(this);
         return *p;
     }
 };
