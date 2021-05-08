@@ -55,5 +55,6 @@ add_library(Eigen INTERFACE)
 target_include_directories(Eigen INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/eigen/)
 add_library(Eigen3::Eigen ALIAS Eigen)
 
-
+set(WITH_DEMOS OFF CACHE BOOL "" FORCE)
+add_subdirectory(SuiteSparse)
 

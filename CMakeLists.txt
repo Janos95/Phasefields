@@ -20,7 +20,6 @@ option(PHASEFIELD_WITH_ADOLC "Enable automatica gradient testing" OFF)
 option(PHASEFIELD_WITH_CERES "Enables ceres for optimization" OFF)
 option(PHASEFIELD_WITH_IPOPT "Enable ipopt for consrained optimization" OFF)
 option(PHASEFIELD_WITH_TBB "Enable threading using intel tbb" OFF)
-option(PHASEFIELD_WITH_SUITESPARSE "Use umfpack from suite sparse for faster decompositions" OFF)
 option(PHASEFIELD_WITH_IO "Import with assimp, export with vtk to vts (paraview), ply and videos using ffmpeg" OFF)
 
 add_subdirectory(contrib)

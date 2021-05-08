@@ -4,20 +4,13 @@
 
 #pragma once
 
-#include "CudaCG.h"
 #include "Types.h"
 
 #include <Corrade/Utility/Debug.h>
 
 #include <Eigen/SparseCore>
-#include <Eigen/SparseLU>
-#include <Eigen/IterativeLinearSolvers>
-//#include <Eigen/PardisoSupport>
-
-#ifdef PHASEFIELD_WITH_SUITESPARSE
 #include <Eigen/UmfPackSupport>
 #include <Eigen/CholmodSupport>
-#endif
 
 #ifdef PHASEFIELD_WITH_ADOLC
 #include <adolc/adouble.h>
@@ -91,20 +84,8 @@ void handleSolverInfo(Eigen::ComputationInfo info) {
 
 template<class Scalar>
 struct SelectSolver {
-#ifndef MAGNUM_TARGET_WEBGL
-#ifdef PHASEFIELD_WITH_SUITESPARSE
     //using type = Eigen::UmfPackLU<Eigen::SparseMatrix<Scalar>>;
-    //using type = Eigen::CholmodSimplicialLDLT<Eigen::SparseMatrix<Scalar>>;
-    //using type = Eigen::PardisoLDLT<Eigen::SparseMatrix<Scalar>, Eigen::Upper>;
-    //using type = CudaCG;
-    //using type = Eigen::ConjugateGradient<Eigen::SparseMatrix<double>, Eigen::Lower|Eigen::Upper>;
     using type = Eigen::CholmodSupernodalLLT<Eigen::SparseMatrix<Scalar>>;
-#else
-    using type = Eigen::SparseLU<Eigen::SparseMatrix<Scalar>>;
-#endif
-#else
-    using type = Eigen::ConjugateGradient<Eigen::SparseMatrix<double>, Eigen::Lower|Eigen::Upper>;
-#endif
 };
 
 #ifdef PHASEFIELD_WITH_ADOLC

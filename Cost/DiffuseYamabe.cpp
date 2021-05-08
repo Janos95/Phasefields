@@ -484,11 +484,7 @@ void DiffuseYamabe::drawImGuiOptions(VisualizationProxy& proxy) {
 
                         A.setFromTriplets(triplets.begin(), triplets.end());
 
-#ifdef PHASEFIELD_WITH_SUITESPARSE
-                        Eigen::UmfPackLU<Eigen::SparseMatrix<double>> solver;
-#else
-                        Eigen::SparseLU<Eigen::SparseMatrix<double>> solver;
-#endif
+                        Eigen::CholmodSupernodalLLT<Eigen::SparseMatrix<double>> solver;
 
                         solver.compute(A);
                         handleSolverInfo(solver.info());
