@@ -25,6 +25,8 @@ struct NodeData {
     size_t depth = 0;
 };
 
+SMART_ENUM(Initialization, size_t, RANDOM, NORMAL_CLUSTER, BFS)
+
 struct Node {
     size_t idx = Invalid;
     Tree* tree = nullptr;
@@ -44,7 +46,7 @@ struct Node {
 
     [[nodiscard]] bool isRightChild() const { return parent().rightChild() == *this; }
 
-     void splitAndInitialize(Node* n);
+     void splitAndInitializeChildren(Node* n);
 
     [[nodiscard]] double integrateWeight(Mesh& mesh) const;
 
@@ -60,7 +62,7 @@ struct Node {
 
     Node addChild(bool left, Node* n);
 
-    void initializePhasefieldFromParent() const;
+    void initialize(Initialization::Value = Initialization::NORMAL_CLUSTER) const;
 
     [[nodiscard]] size_t depth() const;
 

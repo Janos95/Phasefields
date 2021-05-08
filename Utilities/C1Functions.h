@@ -174,20 +174,16 @@ struct SmoothIndicatorFunction {
 
 struct WeightExitPenalty {
 
-    double p = 10;
+    const double eps = 1e-6;
 
     template<class T>
     T eval(const T x) const {
-        if(x < 1.)
-            return p*(x - 1)*(x - 1);
-        return T(0.);
+        return 1./(x + eps);
     }
 
     template<class T>
     T grad(const T x) const {
-        if(x < 1.)
-            return 2*p*(x - 1);
-        return T(0.);
+        return -1./Math::pow<2>(x+eps);
     }
 };
 

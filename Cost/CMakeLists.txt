@@ -3,21 +3,17 @@
 #set(CUDA_TOOLKIT_ROOT_DIR /opt/cuda)
 #set(CMAKE_CUDA_COMPILER /opt/cuda/bin/nvcc)
 #enable_language(CUDA)
-#add_library(CudaSolver
-#        CuSparse/cg.cpp
-#        CudaSolver.cpp
-#        CudaSolver.h
-#        CuSparse/cusparse_cholesky_solver.cpp
-#        CuSparse/cusparse_cholesky_solver.h
-#        CuSparse/cusparse_wrapper.cpp
-#        CuSparse/cusparse_wrapper.h
+#
+#add_library(CudaCG
+#        CudaCG.cpp
+#        CudaCG.h
 #        )
 #
 #find_package(OpenMP)
 #find_package(CUDAToolkit)
 #
-#target_link_libraries(CudaSolver PUBLIC Eigen3::Eigen CUDA::cusparse CUDA::cusolver CUDA::cudart)
-#add_library(Phasefield::CudaSolver ALIAS CudaSolver)
+#target_link_libraries(CudaCG PUBLIC CUDA::cusparse CUDA::cusolver CUDA::cudart Eigen3::Eigen ScopedTimer::ScopedTimer)
+#add_library(Phasefield::CudaCG ALIAS CudaCG)
 
 #add_library(SparseMatrix
 #        SparseMatrix.cpp
@@ -33,8 +29,6 @@ add_library(Cost STATIC
         ConnectednessConstraint.h
         ConnectednessConstraint.cpp
         #StrangRules.hpp
-        CudaSolver.cpp
-        CudaSolver.h
         StoppingCriteria.cpp
         StoppingCriteria.h
         UnionFind.cpp
@@ -53,7 +47,10 @@ target_include_directories(Cost SYSTEM PRIVATE ${Eigen3_INCLUDE_DIRS})
 target_link_libraries(Cost PRIVATE
         ScopedTimer::ScopedTimer
         Phasefield::Viewer
+        #Phasefield::CudaCG
         )
+
+find_package(OpenMP)
 
 target_link_libraries(Cost PUBLIC
         Phasefield::Utilities
@@ -61,6 +58,7 @@ target_link_libraries(Cost PUBLIC
         Phasefield::VisualizationProxy
         Phasefield::Mesh
         Phasefield::Optimization
+        OpenMP::OpenMP_CXX
         )
 
 set_property(TARGET Cost PROPERTY POSITION_INDEPENDENT_CODE ON)

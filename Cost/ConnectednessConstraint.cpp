@@ -40,10 +40,11 @@ void ConnectednessConstraint::operator()(ArrayView<const Scalar> parameters,
     ScopedTimer timer("Connectedness", verbose);
 
     recalculateInterval();
-    double intervalBoundary = 1.1;
-    if(edge0 > edge1) intervalBoundary = -1.1;
+    double intervalBoundary = 1.5;
+    if(edge0 > edge1) intervalBoundary = -1.5;
     auto [a,b] = Math::minmax(edge1, intervalBoundary);
-    W bump{a,b};
+    //W bump{a,b};
+    ParametricSmoothStep bump{edge0, edge1};
     F f{a, b};
 
     //if constexpr (std::is_same_v<double, Scalar>) {
@@ -87,10 +88,8 @@ void ConnectednessConstraint::operator()(ArrayView<const Scalar> parameters,
             Face face1 = de.face1();
             Face face2 = de.face2();
 
-            Scalar fuT1 = f.eval(uT[face1]);
-            Scalar fuT2 = f.eval(uT[face2]);
-
-            //Scalar penalty = 0.5*(facePenalties[face1] + facePenalties[face2]);
+            Scalar fuT1 = f.eval(uT[face1])*facePenalties[face1];
+            Scalar fuT2 = f.eval(uT[face2])*facePenalties[face2];
 
             Scalar w = .5*(face1.diameter() + face2.diameter())*.5*(fuT1 + fuT2);
             dualEdgeWeights[de] = w;
@@ -141,6 +140,13 @@ void ConnectednessConstraint::operator()(ArrayView<const Scalar> parameters,
                 //CORRADE_INTERNAL_ASSERT(std::abs(-1. - ws[face]) > 1e-6);
                 W[k] += ws[face]*face.area();
                 c = k;
+            }
+        }
+
+        if constexpr(std::is_same_v<double, Scalar>) {
+            Debug{} << "W";
+            for(double w : W) {
+                Debug{} << w;
             }
         }
     }
@@ -194,7 +200,7 @@ void ConnectednessConstraint::operator()(ArrayView<const Scalar> parameters,
     Array<StoppingCriteria> stops{numComponents - 1};
     {
         ScopedTimer t("dijkstra", verbose);
-//#pragma omp parallel for
+#pragma omp parallel for
         for(std::size_t i = 0; i < numComponents - 1; ++i) {
             StoppingCriteria stop(roots[i], numComponents, components);
             Dijkstra<Face, Scalar> dijk(*mesh, dualEdgeWeights);
@@ -230,9 +236,9 @@ void ConnectednessConstraint::operator()(ArrayView<const Scalar> parameters,
                         auto weightedFGrad = Wij*lineElement*.5*(1./3.);
 
                         for(Vertex vertex : face1.vertices())
-                            gradP[vertex.idx] += weightedFGrad*fgrad1;
+                            gradP[vertex.idx] += weightedFGrad*fgrad1*facePenalties[face1];
                         for(Vertex vertex : face2.vertices())
-                            gradP[vertex.idx] += weightedFGrad*fgrad2;
+                            gradP[vertex.idx] += weightedFGrad*fgrad2*facePenalties[face2];
                     }
                 }
 

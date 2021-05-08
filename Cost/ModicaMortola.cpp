@@ -91,8 +91,7 @@ void AreaRegularizer::operator()(ArrayView<const Scalar> parameters,
     out += (integral - 0.5*(*totalArea))*invTotalArea;
 }
 
-DoubleWellPotential::DoubleWellPotential(Mesh& m) : mesh(m) {
-    mesh.requireIntegralOperator(); }
+DoubleWellPotential::DoubleWellPotential(Mesh& m) : mesh(m) { mesh.requireIntegralOperator(); }
 
 size_t DoubleWellPotential::numParameters() const { return mesh.vertexCount(); }
 
@@ -121,20 +120,43 @@ void DoubleWellPotential::operator()(ArrayView<const Scalar> parameters,
     }
 }
 
+HierarchicalRegularization::HierarchicalRegularization(Mesh& m) : mesh(m) { mesh.requireIntegralOperator(); }
+
+size_t HierarchicalRegularization::numParameters() const { return mesh.vertexCount(); }
+
+template<class Scalar>
+void HierarchicalRegularization::operator()(ArrayView<const Scalar> parameters,
+                                 ArrayView<const Scalar> weights,
+                                 Scalar& out,
+                                 ArrayView<Scalar> gradP,
+                                 ArrayView<Scalar> gradW) {
+    for(Vertex vertex : mesh.vertices()) {
+        const size_t idx = vertex.idx;
+        const Scalar sq = 0.5*parameters[idx]*parameters[idx];
+        out += (1. - weights[idx])*sq*mesh.integral[vertex];
+        if(gradP) {
+            gradP[idx] += (1. - weights[idx])*parameters[idx]*mesh.integral[vertex];
+        }
+    }
+}
+
 /* explicit instantiations */
 
 DEFINE_FUNCTIONAL_CONSTRUCTOR(DirichletEnergy)
 DEFINE_FUNCTIONAL_CONSTRUCTOR(AreaRegularizer)
 DEFINE_FUNCTIONAL_CONSTRUCTOR(DoubleWellPotential)
+DEFINE_FUNCTIONAL_CONSTRUCTOR(HierarchicalRegularization)
 
 DEFINE_FUNCTIONAL_OPERATOR(DirichletEnergy, double)
 DEFINE_FUNCTIONAL_OPERATOR(AreaRegularizer, double)
 DEFINE_FUNCTIONAL_OPERATOR(DoubleWellPotential, double)
+DEFINE_FUNCTIONAL_OPERATOR(HierarchicalRegularization, double)
 
 #ifdef PHASEFIELD_WITH_ADOLC
 DEFINE_FUNCTIONAL_OPERATOR(DirichletEnergy, adouble)
 DEFINE_FUNCTIONAL_OPERATOR(AreaRegularizer, adouble)
 DEFINE_FUNCTIONAL_OPERATOR(DoubleWellPotential, adouble)
+DEFINE_FUNCTIONAL_OPERATOR(HierarchicalRegularization, adouble)
 #endif
 
 }

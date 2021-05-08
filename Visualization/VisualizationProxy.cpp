@@ -59,7 +59,7 @@ Array<Color4>& getColors(size_t n) {
             Deg hue = 100.0_degf;
             Deg step = 360._degf/n;
             for(size_t i = 0; i < n; ++i) {
-                g_colors[i] = Color4::fromHsv({hue += step, 0.9f, 0.9f});
+                g_colors[i] = Color4::fromHsv({hue += step, 0.9f, 0.7f});
             }
         } else {
             for(size_t i = 0; i < n; ++i) {

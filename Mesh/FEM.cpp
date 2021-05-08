@@ -63,6 +63,7 @@ void StiffnessMatrixFeature::update() {
     auto& elements = mesh.stiffnessElements;
 
     for(HalfEdge he : mesh.halfEdges()) {
+        // TODO: this is somewhat wrong. Maybe he.edge().onBoundaryLoop() would be better?
         if(he.onBoundaryLoop()) continue;
         HalfEdge he1 = he.next();
         HalfEdge he2 = he1.next();

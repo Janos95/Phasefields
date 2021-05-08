@@ -21,7 +21,6 @@
 #include <queue>
 #include <random>
 
-#define RANDOM_INIT 1
 
 namespace Phasefield {
 
@@ -101,7 +100,7 @@ Node Node::addRightChild(Node* n) { return addChild(false, n); }
 
 Node Node::addLeftChild(Node* n) { return addChild(true, n); }
 
-void Node::initializePhasefieldFromParent() const {
+void Node::initialize(Initialization::Value init) const {
     Mesh* mesh = tree->mesh;
     mesh->requireFaceInformation();
 
@@ -144,39 +143,86 @@ void Node::initializePhasefieldFromParent() const {
             thresholded[f] = 0;
     }
 
-#if RANDOM_INIT
-    std::mt19937 gen(0);
-    std::bernoulli_distribution dist;
-
-    for(Face face : mesh->faces()) {
-        if(thresholded[face]) {
-            bool positive = dist(gen);
-            for(Vertex v : face.vertices()) {
-                phase[v] = positive ? 1. : -1;
-            }
-        }
-    }
-#else
-    if(start) {
-        Bfs<Face> bfs{*mesh};
-        bfs.setSource(start);
-        double area = 0;
-        Face f;
-        while(bfs.step(f)) {
-            area += f.area()*faceWeights[f];
-            if(area > totalArea*0.5)
-                break;
-        }
+    if(init == Initialization::RANDOM) {
+        std::mt19937 gen(0);
+        std::bernoulli_distribution dist;
 
         for(Face face : mesh->faces()) {
             if(thresholded[face]) {
+                bool positive = dist(gen);
                 for(Vertex v : face.vertices()) {
-                    phase[v] = bfs.visited(face) ? 1. : -1.;
+                    phase[v] = positive ? 1. : -1;
                 }
             }
         }
-    } else Debug{} << "Could not find any face for which weights are positive";
-#endif
+    } else if(init == Initialization::NORMAL_CLUSTER) {
+        /*
+         * Compute distance using cosine distance and reproject centers
+         * onto sphere.
+         */
+        Array<Vertex> vertices;
+        for(Vertex v : mesh->vertices()) {
+            bool shouldInit = false;
+            for(Face f : v.faces())
+                shouldInit |= thresholded[f];
+            if(shouldInit) {
+                arrayAppend(vertices, v);
+            }
+        }
+
+        Vector3 center1{0,0,1};
+        Vector3 center2{0,0,-1};
+
+        Array<char> assignement{vertices.size()};
+
+        for(size_t i = 0; i < 10; ++i) {
+
+            Vector3 newCenter1{};
+            Vector3 newCenter2{};
+
+            for(size_t j = 0; j < vertices.size(); ++j) {
+                Vector3 p = vertices[j].normal();
+                float dist1 = 1 - Math::dot(center1, p);
+                float dist2 = 1 - Math::dot(center2, p);
+
+                bool isSmaller = dist1 < dist2;
+                newCenter1 = isSmaller*p;
+                newCenter2 = !isSmaller*p;
+            }
+
+            center1 = center1.normalized();
+            center2 = center2.normalized();
+        }
+
+        for(Vertex v : vertices) {
+            Vector3 p = v.normal();
+            float dist1 = 1 - Math::dot(center1, p);
+            float dist2 = 1 - Math::dot(center2, p);
+
+            phase[v] = dist1 < dist2 ? 1 : -1;
+        }
+
+    } else if(init == Initialization::BFS) {
+        if(start) {
+            Bfs<Face> bfs{*mesh};
+            bfs.setSource(start);
+            double area = 0;
+            Face f;
+            while(bfs.step(f)) {
+                area += f.area()*faceWeights[f];
+                if(area > totalArea*0.5)
+                    break;
+            }
+
+            for(Face face : mesh->faces()) {
+                if(thresholded[face]) {
+                    for(Vertex v : face.vertices()) {
+                        phase[v] = bfs.visited(face) ? 1. : -1.;
+                    }
+                }
+            }
+        } else Debug{} << "Could not find any face for which weights are positive";
+    } else Debug{} << "Invalid initialization";
 }
 
 void Tree::computeAdjacencyGraph(Array<size_t>& neighbors, Array<size_t>& starts, size_t level) {
@@ -256,18 +302,18 @@ void Tree::computeAdjacencyGraph(Array<size_t>& neighbors, Array<size_t>& starts
     }
 }
 
-void Node::splitAndInitialize(Node* n) {
+void Node::splitAndInitializeChildren(Node* n) {
     Node right;
     if(!hasRightChild()) {
         right = addRightChild(n);
     } else right = rightChild();
-    right.initializePhasefieldFromParent();
+    right.initialize();
 
     Node left;
     if(!hasLeftChild()) {
         left = addLeftChild(n);
     } else left = leftChild();
-    left.initializePhasefieldFromParent();
+    left.initialize();
 }
 
 double Node::integrateWeight(Mesh& mesh) const {

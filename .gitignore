@@ -8,3 +8,4 @@ math/openblas_modules/*
 docs/
 log.md
 .vscode
+.idea/

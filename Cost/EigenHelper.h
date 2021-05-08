@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "CudaSolver.h"
+#include "CudaCG.h"
 #include "Types.h"
 
 #include <Corrade/Utility/Debug.h>
@@ -96,9 +96,9 @@ struct SelectSolver {
     //using type = Eigen::UmfPackLU<Eigen::SparseMatrix<Scalar>>;
     //using type = Eigen::CholmodSimplicialLDLT<Eigen::SparseMatrix<Scalar>>;
     //using type = Eigen::PardisoLDLT<Eigen::SparseMatrix<Scalar>, Eigen::Upper>;
-    //using type = CUDASolver;
-    using type = Eigen::ConjugateGradient<Eigen::SparseMatrix<double>, Eigen::Lower|Eigen::Upper>;
-    //using type = Eigen::CholmodSupernodalLLT<Eigen::SparseMatrix<Scalar>>;
+    //using type = CudaCG;
+    //using type = Eigen::ConjugateGradient<Eigen::SparseMatrix<double>, Eigen::Lower|Eigen::Upper>;
+    using type = Eigen::CholmodSupernodalLLT<Eigen::SparseMatrix<Scalar>>;
 #else
     using type = Eigen::SparseLU<Eigen::SparseMatrix<Scalar>>;
 #endif

@@ -9,6 +9,7 @@
 #include "ConnectednessConstraint.h"
 #include "DiffuseYamabe.h"
 #include "C1Functions.h"
+#include "SmoothVertexData.h"
 
 #include <ScopedTimer/ScopedTimer.h>
 
@@ -532,7 +533,7 @@ void Viewer::loadExperiment(const char* meshName, const char* treeName, const ch
         tree = Tree::deserialize(expResource.getRaw(treeName), mesh);
     } else {
         tree.update();
-        tree.root().initializePhasefieldFromParent();
+        tree.root().initialize();
     }
     //tree.update();
     auto raw = expResource.getRaw(confName);
@@ -792,7 +793,7 @@ void Viewer::runOptimization(UniqueFunction<bool()>&& cb){
     if(hierarchicalOptimization) {
 
         for(Node node : tree.leafs())
-            node.splitAndInitialize(&currentNode);
+            node.splitAndInitializeChildren(&currentNode);
         tree.computeLeafWeights();
 
         for(Node node : tree.leafs()) {
@@ -816,7 +817,7 @@ void Viewer::refineLeafNodes(UniqueFunction<bool()>&& cb) {
     setCallbacks(MOVE(cb));
 
     for(Node leaf : tree.leafs()) {
-        leaf.splitAndInitialize(&currentNode);
+        leaf.splitAndInitializeChildren(&currentNode);
     }
 
     tree.computeLeafWeights();
@@ -849,6 +850,9 @@ Functional Viewer::makeFunctional(FunctionalType::Value type) {
             Functional f = DoubleWellPotential{mesh};
             f.scaling = &doubleWellScaling;
             return f;
+        }
+        case FunctionalType::HierarchicalRegularization : {
+            return HierarchicalRegularization{mesh};
         }
         case FunctionalType::ConnectednessConstraint : {
             ConnectednessConstraint cc{mesh};
@@ -987,23 +991,31 @@ void Viewer::drawVisualizationOptions() {
 
         if(ImGui::Button("Split Leaf nodes")) {
             for(Node node : tree.leafs()) {
-                node.splitAndInitialize(&currentNode);
+                node.splitAndInitializeChildren(&currentNode);
             }
             proxy.redraw();
         }
 
+        if(ImGui::BeginCombo("Initialization Method", Initialization::to_string(init))) {
+            for(auto i : Initialization::range) {
+                bool isSelected = i == init;
+                if(ImGui::Selectable(Initialization::to_string(i), isSelected)) {
+                    init = i;
+                }
+                if(isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
         if(ImGui::Button("Initialize Current Node")) {
-            currentNode.initializePhasefieldFromParent();
+            currentNode.initialize(init);
             proxy.redraw();
         }
 
         if(ImGui::Button("Split Current Node")) {
             /* the node handle (potentially) gets invalidated after we add the other child */
-            Node rightChild = currentNode.addRightChild(&currentNode);
-            rightChild.initializePhasefieldFromParent();
-
-            Node leftChild = currentNode.addLeftChild(&currentNode);
-            leftChild.initializePhasefieldFromParent();
+            currentNode.splitAndInitializeChildren(&currentNode);
             proxy.redraw();
         }
 
@@ -1070,12 +1082,15 @@ void Viewer::drawVisualizationOptions() {
             printf("Total error %f\n", totalError);
         }
 
+
         static bool drawCurvature = false;
         if(ImGui::Checkbox("Gaussian Curvature", &drawCurvature)) {
             if(drawCurvature) {
                 proxy.setCallbacks(
                         [this](Node node) {
                             mesh.requireGaussianCurvature();
+
+
                             proxy.drawValuesNormalized(mesh.gaussianCurvature);
                         },
                         [this]{ drawCurvature = false; });
@@ -1158,8 +1173,8 @@ void Viewer::drawIO() {
         }
 
 
-        static char path[50] = "/home/janos/";
-        static char postfix[25] = "torus_hierarchical_32";
+        static char path[50] = "/home/janos/seams";
+        static char postfix[25] = "sphere";
 
         ImGui::BeginGroup();
         ImGui::Text("Import/Export to");
@@ -1200,6 +1215,56 @@ void Viewer::drawIO() {
 
         if(ImGui::Button("Load Scene")) {
             loadScene(path, postfix);
+        }
+
+        constexpr double delta = 0.1;
+        if(ImGui::Button("Export Seams and Weights")) {
+            FaceData<char> inInterior(NoInit, mesh.faceCount());
+
+            std::string seamsPath = Cr::Utility::Directory::join(path, std::string(postfix) + "-seams" + ".txt");
+            std::string weightsPath = Cr::Utility::Directory::join(path, std::string(postfix) + "-weights" + ".txt");
+            FILE* fp = fopen(seamsPath.c_str(), "w");
+            FILE* fp2 = fopen(weightsPath.c_str(), "w");
+            tree.computeLeafWeights();
+
+            for(Node node : tree.nodesOnLevel(proxy.level)) {
+                auto weights = node.temporary();
+                memset(inInterior.begin(),char(0), inInterior.size());
+                size_t count = 0;
+                for(Face face : mesh.faces()) {
+                    double average = 0;
+                    for(Vertex v : face.vertices()) {
+                        average += weights[v];
+                    }
+                    average /= 3.;
+                    if(average > delta) {
+                        inInterior[face] = 1;
+                        ++count;
+                    }
+                }
+                fprintf(fp, "#%zu\n", count);
+                fprintf(fp2, "#%zu\n", weights.size());
+
+                for(Edge edge : mesh.edges()) {
+                    if(edge.onBoundaryLoop())
+                        continue;
+
+                    HalfEdge he = edge.halfEdge();
+                    Face f1 = he.face();
+                    Face f2 = he.twin().face();
+
+                    if(inInterior[f1] ^ inInterior[f2]) {
+                        fprintf(fp, "%zu %zu\n", edge.vertex1().idx, edge.vertex2().idx);
+                    }
+                }
+
+                for(double w : weights) {
+                    fprintf(fp2, "%f ", w);
+                }
+                fputc('\n', fp2);
+            }
+            fclose(fp);
+            fclose(fp2);
         }
 
         if(ImGui::Button("Export to VTK")) {

@@ -15,6 +15,8 @@ add_library(Mesh STATIC
         GraphCommon.h
         FEM.cpp
         FEM.h
+        SmoothVertexData.cpp
+        SmoothVertexData.h
         )
 
 target_include_directories(Mesh PUBLIC

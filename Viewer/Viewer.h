@@ -109,7 +109,7 @@ struct Viewer : public Mg::Platform::Application {
 
     void drawIO();
 
-    void drawMeshEdit();
+    //void drawMeshEdit();
 
     Functional makeFunctional(FunctionalType::Value);
 
@@ -231,7 +231,10 @@ struct Viewer : public Mg::Platform::Application {
     double pinchLength;
     Vector2i previousMouseMovePosition{-1};
 
-bool swapColors= false;
+
+    Initialization::Value init = Initialization::NORMAL_CLUSTER;
+
+    bool swapColors= false;
     size_t colorIndexToSwap[2];
     size_t swapIndex = 0;
 };
