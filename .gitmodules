@@ -31,3 +31,6 @@
 [submodule "contrib/glfw"]
 	path = contrib/glfw
 	url = https://github.com/glfw/glfw.git
+[submodule "contrib/SuiteSparse"]
+	path = contrib/SuiteSparse
+	url = git@github.com:sergiud/SuiteSparse.git
