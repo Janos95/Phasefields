@@ -34,9 +34,8 @@
 #include <Magnum/Platform/GlfwApplication.h>
 #endif
 
-#ifdef PHASEFIELD_WITH_IO
+#ifdef PHASEFIELD_WITH_VIDEO
 #include "VideoSaver.h"
-#include <MagnumPlugins/AssimpImporter/AssimpImporter.h>
 #endif
 
 #include <MagnumPlugins/StanfordImporter/StanfordImporter.h>
@@ -129,7 +128,6 @@ struct Viewer : public Mg::Platform::Application {
     void drawErrorPlot();
 
     bool saveMesh(const char*);
-    bool dumpMesh(const char*);
     void loadConfig(Cr::Utility::ConfigurationGroup const&);
     void saveCurrentConfig(const char*);
 
@@ -205,9 +203,8 @@ struct Viewer : public Mg::Platform::Application {
     bool animate = false;
     bool recording = false;
 
-#ifdef PHASEFIELD_WITH_IO
+#ifdef PHASEFIELD_WITH_VIDEO
     VideoSaver videoSaver;
-    Mg::Trade::AssimpImporter assimpImporter;
 #endif
 
     Mg::Trade::StanfordImporter stanfordImporter;

@@ -16,7 +16,6 @@
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Utility/Configuration.h>
 #include <Corrade/Utility/Directory.h>
-#include <Corrade/PluginManager/Manager.h>
 #include <Corrade/PluginManager/PluginMetadata.h>
 #include <Corrade/Containers/GrowableArray.h>
 #include <Corrade/Containers/StringView.h>
@@ -35,34 +34,18 @@
 #include <Magnum/Shaders/Phong.h>
 
 #include <Magnum/Trade/MeshData.h>
-#include <Magnum/Image.h>
 #include <Magnum/MeshTools/Duplicate.h>
+#include <Magnum/MeshTools/RemoveDuplicates.h>
 #include <Magnum/ImageView.h>
 #include <Magnum/PixelFormat.h>
 #include <Magnum/DebugTools/ColorMap.h>
 #include <Magnum/MeshTools/Compile.h>
-#include <Magnum/MeshTools/RemoveDuplicates.h>
 #include <Magnum/ImGuiIntegration/Context.hpp>
+
+#include <MagnumPlugins/StanfordSceneConverter/StanfordSceneConverter.h>
 
 #include <implot.h>
 #include <sstream>
-
-
-#ifdef PHASEFIELD_WITH_IO
-#include <MagnumPlugins/StanfordSceneConverter/StanfordSceneConverter.h>
-
-#include <vtkCellArray.h>
-#include <vtkPoints.h>
-#include <vtkXMLPolyDataWriter.h>
-#include <vtkPolyData.h>
-#include <vtkSmartPointer.h>
-#include <vtkDoubleArray.h>
-#include <vtkPointData.h>
-#include <vtkTriangle.h>
-#include <vtkCellData.h>
-#endif
-
-
 
 static void initializeRessources() {
     CORRADE_RESOURCE_INITIALIZE(Viewer_Rsc)
@@ -122,7 +105,6 @@ using namespace Mg::Math::Literals;
 using namespace Cr::Containers::Literals;
 
 bool Viewer::saveMesh(char const* path) {
-#ifdef PHASEFIELD_WITH_IO
     Mg::PluginManager::Manager<Mg::Trade::AbstractSceneConverter> manager;
     Mg::Trade::StanfordSceneConverter exporter{manager, "StanfordSceneConverter"};
 
@@ -132,81 +114,7 @@ bool Viewer::saveMesh(char const* path) {
         Mg::Error{} << "Cannot save file to " << path;
         return false;
     }
-#endif
     return true;
-}
-
-bool Viewer::dumpMesh(char const* path) {
-#ifdef PHASEFIELD_WITH_IO
-    mesh.requireGaussianCurvature();
-    size_t n = mesh.vertexCount();
-    size_t m = mesh.faceCount();
-
-    auto points = vtkSmartPointer<vtkPoints>::New();
-    for (Vertex v : mesh.vertices()) {
-        auto& p = v.position();
-        points->InsertNextPoint(p.x(), p.y(), p.z());
-    }
-
-    auto triangles = vtkSmartPointer<vtkCellArray>::New();
-    for (Face f : mesh.faces()) {
-        auto triangle = vtkSmartPointer<vtkTriangle>::New();
-        size_t i = 0;
-        for(Vertex v : f.vertices()) {
-            triangle->GetPointIds()->SetId(i++,v.idx);
-        }
-        triangles->InsertNextCell(triangle);
-    }
-
-    auto produceArray = [](const char* name, size_t size) {
-        vtkSmartPointer<vtkDoubleArray> array = vtkSmartPointer<vtkDoubleArray>::New();
-        array->SetNumberOfValues(size);
-        array->SetName(name);
-        return array;
-    };
-
-    auto curvature = produceArray("Curvature", n);
-    auto phasefield = produceArray("Phasefield", n);
-    auto scalar = produceArray("Scalar", n);
-    auto nodalAreas = produceArray("Nodal Area", n);
-
-    auto faceCurvature = produceArray("Face Curvature", m);
-
-    for(Vertex v : mesh.vertices()) {
-        curvature->SetValue(v.idx, mesh.gaussianCurvature[v]);
-        phasefield->SetValue(v.idx, currentNode.phasefield()[v]);
-        scalar->SetValue(v.idx, mesh.scalar(v));
-        nodalAreas->SetValue(v.idx, mesh.integral[v]);
-    }
-
-    for(Face f : mesh.faces()) {
-        faceCurvature->SetValue(f.idx, mesh.faceCurvature[f]);
-    }
-
-    // Create a polydata object and add the points to it.
-    auto polyData = vtkSmartPointer<vtkPolyData>::New();
-    polyData->SetPoints(points);
-    polyData->SetPolys(triangles);
-
-    auto pointData = polyData->GetPointData();
-    pointData->AddArray(curvature);
-    pointData->AddArray(scalar);
-    pointData->AddArray(nodalAreas);
-    pointData->AddArray(phasefield);
-
-    auto cellData = polyData->GetCellData();
-    cellData->AddArray(faceCurvature);
-
-    // Write the file
-    vtkSmartPointer<vtkXMLPolyDataWriter> writer = vtkSmartPointer<vtkXMLPolyDataWriter>::New();
-    writer->SetFileName(path);
-    writer->SetInputData(polyData);
-
-    writer->Write();
-    return true;
-#else
-    return false;
-#endif
 }
 
 namespace {
@@ -451,7 +359,6 @@ void Viewer::saveCurrentConfig(const char* path) {
 }
 
 void Viewer::loadScene(const char* path, const char* postfix) {
-#ifdef PHASEFIELD_WITH_IO
     bool loadedTree = false;
     Optional<Mg::Trade::MeshData> md;
 
@@ -479,11 +386,11 @@ void Viewer::loadScene(const char* path, const char* postfix) {
 
             Debug{} << "Opening file" << meshPath.c_str();
 
-            if(assimpImporter.openFile(meshPath)) {
-                Debug{} << "Imported " << assimpImporter.meshCount() << " meshes";
+            if(stanfordImporter.openFile(meshPath)) {
+                Debug{} << "Imported " << stanfordImporter.meshCount() << " meshes";
 
-                if(assimpImporter.meshCount() && assimpImporter.mesh(0)) {
-                    md = assimpImporter.mesh(0);
+                if(stanfordImporter.meshCount() && stanfordImporter.mesh(0)) {
+                    md = stanfordImporter.mesh(0);
                 } else {
                     Debug{} << "Could not load mesh";
                 }
@@ -520,7 +427,6 @@ void Viewer::loadScene(const char* path, const char* postfix) {
     if(md || loadedTree) {
         proxy.redraw();
     }
-#endif
 }
 
 void Viewer::loadExperiment(const char* meshName, const char* treeName, const char* confName) {
@@ -1151,8 +1057,6 @@ void Viewer::drawVisualizationOptions() {
 
 void Viewer::drawIO() {
     if(ImGui::TreeNode("IO")) {
-
-
         static size_t curExp = 0;
 
         if(ImGui::BeginCombo("Experiment", experiments[curExp].name)) {
@@ -1267,14 +1171,6 @@ void Viewer::drawIO() {
             fclose(fp2);
         }
 
-        if(ImGui::Button("Export to VTK")) {
-            if(!Cr::Utility::Directory::exists(path))
-                Cr::Utility::Directory::mkpath(path);
-
-            std::string meshPath = Cr::Utility::Directory::join(path,"dump.vts");
-            dumpMesh(meshPath.c_str());
-        }
-
         ImGui::Checkbox("Animate", &animate);
 
         static char recordingPath[100] = "/home/janos/test.mp4";
@@ -1286,7 +1182,7 @@ void Viewer::drawIO() {
         ImGui::PushStyleColor(ImGuiCol{}, recording ? red : green);
         if(ImGui::Button("Start Recording")) {
             if(!recording) {
-#ifdef PHASEFIELD_WITH_IO
+#ifdef PHASEFIELD_WITH_VIDEO
                 videoSaver.startRecording(recordingPath, framebufferSize());
                 recording = true;
 #endif
@@ -1297,7 +1193,7 @@ void Viewer::drawIO() {
         ImGui::PushStyleColor(ImGuiCol{}, recording ? green : red);
         if(ImGui::Button("Stop Recording")) {
             if(recording) {
-#ifdef PHASEFIELD_WITH_IO
+#ifdef PHASEFIELD_WITH_VIDEO
                 videoSaver.endRecording();
                 recording = false;
 #endif
@@ -1569,7 +1465,7 @@ void Viewer::drawEvent() {
 
 
     if(recording) {
-#ifdef PHASEFIELD_WITH_IO
+#ifdef PHASEFIELD_WITH_VIDEO
         Mg::Image2D image = GL::defaultFramebuffer.read({{},framebufferSize()}, {GL::PixelFormat::RGBA, Mg::GL::PixelType::UnsignedByte});
         videoSaver.appendFrame(std::move(image));
 #endif

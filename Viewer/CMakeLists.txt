@@ -30,20 +30,15 @@ target_link_libraries(Viewer
             Magnum::DebugTools
             MagnumIntegration::ImGui
             MagnumPlugins::StanfordImporter
+            MagnumPlugins::StanfordSceneConverter
             ImPlot::ImPlot
             bvh
         )
 
 add_library(Phasefield::Viewer ALIAS Viewer)
 
-if (PHASEFIELD_WITH_IO)
-    target_link_libraries(Viewer PUBLIC
-            MagnumPlugins::AssimpImporter
-            MagnumPlugins::StanfordSceneConverter
-            VTK::CommonCore
-            VTK::CommonDataModel
-            VTK::IOXML
-            Phasefield::VideoSaver)
-    target_compile_definitions(Viewer PUBLIC PHASEFIELD_WITH_IO)
+if (PHASEFIELD_WITH_VIDEO)
+    target_link_libraries(Viewer PUBLIC Phasefield::VideoSaver)
+    target_compile_definitions(Viewer PUBLIC PHASEFIELD_WITH_VIDEO)
 endif ()
 

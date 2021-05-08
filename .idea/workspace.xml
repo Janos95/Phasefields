@@ -55,9 +55,11 @@
       <config projectName="Phasefield" targetName="MagnumGlxContextObjects" />
       <config projectName="Phasefield" targetName="MagnumMathObjects" />
       <config projectName="Phasefield" targetName="CorradePluginManagerObjects" />
+      <config projectName="Phasefield" targetName="AnyImageImporter-dependencies" />
       <config projectName="Phasefield" targetName="MagnumPlatform" />
       <config projectName="Phasefield" targetName="MagnumGL" />
       <config projectName="Phasefield" targetName="CorradeUtility" />
+      <config projectName="Phasefield" targetName="AnyImageImporter" />
       <config projectName="Phasefield" targetName="MagnumPrimitives" />
       <config projectName="Phasefield" targetName="MagnumShaders" />
       <config projectName="Phasefield" targetName="Corrade" />
@@ -93,21 +95,15 @@
   </component>
   <component name="CMakeSettings">
     <configurations>
-      <configuration PROFILE_NAME="default" CONFIG_NAME="Release" TOOLCHAIN_NAME="Default" GENERATION_OPTIONS="-DCMAKE_CXX_COMPILER=g++-10" ENABLED="true" />
+      <configuration PROFILE_NAME="default" CONFIG_NAME="Debug" TOOLCHAIN_NAME="Default" GENERATION_OPTIONS="-DCMAKE_CXX_COMPILER=g++-10" ENABLED="true" />
     </configurations>
   </component>
   <component name="ChangeListManager">
     <list default="true" id="bd8fd83c-0dbd-43c4-895d-0b5ef02c9565" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/Phasefield.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cost/EigenHelper.h" beforeDir="false" afterPath="$PROJECT_DIR$/Cost/EigenHelper.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Mesh/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Mesh/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Viewer/Viewer.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Viewer/Viewer.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/contrib/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/contrib/CMakeLists.txt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -153,6 +149,16 @@
     </key>
   </component>
   <component name="RunManager" selected="CMake Application.Phasefield">
+    <configuration name="AnyImageImporter-dependencies" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="AnyImageImporter-dependencies" CONFIG_NAME="default">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="AnyImageImporter" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="AnyImageImporter" CONFIG_NAME="default">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="Corrade" type="CMakeRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Phasefield" TARGET_NAME="Corrade" CONFIG_NAME="default">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -642,6 +648,8 @@
       <item itemvalue="CMake Application.MagnumDebugToolsObjects" />
       <item itemvalue="CMake Application.MagnumDebugTools" />
       <item itemvalue="CMake Application.MagnumFlextGLObjects" />
+      <item itemvalue="CMake Application.AnyImageImporter" />
+      <item itemvalue="CMake Application.AnyImageImporter-dependencies" />
       <item itemvalue="CMake Application.MagnumGLObjects" />
       <item itemvalue="CMake Application.MagnumGL" />
       <item itemvalue="CMake Application.MagnumGlfwApplication" />
