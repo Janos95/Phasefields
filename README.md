@@ -42,11 +42,11 @@ git submodules update --init --recursive
 ```
 
 Build files are generated using cmake. 
-If you want to build the project using e.g.
-ninja, you can use the following command:
+If you want to build the project on a unix 
+like platform you can use the following command
 
 ```bash
-mkdir build && cd build && cmake .. -GNinja -DCMAKE_BUILD_TYPE=Release && ninja
+mkdir build && cd build && cmake .. -DCMAKE_BUILD_TYPE=Release && make -j
 ```
 
 There are some more dependencies which you can enable using the following cmake options:
