@@ -26,17 +26,20 @@ target_link_libraries(Cost PRIVATE
         Phasefield::Viewer
         )
 
-find_package(OpenMP)
 
 target_link_libraries(Cost PUBLIC
         Phasefield::Utilities
         Phasefield::VisualizationProxy
         Phasefield::Mesh
         Phasefield::Optimization
-        OpenMP::OpenMP_CXX
         cholmod
         umfpack
         )
+
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(Cost PUBLIC OpenMP::OpenMP_CXX)
+endif()
 
 set_property(TARGET Cost PROPERTY POSITION_INDEPENDENT_CODE ON)
 add_library(Phasefield::Cost ALIAS Cost)

@@ -31,8 +31,10 @@ struct Node {
     size_t idx = Invalid;
     Tree* tree = nullptr;
 
-    auto operator<=>(Node const& other) const { return idx <=> other.idx; }
-    bool operator==(Node const& other) const = default;
+    bool operator != (Node const& other) const { return idx != other.idx; }
+    bool operator == (Node const& other) const { return idx == other.idx; }
+    bool operator < (Node const& other) const { return idx < other.idx; }
+    bool operator > (Node const& other) const { return idx > other.idx; }
 
     [[nodiscard]] bool isLeaf() const { return !hasLeftChild() && !hasRightChild(); }
 
@@ -147,15 +149,10 @@ struct NodeIterator {
     Node node;
 
     Node operator *() const { return node; }
-    NodeIterator& operator++() requires (IteratorType == 2){ node.idx++; return *this; }
 
-    NodeIterator& operator++() requires (IteratorType == 0) {
+    NodeIterator& operator++() {
+        if constexpr (IteratorType == 2) { node.idx++; return *this; }
         do { node.idx++; } while(node.idx < node.tree->nodeCount() && !node.isLeaf());
-        return *this;
-    }
-
-    NodeIterator& operator++() requires (IteratorType == 1) {
-        do { node.idx++; } while(node.idx < node.tree->nodeCount() && node.isLeaf());
         return *this;
     }
 

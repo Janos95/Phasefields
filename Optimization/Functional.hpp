@@ -13,8 +13,16 @@
 
 namespace Phasefield {
 
+template<class T, class Lambda>
+constexpr bool valid = std::is_invocable_r_v<bool, Lambda, T>;
+
 template<class F>
 Functional::Functional(F f): tag(getTag()) {
+
+    auto checkDraw = [](auto&& f) -> decltype(f.drawImGuiOptions(std::declval<VisualizationProxy>())) {};
+    auto checkSave = [](auto&& f) -> decltype(f.saveParameters(std::declval<Cr::Utility::ConfigurationGroup>())) {};
+    auto checkLoad = [](auto&& f) -> decltype(f.loadParameters(std::declval<Cr::Utility::ConfigurationGroup>())) {};
+    auto checkType = [](auto&& f) -> decltype(decltype(f)::type()) {};
 
     evalWithGrad = +[](
             void* e,
@@ -50,19 +58,19 @@ Functional::Functional(F f): tag(getTag()) {
 
 
     /* optional */
-    if constexpr(requires(VisualizationProxy& p) { f.drawImGuiOptions(p); }) {
+    if constexpr(valid<F, decltype(checkDraw)>) {
         options = +[](void* e, VisualizationProxy& p) { static_cast<F*>(e)->drawImGuiOptions(p); };
     }
 
-    if constexpr (requires(Cr::Utility::ConfigurationGroup& group) { f.saveParameters(group); }) {
+    if constexpr (valid<F, decltype(checkSave)>) {
         save = +[](void* e, Cr::Utility::ConfigurationGroup& group) { static_cast<F*>(e)->saveParameters(group); };
     }
 
-    if constexpr (requires(Cr::Utility::ConfigurationGroup const& group) { f.loadParameters(group); }) {
+    if constexpr (valid<F, decltype(checkLoad)>) {
         load = +[](void* e, Cr::Utility::ConfigurationGroup const& group) { static_cast<F*>(e)->loadParameters(group); };
     }
 
-    if constexpr (requires { F::type(); })
+    if constexpr (valid<F, decltype(checkType)>)
         functionalType = F::type();
 
     Debug{} << tag;

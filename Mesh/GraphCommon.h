@@ -15,8 +15,20 @@ struct HeapElement {
     E node;
     double distance;
 
-    auto operator<=>(const HeapElement& other) const {
-        return distance <=> other.distance;
+    bool operator == (const HeapElement& other) const {
+        return distance == other.distance;
+    }
+
+    bool operator != (const HeapElement& other) const {
+        return distance != other.distance;
+    }
+
+    bool operator < (const HeapElement& other) const {
+        return distance < other.distance;
+    }
+
+    bool operator > (const HeapElement& other) const {
+        return distance > other.distance;
     }
 };
 

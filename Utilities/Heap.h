@@ -131,18 +131,6 @@ public:
         return static_cast<T&&>(m_data[m_size]);
     }
 
-    T const& findMax() const requires (algo == HeapAlgorithm::MinMax) {
-        if (m_size <= 2ul)
-            return m_data[m_size - 1];
-        size_t index = 1ul + static_cast<size_t>(m_comp(m_data[1], m_data[2]));
-        return m_data[index];
-    }
-
-    T extractMax() requires (algo == HeapAlgorithm::MinMax) {
-        pop_minmax_heap_max(m_data, m_data + m_size--, SwapComp<Comp>{m_comp});
-        return static_cast<T&&>(m_data[m_size]);
-    }
-
     template<class... Args>
     void emplace(Args&& ... args) {
         if(m_capacity == m_size)

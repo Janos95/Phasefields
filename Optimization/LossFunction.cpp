@@ -17,8 +17,15 @@
 
 namespace Phasefield {
 
+template<class T, class Lambda>
+constexpr bool valid = std::is_invocable_r_v<bool, Lambda, T>;
+
 template<class T>
 LossFunction::LossFunction(T f) {
+
+    auto checkDraw = [](auto&& f) -> decltype(f.drawSettings()){};
+    auto checkType = [](auto&& f) -> decltype(decltype(f)::type()) {};
+
     erased = allocate_buffer(sizeof(T), alignof(T));
     ::new(erased) T(std::move(f));
 
@@ -36,14 +43,14 @@ LossFunction::LossFunction(T f) {
         deallocate_buffer(e, sizeof(T), alignof(T));
     };
 
-    if constexpr ( requires {T::type(); })
+    if constexpr (valid<T, decltype(checkType)>)
         lossType = T::type();
     else
         lossType = LossFunctionType::Unknown;
 
     /* optional */
     //constexpr bool hasSettings = is_valid(f)([](auto&& p) constexpr -> decltype(f.drawSettings()){});
-    if constexpr(requires { f.drawSettings(); }) {
+    if constexpr(valid<T, decltype(checkDraw)>) {
         draw = +[](void* e) { static_cast<T*>(e)->drawSettings(); };
     }
 }

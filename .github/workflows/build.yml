@@ -6,7 +6,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-20.04, macos-latest]
         config: [Debug]
     steps:
     - uses: actions/checkout@v2
@@ -21,7 +21,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DCMAKE_C_COMPILER=gcc-10 -DCMAKE_CXX_COMPILER=g++-10 ..
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.config }} ..
         cd ..
     - name: Build
       run: |

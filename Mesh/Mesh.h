@@ -103,12 +103,7 @@ public:
 
     static constexpr bool HasConst = std::is_const_v<T>;
 
-    operator ArrayView<T>() {
-        auto* p = reinterpret_cast<Array<T>*>(this);
-        return *p;
-    }
-
-    operator ArrayView<const T>() requires (!HasConst) {
+    operator ArrayView<std::conditional_t<HasConst, const T, T>>() {
         auto* p = reinterpret_cast<Array<T>*>(this);
         return *p;
     }

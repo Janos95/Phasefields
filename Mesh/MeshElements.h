@@ -8,8 +8,6 @@
 #include "Types.h"
 #include "Range.h"
 
-#include <compare>
-
 namespace Phasefield {
 
 struct HalfEdge {
@@ -17,8 +15,8 @@ struct HalfEdge {
     size_t idx;
     Mesh const* mesh;
 
-    auto operator<=>(HalfEdge const& other) const { return idx <=> other.idx; }
-    bool operator==(HalfEdge const& other) const = default;
+    bool operator==(HalfEdge const& other) const { return idx == other.idx; };
+    auto operator!=(HalfEdge const& other) const { return idx != other.idx; }
 
     [[nodiscard]] HalfEdge next() const;
 
@@ -56,8 +54,9 @@ struct Vertex {
     size_t idx;
     Mesh const* mesh;
 
-    auto operator<=>(Vertex const& other) const { return idx <=> other.idx; }
-    bool operator==(Vertex const& other) const = default;
+    bool operator==(Vertex const& other) const { return idx == other.idx; };
+    auto operator!=(Vertex const& other) const { return idx != other.idx; }
+
 
     [[nodiscard]] double gaussianCurvature() const;
 
@@ -88,10 +87,6 @@ struct Vertex {
     [[nodiscard]] bool onBoundary() const;
 
     [[nodiscard]] explicit operator bool() const { return idx != Invalid; }
-
-    //IncidentEdgeRange incidentEdges() const;
-    //IncidentFaceRange incidentFaces() const;
-
 };
 
 struct Face {
@@ -99,11 +94,9 @@ struct Face {
     size_t idx;
     Mesh const* mesh;
 
-    auto operator<=>(Face const& other) const { return idx <=> other.idx; }
-    bool operator==(Face const& other) const = default;
-
-    //FaceIncidentVertexRange vertices();
-    //FaceIncidentFaceRange incidentFaces() const;
+    bool operator == (Face const& other) const { return idx == other.idx; };
+    bool operator != (Face const& other) const { return idx != other.idx; }
+    bool operator < (Face const& other) const { return idx < other.idx; }
 
     [[nodiscard]] HalfEdge halfEdge() const;
 
@@ -132,18 +125,15 @@ struct Face {
     [[nodiscard]] Range3D bb() const;
 
     [[nodiscard]] explicit operator bool() const { return idx != Invalid; }
-
 };
 
 struct Edge {
-
     size_t idx;
     Mesh const* mesh;
 
-    auto operator<=>(Edge const& other) const { return idx <=> other.idx; }
-    bool operator==(Edge const& other) const = default;
+    bool operator==(Edge const& other) const { return idx == other.idx; };
+    bool operator!=(Edge const& other) const { return idx != other.idx; }
 
-    //bool isManifold();
     [[nodiscard]] Vertex vertex1() const;
 
     [[nodiscard]] Vertex vertex2() const;
@@ -164,12 +154,11 @@ struct Edge {
 };
 
 struct Corner {
-
     size_t idx;
     Mesh const* mesh;
 
-    auto operator<=>(Corner const& other) const { return idx <=> other.idx; }
-    bool operator==(Corner const& other) const = default;
+    bool operator==(Corner const& other) const { return idx == other.idx; };
+    bool operator!=(Corner const& other) const { return idx != other.idx; }
 
     [[nodiscard]] HalfEdge side1() const;
 
@@ -188,15 +177,14 @@ struct Corner {
     [[nodiscard]] bool isValid() const { return !halfEdge().onBoundaryLoop(); }
 
     [[nodiscard]] explicit operator bool() const { return idx != Invalid; }
-
 };
 
 struct DualEdge {
     size_t idx;
     Mesh const* mesh;
 
-    auto operator<=>(DualEdge const& other) const { return idx <=> other.idx; }
-    bool operator==(DualEdge const& other) const = default;
+    bool operator==(DualEdge const& other) const { return idx == other.idx; };
+    bool operator!=(DualEdge const& other) const { return idx != other.idx; }
 
     [[nodiscard]] Face face1() const;
 

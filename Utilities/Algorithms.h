@@ -48,7 +48,7 @@ ForwardIt removeIf(ForwardIt first, ForwardIt last, UnaryPredicate p) {
     return first;
 }
 
-template<class Rng, invocable UnaryPredicate>
+template<class Rng, class UnaryPredicate>
 auto removeIf(Rng&& rng, UnaryPredicate p) {
     return removeIf(rng.begin(), rng.end(), p);
 }
