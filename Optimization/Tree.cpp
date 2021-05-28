@@ -10,16 +10,14 @@
 
 #include <Corrade/Utility/Algorithms.h>
 #include <Corrade/Containers/GrowableArray.h>
-#include <Corrade/Utility/MurmurHash2.h>
 #include <Corrade/Utility/FormatStl.h>
 
 #include <Magnum/Math/Vector4.h>
 #include <Magnum/Magnum.h>
 
-#include <cstdio>
 #include <unordered_map>
-#include <queue>
 #include <random>
+#include <algorithm>
 
 
 namespace Phasefield {
